@@ -18,6 +18,7 @@
 	<ul>
 
 		<li><A HREF="#html__mason__cgihandler_methods"><code>HTML::Mason::CGIHandler</code> Methods</a></li>
+		<li><A HREF="#calling_abort___under_cgihandler">Calling <code>abort()</code> Under CGIHandler</a></li>
 		<li><A HREF="#_r_methods">$r Methods</a></li>
 		<li><A HREF="#added__m_methods">Added <code>$m</code> methods</a></li>
 		<li><A HREF="#html__mason__faketable_methods"><code>HTML::Mason::FakeTable</code> Methods</a></li>
@@ -132,6 +133,19 @@ subclass.
 Returns the Mason Interpreter associated with this handler.  The
 Interpreter lasts for the entire lifetime of the handler.
 <p></p></ul>
+<p>
+</p>
+<h2><A NAME="calling_abort___under_cgihandler">Calling <code>abort()</code> Under CGIHandler</a></h2>
+<p>If you call <code>$m-&gt;abort()</code> under CGIHandler, request execution
+stops, just as when running ApacheHandler.  For compatibility with
+ApacheHandler, if you call <code>$m-&gt;abort()</code> with no argument, or
+with an argument of 0 or 200 (OK statuses), then headers will be sent.
+Otherwise, they are not.  However, unlike with ApacheHandler, calling
+<code>$m-&gt;abort()</code> with an HTTP status code does not cause the web
+server to return that status code to the browser.</p>
+<p>It would be theoretically possible to use CGI's ``Status:'' header to
+set the status in response to the top-level component's return value
+or the aborted value. We will try this in a later version.</p>
 <p>
 </p>
 <h2><A NAME="_r_methods">$r Methods</a></h2>

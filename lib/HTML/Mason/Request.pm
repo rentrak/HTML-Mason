@@ -1598,6 +1598,9 @@ Note: users upgrading from 1.0x and earlier can continue to use the
 old C<$m-E<gt>cache_self> API by setting L<data_cache_api|HTML::Mason::Params/data_cache_api> to '1.0'.
 This support will be removed at a later date.
 
+See the the L<DATA CACHING|HTML::Mason::Devel/DATA CACHING> section of the developer's manual section for more details on how to
+exercise finer control over caching.
+
 =for html <a name="item_caller_args"></a>
 
 =item caller_args

@@ -118,15 +118,27 @@ sub _handler {
 
     my %args = $self->request_args($r);
 
-    eval { $self->interp->exec($p->{comp}, %args) };
+    my @result;
+    if (wantarray) {
+        @result = eval { $self->interp->exec($p->{comp}, %args) };
+    } elsif ( defined wantarray ) {
+        $result[0] = eval { $self->interp->exec($p->{comp}, %args) };
+    } else {
+        eval { $self->interp->exec($p->{comp}, %args) };
+    }
 
     if (my $err = $@) {
+	my $retval = isa_mason_exception($err, 'Abort')   ? $err->aborted_value  :
+		     isa_mason_exception($err, 'Decline') ? $err->declined_value :
+		     rethrow_exception $err;
 
-        unless ( isa_mason_exception($err, 'Abort')
-                 or isa_mason_exception($err, 'Decline') ) {
 
-            rethrow_exception($err);
-        }
+        # Unlike under mod_perl, we cannot simply return a 301 or 302
+        # status and let Apache send headers, we need to explicitly
+        # send this header ourself.
+        $r->send_http_header if $retval && grep { $retval eq $_ } ( 200, 301, 302 );
+
+	return $retval;
     }
 
     if (@_) {
@@ -134,6 +146,8 @@ sub _handler {
 	# away) because it's just a hack for the test suite.
 	$_[0] .= $r->http_header . $self->{output};
     }
+
+    return wantarray ? @result : defined wantarray ? $result[0] : undef;
 }
 
 # This is broken out in order to make subclassing easier.
@@ -182,16 +196,23 @@ sub exec
 
     eval { $retval = $self->SUPER::exec(@_) };
 
+    if (my $err = $@)
+    {
+	$retval = isa_mason_exception($err, 'Abort')   ? $err->aborted_value  :
+                  isa_mason_exception($err, 'Decline') ? $err->declined_value :
+                  rethrow_exception $err;
+    }
+
     # On a success code, send headers if they have not been sent and
     # if we are the top-level request. Since the out_method sends
     # headers, this will typically only apply after $m->abort.
-    # On an error code, leave it to Apache to send the headers.
     if (!$self->is_subrequest
 	and $self->auto_send_headers
 	and !$r->http_header_sent
 	and (!$retval or $retval==200)) {
 	$r->send_http_header();
     }
+
 }
 
 sub redirect {
@@ -321,6 +342,20 @@ Returns the Mason Interpreter associated with this handler.  The
 Interpreter lasts for the entire lifetime of the handler.
 
 =back
+
+=head2 Calling abort() Under CGIHandler
+
+If you call C<< $m->abort() >> under CGIHandler, request execution
+stops, just as when running ApacheHandler.  For compatibility with
+ApacheHandler, if you call C<< $m->abort() >> with no argument, or
+with an argument of 0 or 200 (OK statuses), then headers will be sent.
+Otherwise, they are not.  However, unlike with ApacheHandler, calling
+C<< $m->abort() >> with an HTTP status code does not cause the web
+server to return that status code to the browser.
+
+It would be theoretically possible to use CGI's "Status:" header to
+set the status in response to the top-level component's return value
+or the aborted value. We will try this in a later version.
 
 =head2 $r Methods
 

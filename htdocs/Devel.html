@@ -1594,8 +1594,10 @@ the <A HREF="Devel.html#accessing_a_cache_externally">previous section</a>.</p>
 <p>
 </p>
 <h2><A NAME="sending_http_headers">Sending HTTP Headers</a></h2>
-<p>Mason automatically sends HTTP headers via <code>$r-&gt;send_http_header</code>
-but it will not send headers if they've already been sent manually.</p>
+<p>Under ApacheHandler and CGIHandler, Mason automatically sends HTTP
+headers, via <code>$r-&gt;send_http_header()</code> with ApacheHandler, and via
+<code>CGI-&gt;header()</code> with CGIHandler, but it will not send headers if
+they've already been sent manually.</p>
 <p>To determine the exact header behavior on your system, you need to
 know whether your server's default is to have <A HREF="Params.html#autoflush">autoflush</a> on or off.
 Your administrator should have this information.  If your administrator
@@ -1628,9 +1630,9 @@ output anything (given its functional nature, it shouldn't).</p>
 <p>
 </p>
 <h2><A NAME="returning_http_status">Returning HTTP Status</a></h2>
-<p>The value returned from the top-most component becomes the status code
-of the request. If no value is explicitly returned, it defaults to OK
-(0).</p>
+<p>When running under ApacheHandler, the value returned from the top-most
+component becomes the status code of the request. If no value is
+explicitly returned, it defaults to OK (0).</p>
 <p>Simply returning an error status (such as 404) from the top-most
 component has two problems in practice. First, the decision to return
 an error status often resides further down in the component
@@ -1655,6 +1657,9 @@ or the status will not make it out:</p>
           # deal with non-abort exceptions
       }
    }</pre>
+<p>Note that when running under CGIHandler, the value you return from
+your components, or via <code>$m-&gt;abort()</code>, is not able to affect the
+status code of the request.</p>
 <p>
 </p>
 <h3><A NAME="filters_and__m_abort">Filters and $m-&gt;abort</a></h3>
@@ -1693,8 +1698,9 @@ immediately before calling <code>die()</code>.</p>
 client.</p>
 <p>First, you can use a Mason subrequest (see <A HREF="#subrequests">Subrequests</a>). This only
 works if you are redirecting to another Mason page.</p>
-<p>Second, you can use Apache's internal_redirect method, which works
-whether or not the new URL will be handled by Mason.  Use it this way:</p>
+<p>Second, if you're running under mod_perl with ApacheHandler, you can
+use Apache's internal_redirect method, which works whether or not the
+new URL will be handled by Mason.  Use it this way:</p>
 <pre>
     $r-&gt;internal_redirect($url);
     $m-&gt;auto_send_headers(0);
