@@ -61,37 +61,37 @@
 	<li><A HREF="#initialization_and_cleanup">INITIALIZATION AND CLEANUP</a></li>
 	<ul>
 
-		<li><A HREF="#_init_">&lt;%init&gt;</a></li>
-		<li><A HREF="#_cleanup_">&lt;%cleanup&gt;</a></li>
-		<li><A HREF="#_once_">&lt;%once&gt;</a></li>
-		<li><A HREF="#_shared_">&lt;%shared&gt;</a></li>
+		<li><A HREF="#__init_">&lt;%init&gt;</a></li>
+		<li><A HREF="#__cleanup_">&lt;%cleanup&gt;</a></li>
+		<li><A HREF="#__once_">&lt;%once&gt;</a></li>
+		<li><A HREF="#__shared_">&lt;%shared&gt;</a></li>
 	</ul>
 
 	<li><A HREF="#embedded_components">EMBEDDED COMPONENTS</a></li>
 	<ul>
 
-		<li><A HREF="#_def_name_">&lt;%def <em>name</em>&gt;</a></li>
-		<li><A HREF="#_method_name_">&lt;%method <em>name</em>&gt;</a></li>
+		<li><A HREF="#__def_name_">&lt;%def <em>name</em>&gt;</a></li>
+		<li><A HREF="#__method_name_">&lt;%method <em>name</em>&gt;</a></li>
 	</ul>
 
 	<li><A HREF="#flags_and_attributes">FLAGS AND ATTRIBUTES</a></li>
 	<ul>
 
-		<li><A HREF="#_flags_">&lt;%flags&gt;</a></li>
-		<li><A HREF="#_attr_">&lt;%attr&gt;</a></li>
+		<li><A HREF="#__flags_">&lt;%flags&gt;</a></li>
+		<li><A HREF="#__attr_">&lt;%attr&gt;</a></li>
 	</ul>
 
 	<li><A HREF="#filtering">FILTERING</a></li>
 	<ul>
 
-		<li><A HREF="#_filter__section">&lt;%filter&gt; section</a></li>
+		<li><A HREF="#__filter__section">&lt;%filter&gt; section</a></li>
 	</ul>
 
 	<li><A HREF="#other_syntax">OTHER SYNTAX</a></li>
 	<ul>
 
-		<li><A HREF="#_doc_">&lt;%doc&gt;</a></li>
-		<li><A HREF="#_text_">&lt;%text&gt;</a></li>
+		<li><A HREF="#__doc_">&lt;%doc&gt;</a></li>
+		<li><A HREF="#__text_">&lt;%text&gt;</a></li>
 		<li><A HREF="#escaping_expressions">Escaping expressions</a></li>
 		<ul>
 
@@ -954,7 +954,7 @@ and the <code>%ARGS</code> hash always contain copies of arguments.</p>
 times.</p>
 <p>
 </p>
-<h2><A NAME="_init_">&lt;%init&gt;</a></h2>
+<h2><A NAME="__init_">&lt;%init&gt;</a></h2>
 <p>This section contains initialization code that executes as soon as the
 component is called. For example: checking that a user is logged in;
 selecting rows from a database into a list; parsing the contents of a
@@ -997,7 +997,7 @@ HTML without getting distracted or discouraged by Perl code. For example:</p>
     &lt;/%args&gt;</pre>
 <p>
 </p>
-<h2><A NAME="_cleanup_">&lt;%cleanup&gt;</a></h2>
+<h2><A NAME="__cleanup_">&lt;%cleanup&gt;</a></h2>
 <p>This section contains cleanup code that executes just before the
 component exits. For example: closing a database connection or closing
 a file handle.</p>
@@ -1006,9 +1006,14 @@ block at the end of the component. Since a component corresponds a
 subroutine block, and since Perl is so darned good at cleaning up
 stuff at the end of blocks, <code>&lt;%cleanup&gt;</code> sections are rarely
 needed.</p>
+<p>The <code>&lt;%cleanup&gt;</code> block is not executed if the component returns
+(via an explicit <code>return</code> statement) or if an error or abort occurs
+in this component or one of its children. This makes <code>&lt;%cleanup&gt;</code> 
+useless for real cleanup code that needs a guarantee of execution.
+We hope to remedy this in the next major release.</p>
 <p>
 </p>
-<h2><A NAME="_once_">&lt;%once&gt;</a></h2>
+<h2><A NAME="__once_">&lt;%once&gt;</a></h2>
 <p>This code executes once when the component is loaded. Variables
 declared in this section can be seen in all of a component's code and
 persist for the lifetime of the component.</p>
@@ -1042,7 +1047,7 @@ preloaded component, because neither of those variable exist when a
 component is preloaded.</p>
 <p>
 </p>
-<h2><A NAME="_shared_">&lt;%shared&gt;</a></h2>
+<h2><A NAME="__shared_">&lt;%shared&gt;</a></h2>
 <p>As with <code>&lt;%once&gt;</code>, lexical (<code>my</code>) variables declared in this
 section can be seen in all the rest of a component's code: the main
 body, subcomponents, and methods.  However, unlike <code>&lt;%once&gt;</code>, the
@@ -1083,7 +1088,7 @@ current compiler cannot properly handle it.</p>
 <h1><A NAME="embedded_components">EMBEDDED COMPONENTS</a></h1>
 <p>
 </p>
-<h2><A NAME="_def_name_">&lt;%def <em>name</em>&gt;</a></h2>
+<h2><A NAME="__def_name_">&lt;%def <em>name</em>&gt;</a></h2>
 <p>Each instance of this section creates a <em>subcomponent</em> embedded
 inside the current component. Inside you may place anything that a
 regular component contains, with the exception of <code>&lt;%def&gt;</code>, <code>&lt;%method&gt;</code>,
@@ -1127,7 +1132,7 @@ standardized hyperlink:</p>
     &lt;/ul&gt;</pre>
 <p>
 </p>
-<h2><A NAME="_method_name_">&lt;%method <em>name</em>&gt;</a></h2>
+<h2><A NAME="__method_name_">&lt;%method <em>name</em>&gt;</a></h2>
 <p>Each instance of this section creates a <em>method</em> embedded inside
 the current component. Methods resemble subcomponents in terms of
 naming, contents, and scope. However, while subcomponents can only be
@@ -1159,7 +1164,7 @@ the underscore character), and the value may be any scalar value,
 including references.  An optional comment may follow each line.</p>
 <p>
 </p>
-<h2><A NAME="_flags_">&lt;%flags&gt;</a></h2>
+<h2><A NAME="__flags_">&lt;%flags&gt;</a></h2>
 <p>Use this section to set official Mason flags that affect the current
 component's behavior.</p>
 <p>Currently there is only one flag, <code>inherit</code>, which specifies the
@@ -1173,7 +1178,7 @@ examples.</p>
     &lt;/%flags&gt;</pre>
 <p>
 </p>
-<h2><A NAME="_attr_">&lt;%attr&gt;</a></h2>
+<h2><A NAME="__attr_">&lt;%attr&gt;</a></h2>
 <p>Use this section to assign static key/value attributes that can be
 queried from other components.</p>
 <pre>
@@ -1197,7 +1202,7 @@ filter that, say, changes HTML in a complex way, we allow
 non-programmers to work in a cleaner HTML environment.</p>
 <p>
 </p>
-<h2><A NAME="_filter__section">&lt;%filter&gt; section</a></h2>
+<h2><A NAME="__filter__section">&lt;%filter&gt; section</a></h2>
 <p>The <code>&lt;%filter&gt;</code> section allows you to arbitrarily filter the output of
 the current component. Upon entry to this code, <code>$_</code> contains the
 component output, and you are expected to modify it in place. The code
@@ -1242,7 +1247,7 @@ than the entire component.</p>
 <h1><A NAME="other_syntax">OTHER SYNTAX</a></h1>
 <p>
 </p>
-<h2><A NAME="_doc_">&lt;%doc&gt;</a></h2>
+<h2><A NAME="__doc_">&lt;%doc&gt;</a></h2>
 <p>Text in this section is treated as a comment and ignored. Most useful
 for a component's main documentation.  One can easily write a program
 to sift through a set of components and pull out their <code>&lt;%doc&gt;</code>
@@ -1255,7 +1260,7 @@ cumbersome comment marker.  Another option is '%#':</p>
 the HTML.</p>
 <p>
 </p>
-<h2><A NAME="_text_">&lt;%text&gt;</a></h2>
+<h2><A NAME="__text_">&lt;%text&gt;</a></h2>
 <p>Text in this section is passed through unmodified by Mason.  Any Mason
 syntax inside it is ignored.  This is useful, for example, when
 documenting Mason itself from a component:</p>
@@ -1428,7 +1433,7 @@ arbitrary complex list or hash reference:</p>
 <pre>
     $m-&gt;cache-&gt;set(name =&gt; $string);
     $m-&gt;cache-&gt;set(friends =&gt; \@list);
-    $m-&gt;cache-&gt;set(map =&gt; %hash);</pre>
+    $m-&gt;cache-&gt;set(map =&gt; \%hash);</pre>
 <p>You can fetch all the keys in a cache with</p>
 <pre>
     my @idents = $m-&gt;cache-&gt;get_keys;</pre>
@@ -1665,8 +1670,8 @@ or the status will not make it out:</p>
 <p>
 </p>
 <h2><A NAME="external_redirects">External Redirects</a></h2>
-<p>Because it is so commonly needed, Mason provides an external redirect
-method:</p>
+<p>Because it is so commonly needed, Mason 1.1x and on provides an
+external redirect method:</p>
 <pre>
     $m-&gt;redirect($url);    # Redirects with 302 status</pre>
 <p>This method uses the clear_buffer/abort technique mentioned above,

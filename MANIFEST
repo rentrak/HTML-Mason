@@ -1,22 +1,18 @@
-CREDITS
-Changes
-MANIFEST			This list of files
-Makefile.PL
-README
-UPGRADE
-bin/convert0.6.README
 bin/convert0.6.pl
-bin/convert0.8.README
+bin/convert0.6.README
 bin/convert0.8.pl
+bin/convert0.8.README
 bin/mason.pl
+Changes
+CREDITS
 eg/handler.pl
 eg/httpd.conf
 eg/session_handler.pl
 htdocs/Admin.html
 htdocs/ApacheHandler.html
 htdocs/Buffer.html
-htdocs/CGIHandler.html
 htdocs/Cache/BaseCache.html
+htdocs/CGIHandler.html
 htdocs/Compiler.html
 htdocs/Compiler/ToObject.html
 htdocs/Component.html
@@ -24,6 +20,7 @@ htdocs/Component/Subcomponent.html
 htdocs/ComponentSource.html
 htdocs/Devel.html
 htdocs/Exceptions.html
+htdocs/index.html
 htdocs/Interp.html
 htdocs/Lexer.html
 htdocs/Mason.html
@@ -32,7 +29,6 @@ htdocs/Request.html
 htdocs/Resolver.html
 htdocs/Resolver/File.html
 htdocs/Subclassing.html
-htdocs/index.html
 install/apache_tests_helper.pl
 install/assisted_install_helper.pl
 install/configure_apache.pl
@@ -43,8 +39,8 @@ lib/HTML/Mason.pm
 lib/HTML/Mason/Admin.pod
 lib/HTML/Mason/ApacheHandler.pm
 lib/HTML/Mason/Buffer.pm
-lib/HTML/Mason/CGIHandler.pm
 lib/HTML/Mason/Cache/BaseCache.pm
+lib/HTML/Mason/CGIHandler.pm
 lib/HTML/Mason/Compiler.pm
 lib/HTML/Mason/Compiler/ToObject.pm
 lib/HTML/Mason/Component.pm
@@ -68,8 +64,11 @@ lib/HTML/Mason/Subclassing.pod
 lib/HTML/Mason/Tests.pm
 lib/HTML/Mason/Tools.pm
 lib/HTML/Mason/Utils.pm
-samples/README
+Makefile.PL
+MANIFEST			This list of files
+README
 samples/dump-request
+samples/README
 samples/show-env
 t/01-syntax.t
 t/02-sections.t
@@ -98,3 +97,5 @@ t/lib/Apache/test.pm
 t/live_server_lib.pl
 t/single_test.pl
 t/taint.comp
+UPGRADE
+META.yml                                 Module meta-data (added by MakeMaker)

@@ -979,7 +979,7 @@ arguments.</p>
 <pre>
  &lt;p&gt;
  If you have further questions, please feel free to contact us at &lt;a
- href=&quot;<a href="mailto:support@example.com&quot;&gt;support@example.com&lt;/a&gt">mailto:support@example.com&quot;&gt;support@example.com&lt;/a&gt</a>;.
+ href=&quot;<a href="mailto:support@example.com">mailto:support@example.com</a>&quot;&gt;support@example.com&lt;/a&gt;.
  &lt;/p&gt;</pre>
 <pre>
  &lt;p&gt;&lt;a href=&quot;/&quot;&gt;Click here&lt;/a&gt; to continue.&lt;/p&gt;</pre>
@@ -1073,11 +1073,10 @@ the result to standard output:</p>
     use strict;</pre>
 <pre>
     my $interp = HTML::Mason::Interp-&gt;new ();
-    $interp-&gt;exec(&lt;absolute-file-path&gt;, &lt;args&gt;...);</pre>
-<p>Because no component root was specified, the root is set to '/' and
-any file on the system may be used as a component. If you have a
-well defined and contained component tree, you'll probably want to
-specify a component root.</p>
+    $interp-&gt;exec(&lt;relative path to file&gt;, &lt;args&gt;...);</pre>
+<p>Because no component root was specified, the root is set to your
+current working directory.  If you have a well defined and contained
+component tree, you'll probably want to specify a component root.</p>
 <p>Because no data directory was specified, object files will not be
 created and data caching will not work in the default manner. If
 performance is an issue, you will want to specify a data directory.</p>

@@ -1,0 +1,18 @@
+# http://module-build.sourceforge.net/META-spec.html
+#XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
+name:         HTML-Mason
+version:      1.24
+version_from: lib/HTML/Mason.pm
+installdirs:  site
+requires:
+    Apache::Request:               0.32
+    Cache::Cache:                  1
+    CGI:                           2.46
+    Class::Container:              0.07
+    Exception::Class:              1.14
+    File::Spec:                    0.8
+    Params::Validate:              0.59
+    Scalar::Util:                  1.01
+
+distribution_type: module
+generated_by: ExtUtils::MakeMaker version 6.17
