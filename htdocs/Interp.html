@@ -15,6 +15,8 @@
 	<LI><A HREF="#synopsis">SYNOPSIS</A>
 	<LI><A HREF="#description">DESCRIPTION</A>
 	<LI><A HREF="#parameters_for_new_constructor">PARAMETERS FOR new() CONSTRUCTOR</A>
+	<LI><A HREF="#accessor_methods">ACCESSOR METHODS</A>
+	<LI><A HREF="#other_methods">OTHER METHODS</A>
 	<LI><A HREF="#standalone_mode">STANDALONE MODE</A>
 	<LI><A HREF="#author">AUTHOR</A>
 	<LI><A HREF="#see_also">SEE ALSO</A>
@@ -38,7 +40,7 @@ HTML::Mason::Interp - Mason Component Interpreter
 </A></H1>
 <PRE>    my $i = new HTML::Mason::Interp (data_dir=&gt;'/usr/local/mason',
                                      comp_root=&gt;'/usr/local/www/htdocs/',
-                                     &lt; other params &gt;);
+                                     ...other params...);
 </PRE>
 
 <P>
@@ -151,8 +153,8 @@ to send output to a file called ``mason.out'':
 
 <P>
 
-In standalone mode, out_method prints to standard output. In a web
-environment, out_method defaults to using <CODE>$r-</CODE>print&gt;.
+By default, out_method prints to standard output. (In a mod_perl
+environment this is automatically redirected to the HTTP client.)
 
 
 <P>
@@ -215,8 +217,9 @@ separated by ``|''. Default is to log nothing.
 <DT><STRONG><A NAME="item_use_data_cache">use_data_cache
 
 </A></STRONG><DD>
-True or undef, default is true. You may need to disable data caching
-temporarily for debugging purposes, but normally this should be left alone.
+True or undef, default is true. Specifies whether the mc_cache and related
+commands are operational. You may need to disable data caching temporarily
+for debugging purposes, but normally this should be left alone.
 
 
 <P>
@@ -248,6 +251,103 @@ explicitly updated <A HREF="././Admin.html#reload_file">reload file</A>.
 True or undef, default is undef. If true, component compile errors are
 followed with the full component source, annotated with line numbers, to
 better interpret the error message. Does not affect runtime errors.
+
+
+<P>
+
+</DL>
+<P>
+<HR>
+<H1><A NAME="accessor_methods">ACCESSOR METHODS
+
+</A></H1>
+All of the above properties have standard accessor methods of the same
+name: no arguments retrieves the value, and one argument sets it. For
+example:
+
+
+<P>
+
+<PRE>    my $interp = new HTML::Mason::Interp (...);
+    my $p = $interp-&gt;parser;
+    my $comproot = $interp-&gt;comp_root;
+    $interp-&gt;out_method(\$buf);
+</PRE>
+
+<P>
+
+The following properties can be queried but should not be modified:
+
+
+<P>
+
+o comp_root, data_dir: these are too integral to the interpreter to
+reliably change on-the-fly. Better to create multiple interpreters.
+
+
+<P>
+
+o preloads: changing this is ineffective since preloading happens when the
+interpreter is created
+
+
+<P>
+
+o system_log_file: changing this is ineffective since a persistent log file
+handle is opened when the interpreter is created
+
+
+<P>
+
+<P>
+<HR>
+<H1><A NAME="other_methods">OTHER METHODS
+
+</A></H1>
+<a name="item_set_global">
+
+<DL>
+<DT><STRONG><A NAME="item_set_global_varname_values_">set_global ($varname, [values...])
+
+</A></STRONG><DD>
+This method sets a global to be used in components. <CODE>varname</CODE> is a variable name, optionally preceded with a prefix (<CODE>$</CODE>, <CODE>@</CODE>, or
+<CODE>%</CODE>); if the prefix is omitted then <CODE>$</CODE> is assumed. <CODE>varname</CODE> is followed by a value, in the case of a scalar, or by one or more values
+in the case of a list or hash. For example:
+
+
+<P>
+
+<PRE>    # Set a global variable $dbh containing the database handle
+    $interp-&gt;set_global(dbh =&gt; DBI-&gt;connect(...));
+</PRE>
+
+<P>
+
+<PRE>    # Set a global hash %session from a local hash
+    $interp-&gt;set_global('%session', %s);
+</PRE>
+
+<P>
+
+The global is set in the package that components run in: usually
+<CODE>HTML::Mason::Commands</CODE>, although this can be overridden via the Parser parameter <A HREF="./Parser.html#item_in_package">in_package</A>. The lines above, for example, are equivalent to:
+
+
+<P>
+
+<PRE>    $HTML::Mason::Commands::dbh = DBI-&gt;connect(...);
+    %HTML::Mason::Commands::session = %s;
+</PRE>
+
+<P>
+
+assuming that <A HREF="././Parser.html#item_in_package">in_package</A> has not been changed.
+
+
+<P>
+
+Any global that you set should also be registered with the Parser parameter <A HREF="./Parser.html#item_allow_globals">allow_globals</A>; otherwise you'll get warnings from
+<CODE>strict</CODE>.
 
 
 <P>

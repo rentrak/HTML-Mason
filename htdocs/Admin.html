@@ -14,13 +14,32 @@
 	<LI><A HREF="#name">NAME</A>
 	<LI><A HREF="#description">DESCRIPTION</A>
 	<LI><A HREF="#pieces_of_an_installation">PIECES OF AN INSTALLATION</A>
+	<UL>
+
+		<LI><A HREF="#config_pm">Config.pm</A>
+		<LI><A HREF="#httpd_conf_srm_conf">httpd.conf, srm.conf</A>
+		<LI><A HREF="#handler_pl">handler.pl</A>
+	</UL>
+
+	<LI><A HREF="#configuring_the_handler_script">CONFIGURING THE HANDLER SCRIPT</A>
+	<UL>
+
+		<LI><A HREF="#creating_the_mason_objects">Creating the Mason objects</A>
+		<LI><A HREF="#component_root">Component root</A>
+		<LI><A HREF="#data_directory">Data directory</A>
+		<LI><A HREF="#external_modules">External modules</A>
+		<LI><A HREF="#file_ownership">File ownership</A>
+		<LI><A HREF="#persistent_user_sessions_new_in">Persistent user sessions (new in 0.5)</A>
+		<LI><A HREF="#using_global_variables_new_in_0">Using global variables (new in 0.5)</A>
+	</UL>
+
 	<LI><A HREF="#standard_features">STANDARD FEATURES</A>
 	<UL>
 
 		<LI><A HREF="#data_caching">Data caching</A>
 		<LI><A HREF="#debugging">Debugging</A>
 		<LI><A HREF="#previewer">Previewer</A>
-		<LI><A HREF="#system_logs_new_in_0_3_">System Logs (new in 0.3)</A>
+		<LI><A HREF="#system_logs_new_in_0_3_">System logs (new in 0.3)</A>
 	</UL>
 
 	<LI><A HREF="#performance_tuning">PERFORMANCE TUNING</A>
@@ -80,33 +99,47 @@ in Mason's configuration.
 
 <P>
 
-<DL>
-<DT><STRONG><A NAME="item_Config_pm">Config.pm
+<P>
+<HR>
+<H2><A NAME="config_pm">Config.pm
 
-</A></STRONG><DD>
+</A></H2>
 Config.pm contains global configuration options for Mason. Makefile.PL will
-make initial modifications to the file based on your environment; after
-that, you can edit it by hand, following the comments inside. Currently
-this file controls:
+initially create the file based on your environment, placing it in the <CODE>lib/HTML/Mason</CODE> subdirectory of the distribution. After that, you can edit it by hand,
+following the comments inside.
 
 
 <P>
 
-o whether or not certain optional modules, such as Time::HiRes, should be
-loaded for enhanced features
+``make install'' copies Config.pm to your Perl library directory (e.g. <CODE>/usr/lib/perl5/site_perl/HTML/Mason</CODE>) along with the other module files. This allows Mason internally to grab
+the configuration data with ``<CODE>use HTML::Mason::Config</CODE>''.
 
 
 <P>
 
-o the type of DBM and the serialization method to use for Mason's data
-caching
+Currently this file controls:
 
 
 <P>
 
-<DT><STRONG><A NAME="item_httpd_conf_srm_conf_access_con">httpd.conf (srm.conf, access.conf)
+o Whether or not certain optional modules, such as Time::HiRes, should be
+loaded for enhanced features.
 
-</A></STRONG><DD>
+
+<P>
+
+o The type of DBM and the serialization method used for Mason's data
+caching. If you plan to use data caching, make sure that the DBM package is
+a good-quality one (<STRONG>DB_File</STRONG> or <STRONG>GDBM_File</STRONG>).
+
+
+<P>
+
+<P>
+<HR>
+<H2><A NAME="httpd_conf_srm_conf">httpd.conf, srm.conf
+
+</A></H2>
 Directives must be added to Apache's configuration files to specify which
 requests should be handled through Mason, and the handler used for those
 requests. As described in <STRONG><A HREF="././Mason.html#">HTML::Mason</A></STRONG>, a simple configuration looks like:
@@ -116,6 +149,7 @@ requests. As described in <STRONG><A HREF="././Mason.html#">HTML::Mason</A></STR
 
 <PRE>    DocumentRoot /usr/local/www/htdocs
     PerlRequire /usr/local/mason/handler.pl
+    DefaultType text/html
     &lt;Location /&gt;
         SetHandler perl-script
         PerlHandler HTML::Mason
@@ -124,17 +158,43 @@ requests. As described in <STRONG><A HREF="././Mason.html#">HTML::Mason</A></STR
 
 <P>
 
-<DT><STRONG><A NAME="item_handler_pl">handler.pl
+<P>
+<HR>
+<H2><A NAME="handler_pl">handler.pl
 
-</A></STRONG><DD>
+</A></H2>
 This file contains startup code that initializes the parent Apache process.
 It also defines the handler used by each child process to field Mason
-requests. See the synopsis in <STRONG><A HREF="././Mason.html#">HTML::Mason</A></STRONG> for a simple example.
+requests. See the synopsis in <STRONG><A HREF="././Mason.html#">HTML::Mason</A></STRONG> for a simple example. The next section discusses in detail how to configure
+this file.
 
 
 <P>
 
-<A HREF="././Admin.html#item_handler_pl">handler.pl</A> creates three Mason objects: the Parser, Interpreter, and Apache handler.
+<P>
+<HR>
+<H1><A NAME="configuring_the_handler_script">CONFIGURING THE HANDLER SCRIPT
+
+</A></H1>
+Handler.pl is the most important file in your Mason configuration. It is
+responsible for creating the three Mason objects and supplying the many
+parameters that control how your components are parsed and executed. It
+also provides the opportunity to execute arbitrary code at three important
+junctures: the server initialization, the beginning of a request, and the
+end of a request. A wide set of behaviors can be implemented with a mere
+few lines of well-placed Perl in your handler.pl. In this section we
+present the basics of setting up handler.pl as well as some ideas for more
+advanced applications.
+
+
+<P>
+
+<P>
+<HR>
+<H2><A NAME="creating_the_mason_objects">Creating the Mason objects
+
+</A></H2>
+<CODE>handler.pl</CODE> creates three Mason objects: the Parser, Interpreter, and ApacheHandler.
 The Parser compiles components into Perl subroutines; the Interpreter
 executes those compiled components; and the Apache handler routes mod_perl
 requests to Mason. These objects are created once in the parent httpd and
@@ -143,14 +203,111 @@ then copied to each child process.
 
 <P>
 
-These objects have a fair number of initial parameters, only two of which
-are required: <EM>comp_root</EM> and <EM>data_dir</EM>. The various parameters are documented in the individual reference manuals
-for each object: <STRONG><A HREF="././Parser.html#">HTML::Mason::Parser</A></STRONG>, <STRONG><A HREF="././Interp.html#">HTML::Mason::Interp</A></STRONG>, and
+These objects have a fair number of possible parameters. Only two of them
+are required, <EM>comp_root</EM> and <EM>data_dir</EM>; these are discussed in the next two subsections. The various parameters
+are documented in the individual reference manuals for each object:
+<STRONG><A HREF="././Parser.html#">HTML::Mason::Parser</A></STRONG>, <STRONG><A HREF="././Interp.html#">HTML::Mason::Interp</A></STRONG>, and
 <STRONG><A HREF="././ApacheHandler.html#">HTML::Mason::ApacheHandler</A></STRONG>.
 
 
 <P>
 
+The advantage of embedding these parameters in objects is that advanced
+configurations can create more than one set of objects, choosing which set
+to use at request time. For example, suppose you have a staging site and a
+production site running on the same web server, distinguishing between them
+with a configuration variable called <CODE>version</CODE>:
+
+
+<P>
+
+<PRE>    # Create Mason objects for staging site
+    my $parser1 = new HTML::Mason::Parser;
+    my $interp1 = new HTML::Mason::Interp (parser=&gt;$parser1, ...);
+    my $ah1 = new HTML::Mason::ApacheHandler (interp=&gt;$interp1);
+</PRE>
+
+<P>
+
+<PRE>    # Create Mason objects for production site
+    my $parser2 = new HTML::Mason::Parser;
+    my $interp2 = new HTML::Mason::Interp (parser=&gt;$parser2, ...);
+    my $ah2 = new HTML::Mason::ApacheHandler (interp=&gt;$interp2);
+</PRE>
+
+<P>
+
+<PRE>    sub handler {
+        ...
+</PRE>
+
+<P>
+
+<PRE>        # Choose the right ApacheHandler
+        if ($r-&gt;dir_config('version') eq ' staging') {
+            $ah1-&gt;handle_request($r);
+        } else {
+            $ah2-&gt;handle_request($r);
+        }
+    }
+</PRE>
+
+<P>
+
+<P>
+<HR>
+<H2><A NAME="component_root">Component root
+
+</A></H2>
+Given a tree of component source files, the top of the tree is called the
+component root and is set via the <A HREF="././Interp.html#item_comp_root">comp_root</A> parameter. In simple Mason configurations the component root is the same as
+the server's DocumentRoot. More complex configurations may specify several
+different document roots under a single component root.
+
+
+<P>
+
+When Mason handles a request, the request filename (<CODE>$r-&gt;filename</CODE>) must be underneath your component root -- that way Mason has a legitimate
+component to start with. If the filename is not under the component root,
+Mason will place a warning in the error logs and return a 404.
+Unfortunately if your component root or document root goes through a soft
+link, Mason will have trouble comparing the paths and will return 404. To
+fix this, set your document root to the true path.
+
+
+<P>
+
+<P>
+<HR>
+<H2><A NAME="data_directory">Data directory
+
+</A></H2>
+The data directory is where Mason keeps various files to help implement
+caching, debugging, etc. You specify a single data directory via the <A HREF="././Interp.html#item_data_dir">data_dir</A> parameter and Mason creates subdirectories underneath it as needed:
+
+
+<P>
+
+<PRE> cache:    data cache files
+ debug:    debug files
+ etc:      miscellaneous files
+ obj:      compiled components
+ preview:  preview settings files
+</PRE>
+
+<P>
+
+These directories will be discussed in appropriate sections throughout this
+manual.
+
+
+<P>
+
+<P>
+<HR>
+<H2><A NAME="external_modules">External modules
+
+</A></H2>
 Components will often need access to external Perl modules. Any such
 modules that export symbols should by listed in handler.pl, rather than the
 standard practice of using a PerlModule configuration directive. This is
@@ -172,16 +329,20 @@ sample module list:
 In any case, for optimal memory utilization, make sure all Perl modules are
 used in the parent process, and <EM>not</EM> in components. Otherwise, each child allocates its own copy and you lose
 the benefit of shared memory between parent processes and their children.
-See Vivek Khera's mod_perl tuning FAQ for details.
+See Vivek Khera's mod_perl tuning FAQ (perl.apache.org/tuning) for details.
 
 
 <P>
 
-Another parent/child consideration is file ownership. Web servers that run
-on privileged ports like 80 start with a root parent process, then spawn
-children running as the 'User' and 'Group' specified in httpd.conf. This
-difference leads to permission errors when child processes try to write
-files or directories created by the parent process.
+<P>
+<HR>
+<H2><A NAME="file_ownership">File ownership
+
+</A></H2>
+Web servers that run on privileged ports like 80 start with a root parent
+process, then spawn children running as the 'User' and 'Group' specified in
+httpd.conf. This difference leads to permission errors when child processes
+try to write files or directories created by the parent process.
 
 
 <P>
@@ -189,7 +350,7 @@ files or directories created by the parent process.
 To work around this conflict, Mason remembers all directories and files
 created at startup, returning them in response to
 <CODE>$interp-&gt;files_written</CODE>. This list can be fed to a <CODE>chown()</CODE> at the end of the startup
-code in <A HREF="././Admin.html#item_handler_pl">handler.pl</A>:
+code in <CODE>handler.pl</CODE>:
 
 
 <P>
@@ -200,52 +361,131 @@ code in <A HREF="././Admin.html#item_handler_pl">handler.pl</A>:
 
 <P>
 
-<DT><STRONG><A NAME="item_Component_space_comp_root_">Component space (comp_root)
+<P>
+<HR>
+<H2><A NAME="persistent_user_sessions_new_in">Persistent user sessions (new in 0.5)
 
-</A></STRONG><DD>
-The component space is a tree of component source files. The top of the
-tree is called the component root and is set via the <A HREF="././Interp.html#item_comp_root">comp_root</A> parameter. In simple Mason configurations the component root is the same as
-the server's DocumentRoot. More complex configurations may specify several
-different document roots under a single component root.
+</A></H2>
+With just a few lines in handler.pl you can make a global hash (e.g. <EM>%session</EM>) available to all components containing persistent user session data. If
+you set a value in the hash, you will see the change in future visits by
+the same user. The <STRONG>Apache::Session</STRONG> module, available from CPAN, provides convenient facilities for this. The
+following lines, commented out in the default handler.pl, implement a
+cookie-based session with user data stored on the filesystem:
 
 
 <P>
 
-When Mason handles a request, the request filename ($r-&gt;filename) must
-be underneath your component root -- that way Mason has a legitimate
-component to start with. If the filename is not under the component root,
-Mason will place a warning in the error logs and return a 404.
-Unfortunately if your component root or document root goes through a soft
-link, Mason will have trouble comparing the paths and will return 404. To
-fix this, set your document root to the true path.
-
-
-<P>
-
-<DT><STRONG><A NAME="item_Data_directory_data_dir_">Data directory (data_dir)
-
-</A></STRONG><DD>
-The data directory is where Mason keeps various files to help implement
-caching, debugging, etc. You specify a single data directory via the <A HREF="././Interp.html#item_data_dir">data_dir</A> parameter and Mason creates subdirectories underneath it as needed:
-
-
-<P>
-
-<PRE> cache:    data cache files
- debug:    debug files
- etc:      miscellaneous files
- obj:      compiled components
+<PRE>    my %session;
+    my $cookie = $r-&gt;header_in('Cookie');
+    $cookie =~ s/SESSION_ID=(\w*)/$1/;
+    tie %session, 'Apache::Session::File', $cookie, {'Directory' =&gt; '/tmp/session'};
+    $r-&gt;header_out(&quot;Set-Cookie&quot; =&gt; &quot;SESSION_ID=$session{_session_id};&quot;) if ( !$cookie );
+    local *HTML::Mason::Commands::session = \%session;
 </PRE>
 
 <P>
 
-These directories will be discussed in appropriate sections throughout this
-manual.
+This code is customizable; you can change the user ID location (e.g. URL
+instead of cookie), the user data storage mechanism (e.g. DBI database),
+and the name of the global hash.
 
 
 <P>
 
-</DL>
+<P>
+<HR>
+<H2><A NAME="using_global_variables_new_in_0">Using global variables (new in 0.5)
+
+</A></H2>
+Global variables generally make programs harder to read, maintain, and
+debug, and this is no less true for Mason. Due to the persistent mod_perl
+environment, globals require extra initialization and cleanup care. And the
+highly modular nature of Mason pages does not mix well with globals: it is
+no fun trying to track down which of twenty components is stepping on your
+variable. With the ability to pass parameters and declare lexical (<CODE>my</CODE>) variables in components, there is very little need for globals at all.
+
+
+<P>
+
+That said, there are times when it is very useful to make a value available
+to all Mason components. One example is the Apache request object; this is
+automatically made available as the global $r. Other examples are a DBI
+database handler or a hash of user session information. Usually you
+initialize the global in your handler.pl, either outside the
+<CODE>handler()</CODE> subroutine (if you only need to set it once) or
+inside (if you need to set it every request).
+
+
+<P>
+
+Mason by default parses components in <CODE>strict</CODE> mode, so you can't simply start referring to a new global or you'll get a
+fatal warning. The solution is to invoke <CODE>use vars</CODE> inside the package that components execute in, by default <STRONG>HTML::Mason::Commands</STRONG>:
+
+
+<P>
+
+<PRE>    { package HTML::Mason::Commands;
+      use vars qw($dbh %session);
+    }
+</PRE>
+
+<P>
+
+Alternatively you can use the <A HREF="./Parser.html#item_allow_globals">allow_globals</A> parameter or method:
+
+
+<P>
+
+<PRE>    my $parser = new HTML::Mason::Parser (..., allow_globals =&gt; [qw($dbh %session)]);
+    $parser-&gt;allow_globals(qw($foo @bar))
+</PRE>
+
+<P>
+
+The only advantage to <A HREF="././Parser.html#item_allow_globals">allow_globals</A> is that it will do the right thing if you've chosen a different package for
+components to run in (via the <A HREF="./Parser.html#item_in_package">in_package</A> Parser parameter.)
+
+
+<P>
+
+Similarly, to initialize the variable in handler.pl, you need to set it in
+the component package:
+
+
+<P>
+
+<PRE>   $HTML::Mason::Commands::dbh = DBI-&gt;connect(...);
+</PRE>
+
+<P>
+
+Alternatively you can use the <A HREF="./Interp.html#item_set_global">set_global</A> interpreter method:
+
+
+<P>
+
+<PRE>    $interp-&gt;set_global(dbh =&gt; DBI-&gt;connect(...));
+</PRE>
+
+<P>
+
+Again, <A HREF="././Interp.html#item_set_global">set_global</A> will do the right thing if you've chosen a different package for
+components.
+
+
+<P>
+
+Now when referring to these globals inside components, you can use the
+plain variable name:
+
+
+<P>
+
+<PRE>    $dbh-&gt;prepare...
+</PRE>
+
+<P>
+
 <P>
 <HR>
 <H1><A NAME="standard_features">STANDARD FEATURES
@@ -266,9 +506,26 @@ administer them.
 <DT><STRONG><A NAME="item_Setup">Setup
 
 </A></STRONG><DD>
-Cache files are implemented using <STRONG>MLDBM</STRONG>, an interface for storing persistent multi-level data structures. <STRONG>MLDBM</STRONG>, in turn, uses one of several DBM packages (<STRONG>DB_File</STRONG>, <STRONG>GDBM</STRONG>, etc.) and one of several serialization mechanisms (<STRONG>Data::Dumper</STRONG>, <STRONG>FreezeThaw</STRONG> or
-<STRONG>Storable</STRONG>). Mason's Config.pm contains stubs for several combinations; you will at
-least want to replace the default NDBM with a faster, less limited package.
+Cache files are implemented using <STRONG>MLDBM</STRONG>, an interface for storing persistent multi-level data structures. <STRONG>MLDBM</STRONG>, in turn, uses one of several DBM packages (<STRONG>DB_File</STRONG>, <STRONG>GDBM</STRONG>) and one of several serialization mechanisms (<STRONG>Data::Dumper</STRONG>, <STRONG>FreezeThaw</STRONG> or
+<STRONG>Storable</STRONG>). Mason's Config.pm controls which packages are used.
+
+
+<P>
+
+The most important task is selecting a good DBM package. Most standard DBM
+packages (<STRONG>SDBM</STRONG>, <STRONG>ODBM</STRONG>, <STRONG>NDBM</STRONG>) are unsuitable for data caching due to significant limitations on the
+size of keys and values. Perl only comes with <STRONG>SDBM</STRONG>, so you'll need to obtain a good-quality package if you haven't already.
+At this time the best options are Berkeley DB (<STRONG>DB_File</STRONG>), available at www.sleepycat.com, and GNU's gdbm (<STRONG>GDBM</STRONG>), available at GNU mirror sites everywhere.
+
+
+<P>
+
+As far as the serialization methods, all of them should work fine.
+<STRONG>Data::Dumper</STRONG> is probably simplest: it comes with the latest versions of Perl, is
+required by Mason anyway, and produces readable output (possibly useful for
+debugging cache files). On the other hand
+<STRONG>Storable</STRONG> is significantly faster than the other options according to the MLDBM
+documentation.
 
 
 <P>
@@ -276,8 +533,8 @@ least want to replace the default NDBM with a faster, less limited package.
 <DT><STRONG><A NAME="item_Administration">Administration
 
 </A></STRONG><DD>
-Data caching requires little administration. When a component calls
-<A HREF="././Commands.html#item_mc_cache">mc_cache</A> or <A HREF="././Commands.html#item_mc_cache_self">mc_cache_self</A> for the first time, Mason automatically creates a new cache file under <CODE>data_dir/cache</CODE>, replacing slashes in the component path with ``::''. For example, the
+Once set up, data caching requires little administration. When a component
+calls <A HREF="././Commands.html#item_mc_cache">mc_cache</A> or <A HREF="././Commands.html#item_mc_cache_self">mc_cache_self</A> for the first time, Mason automatically creates a new cache file under <CODE>data_dir/cache</CODE>, replacing slashes in the component path with ``::''. For example, the
 cache file for component <CODE>/foo/bar</CODE> is <CODE>data_dir/cache/foo::bar</CODE>.
 
 
@@ -350,8 +607,8 @@ The full path to your Perl binary -- e.g. <CODE>/usr/bin/perl</CODE>. This is us
 <DT><STRONG><A NAME="item_debug_handler_script">debug_handler_script
 
 </A></STRONG><DD>
-The full path to your <A HREF="././Admin.html#item_handler_pl">handler.pl</A> script. Debug files invoke
-<A HREF="././Admin.html#item_handler_pl">handler.pl</A> just as Apache does as startup, to load needed modules and create Mason
+The full path to your <CODE>handler.pl</CODE> script. Debug files invoke
+<CODE>handler.pl</CODE> just as Apache does as startup, to load needed modules and create Mason
 objects.
 
 
@@ -360,13 +617,13 @@ objects.
 <DT><STRONG><A NAME="item_debug_handler_proc">debug_handler_proc
 
 </A></STRONG><DD>
-The name of the request handler defined in <A HREF="././Admin.html#item_handler_pl">handler.pl</A>. This routine is called with the saved Apache request object.
+The name of the request handler defined in <CODE>handler.pl</CODE>. This routine is called with the saved Apache request object.
 
 
 <P>
 
 </DL>
-Here's a sample ApacheHandler constructor with all debug options:
+Here's a sample <CODE>ApacheHandler</CODE> constructor with all debug options:
 
 
 <P>
@@ -381,9 +638,8 @@ Here's a sample ApacheHandler constructor with all debug options:
 <P>
 
 When replaying a request through a debug file, the global variable
-$HTML::Mason::IN_DEBUG_FILE will be set to 1. This is useful if you want to
-omit certain flags (like preloading) in handler.pl when running under
-debug. For example:
+<CODE>$HTML::Mason::IN_DEBUG_FILE</CODE> will be set to 1. This is useful if you want to omit certain flags (like
+preloading) in handler.pl when running under debug. For example:
 
 
 <P>
@@ -473,8 +729,19 @@ to keep configurations separate.
 <LI><STRONG><A NAME="item_">
 
 </A></STRONG>
-Add code to your handler routine (in <A HREF="././Admin.html#item_handler_pl">handler.pl</A>) to intercept Previewer requests on the ports defined above. Your handler
-should end up looking like this:
+In your <CODE>handler.pl</CODE>, add the line
+
+
+<P>
+
+<PRE>    use HTML::Mason::Preview;
+</PRE>
+
+<P>
+
+somewhere underneath ``use HTML::Mason''. Then add code to your handler
+routine to intercept Previewer requests on the ports defined above. Your
+handler should end up looking like this:
 
 
 <P>
@@ -508,7 +775,7 @@ should end up looking like this:
 <P>
 
 The three ``new'' lines inside the if block should look exactly the same as
-the lines at the top of <A HREF="././Admin.html#item_handler_pl">handler.pl</A>. Note that these separate Mason objects are created for a single request
+the lines at the top of <CODE>handler.pl</CODE>. Note that these separate Mason objects are created for a single request
 and discarded. The reason is that the previewer may alter the objects'
 settings, so it is safer to create new ones every time.
 
@@ -537,7 +804,7 @@ page.
 
 <P>
 <HR>
-<H2><A NAME="system_logs_new_in_0_3_">System Logs (new in 0.3)
+<H2><A NAME="system_logs_new_in_0_3_">System logs (new in 0.3)
 
 </A></H2>
 Mason will log various events to a system log file if you so desire. This
@@ -631,7 +898,7 @@ You can change the separator to any sequence of characters with <A HREF="././Int
 
 The time on each log line will be of the form ``seconds.microseconds'' if
 you are using Time::HiRes, and simply ``seconds'' otherwise. See
-<A HREF="././Admin.html#item_Config_pm">Config.pm</A> section.
+<CODE>Config.pm</CODE> section.
 
 
 <P>
@@ -796,9 +1063,9 @@ translates to something like:
 <P>
 
 <PRE>    my $name = &quot;Jon&quot;;
-    $r-&gt;print(&quot;Hello &quot;);
-    $r-&gt;print($name);
-    $r-&gt;print(&quot;, how are you?&quot;);
+    print(&quot;Hello &quot;);
+    print($name);
+    print(&quot;, how are you?&quot;);
 </PRE>
 
 <P>
@@ -832,10 +1099,10 @@ translates to something like:
 <P>
 
 <PRE>    my $_srctext = mc_file('/usr/local/www/htdocs/foo/bar');
-    $r-&gt;print(mc_comp('top'));
-    $r-&gt;print(substr($_srctext,18,20498));
-    $r-&gt;print(mc_comp('center'));
-    $r-&gt;print(substr($_srctext,20520,30720));
+    print(mc_comp('top'));
+    print(substr($_srctext,18,20498));
+    print(mc_comp('center'));
+    print(substr($_srctext,20520,30720));
 </PRE>
 
 <P>
@@ -913,37 +1180,50 @@ from scratch.)
 <H2><A NAME="reload_file">Reload file
 
 </A></H2>
-Even if a component has been preloaded or cached in memory, Mason still
-checks the last modified time of its source file every time it runs to see
-if it needs to be reloaded. If the average page consists of twenty
-components, that means twenty file stats per page, a potential performance
-concern.
+Normally, every time Mason executes a component, it checks the last
+modified time of its source file to see if it needs to be reloaded. These
+file checks are convenient for development, but for a production site they
+degrade performance unnecessarily.
 
 
 <P>
 
-To prevent these constant file checks, Mason can monitor a single ``reload
-file'' of modified components. When a component changes, you append its
-component path to the reload file, one path per line. At the beginning of
-each request Mason checks to see if the reload file has changed; if so, it
-reads the new paths and invalidates their cache entries, which in turn
-forces a recompile the next time those components are requested.
+To remedy this, Mason has an accelerated mode that changes its behavior in
+two ways:
 
 
 <P>
 
-The reload file is kept in <CODE>data_dir/etc/reload.lst</CODE>. You can activate reload file monitoring with <CODE>interp-&gt;use_reload_file</CODE>.
+1. Does not check component source files at all, relying solely on object
+files. This means the developer or an automated system is responsible for
+recompiling any components that change and recreating object files, using
+the Parser <A HREF="./Parser.html#item_parse">parse</A> method.
 
 
 <P>
 
-The advantage of using a reload file is that Mason stats one file per
-request instead of ten or twenty. The disadvantage is a major increase in
-maintenance costs as the reload file has to be kept up-to-date. If
-developers on your site use editorial tools to access and trigger
-components, you can update the reload file as part of these tools. Or you
-might run a cron job or similar timed task that periodically scans the
-component hierarchy, updating the reload file if anything has changed.
+2. Rather than continuously checking whether object files have changed,
+Mason monitors a ``reload file'' containing an ever-growing list of
+components that have changed. Whenever a component changes, the developer
+or an automated system is responsible for appending the component path to
+the reload file. The reload file is kept in
+<CODE>data_dir/etc/reload.lst</CODE>.
+
+
+<P>
+
+You can activate this mode with the <A HREF="./Interp.html#item_use_reload_file">use_reload_file</A>
+Interp method.
+
+
+<P>
+
+The advantage of using this mode is that Mason stats one file per request
+instead of ten or twenty. The disadvantage is a increase in maintenance
+costs as the object and reload files have to be kept up-to-date. Automated
+editorial tools, and cron jobs that periodically scan the component
+hierarchy for changes, are two possible solutions. The Mason content
+management system automatically handles this task.
 
 
 <P>
