@@ -372,7 +372,7 @@ Here's how a simple /newsfeeds/dhandler might look:
     </%init>
 
 You can customize the file name used for dhandlers, or turn off
-autohandlers entirely, with the L<Interp/dhandler_name> Interp
+dhandlers entirely, with the L<Interp/dhandler_name> Interp
 parameter.
 
 =head2 autohandlers
@@ -470,7 +470,7 @@ If you have recursive mode turned on but want a particular autohandler
 to apply only to the current directory, use a conditional like this:
 
     <%init>
-    return mc_auto_continue if (mc_auto_comp =~ /\//);
+    return mc_auto_next if (mc_auto_comp =~ /\//);
     ... rest of autohandler ...
     </%init>
 
@@ -977,7 +977,7 @@ The code shown in "Basic Usage" above,
 
   my $result = mc_cache(action=>'retrieve');
   if (!defined($result)) {
-      ... compute $result> ...
+      ... compute $result ...
       mc_cache(action=>'store', value=>$result);
   }
 
@@ -996,7 +996,7 @@ The solution here is to have the first process notify the others that
 it has started recomputing.  This can be accomplished with the
 busy_lock flag:
 
-        mc_cache(action=>'retrieve',busy_lock=>'10sec',...);
+  my $result = mc_cache(action=>'retrieve',busy_lock=>'10sec',...);
 
 With this flag, the first process sets a lock in the cache that
 effectively says "I'm busy recomputing his value, don't bother."
@@ -1005,11 +1005,10 @@ is good for 10 seconds (in this case) and is ignored after that.  Thus
 the time value you pass to busy_lock indicates how long you're willing
 to allow this component to use an expired cache value.
 
-Would some of your caches would benefit from busy locks?
-One way to find out is to turn on cache logging in the Mason system logs.  
-If you see large clusters of writes to the same cache
-in a short time span, then you might want to use busy locks when writing to 
-that cache.
+Would some of your caches benefit from busy locks?  One way to find
+out is to turn on cache logging in the Mason system logs.  If you see
+large clusters of writes to the same cache in a short time span, then
+you might want to use busy locks when writing to that cache.
 
 =head2 Keeping In Memory
 

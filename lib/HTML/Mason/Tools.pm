@@ -20,16 +20,16 @@ use IO::File qw(!/^SEEK/);
 use Cwd;
 
 #
-# Return contents of file.
+# Return contents of file. If $binmode is 1, read in binary mode.
 #
 sub read_file
 {
-    my ($file) = @_;
+    my ($file,$binmode) = @_;
     die "read_file: '$file' does not exist" if (!-e $file);
     die "read_file: '$file' is a directory" if (-d _);
     my $fh = new IO::File $file;
     die "read_file: could not open file '$file' for reading\n" if !$fh;
-    binmode $fh;
+    binmode $fh if $binmode;
     local $/ = undef;
     my $text = <$fh>;
     return $text;
@@ -107,12 +107,12 @@ sub date_delta_to_secs
 }
 
 #
-# Determines whether a pathname is absolute: beginning with / or a
+# Determines whether a pathname is absolute: beginning with / or ~/ or a
 # drive letter (e.g. C:/).
 #
 sub is_absolute_path
 {
-    return $_[0] =~ /^([A-Za-z]:)?\//;
+    return $_[0] =~ /^(([A-Za-z]:)|~\w*)?\//;
 }
     
 #

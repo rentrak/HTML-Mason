@@ -17,7 +17,7 @@ use File::Find;
 use IO::File;
 use IO::Seekable;
 use HTML::Mason::Parser;
-use HTML::Mason::Tools qw(read_file pkg_loaded);
+use HTML::Mason::Tools qw(read_file pkg_loaded is_absolute_path);
 use HTML::Mason::Commands qw();
 use HTML::Mason::Config;
 require Time::HiRes if $HTML::Mason::Config{use_time_hires};
@@ -103,6 +103,15 @@ sub _initialize
 	$self->parser($p);
     }
 
+    #
+    # Remove unnecessary terminating slashes from directories, and check
+    # that directories are absolute.
+    #
+    foreach my $field (qw(comp_root data_dir data_cache_dir)) {
+	$self->{$field} =~ s/\/$//g;
+ 	die "$field ('".$self->{$field}."') must be an absolute directory" if !is_absolute_path($self->{$field});
+    }
+    
     #
     # Create data subdirectories if necessary. mkpath will die on error.
     #
@@ -403,7 +412,7 @@ sub current_time {
     my $self = shift;
     if (@_) {
 	my $newtime = shift;
-	die "Interp->current_time: invalid value '$newtime' - must be 'real' or a numeric time value" if $newtime ne 'real' && $newtime !~ /^[0-9]+$/;
+	die "Interp::current_time: invalid value '$newtime' - must be 'real' or a numeric time value" if $newtime ne 'real' && $newtime !~ /^[0-9]+$/;
 	return $self->{current_time} = $newtime;
     } else {
 	return $self->{current_time};
@@ -413,6 +422,7 @@ sub current_time {
 sub set_global
 {
     my ($self, $decl, @values) = @_;
+    die "Interp::set_global: expects a variable name and one or more values" if !@values;
     my ($prefix, $name) = ($decl =~ /^[\$@%]/) ? (substr($decl,0,1),substr($decl,1)) : ("\$",$decl);
 
     my $varname = sprintf("%s::%s",$self->{parser}->{in_package},$name);

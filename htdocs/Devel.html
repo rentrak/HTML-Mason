@@ -722,8 +722,8 @@ Here's how a simple /newsfeeds/dhandler might look:
 
 <P>
 
-You can customize the file name used for dhandlers, or turn off
-autohandlers entirely, with the <A HREF="./Interp.html#item_dhandler_name">dhandler_name</A> Interp parameter.
+You can customize the file name used for dhandlers, or turn off dhandlers
+entirely, with the <A HREF="./Interp.html#item_dhandler_name">dhandler_name</A> Interp parameter.
 
 
 <P>
@@ -873,7 +873,7 @@ apply only to the current directory, use a conditional like this:
 <P>
 
 <PRE>    &lt;%init&gt;
-    return mc_auto_continue if (mc_auto_comp =~ /\//);
+    return mc_auto_next if (mc_auto_comp =~ /\//);
     ... rest of autohandler ...
     &lt;/%init&gt;
 </PRE>
@@ -1725,7 +1725,7 @@ The code shown in ``Basic Usage'' above,
 
 <PRE>  my $result = mc_cache(action=&gt;'retrieve');
   if (!defined($result)) {
-      ... compute $result&gt; ...
+      ... compute $result ...
       mc_cache(action=&gt;'store', value=&gt;$result);
   }
 </PRE>
@@ -1754,7 +1754,7 @@ has started recomputing. This can be accomplished with the busy_lock flag:
 
 <P>
 
-<PRE>        mc_cache(action=&gt;'retrieve',busy_lock=&gt;'10sec',...);
+<PRE>  my $result = mc_cache(action=&gt;'retrieve',busy_lock=&gt;'10sec',...);
 </PRE>
 
 <P>
@@ -1769,8 +1769,8 @@ an expired cache value.
 
 <P>
 
-Would some of your caches would benefit from busy locks? One way to find
-out is to turn on cache logging in the Mason system logs. If you see large
+Would some of your caches benefit from busy locks? One way to find out is
+to turn on cache logging in the Mason system logs. If you see large
 clusters of writes to the same cache in a short time span, then you might
 want to use busy locks when writing to that cache.
 
