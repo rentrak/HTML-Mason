@@ -1,0 +1,178 @@
+<HTML>
+<HEAD>
+<TITLE>HTML::Mason::CGIHandler - Use Mason in a CGI environment</TITLE>
+<LINK REV="made" HREF="mailto:perl@packages.debian.org">
+</HEAD>
+
+<BODY>
+
+<A NAME="__index__"></A>
+<!-- INDEX BEGIN -->
+
+<UL>
+
+	<LI><A HREF="#name">NAME</A></LI>
+	<LI><A HREF="#synopsis">SYNOPSIS</A></LI>
+	<LI><A HREF="#description">DESCRIPTION</A></LI>
+	<UL>
+
+		<LI><A HREF="#html::mason::cgihandler methods"><CODE>HTML::Mason::CGIHandler</CODE> Methods</A></LI>
+		<LI><A HREF="#$r methods"><CODE>$r</CODE> Methods</A></LI>
+		<LI><A HREF="#added $m methods">Added <CODE>$m</CODE> methods</A></LI>
+	</UL>
+
+	<LI><A HREF="#see also">SEE ALSO</A></LI>
+</UL>
+<!-- INDEX END -->
+
+<HR>
+<P>
+<H1><A NAME="name">NAME</A></H1>
+<P>HTML::Mason::CGIHandler - Use Mason in a CGI environment</P>
+<P>
+<HR>
+<H1><A NAME="synopsis">SYNOPSIS</A></H1>
+<P>In httpd.conf or .htaccess:</P>
+<PRE>
+   Action html-mason /cgi-bin/mason_handler.cgi
+   &lt;FilesMatch &quot;\.html$&quot;&gt;
+    SetHandler html-mason
+   &lt;/FilesMatch&gt;</PRE>
+<P>A script at /cgi-bin/mason_handler.pl :</P>
+<PRE>
+   #!/usr/bin/perl
+   use HTML::Mason::CGIHandler;
+</PRE>
+<PRE>
+
+   my $h = new HTML::Mason::CGIHandler
+    (
+     data_dir  =&gt; '/home/jethro/code/mason_data',
+     allow_globals =&gt; [qw(%session $u)],
+    );</PRE>
+<PRE>
+
+   $h-&gt;handle_request;</PRE>
+<P>A .html component somewhere in the web server's document root:</P>
+<PRE>
+   &lt;%args&gt;
+    $mood =&gt; 'satisfied'
+   &lt;/%args&gt;
+   % $r-&gt;header_out(Location =&gt; &quot;<A HREF="http://blahblahblah.com/moodring/">http://blahblahblah.com/moodring/</A>$mood.html&quot;);
+   ...</PRE>
+<P>
+<HR>
+<H1><A NAME="description">DESCRIPTION</A></H1>
+<P>This module lets you execute Mason components in a CGI environment.
+It lets you keep your top-level components in the web server's
+document root, using regular component syntax and without worrying
+about the particular details of invoking Mason on each request.</P>
+<P>If you want to use Mason components from <EM>within</EM> a regular CGI
+script (or any other Perl program, for that matter), then you don't
+need this module.  You can simply follow the directions in
+<A HREF="#using mason from a standalone script">HTLM::Mason::Admin/Using Mason from a standalone script</A>.</P>
+<P>This module also provides an <CODE>$r</CODE> request object for use inside
+components, similar to the Apache request object under
+<CODE>HTML::Mason::ApacheHandler</CODE>, but limited in functionality.</P>
+<P>Finally, this module alters the <CODE>HTML::Mason::Request</CODE> object <CODE>$m</CODE> to
+provide direct access to the CGI query, should such access be necessary.</P>
+<P>
+<H2><A NAME="html::mason::cgihandler methods"><CODE>HTML::Mason::CGIHandler</CODE> Methods</A></H2>
+<UL>
+<LI><STRONG><A NAME="item_new"><CODE>new()</CODE></A></STRONG><BR>
+
+Creates a new handler.  Accepts any parameter that the Interpreter
+accepts.
+<P>If no <CODE>comp_root</CODE> parameter is passed to <A HREF="#item_new"><CODE>new()</CODE></A>, the component root
+will be <CODE>$ENV{DOCUMENT_ROOT}</CODE>.</P>
+<P></P>
+<LI><STRONG><A NAME="item_handle_request"><CODE>handle_request()</CODE></A></STRONG><BR>
+
+Handles the current request, reading input from <CODE>$ENV{QUERY_STRING}</CODE>
+or <CODE>STDIN</CODE> and sending headers and component output to <CODE>STDOUT</CODE>.
+This method doesn't accept any parameters.  The initial component
+will be the one specified in <CODE>$ENV{PATH_INFO}</CODE>.
+<P></P>
+<LI><STRONG><A NAME="item_handle_comp"><CODE>handle_comp()</CODE></A></STRONG><BR>
+
+Like <A HREF="#item_handle_request"><CODE>handle_request()</CODE></A>, but the first (only) parameter is a
+component path or component object.  This is useful within a
+traditional CGI environment, in which you're essentially using Mason
+as a templating language but not an application server.
+<P><CODE>handle_component()</CODE> will create a CGI query object, parse the query
+parameters, and send the HTTP header and component output to STDOUT.
+If you want to handle those parts yourself, see <A HREF="Interp.html#using mason from a standalone script">Using Mason from a standalone script</A>.</P>
+<P></P>
+<LI><STRONG><A NAME="item_handle_cgi_object"><CODE>handle_cgi_object()</CODE></A></STRONG><BR>
+
+Also like <A HREF="#item_handle_request"><CODE>handle_request()</CODE></A>, but this method takes only a CGI object
+as its parameter.  This can be quite useful if you want to use this
+module with CGI::Fast.
+<P>The component path will be the value of the CGI object's
+<CODE>path_info()</CODE> method.</P>
+<P></P>
+<LI><STRONG><A NAME="item_interp"><CODE>interp()</CODE></A></STRONG><BR>
+
+Returns the Mason Interpreter associated with this handler.  The
+Interpreter lasts for the entire lifetime of the handler.
+<P></P></UL>
+<P>
+<H2><A NAME="$r methods"><CODE>$r</CODE> Methods</A></H2>
+<UL>
+<LI><STRONG><A NAME="item_header_out"><CODE>header_out()</CODE></A></STRONG><BR>
+
+This works much like the <CODE>Apache</CODE> method of the same name.  When
+passed the name of a header, returns the value of the given outgoing
+header.  When passed a name and a value, sets the value of the header.
+Setting the header to <CODE>undef</CODE> will actually <EM>unset</EM> the header,
+removing it from the table of headers that will be sent to the client.
+<P>The headers are eventually passed to the <CODE>CGI</CODE> module's <CODE>header()</CODE>
+method.</P>
+<P>One header currently gets special treatment - if you set a <CODE>Location</CODE>
+header, you'll cause the <CODE>CGI</CODE> module's <CODE>redirect()</CODE> method to be
+used instead of the <CODE>header()</CODE> method.  This means that in order to
+do a redirect, all you need to do is:</P>
+<PRE>
+ $r-&gt;header_out(Location =&gt; '<A HREF="http://redirect.to/here">http://redirect.to/here</A>');</PRE>
+<P></P>
+<LI><STRONG><A NAME="item_content_type"><CODE>content_type()</CODE></A></STRONG><BR>
+
+When passed an argument, sets the content type of the current request
+to the value of the argument.  Use this method instead of setting a
+<CODE>Content-Type</CODE> header directly with <A HREF="#item_header_out"><CODE>header_out()</CODE></A>.  Like
+<A HREF="#item_header_out"><CODE>header_out()</CODE></A>, setting the content type to <CODE>undef</CODE> will remove any
+content type set previously.
+<P>When called without arguments, returns the value set by a previous
+call to <A HREF="#item_content_type"><CODE>content_type()</CODE></A>.  The behavior when <A HREF="#item_content_type"><CODE>content_type()</CODE></A> hasn't
+already been set is undefined - currently it returns <CODE>undef</CODE>.</P>
+<P>If no content type is set during the request, the default MIME type
+<CODE>text/html</CODE> will be used.</P>
+<P></P></UL>
+<P>
+<H2><A NAME="added $m methods">Added <CODE>$m</CODE> methods</A></H2>
+<P>The <CODE>$m</CODE> object provided in components has all the functionality of
+the regular <CODE>HTML::Mason::Request</CODE> object <CODE>$m</CODE>, and the following:</P>
+<UL>
+<LI><STRONG><A NAME="item_cgi_object"><CODE>cgi_object()</CODE></A></STRONG><BR>
+
+Returns the current <CODE>CGI</CODE> request object.  This is handy for
+processing cookies or perhaps even doing HTML generation (but is that
+<EM>really</EM> what you want to do?).  If you pass an argument to this
+method, you can set the request object to the argument passed.  Use
+this with care, as it may affect components called after the current
+one (they may check the content length of the request, for example).
+<P>Note that the ApacheHandler class (for using Mason under mod_perl)
+also provides a <A HREF="#item_cgi_object"><CODE>cgi_object()</CODE></A> method that does the same thing as
+this one.  This makes it easier to write components that function
+equally well under CGIHandler and ApacheHandler.</P>
+<P></P></UL>
+<P>
+<HR>
+<H1><A NAME="see also">SEE ALSO</A></H1>
+<P><A HREF="Mason.html">HTML::Mason</A>,
+<A HREF="Admin.html">HTML::Mason::Admin</A>,
+<A HREF="ApacheHandler.html">HTML::Mason::ApacheHandler</A></P>
+
+</BODY>
+
+</HTML>

@@ -1,4 +1,4 @@
-# Copyright (c) 1998-2000 by Jonathan Swartz. All rights reserved.
+# Copyright (c) 1998-2002 by Jonathan Swartz. All rights reserved.
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
@@ -13,13 +13,15 @@ package HTML::Mason::Tools;
 use strict;
 
 use Cwd;
+use File::Spec;
+use HTML::Mason::Exceptions( abbr => [qw(system_error param_error error)] );
 
 require Exporter;
 
 use vars qw(@ISA @EXPORT_OK);
 
 @ISA = qw(Exporter);
-@EXPORT_OK = qw(read_file chop_slash html_escape url_escape url_unescape date_delta_to_secs dumper_method paths_eq is_absolute_path make_absolute_path compress_path mason_canonpath pkg_loaded pkg_installed make_fh);
+@EXPORT_OK = qw(read_file html_escape url_escape paths_eq compress_path mason_canonpath make_fh taint_is_on load_pkg absolute_comp_path);
 
 #
 # Return contents of file. If $binmode is 1, read in binary mode.
@@ -27,26 +29,13 @@ use vars qw(@ISA @EXPORT_OK);
 sub read_file
 {
     my ($file,$binmode) = @_;
-    die "read_file: '$file' does not exist" if (!-e $file);
-    die "read_file: '$file' is a directory" if (-d _);
+    error "read_file: '$file' does not exist" unless -e $file;
+    error "read_file: '$file' is a directory" if (-d _);
     my $fh = make_fh();
-    open $fh, $file
-	or die "read_file: could not open file '$file' for reading: $!";
+    open $fh, "< $file"
+	or system_error "read_file: could not open file '$file' for reading: $!";
     binmode $fh if $binmode;
-    local $/ = undef;
-    my $text = <$fh>;
-    close $fh;
-    return $text;
-}
-
-#
-# Remove final slash from string, if any; return resulting string.
-#
-sub chop_slash
-{
-    my ($str) = (@_);
-    $str =~ s@/$@@;
-    return $str;
+    return do { local $/; scalar <$fh> };
 }
 
 #
@@ -55,6 +44,7 @@ sub chop_slash
 sub html_escape
 {
     my ($text) = @_;
+    return unless defined $text;
     my %html_escape = ('&' => '&amp;', '>'=>'&gt;', '<'=>'&lt;', '"'=>'&quot;');
     my $html_escape = join('', keys %html_escape);
     $text =~ s/([$html_escape])/$html_escape{$1}/mgoe;
@@ -62,91 +52,17 @@ sub html_escape
 }
 
 #
-# Unescape URL-encoded data. Borrowed from CGI.
-#
-sub url_unescape {
-    my $todecode = shift;
-    return undef unless defined($todecode);
-    $todecode =~ tr/+/ /;       # pluses become spaces
-    $todecode =~ s/%([0-9a-fA-F]{2})/pack("c",hex($1))/ge;
-    return $todecode;
-}
-
-#
-# URL-encode data. Borrowed from CGI.
-#
-sub url_escape {
-    my $toencode = shift;
-    return undef unless defined($toencode);
-    $toencode=~s/([^a-zA-Z0-9_.-])/uc sprintf("%%%02x",ord($1))/eg;
-    return $toencode;
-}
-
-#
-# Convert a "date delta string" (e.g. 1sec, 3min, 2h) to a number of
-# seconds. Based on Date::Manip date delta concept.
-#
-my %date_delta = ('y'=>31557600, yr=>31557600, year=>31557600, years=>31557600,
-		  'm'=>2592000, mon=>2592000, month=>2592000, months=>2592000,
-		  'w'=>604800, wk=>604800, ws=>604800, wks=>604800, week=>604800, weeks=>604800,
-		  'd'=>86400, day=>86400, days=>86400,
-		  'h'=>3600, hr=>3600, hour=>3600, hours=>3600,
-		  mn=>60, min=>60, minute=>60, minutes=>60,
-		  's'=>1, sec=>1, second=>1, seconds=>1
-		 );
-sub date_delta_to_secs
-{
-    my ($delta) = @_;
-    my $usage = "date_delta_to_secs: invalid argument '$delta'";
-    my ($num,$unit,$sign);
-    if ($delta =~ /^([-+]?)\s*([0-9]+)\s*([a-zA-Z]*)\s*$/) {
-	($sign,$num,$unit) = ($1,$2,lc($3));
-    } else {
-	die $usage;
-    }
-    $unit = "s" if !$unit;
-    my $mult = $date_delta{$unit};
-    die $usage if !$mult;
-    return $num * $mult * ($sign eq '-' ? -1 : 1);
-}
-
-#
-# Call the XS or normal version of Data::Dumper::Dump depending on what's installed.
-#
-sub dumper_method {
-    my ($d) = @_;
-    return ($HTML::Mason::Config{use_data_dumper_xs} ? $d->Dumpxs : $d->Dump);
-}
-
-#
 # Determines whether two paths are equal, taking into account
 # case-insensitivity in Windows O/S.
 #
 sub paths_eq {
-    return (lc($^O) =~ /^ms(dos|win32)/) ? (lc($_[0]) eq lc($_[1])) : $_[0] eq $_[1];
+    return File::Spec->case_tolerant ? (lc($_[0]) eq lc($_[1])) : $_[0] eq $_[1];
 }
 
 #
-# Determines whether a pathname is absolute: beginning with / or ~/ or a
-# drive letter (e.g. C:/).
+# Compress a component path into a single, filesystem-friendly
+# string. Uses URL-like escaping with + instead of %.
 #
-sub is_absolute_path
-{
-    return $_[0] =~ /^(([A-Za-z]:)|~\w*)?[\/\\]/;
-}
-    
-#
-# Return an absolute version of a pathname.  No change if already absolute.
-#
-sub make_absolute_path
-{
-    my ($path) = @_;
-    unless (is_absolute_path($path)) {
-	$path = cwd() . $path;
-    }
-    return $path;
-}
-
 sub compress_path
 {
     my ($path) = @_;
@@ -157,12 +73,28 @@ sub compress_path
     return $path;
 }
 
+#
+# Return the absolute version of a component path. Handles . and ..
+# Second argument is directory path to resolve relative paths against.
+#
+sub absolute_comp_path
+{
+    my ($comp_path, $dir_path) = @_;
+
+    $comp_path = "$dir_path/$comp_path" if $comp_path !~ m@^/@;
+    return mason_canonpath($comp_path);
+}
+
+
+#
+# Makes a few fixes to File::Spec::canonpath. Will go away if/when they
+# accept our patch.
+#
 sub mason_canonpath {
     # Just like File::Spec::canonpath, but we're having trouble
     # getting a patch through to them.
-    shift;
     my $path = shift;
-    $path =~ s|/+|/|g unless($^O eq 'cygwin');       # xx////yy  -> xx/yy
+    $path =~ s|/+|/|g;                               # xx////yy  -> xx/yy
     $path =~ s|(/\.)+/|/|g;                          # xx/././yy -> xx/yy
     {
 	$path =~ s|^(\./)+||s unless $path eq "./";  # ./xx      -> xx
@@ -173,8 +105,6 @@ sub mason_canonpath {
     }
     return $path;
 }
-
-no strict 'refs';
 
 #
 # Determine if package is installed without loading it, by checking
@@ -196,10 +126,242 @@ sub pkg_loaded
     my ($pkg) = @_;
 
     my $varname = "${pkg}::VERSION";
+    no strict 'refs';
     return $$varname ? 1 : 0;
+}
+
+#
+# Load package $pkg if not already loaded. Return 1 if file was found
+# and loaded successfully. When file is not found: if optional second
+# argument $nf_error is provided, die with that error message,
+# otherwise return 0. Errors while loading the package are always
+# passed through as fatal errors.
+#
+sub load_pkg {
+    my ($pkg, $nf_error) = @_;
+
+    my $file = File::Spec->catfile( split /::/, $pkg );
+    $file .= '.pm';
+    return 1 if exists $INC{$file};
+
+    eval "use $pkg";
+
+    if ($@) {
+	if ($@ =~ /^Can\'t locate .* in \@INC/) {
+	    if (defined($nf_error)) {
+		error sprintf("Can't locate %s in \@INC. %s\n(\@INC contains: %s)",
+			      $pkg, $nf_error, join(" ", @INC));
+	    } else {
+		undef $@;
+		return 0;
+	    }
+	} else {
+	    error $@;
+	}
+    }
+    return 1;
+}
+
+sub taint_is_on
+{
+    not eval { "$0$^X" && kill 0; 1 };
 }
 
 sub make_fh
 {
+    return undef if $] >= 5.6;  # Let filehandles autovivify
     return do { local *FH; *FH; };  # double *FH avoids a warning
 }
+
+#
+# Process escape flags in <% %> tags
+#   h - html escape
+#   u - url escape
+#
+sub escape_perl_expression
+{
+    my ($expr,@flags) = @_;
+
+    return $expr if grep { $_ eq 'n' } @flags;
+
+    if (defined($expr)) {
+	foreach my $flag (@flags) {
+	    if ($flag eq 'h') {
+		load_pkg('HTML::Entities', 'The |h escape flag requires the HTML::Entities module, available from CPAN.');
+		$expr = HTML::Entities::encode($expr);
+	    } elsif ($flag eq 'u') {
+		$expr =~ s/([^a-zA-Z0-9_.-])/uc sprintf("%%%02x",ord($1))/eg;
+	    }
+	}
+    }
+    return $expr;
+}
+
+sub coerce_to_array
+{
+    my ($val, $name) = @_;
+
+    return ($val) unless ref $val;
+
+    if ( UNIVERSAL::isa( $val, 'ARRAY' ) )
+    {
+	return @$val;
+    }
+    elsif ( UNIVERSAL::isa( $val, 'HASH' ) )
+    {
+	return %$val;
+    }
+
+    param_error "Cannot coerce $val to an array for '$name' parameter";
+}
+
+sub coerce_to_hash
+{
+    my ($val, $name) = @_;
+
+    param_error "Cannot convert a single value to a hash for '$name' parameter"
+	unless ref $val;
+
+    if ( UNIVERSAL::isa( $val, 'ARRAY' ) )
+    {
+	return @$val;
+    }
+    elsif ( UNIVERSAL::isa( $val, 'HASH' ) )
+    {
+	return %$val;
+    }
+
+    param_error "Cannot coerce $val to a hash";
+}
+
+
+1;
+
+__END__
+
+=head1 NAME
+
+HTML::Mason::Tools - Function library used internally in Mason
+
+=head1 DESCRIPTION
+
+This module contains exportable functions that are intended to be used
+by other Mason modules.
+
+The documentation here is primarily intended to be used by Mason core
+developers.
+
+Others who choose to use these functions do so at their own risk, as
+they may change from release to release.  You have been warned.
+
+=head1 FUNCTIONS
+
+=over
+
+=item read_file
+
+This function takes a file name and an optional argument indicating
+whether or not to open the final in binary mode.  It will return the
+entire contents of the file as a scalar.
+
+=item html_escape
+
+This function takes a string and returns its HTML-escaped version,
+escaping the following characters: '&', '>', '<', and '"'.
+
+The escaped string is this function's return value.
+
+=item paths_eq
+
+Given to paths, this function indicates whether they represent the
+same location on the filesystem.  It does not account for symlinks.
+
+=item compress_path
+
+This turns a component path into a filesystem-friendly path by
+escaping potentially meaningful characters.
+
+=item absolute_comp_path
+
+Given a component path and a directory path, this function returns the
+absolute component path, prepending the directory path if needed.
+
+=item mason_canonpath
+
+This function cleans up a component path and returns its canonical
+version.  It is largely the same as File::Spec::Unix::canonpath, with
+a few additional cleanups.
+
+=item pkg_installed
+
+Given a module name, this function returns true or false to indicate
+whether or not a corresponding F<.pm> file exists.
+
+=item pkg_loaded
+
+Given a module name, this function returns true or false to indicate
+whether or not the module has been loaded into memory.
+
+=item load_pkg
+
+Given a module name, this function attempts to load it.  It takes an
+additional boolean parameter indicating whether or not to throw an
+exception if the module cannot be found.  By default, if the module
+cannot be found, this function simply returns false.
+
+All errors generate exceptions no matter what.
+
+If the module is loaded successfully, this function returns true.
+
+=item taint_is_on
+
+Returns a boolean value indicating whether taint mode is on or not.
+
+=item make_fh
+
+This function returns something suitable to be passed to the first
+argument of an C<open> function call.
+
+=item escape_perl_expression
+
+Given a scalar and one or more flags as an array, this method does the
+following.
+
+If any of the flags are "n", then no escaping is done.
+
+If it finds the "h" flag, the text is escaped with
+C<HTML::Entities::encode()>.
+
+If it finds the "u" flag, the text is URL-escaped, meaning that all
+characters not matching C<[a-zA-Z0-9_.-]> are replaced by a percent
+sign (%) followed by their hexadecimal ASCII value.
+
+NOTE: This will break miserably given Unicode characters, producing
+something like "%abc7", which is unabashedly incorrect.
+
+NOTE part deux: The URL RFC (1738) does not specify how to handle
+Unicode.
+
+NOTE part trois: The URI RFC (2396) doesn't provide much help either.
+
+=item coerce_to_array
+
+Given a scalar, which may be a reference, this function attempts to
+return an array.  It throws an HTML::Mason::Exception::Params
+exception if this can't be done.
+
+This function is called from the generated component code as part of a
+component's argument handling.
+
+=item coerce_to_hash
+
+Given a scalar, which may be a reference, this function attempts to
+return a hash.  It throws an HTML::Mason::Exception::Params exception
+if this can't be done.
+
+This function is called from the generated component code as part of a
+component's argument handling.
+
+=back
+
+=cut

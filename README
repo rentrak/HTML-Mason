@@ -1,4 +1,4 @@
-Copyright (c) 1998-2000 by Jonathan Swartz. All rights reserved.
+Copyright (c) 1998-2002 by Jonathan Swartz. All rights reserved.
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
 
@@ -17,23 +17,27 @@ previewing utility.  See http://www.masonhq.com/ for more information.
 
 PREREQUISITES
 
-Mason requires Perl 5.004 or greater plus the following CPAN modules:
+Mason requires Perl 5.005 or greater, and the following CPAN modules:
 
-    MLDBM
-    Data::Dumper (comes installed with Perl 5.005 and on)
-    Params::Validate
+* Params::Validate
+
+* Exception::Class
 
 The following CPAN modules are optional for certain features, but not required:
 
-    Time::HiRes
+* Apache::Request
+
+* Time::HiRes
+
+* Cache::Cache
 
 INSTALLATION
 
 To install Mason, run the standard sequence:
 
-    perl Makefile.PL
-    make
-    make install
+	perl Makefile.PL
+	make
+	make install
 
 By default, Mason will prompt you for information about where Apache
 is installed so that it can do tests with a live Apache server.  If
@@ -62,28 +66,36 @@ Testing with recent mod_perls showed improvements, but because this
 bug can be so intermittent and difficult to spot, mod_perl DSO with
 Mason is still strictly unsupported.
 
+* Don't use Mason with PerlFreshRestart.
+
+The mod_perl PerlFreshRestart directive attempts to reload modules on
+restart in a very simplistic way. Mason cannot be reloaded this way.
+To reliably restart a server using Mason, you must actually stop and
+start the server.
+
 GETTING HELP
 
 The official Mason web site is at http://www.masonhq.com/.  There
 you'll find Mason documentation, news, etc.
 
 The FAQ, currently maintained by Kwindla Kramer, can be found at
-http://www.masonhq.com/faq/ or
+http://www.masonhq.com/docs/faq/ or
 http://allafrica.com/tools/mason/faq.html.
 
 Several mailing lists exist for Mason users and developers. Full
-information can be found at http://www.masonhq.com/maillist.html.
+information can be found at
+http://www.masonhq.com/resources/mailing_lists.html.
 
 CODE EXAMPLES
 
 The samples/ directory contains a few basic components as well as
 a miniature commerce site built with components.
 
-The Mason component archive (http://www.masonhq.com/arch/), launched
-in November 1999, should be another good source of examples.
+The Mason community collaboration system (http://www.masonhq.com/)
+contains, among other things, an archive of contributed code.
 
 Links to various articles containing code examples are listed at
-http://www.masonhq.com/articles.html.
+http://www.masonhq.com/docs/articles.html.
 
 REPORTING BUGS
 
@@ -98,22 +110,10 @@ small component or set of components, and send those.
 
 If you are experiencing test failures, please run the tests like this:
 
-  make test TEST_VERBOSE=1
+        make test TEST_VERBOSE=1
 
 and send the output along with the bug report.  Otherwise we'll just
 ask you to do this before we can do anything.
-
-CONTENT MANAGEMENT
-
-There is a companion content management system for Mason, originally
-developed by Mark Schmick and now maintained by Michael Alan Dorman
-and Jaron Rubenstein.  CM is a web-based interface to your component
-and content files; it allows designers and programmers to work on a
-site remotely without resorting to ftp or telnet. It supports
-staging/production sites, RCS versioning of files, global content
-searching, and a host of other features. CM is written entirely as a
-set of Mason components.  Find out more and download a copy at
-http://mason-cm.sourceforge.net/.
 
 LICENSE
 
@@ -126,10 +126,11 @@ for its support or maintenance.
 
 Mason is provided "as is" and without any express or implied
 warranties, including, without limitation, the implied warranties of
-merchantibility and fitness for a particular purpose.  Mason is
-released under the same terms as Perl itself.  For more information
-see the "README" or "Artistic" files provided with the Perl
-distribution.
+merchantibility and fitness for a particular purpose.
+
+Mason is released under the same terms as Perl itself.  For more
+information see the "README" or "Artistic" files provided with the
+Perl distribution.
 
 AUTHOR
 

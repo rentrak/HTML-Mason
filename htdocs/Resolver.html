@@ -1,0 +1,111 @@
+<HTML>
+<HEAD>
+<TITLE>HTML::Mason::Resolver - base class for component path resolvers</TITLE>
+<LINK REV="made" HREF="mailto:perl@packages.debian.org">
+</HEAD>
+
+<BODY>
+
+<A NAME="__index__"></A>
+<!-- INDEX BEGIN -->
+
+<UL>
+
+	<LI><A HREF="#name">NAME</A></LI>
+	<LI><A HREF="#synopsis">SYNOPSIS</A></LI>
+	<LI><A HREF="#description">DESCRIPTION</A></LI>
+	<LI><A HREF="#html::mason::container">HTML::Mason::Container</A></LI>
+	<LI><A HREF="#methods">METHODS</A></LI>
+	<UL>
+
+		<LI><A HREF="#using a resolver with html::mason::apachehandler">Using a Resolver with HTML::Mason::ApacheHandler</A></LI>
+	</UL>
+
+	<LI><A HREF="#see also">SEE ALSO</A></LI>
+</UL>
+<!-- INDEX END -->
+
+<HR>
+<P>
+<H1><A NAME="name">NAME</A></H1>
+<P>HTML::Mason::Resolver - base class for component path resolvers</P>
+<P>
+<HR>
+<H1><A NAME="synopsis">SYNOPSIS</A></H1>
+<PRE>
+  # make a subclass and use it</PRE>
+<P>
+<HR>
+<H1><A NAME="description">DESCRIPTION</A></H1>
+<P>The resolver is responsible for translating a component path like
+/foo/index.html into a component.  By default, Mason expects
+components to be stored on the filesystem, and uses the
+HTML::Mason::Resolver::File class to get information on these
+components.</P>
+<P>The HTML::Mason::Resolver provides a virtual parent class from which
+all resolver implementations should inherit.</P>
+<P>
+<HR>
+<H1><A NAME="html::mason::container">HTML::Mason::Container</A></H1>
+<P>This class is used by most of the Mason object's to manage constructor
+parameters and has-a relationships with other objects.</P>
+<P>See the documentation on this class for details on how to declare what
+paremeters are valid for your subclass's constructor.</P>
+<P>HTML::Mason::Resolver is a subclass of HTML::Mason::Container so you
+do not need to subclass it yourself.</P>
+<P>
+<HR>
+<H1><A NAME="methods">METHODS</A></H1>
+<P>If you are interested in creating a resolver subclass, you must
+implement the following methods.</P>
+<DL>
+<DT><STRONG><A NAME="item_new">new</A></STRONG><BR>
+<DD>
+This method is optional.  The new method included in this class is
+simply inherited from <CODE>HTML::Mason::Container</CODE>.
+If you need something more complicated done in your new method you
+will need to override it in your subclass.
+<P></P>
+<DT><STRONG><A NAME="item_get_info">get_info</A></STRONG><BR>
+<DD>
+Given an absolute component path, returns a new
+<A HREF="ComponentSource.html">HTML::Mason::ComponentSource</A> object.
+<P></P>
+<DT><STRONG><A NAME="item_glob_path">glob_path</A></STRONG><BR>
+<DD>
+The only argument to this method is a path glob pattern, something
+like ``/foo/*'' or ``/foo/*/bar''.  Given this path, it should return a
+list of component paths for components which match this glob pattern.
+<P>For example, the filesystem resolver simply appends this pattern to
+each component root in turn and calls the Perl <CODE>glob()</CODE> function to
+find matching files on the filesystem.</P>
+<P></P></DL>
+<P>
+<H2><A NAME="using a resolver with html::mason::apachehandler">Using a Resolver with HTML::Mason::ApacheHandler</A></H2>
+<P>If you are creating a new resolver that you intend to use with the
+<A HREF="ApacheHandler.html">HTML::Mason::ApacheHandler</A> module, then
+you must implement the following method as well, possibly in a
+different subclass.</P>
+<DL>
+<DT><STRONG><A NAME="item_apache_request_to_comp_path">apache_request_to_comp_path ($r)</A></STRONG><BR>
+<DD>
+This method, given an Apache object, should return a component path.
+This method is used by the
+<A HREF="ApacheHandler.html">HTML::Mason::ApacheHandler</A> class to
+translate web requests into component paths.  You can omit this method
+if your resolver subclass will never be used in conjunction with
+<A HREF="ApacheHandler.html">HTML::Mason::ApacheHandler</A>.
+<P></P></DL>
+<P>For example, Mason includes the
+<A HREF="Resolver/File.html">HTML::Mason::Resolver::File</A> and
+HTML::Mason::Resolver::File::ApacheHandler classes.  The latter simply
+adds an implementation of the <A HREF="#item_apache_request_to_comp_path"><CODE>apache_request_to_comp_path</CODE></A> method
+for file based components.</P>
+<P>
+<HR>
+<H1><A NAME="see also">SEE ALSO</A></H1>
+<P><A HREF="Mason.html">HTML::Mason</A></P>
+
+</BODY>
+
+</HTML>

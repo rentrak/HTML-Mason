@@ -1,0 +1,357 @@
+<HTML>
+<HEAD>
+<TITLE>HTML::Mason::Params - Constructor parameter documentation</TITLE>
+<LINK REV="made" HREF="mailto:perl@packages.debian.org">
+</HEAD>
+
+<BODY>
+
+<A NAME="__index__"></A>
+<!-- INDEX BEGIN -->
+
+<UL>
+
+	<LI><A HREF="#name">NAME</A></LI>
+	<LI><A HREF="#description">DESCRIPTION</A></LI>
+	<LI><A HREF="#parameters">PARAMETERS</A></LI>
+</UL>
+<!-- INDEX END -->
+
+<HR>
+<P>
+<H1><A NAME="name">NAME</A></H1>
+<P>HTML::Mason::Params - Constructor parameter documentation</P>
+<P>
+<HR>
+<H1><A NAME="description">DESCRIPTION</A></H1>
+<P>Mason has a lot of objects, most of which accept parameters when
+passed to their constructor.  However, since most Mason objects are
+made by other Mason objects, rather than by end users, Mason has been
+designed so that when one object contains another, the container
+object can accept constructor params not only for itself, but also for
+any of its contained objects.</P>
+<P>This means that typically, you simply make a top level object such as
+an ApacheHandler or Interp object, and pass it whatever parameters you
+want to set for any Mason object.</P>
+<P>Of course, many people simply configure Mason via their httpd.conf
+file, and don't ever make a Mason object.</P>
+<P>This document lists <STRONG>all</STRONG> of the Mason parameters are intended to be
+used by end users.</P>
+<P>
+<HR>
+<H1><A NAME="parameters">PARAMETERS</A></H1>
+<UL>
+<LI><STRONG><A NAME="item_allow_globals">allow_globals</A></STRONG><BR>
+
+An array of names of Perl variables that are allowed globally within components
+<P>Type:               list</P>
+<P>Name in httpd.conf: AllowGlobals</P>
+<P>Belongs to:         <A HREF="Compiler.html">HTML::Mason::Compiler</A></P>
+<P></P>
+<LI><STRONG><A NAME="item_apache_status_title">apache_status_title</A></STRONG><BR>
+
+The title of the Apache::Status page
+<P>Type:               string</P>
+<P>Default:            HTML::Mason status</P>
+<P>Name in httpd.conf: ApacheStatusTitle</P>
+<P>Belongs to:         <A HREF="ApacheHandler.html">HTML::Mason::ApacheHandler</A></P>
+<P></P>
+<LI><STRONG><A NAME="item_args_method">args_method</A></STRONG><BR>
+
+Whether to use CGI.pm or Apache::Request for parsing the incoming HTTP request
+<P>Type:               string</P>
+<P>Default:            mod_perl</P>
+<P>Name in httpd.conf: ArgsMethod</P>
+<P>Belongs to:         <A HREF="ApacheHandler.html">HTML::Mason::ApacheHandler</A></P>
+<P></P>
+<LI><STRONG><A NAME="item_auto_send_headers">auto_send_headers</A></STRONG><BR>
+
+Whether HTTP headers should be auto-generated
+<P>Type:               boolean</P>
+<P>Default:            1</P>
+<P>Name in httpd.conf: AutoSendHeaders</P>
+<P>Belongs to:         <A HREF="Request/ApacheHandler.html">HTML::Mason::Request::ApacheHandler</A></P>
+<P></P>
+<LI><STRONG><A NAME="item_autoflush">autoflush</A></STRONG><BR>
+
+Whether output should be buffered or sent immediately
+<P>Type:               boolean</P>
+<P>Default:            0</P>
+<P>Name in httpd.conf: Autoflush</P>
+<P>Belongs to:         <A HREF="Request.html">HTML::Mason::Request</A></P>
+<P></P>
+<LI><STRONG><A NAME="item_autohandler_name">autohandler_name</A></STRONG><BR>
+
+The filename to use for Mason's 'autohandler' capability
+<P>Type:               string</P>
+<P>Default:            autohandler</P>
+<P>Name in httpd.conf: AutohandlerName</P>
+<P>Belongs to:         <A HREF="Interp.html">HTML::Mason::Interp</A></P>
+<P></P>
+<LI><STRONG><A NAME="item_buffer_class">buffer_class</A></STRONG><BR>
+
+This class receives component output and dispatches it appropriately
+<P>Type:               string</P>
+<P>Name in httpd.conf: BufferClass</P>
+<P>Belongs to:         <A HREF="Request.html">HTML::Mason::Request</A></P>
+<P>This object is created multiple times by its container.</P>
+<P></P>
+<LI><STRONG><A NAME="item_code_cache_max_size">code_cache_max_size</A></STRONG><BR>
+
+The maximum size of the component code cache
+<P>Type:               string</P>
+<P>Default:            10485760</P>
+<P>Name in httpd.conf: CodeCacheMaxSize</P>
+<P>Belongs to:         <A HREF="Interp.html">HTML::Mason::Interp</A></P>
+<P></P>
+<LI><STRONG><A NAME="item_comp_class">comp_class</A></STRONG><BR>
+
+The class into which component objects will be blessed
+<P>Type:               string</P>
+<P>Default:            HTML::Mason::Component</P>
+<P>Name in httpd.conf: CompClass</P>
+<P>Belongs to:         <A HREF="Compiler/ToObject.html">HTML::Mason::Compiler::ToObject</A></P>
+<P></P>
+<LI><STRONG><A NAME="item_comp_root">comp_root</A></STRONG><BR>
+
+A string or array of arrays indicating the search path for component calls
+<P>Type:               list</P>
+<P>Default:            filesystem root</P>
+<P>Name in httpd.conf: CompRoot</P>
+<P>Belongs to:         <A HREF="Resolver/File.html">HTML::Mason::Resolver::File</A></P>
+<P></P>
+<LI><STRONG><A NAME="item_compiler">compiler</A></STRONG><BR>
+
+A Compiler object for compiling components
+<P>Type:               object</P>
+<P>Default:            HTML::Mason::Compiler::ToObject-&gt;new</P>
+<P>Belongs to:         <A HREF="Interp.html">HTML::Mason::Interp</A></P>
+<P>This object is created only once by its container.</P>
+<P></P>
+<LI><STRONG><A NAME="item_compiler_class">compiler_class</A></STRONG><BR>
+
+This class is used to translate component source into code
+<P>Type:               string</P>
+<P>Name in httpd.conf: CompilerClass</P>
+<P>Belongs to:         <A HREF="Interp.html">HTML::Mason::Interp</A></P>
+<P>This object is created only once by its container.</P>
+<P></P>
+<LI><STRONG><A NAME="item_data_cache_defaults">data_cache_defaults</A></STRONG><BR>
+
+A hash of default parameters for Cache::Cache
+<P>Type:               hash</P>
+<P>Name in httpd.conf: DataCacheDefaults</P>
+<P>Belongs to:         <A HREF="Request.html">HTML::Mason::Request</A></P>
+<P></P>
+<LI><STRONG><A NAME="item_data_dir">data_dir</A></STRONG><BR>
+
+A directory for storing cache files and other state information
+<P>Type:               string</P>
+<P>Name in httpd.conf: DataDir</P>
+<P>Belongs to:         <A HREF="Interp.html">HTML::Mason::Interp</A></P>
+<P></P>
+<LI><STRONG><A NAME="item_decline_dirs">decline_dirs</A></STRONG><BR>
+
+Whether Mason should decline to handle requests for directories
+<P>Type:               boolean</P>
+<P>Default:            1</P>
+<P>Name in httpd.conf: DeclineDirs</P>
+<P>Belongs to:         <A HREF="ApacheHandler.html">HTML::Mason::ApacheHandler</A></P>
+<P></P>
+<LI><STRONG><A NAME="item_default_escape_flags">default_escape_flags</A></STRONG><BR>
+
+Escape flags that will apply by default to all Mason tag output
+<P>Type:               string</P>
+<P>Name in httpd.conf: DefaultEscapeFlags</P>
+<P>Belongs to:         <A HREF="Compiler.html">HTML::Mason::Compiler</A></P>
+<P></P>
+<LI><STRONG><A NAME="item_dhandler_name">dhandler_name</A></STRONG><BR>
+
+The filename to use for Mason's 'dhandler' capability
+<P>Type:               string</P>
+<P>Default:            dhandler</P>
+<P>Name in httpd.conf: DhandlerName</P>
+<P>Belongs to:         <A HREF="Request.html">HTML::Mason::Request</A></P>
+<P></P>
+<LI><STRONG><A NAME="item_error_format">error_format</A></STRONG><BR>
+
+How error messages are formatted
+<P>Type:               string</P>
+<P>Default:            text</P>
+<P>Name in httpd.conf: ErrorFormat</P>
+<P>Belongs to:         <A HREF="Request.html">HTML::Mason::Request</A></P>
+<P></P>
+<LI><STRONG><A NAME="item_error_mode">error_mode</A></STRONG><BR>
+
+How error conditions are returned to the caller (brief, text, line or html)
+<P>Type:               string</P>
+<P>Default:            fatal</P>
+<P>Name in httpd.conf: ErrorMode</P>
+<P>Belongs to:         <A HREF="Request.html">HTML::Mason::Request</A></P>
+<P></P>
+<LI><STRONG><A NAME="item_ignore_warnings_expr">ignore_warnings_expr</A></STRONG><BR>
+
+A regular expression describing Perl warning messages to ignore
+<P>Type:               regex</P>
+<P>Default:            /Subroutine .* redefined/i</P>
+<P>Name in httpd.conf: IgnoreWarningsExpr</P>
+<P>Belongs to:         <A HREF="Interp.html">HTML::Mason::Interp</A></P>
+<P></P>
+<LI><STRONG><A NAME="item_in_package">in_package</A></STRONG><BR>
+
+The package in which component execution will take place
+<P>Type:               string</P>
+<P>Default:            HTML::Mason::Commands</P>
+<P>Name in httpd.conf: InPackage</P>
+<P>Belongs to:         <A HREF="Compiler/ToObject.html">HTML::Mason::Compiler::ToObject</A></P>
+<P></P>
+<LI><STRONG><A NAME="item_interp">interp</A></STRONG><BR>
+
+A Mason interpreter for processing components
+<P>Type:               object</P>
+<P>Default:            HTML::Mason::Interp-&gt;new</P>
+<P>Belongs to:         <A HREF="ApacheHandler.html">HTML::Mason::ApacheHandler</A></P>
+<P>This object is created only once by its container.</P>
+<P></P>
+<LI><STRONG><A NAME="item_interp_class">interp_class</A></STRONG><BR>
+
+A Mason interpreter for processing components
+<P>Type:               string</P>
+<P>Name in httpd.conf: InterpClass</P>
+<P>Belongs to:         <A HREF="ApacheHandler.html">HTML::Mason::ApacheHandler</A></P>
+<P>This object is created only once by its container.</P>
+<P></P>
+<LI><STRONG><A NAME="item_lexer">lexer</A></STRONG><BR>
+
+A Lexer object that will scan component text during compilation
+<P>Type:               object</P>
+<P>Default:            HTML::Mason::Lexer-&gt;new</P>
+<P>Belongs to:         <A HREF="Compiler.html">HTML::Mason::Compiler</A></P>
+<P>This object is created only once by its container.</P>
+<P></P>
+<LI><STRONG><A NAME="item_lexer_class">lexer_class</A></STRONG><BR>
+
+A Lexer object that will scan component text during compilation
+<P>Type:               string</P>
+<P>Name in httpd.conf: LexerClass</P>
+<P>Belongs to:         <A HREF="Compiler.html">HTML::Mason::Compiler</A></P>
+<P>This object is created only once by its container.</P>
+<P></P>
+<LI><STRONG><A NAME="item_max_recurse">max_recurse</A></STRONG><BR>
+
+The maximum recursion depth for component, inheritance, and request stack
+<P>Type:               string</P>
+<P>Default:            32</P>
+<P>Name in httpd.conf: MaxRecurse</P>
+<P>Belongs to:         <A HREF="Request.html">HTML::Mason::Request</A></P>
+<P></P>
+<LI><STRONG><A NAME="item_out_method">out_method</A></STRONG><BR>
+
+A subroutine or scalar reference through which all output will pass
+<P>Type:               code</P>
+<P>Default:            sub { print STDOUT grep {defined} @_ }</P>
+<P>Name in httpd.conf: OutMethod</P>
+<P>Belongs to:         <A HREF="Request.html">HTML::Mason::Request</A></P>
+<P></P>
+<LI><STRONG><A NAME="item_postamble">postamble</A></STRONG><BR>
+
+A chunk of Perl code to add to the end of each compiled component
+<P>Type:               string</P>
+<P>Name in httpd.conf: Postamble</P>
+<P>Belongs to:         <A HREF="Compiler/ToObject.html">HTML::Mason::Compiler::ToObject</A></P>
+<P></P>
+<LI><STRONG><A NAME="item_postprocess_perl">postprocess_perl</A></STRONG><BR>
+
+A subroutine through which all Perl code will be sent during compilation
+<P>Type:               code</P>
+<P>Name in httpd.conf: PostprocessPerl</P>
+<P>Belongs to:         <A HREF="Compiler.html">HTML::Mason::Compiler</A></P>
+<P></P>
+<LI><STRONG><A NAME="item_postprocess_text">postprocess_text</A></STRONG><BR>
+
+A subroutine through which all plain text will be sent during compilation
+<P>Type:               code</P>
+<P>Name in httpd.conf: PostprocessText</P>
+<P>Belongs to:         <A HREF="Compiler.html">HTML::Mason::Compiler</A></P>
+<P></P>
+<LI><STRONG><A NAME="item_preamble">preamble</A></STRONG><BR>
+
+A chunk of Perl code to add to the beginning of each compiled component
+<P>Type:               string</P>
+<P>Name in httpd.conf: Preamble</P>
+<P>Belongs to:         <A HREF="Compiler/ToObject.html">HTML::Mason::Compiler::ToObject</A></P>
+<P></P>
+<LI><STRONG><A NAME="item_preloads">preloads</A></STRONG><BR>
+
+A list of components to load immediately when creating the Interpreter
+<P>Type:               list</P>
+<P>Name in httpd.conf: Preloads</P>
+<P>Belongs to:         <A HREF="Interp.html">HTML::Mason::Interp</A></P>
+<P></P>
+<LI><STRONG><A NAME="item_preprocess">preprocess</A></STRONG><BR>
+
+A subroutine through which all component text will be sent during compilation
+<P>Type:               code</P>
+<P>Name in httpd.conf: Preprocess</P>
+<P>Belongs to:         <A HREF="Compiler.html">HTML::Mason::Compiler</A></P>
+<P></P>
+<LI><STRONG><A NAME="item_request_class">request_class</A></STRONG><BR>
+
+Objects returned by make_request are members of this class
+<P>Type:               string</P>
+<P>Name in httpd.conf: RequestClass</P>
+<P>Belongs to:         <A HREF="Interp.html">HTML::Mason::Interp</A></P>
+<P>This object is created multiple times by its container.</P>
+<P></P>
+<LI><STRONG><A NAME="item_resolver">resolver</A></STRONG><BR>
+
+A Resolver object for fetching components from storage
+<P>Type:               object</P>
+<P>Default:            HTML::Mason::Resolver::File-&gt;new</P>
+<P>Belongs to:         <A HREF="Interp.html">HTML::Mason::Interp</A></P>
+<P>This object is created only once by its container.</P>
+<P></P>
+<LI><STRONG><A NAME="item_resolver_class">resolver_class</A></STRONG><BR>
+
+This class is expected to return component information based on a component path
+<P>Type:               string</P>
+<P>Name in httpd.conf: ResolverClass</P>
+<P>Belongs to:         <A HREF="Interp.html">HTML::Mason::Interp</A></P>
+<P>This object is created only once by its container.</P>
+<P></P>
+<LI><STRONG><A NAME="item_static_source">static_source</A></STRONG><BR>
+
+When true, we only compile source files once
+<P>Type:               boolean</P>
+<P>Default:            0</P>
+<P>Name in httpd.conf: StaticSource</P>
+<P>Belongs to:         <A HREF="Interp.html">HTML::Mason::Interp</A></P>
+<P></P>
+<LI><STRONG><A NAME="item_subcomp_class">subcomp_class</A></STRONG><BR>
+
+The class into which subcomponent objects will be blessed
+<P>Type:               string</P>
+<P>Default:            HTML::Mason::Component::Subcomponent</P>
+<P>Name in httpd.conf: SubcompClass</P>
+<P>Belongs to:         <A HREF="Compiler/ToObject.html">HTML::Mason::Compiler::ToObject</A></P>
+<P></P>
+<LI><STRONG><A NAME="item_use_object_files">use_object_files</A></STRONG><BR>
+
+Whether to cache component objects on disk
+<P>Type:               boolean</P>
+<P>Default:            1</P>
+<P>Name in httpd.conf: UseObjectFiles</P>
+<P>Belongs to:         <A HREF="Interp.html">HTML::Mason::Interp</A></P>
+<P></P>
+<LI><STRONG><A NAME="item_use_strict">use_strict</A></STRONG><BR>
+
+Whether to turn on Perl's 'strict' pragma in components
+<P>Type:               boolean</P>
+<P>Default:            1</P>
+<P>Name in httpd.conf: UseStrict</P>
+<P>Belongs to:         <A HREF="Compiler/ToObject.html">HTML::Mason::Compiler::ToObject</A></P>
+<P></P></UL>
+
+</BODY>
+
+</HTML>

@@ -18,11 +18,13 @@ C<perl -MCPAN -e 'install Bundle::HTML::Mason'>
 
 =head1 CONTENTS
 
-Data::Dumper
+File::Spec  0.8
 
-MLDBM
+Params::Validate  0.16
 
-Params::Validate
+Exception::Class  1.01
+
+Cache::Cache  1.00
 
 HTML::Mason
 

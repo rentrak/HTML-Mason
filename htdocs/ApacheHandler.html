@@ -1,289 +1,144 @@
-    <HTML> 
-	<HEAD> 
-	    <TITLE>HTML::Mason::ApacheHandler - Mason/mod_perl interface
+<HTML>
+<HEAD>
+<TITLE>HTML::Mason::ApacheHandler - Mason/mod_perl interface</TITLE>
+<LINK REV="made" HREF="mailto:perl@packages.debian.org">
+</HEAD>
 
-</TITLE> 
-	</HEAD>
+<BODY>
 
-	<BODY>
-
+<A NAME="__index__"></A>
 <!-- INDEX BEGIN -->
 
 <UL>
 
-	<LI><A HREF="#name">NAME</A>
-	<LI><A HREF="#synopsis">SYNOPSIS</A>
-	<LI><A HREF="#description">DESCRIPTION</A>
-	<LI><A HREF="#parameters_to_the_use_declarat">PARAMETERS TO THE use() DECLARATION</A>
-	<LI><A HREF="#parameters_to_the_new_contruct">PARAMETERS TO THE new() CONTRUCTOR</A>
-	<LI><A HREF="#accessor_methods">ACCESSOR METHODS</A>
-	<LI><A HREF="#author">AUTHOR</A>
-	<LI><A HREF="#see_also">SEE ALSO</A>
+	<LI><A HREF="#name">NAME</A></LI>
+	<LI><A HREF="#synopsis">SYNOPSIS</A></LI>
+	<LI><A HREF="#description">DESCRIPTION</A></LI>
+	<LI><A HREF="#parameters to the new() contructor">PARAMETERS TO THE <CODE>new()</CODE> CONTRUCTOR</A></LI>
+	<LI><A HREF="#accessor methods">ACCESSOR METHODS</A></LI>
+	<LI><A HREF="#other methods">OTHER METHODS</A></LI>
+	<LI><A HREF="#see also">SEE ALSO</A></LI>
 </UL>
 <!-- INDEX END -->
 
 <HR>
 <P>
-<H1><A NAME="name">NAME
-
-</A></H1>
-HTML::Mason::ApacheHandler - Mason/mod_perl interface
-
-
-<P>
-
+<H1><A NAME="name">NAME</A></H1>
+<P>HTML::Mason::ApacheHandler - Mason/mod_perl interface</P>
 <P>
 <HR>
-<H1><A NAME="synopsis">SYNOPSIS
-
-</A></H1>
-<PRE>    use HTML::Mason::ApacheHandler;
-</PRE>
-
-<P>
-
-<PRE>    my $ah = new HTML::Mason::ApacheHandler (..name/value params..);
+<H1><A NAME="synopsis">SYNOPSIS</A></H1>
+<PRE>
+    use HTML::Mason::ApacheHandler;</PRE>
+<PRE>
+    my $ah = new HTML::Mason::ApacheHandler (..name/value params..);
     ...
     sub handler {
         my $r = shift;
         $ah-&gt;handle_request($r);
-    }
-</PRE>
-
-<P>
-
+    }</PRE>
 <P>
 <HR>
-<H1><A NAME="description">DESCRIPTION
-
-</A></H1>
-The ApacheHandler object links Mason to mod_perl, running components in
-response to HTTP requests. It is controlled primarily through parameters to
-the <CODE>new()</CODE> constructor.
-
-
-<P>
-
+<H1><A NAME="description">DESCRIPTION</A></H1>
+<P>The ApacheHandler object links Mason to mod_perl, running components in
+response to HTTP requests. It is controlled primarily through
+parameters to the <CODE>new()</CODE> constructor.</P>
+<P><A HREF="#item_handle_request"><CODE>handle_request()</CODE></A> is not a user method, but rather is called from the
+HTML::Mason::handler() routine in handler.pl.</P>
 <P>
 <HR>
-<H1><A NAME="parameters_to_the_use_declarat">PARAMETERS TO THE use() DECLARATION
-
-</A></H1>
-The following are parameters to pass explicitly when using
-HTML::Mason::ApacheHandler. e.g.
-
-
-<P>
-
-<PRE>    use HTML::Mason::ApacheHandler (args_method=&gt;'mod_perl');
-</PRE>
-
-<P>
-
+<H1><A NAME="parameters to the new() contructor">PARAMETERS TO THE <CODE>new()</CODE> CONTRUCTOR</A></H1>
 <DL>
-<DT><STRONG><A NAME="item_args_method">args_method
-
-</A></STRONG><DD>
-Method to use for unpacking GET and POST arguments. The valid options are
-'CGI' and 'mod_perl'; these indicate that a CGI.pm or Apache::Request
-object (respectively) will be created for the purposes of argument
-handling. These objects are, unfortunately, not yet accessible from
-components.
-
-
-<P>
-
-'CGI' is the default and should work on most Perl systems. However, if you
-have the Apache::Request package (or are inclined to fetch it from CPAN),
-you might switch to 'mod_perl' for speed and memory efficiency.
-
-
-<P>
-
-When specifying args_method='CGI', the Mason request object ($m) will have
-a method called <CODE>cgi_object</CODE> available. This method returns the CGI object used in the ApacheHandler
-code.
-
-
-<P>
-
-When specifying args_method='mod_perl', the <CODE>$r</CODE> global is
-upgraded to an Apache::Request object. This object inherits all Apache
-methods and adds a few of its own, dealing with parameters and file
-uploads. See Apache::Request manual page for more information.
-
-
-<P>
-
-</DL>
+<DT><STRONG><A NAME="item_apache_status_title">apache_status_title</A></STRONG><BR>
+<DD>
+Title that you want this ApacheHandler to appear as under
+Apache::Status.  Default is ``HTML::Mason status''.  This is useful if
+you create more than one ApacheHandler object and want them all
+visible via Apache::Status.
+<P></P>
+<DT><STRONG><A NAME="item_args_method">args_method</A></STRONG><BR>
+<DD>
+Method to use for unpacking GET and POST arguments. The valid options
+are 'CGI' and 'mod_perl'; these indicate that a CGI.pm or
+Apache::Request object (respectively) will be created for the purposes
+of argument handling.
+<P>Apache::Request is the default and requires that you have installed
+this package.</P>
+<P>If the args_method is 'CGI', the Mason request object ($m) will have a
+method called <CODE>cgi_object</CODE> available.  This method returns the CGI
+object used in the ApacheHandler code.</P>
+<P>If args_method is 'mod_perl', the $r global is upgraded to an
+Apache::Request object. This object inherits all Apache methods and
+adds a few of its own, dealing with parameters and file uploads.  See
+<A HREF="/Apache/Request.html">Apache::Request</A> for more information.</P>
+<P>While Mason will load Apache::Request or CGI as needed at runtime, it
+is recommended that you preload the relevant module either in your
+httpd.conf or handler.pl file, as this will save some memory.</P>
+<P></P>
+<DT><STRONG><A NAME="item_decline_dirs">decline_dirs</A></STRONG><BR>
+<DD>
+Indicates whether Mason should decline directory requests, leaving
+Apache to serve up a directory index or a FORBIDDEN error as
+appropriate. Default is 1. See <A HREF="Admin.html#allowing directory requests">Allowing directory requests in the Admin manual</A> for
+more information about handling directories with Mason.
+<P></P>
+<DT><STRONG><A NAME="item_interp">interp</A></STRONG><BR>
+<DD>
+Specifies a Mason interpreter to use for handling requests.  An
+<CODE>HTML::Mason::Interp</CODE> object will be created if you don't specify one
+yourself.  The interpreter should be an instance of the
+<CODE>HTML::Mason::Interp</CODE> class, or a subclass thereof.
+<P></P></DL>
 <P>
 <HR>
-<H1><A NAME="parameters_to_the_new_contruct">PARAMETERS TO THE new() CONTRUCTOR
-
-</A></H1>
+<H1><A NAME="accessor methods">ACCESSOR METHODS</A></H1>
+<P>All of the above properties, except interp, have standard accessor
+methods of the same name: no arguments retrieves the value, and one
+argument sets it.  For example:</P>
+<PRE>
+    my $ah = new HTML::Mason::ApacheHandler;
+    my $decline_dirs = $ah-&gt;decline_dirs;
+    $ah-&gt;decline_dirs(1);</PRE>
+<P>
+<HR>
+<H1><A NAME="other methods">OTHER METHODS</A></H1>
+<P>The ApacheHandler object has a few other publically accessible methods
+that may be of interest to end users.</P>
 <DL>
-<DT><STRONG><A NAME="item_apache_status_title">apache_status_title
-
-</A></STRONG><DD>
-Title that you want this ApacheHandler to appear as under Apache::Status.
-Default is ``HTML::Mason status''. This is useful if you create more then
-one ApacheHandler object and want them all visible via Apache::Status.
-
-
-<P>
-
-<DT><STRONG><A NAME="item_auto_send_headers">auto_send_headers
-
-</A></STRONG><DD>
-True or undef; default true. Indicates whether Mason should automatically
-send HTTP headers before sending content back to the client. If you set to
-false, you should call $r-&gt;send_http_header manually.
-
-
-<P>
-
-See the <A HREF="././Devel.html#sending_http_headers">sending_http_headers</A> of the Component Developer's Guide for details about the automatic header
-feature.
-
-
-<P>
-
-<DT><STRONG><A NAME="item_debug_handler_proc_debug_handle">debug_handler_proc, debug_handler_script, debug_mode, debug_perl_binary
-
-</A></STRONG><DD>
-The <STRONG>debug_*</STRONG> parameters control Mason's use of debug files. Component <A HREF="././Admin.html#debugging">debugging</A> procedures are fully described in the <EM>Mason
-Administrator's Guide</EM>.
-
-
-<P>
-
-<DT><STRONG><A NAME="item_decline_dirs">decline_dirs
-
-</A></STRONG><DD>
-Indicates whether Mason should decline directory requests, leaving Apache
-to serve up a directory index or a FORBIDDEN error as appropriate. Default
-is 1. See <A HREF="././Admin.html#allowing_directory_requests">Allowing directory requests</A>
-for more information about handling directories with Mason.
-
-
-<P>
-
-<DT><STRONG><A NAME="item_error_mode">error_mode
-
-</A></STRONG><DD>
-Specifies how to handle Perl errors. Options are 'html', 'fatal',
-'raw_html', and 'raw_fatal'; the default is 'html'.
-
-
-<P>
-
-In html mode the handler sends a readable HTML version of the error message
-to the client. This mode is most useful on a development server.
-
-
-<P>
-
-In fatal mode the handler simply dies with a compact version of the error
-message. This may be caught with an eval around
-<CODE>$ah-&gt;handle_request</CODE> or left for Apache to handle. In the latter case the error will end up in
-the error logs. This mode is most useful on a production server.
-
-
-<P>
-
-The raw_html and raw_fatal modes emulate pre-1.02 error behavior. They are
-analagous to the modes above except that the errors are not processed for
-readability or compactness. The resulting messages are much longer, but may
-include information accidentally omitted by Mason's processing.
-
-
-<P>
-
-Regardless of this setting, no readability processing occurs if you have
-overriden the <A HREF="./Interp.html#item_die_handler">die_handler</A> Interp parameter.
-
-
-<P>
-
-<DT><STRONG><A NAME="item_output_mode">output_mode
-
-</A></STRONG><DD>
-This parameter has been replaced by the equivalent Interp parameter
-<A HREF="./Interp.html#item_out_mode">out_mode</A>. For backward compatibility, setting
-<CODE>$ah-&gt;output_mode</CODE> will cause <CODE>$interp-&gt;out_mode</CODE> to be set appropriately.
-
-
-<P>
-
-<DT><STRONG><A NAME="item_top_level_predicate">top_level_predicate
-
-</A></STRONG><DD>
-Reference to a subroutine that decides whether a component can answer top
-level requests. This allows for private-use components that live within the
-DocumentRoot but are inaccesible from URLs. By default, always returns 1.
-
-
-<P>
-
-The subroutine receives one parameter, the absolute path to the component.
-It then returns either a true (serve component) or false (reject
-component). In this example, the predicate rejects requests for components
-whose name starts with an ``_'' character:
-
-
-<P>
-
-<PRE>    top_level_predicate =&gt; sub { $_[0] !~ m{/_[^/]+$} }
-</PRE>
-
-<P>
-
-</DL>
+<DT><STRONG><A NAME="item_handle_request">handle_request ($r)</A></STRONG><BR>
+<DD>
+This method takes an Apache object representing a request and
+translates that request into a form Mason can understand.  It's return
+value is an Apache status code.
+<P></P>
+<DT><STRONG><A NAME="item_prepare_request">prepare_request ($r)</A></STRONG><BR>
+<DD>
+This method takes an Apache object representing a request and returns
+a new Mason request object or an Apache status code.  If it is a
+request object you can manipulate that object as you like, and then
+call the request object's <CODE>exec</CODE> method to have it generate output.
+<P>If this method returns an Apache status code, that means that it could
+not create a Mason request object.</P>
+<P>This method is useful if you would like to have a chance to decline a
+request based on properties of the Mason request object or a component
+object.  For example:</P>
+<PRE>
+    my $req = $ah-&gt;prepare_request($r);
+    # $req must be an Apache status code if it's not an object
+    return $req unless ref($req);</PRE>
+<PRE>
+    return DECLINED
+        unless $req-&gt;request_comp-&gt;source_file =~ /\.html$/;</PRE>
+<PRE>
+    $req-&gt;exec;</PRE>
+<P></P></DL>
 <P>
 <HR>
-<H1><A NAME="accessor_methods">ACCESSOR METHODS
+<H1><A NAME="see also">SEE ALSO</A></H1>
+<P><A HREF="Mason.html">HTML::Mason</A>,
+<A HREF="Admin.html">HTML::Mason::Admin</A>,
+<A HREF="Interp.html">HTML::Mason::Interp</A></P>
 
-</A></H1>
-All of the above properties have standard accessor methods of the same
-name: no arguments retrieves the value, and one argument sets it. For
-example:
+</BODY>
 
-
-<P>
-
-<PRE>    my $ah = new HTML::Mason::ApacheHandler;
-    my $errmode = $ah-&gt;error_mode;
-    $ah-&gt;error_mode('html');
-</PRE>
-
-<P>
-
-<P>
-<HR>
-<H1><A NAME="author">AUTHOR
-
-</A></H1>
-Jonathan Swartz, <A HREF="MAILTO:swartz@pobox.com">swartz@pobox.com</A>
-
-
-<P>
-
-<P>
-<HR>
-<H1><A NAME="see_also">SEE ALSO
-
-</A></H1>
-<A HREF="././Mason.html#">HTML::Mason</A>,
-<A HREF="././Parser.html#">HTML::Mason::Parser</A>,
-<A HREF="././Interp.html#">HTML::Mason::Interp</A>,
-<A HREF="././Admin.html#">HTML::Mason::Admin</A>
-
-
-
-
-<P>
-
-</DL>
-    </BODY>
-
-    </HTML>
+</HTML>

@@ -1,7 +1,6 @@
 #!/usr/bin/perl -w
 
 use strict;
-
 use HTML::Mason::Tests;
 
 my $tests = make_tests();
@@ -17,9 +16,12 @@ sub make_tests
 
     $group->add_support( path => '/support/abort_test',
 			 component => <<'EOF',
+<%args>
+$val => 50
+</%args>
 Some more text
 
-% $m->abort(50);
+% $m->abort($val);
 
 But this will never be seen
 EOF
@@ -32,7 +34,7 @@ EOF
 			 component => <<'EOF',
 My depth is <% $m->depth %>.
 
-The top-level component is <% $m->top_comp->title %>.
+The top-level component is <% $m->request_comp->title %>.
 
 My stack looks like:
 -----
@@ -69,13 +71,13 @@ EOF
     $group->add_support( path => '/support/various_test',
 			 component => <<'EOF',
 Caller is <% $m->caller->title %> or <% $m->callers(1)->title %>.
-The top level component is <% $m->callers(-1)->title %> or <% $m->top_comp->title %>.
+The top level component is <% $m->callers(-1)->title %> or <% $m->request_comp->title %>.
 The full component stack is <% join(",",map($_->title,$m->callers)) %>.
 My argument list is (<% join(",",$m->caller_args(0)) %>).
-The top argument list is (<% join(",",$m->top_args()) %>) or (<% join(",",$m->caller_args(-1)) %>).
+The top argument list is (<% join(",",$m->request_args()) %>) or (<% join(",",$m->caller_args(-1)) %>).
 
 % foreach my $path (qw(various_test /request/sections/perl foobar /shared)) {
-%   my $full_path = $m->process_comp_path($path);
+%   my $full_path = HTML::Mason::Tools::absolute_comp_path($path, $m->current_comp->dir_path);
 Trying to fetch <% $path %> (full path <% $full_path %>):
 %   if ($m->comp_exists($path)) {
 %     if (my $comp = $m->fetch_comp($path)) {
@@ -88,19 +90,9 @@ Trying to fetch <% $path %> (full path <% $full_path %>):
 %   }
 % }
 
-% $m->out("Output via the out function.");
+% $m->print("Output via the out function.");
 
 /request/file outputs <% int(length($m->scomp("/request/file"))/10) %>0+ characters.
-
-% my $diff = time-($m->time);
-% if ($diff <= 2) {
-No time difference.
-% } else {
-Time difference!
-% }
-
-
-
 EOF
 		       );
 
@@ -116,14 +108,69 @@ EOF
 #------------------------------------------------------------
 
     $group->add_test( name => 'abort',
-		      description => 'test $m->abort method',
+		      description => 'test $m->abort method (autoflush on)',
+		      interp_params => { autoflush => 1 },
+
 		      component => <<'EOF',
 Some text
 
 % eval {$m->comp('support/abort_test')};
 % if (my $err = $@) {
 %   if ($m->aborted) {
-Component aborted with value <% $m->aborted_value %>
+Component aborted with value <% $err->aborted_value %>
+%   } else {
+Got error
+%   }
+% }
+EOF
+		      expect => <<'EOF',
+Some text
+
+Some more text
+
+Component aborted with value 50
+EOF
+		    );
+
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'abort_0',
+		      description => 'test $m->abort method with value of 0',
+
+		      component => <<'EOF',
+Some text
+
+% eval {$m->comp('support/abort_test', val => 0)};
+% if (my $err = $@) {
+%   if ($m->aborted($err)) {
+Component aborted with value <% $err->aborted_value %>
+%   } else {
+Got error
+%   }
+% }
+EOF
+		      expect => <<'EOF',
+Some text
+
+Some more text
+
+Component aborted with value 0
+EOF
+		    );
+
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'abort',
+		      description => 'test $m->abort method (autoflush off)',
+		      component => <<'EOF',
+Some text
+
+% eval {$m->comp('support/abort_test')};
+% if (my $err = $@) {
+%   if ($m->aborted) {
+Component aborted with value <% $err->aborted_value %>
 %   } else {
 Got error
 %   }
@@ -172,7 +219,7 @@ Sending list of arguments:
 <% 'blah','boom','bah' %>
 
 <%perl>
- $m->out(3,4,5);
+ $m->print(3,4,5);
 </%perl>
 EOF
 		      expect => <<'EOF',
@@ -271,15 +318,13 @@ EOF
 #------------------------------------------------------------
 
     $group->add_test( name => 'subrequest',
-		      description => 'tests a provisional subrequest mechanism (Jon will explain)',
+		      description => 'tests the official subrequest mechanism',
 		      component => <<'EOF',
 <%def .helper>
-% my $interp = $m->interp;
 Executing subrequest
-% # This is still unsupported but will likely be official later
 % my $buf;
-% my $req = new HTML::Mason::Request (interp=>$interp, out_method=>\$buf);
-% $req->exec('/request/support/display_req_obj');
+% my $req = $m->make_subrequest(comp=>'/request/support/display_req_obj', out_method => \$buf);
+% $req->exec();
 <% $buf %>
 </%def>
 
@@ -308,16 +353,48 @@ EOF
 
 #------------------------------------------------------------
 
+    $group->add_support( path => '/support/dir/autohandler',
+			 component => <<'EOF',
+I am the autohandler.
+EOF
+		       );
+
+#------------------------------------------------------------
+
+    $group->add_support( path => '/support/dir/comp',
+			 component => <<'EOF',
+I am the called comp (no autohandler).
+EOF
+		       );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'subrequest_with_autohandler',
+		      description => 'tests the subrequest mechanism with an autohandler',
+		      component => <<'EOF',
+Executing subrequest
+% my $buf;
+% my $req = $m->make_subrequest(comp=>'/request/support/dir/comp', out_method => \$buf);
+% $req->exec();
+<% $buf %>
+EOF
+		      expect => <<'EOF',
+Executing subrequest
+I am the autohandler.
+EOF
+		    );
+
+
+#------------------------------------------------------------
 
     # 5.6.0 is evil
     unless ($] == 5.006)
     {
 	$group->add_test( name => 'subrequest_error',
-			  description => 'check error handling for provision subrequest mechanism',
+			  description => 'check error handling for subrequest mechanism',
 			  component => <<'EOF',
 <%def .helper>
-% my $interp = $m->interp;
-% $interp->exec('/request/support/subrequest_error_test');
+% $m->subexec('/request/support/subrequest_error_test');
 </%def>
 
 Calling helper
@@ -333,8 +410,7 @@ EOF
 			  expect => <<'EOF',
 
 Calling helper
-
-Error: error while executing /request/support/subrequest_error_test:
+Error: whoops!
 
 
 Back from error, checking request state:
@@ -379,12 +455,6 @@ Trying to fetch /shared (full path /shared):
 
 Output via the out function.
 /request/file outputs 120+ characters.
-
-No time difference.
-
-
-
-
 EOF
 		    );
 
@@ -416,7 +486,7 @@ EOF
     $group->add_test( name => 'fetch_next',
 		      path => '/autohandler_test2/dir1/fetch_next',
 		      call_path => '/autohandler_test2/dir1/fetch_next',
-		      description => 'Test $m->fetch_next',
+		      description => 'Test $m->fetch_next and $m->fetch_next_all',
 		      component => <<'EOF',
 This is the main component (called by level <% $ARGS{level} %>)
 Remaining chain: <% join(',',map($_->title,$m->fetch_next_all)) %>
@@ -437,6 +507,208 @@ level
 2
 EOF
 		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'print',
+		      description => 'Test print function from a component',
+		      component => <<'EOF',
+This is first.
+% print "This is second.\n";
+This is third.
+EOF
+		      expect => <<'EOF',
+This is first.
+This is second.
+This is third.
+EOF
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'printf',
+		      description => 'Test printf function from a component',
+		      component => <<'EOF',
+This is first.
+% printf '%s', "This is second.\n";
+This is third.
+EOF
+		      expect => <<'EOF',
+This is first.
+This is second.
+This is third.
+EOF
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'autoflush_print',
+		      description => 'Test print function from a component with autoflush on',
+		      interp_params => { autoflush => 1 },
+		      component => <<'EOF',
+This is first.
+% print "This is second.\n";
+This is third.
+EOF
+		      expect => <<'EOF',
+This is first.
+This is second.
+This is third.
+EOF
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'autoflush_printf',
+		      description => 'Test printf function from a component with autoflush on',
+		      interp_params => { autoflush => 1 },
+		      component => <<'EOF',
+This is first.
+% printf '%s', "This is second.\n";
+This is third.
+EOF
+		      expect => <<'EOF',
+This is first.
+This is second.
+This is third.
+EOF
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'flush_print',
+		      description => 'Test print function from a component in conjunction with $m->flush_buffer call',
+		      component => <<'EOF',
+This is first.
+% print "This is second.\n";
+% $m->flush_buffer;
+This is third.
+EOF
+		      expect => <<'EOF',
+This is first.
+This is second.
+This is third.
+EOF
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'flush_print_autoflush',
+		      description => 'Test print function from a component with autoflush on in conjunction with $m->flush_buffer call',
+		      interp_params => { autoflush => 1 },
+		      component => <<'EOF',
+This is first.
+% print "This is second.\n";
+% $m->flush_buffer;
+This is third.
+EOF
+		      expect => <<'EOF',
+This is first.
+This is second.
+This is third.
+EOF
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'instance',
+		      description => 'Test HTML::Mason::Request->instance',
+		      component => <<'EOF',
+<% $m eq HTML::Mason::Request->instance ? 'yes' : 'no' %>
+EOF
+		      expect => <<'EOF',
+yes
+EOF
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'abort_and_filter',
+		      description => 'Test that an abort in a filtered component still generates _some_ output',
+		      component => <<'EOF',
+filter
+
+% eval { $m->comp('support/abort_test') };
+<%filter>
+return uc $_;
+</%filter>
+EOF
+		      expect => <<'EOF',
+FILTER
+
+SOME MORE TEXT
+
+EOF
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'abort_and_store',
+		      description => 'Test that an abort in a store\'d component still generates _some_ output',
+		      component => <<'EOF',
+filter
+
+% my $foo;
+% eval { $m->comp( { store => \$foo }, 'support/abort_test') };
+<% $foo %>
+EOF
+		      expect => <<'EOF',
+filter
+
+Some more text
+
+EOF
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_support( path => '/subrequest2/autohandler',
+			 component => <<'EOF',
+I am the autohandler for <% $m->base_comp->name %>.
+% $m->call_next;
+<%flags>
+inherit => undef
+</%flags>
+EOF
+		       );
+
+#------------------------------------------------------------
+
+    $group->add_support( path => '/subrequest2/bar',
+			 component => <<'EOF',
+I am bar.
+EOF
+		       );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'subreq_exec_order',
+		      path => '/subrequest2/subreq_exec_order',
+		      call_path => '/subrequest2/subreq_exec_order',
+		      description => 'Test that output from a subrequest comes out when we expect it to.',
+		      component => <<'EOF',
+% $m->subexec('/request/subrequest2/bar');
+I am subreq_exec_order.
+EOF
+		      expect => <<'EOF',
+I am the autohandler for subreq_exec_order.
+I am the autohandler for bar.
+I am bar.
+I am subreq_exec_order.
+EOF
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'reexec',
+		      description => 'test that $m cannot be reexecuted',
+		      component => <<'EOF',
+<%init>
+$m->exec;
+</%init>
+EOF
+                      expect_error => qr/Can only call exec\(\) once/,
+                    );
 
 #------------------------------------------------------------
 

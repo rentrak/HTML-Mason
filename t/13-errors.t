@@ -12,7 +12,6 @@ sub make_tests
     my $group = HTML::Mason::Tests->new( name => 'errors',
 					 description => 'Test that errors are generated properly' );
 
-
 #------------------------------------------------------------
 
     $group->add_support( path => '/support/error_helper',
@@ -49,7 +48,7 @@ EOF
 foo
 </%args>
 EOF
-		      expect_error => quotemeta q|unknown type for argument/attribute 'foo': first character must be $, @, or %|
+		      expect_error => qr|Invalid <%args> section line|
 		    );
 
 #------------------------------------------------------------
