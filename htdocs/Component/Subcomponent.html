@@ -32,7 +32,11 @@
 <a HREF="../Component.html">HTML::Mason::Component</a>. Mason uses it to
 implement both subcomponents (defined by <code>&lt;%def&gt;</code>) and methods (defined
 by <code>&lt;%method&gt;</code>).</p>
-<p>A subcomponent gets most of its properties from its owner.</p>
+<p>A subcomponent/method gets most of its properties from its owner. Note
+that the link from the subcomponent to its owner is a weak reference
+(to prevent circular references), so if you grab a subcomponent/method
+object, you should also grab and hold a reference to its owner. If the
+owner goes out of scope, the subcomponent/method object will become unusable.</p>
 <p>
 </p>
 <hr />

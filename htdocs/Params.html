@@ -744,7 +744,9 @@ redirected to <code>$r-&gt;print</code>.</p>
 <li><strong>Belongs to:          <a HREF="Compiler/ToObject.html">HTML::Mason::Compiler::ToObject</a></strong><br />
 </li>
 </ul>
-<p>Text given for this parameter is placed at the end of each component. See also <A HREF="Params.html#preamble">preamble</a>.</p>
+<p>Text given for this parameter is placed at the end of each
+component. See also <A HREF="Params.html#preamble">preamble</a>.  The request will be available as
+<code>$m</code> in postamble code.</p>
 <p>
 </p>
 <h2><A NAME="postprocess_perl">postprocess_perl</a></h2>
@@ -802,7 +804,9 @@ to process the string in-place. See also
 <li><strong>Belongs to:          <a HREF="Compiler/ToObject.html">HTML::Mason::Compiler::ToObject</a></strong><br />
 </li>
 </ul>
-<p>Text given for this parameter is placed at the beginning of each component. See also <A HREF="Params.html#postamble">postamble</a>.</p>
+<p>Text given for this parameter is placed at the beginning of each component,
+but after the execution of any <code>&lt;%once&gt;</code> block. See also
+<A HREF="Params.html#postamble">postamble</a>. The request will be available as <code>$m</code> in preamble code.</p>
 <p>
 </p>
 <h2><A NAME="preloads">preloads</a></h2>

@@ -895,7 +895,9 @@ redirected to C<< $r->print >>.
 
 =back
 
-Text given for this parameter is placed at the end of each component. See also L<preamble|HTML::Mason::Params/preamble>.
+Text given for this parameter is placed at the end of each
+component. See also L<preamble|HTML::Mason::Params/preamble>.  The request will be available as
+C<$m> in postamble code.
 
 
 =head2 postprocess_perl
@@ -971,7 +973,9 @@ L<preprocess|HTML::Mason::Params/preprocess> and L<postprocess_perl|HTML::Mason:
 
 =back
 
-Text given for this parameter is placed at the beginning of each component. See also L<postamble|HTML::Mason::Params/postamble>.
+Text given for this parameter is placed at the beginning of each component,
+but after the execution of any C<< <%once> >> block. See also
+L<postamble|HTML::Mason::Params/postamble>. The request will be available as C<$m> in preamble code.
 
 
 =head2 preloads

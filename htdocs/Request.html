@@ -17,7 +17,8 @@
 	<li><A HREF="#description">DESCRIPTION</a></li>
 	<li><A HREF="#component_paths">COMPONENT PATHS</a></li>
 	<li><A HREF="#parameters_to_the_new___construc">PARAMETERS TO THE <code>new()</code> CONSTRUCTOR</a></li>
-	<li><A HREF="#methods">METHODS</a></li>
+	<li><A HREF="#accessor_methods">ACCESSOR METHODS</a></li>
+	<li><A HREF="#other_methods">OTHER METHODS</a></li>
 	<li><A HREF="#apacheonly_methods">APACHE-ONLY METHODS</a></li>
 	<li><A HREF="#cgionly_methods">CGI-ONLY METHODS</a></li>
 	<li><A HREF="#apache_or_cgionly_methods">APACHE- OR CGI-ONLY METHODS</a></li>
@@ -197,7 +198,17 @@ redirected to <A HREF="#item_print"><code>$r-&gt;print</code></a>.</p>
 <p>
 </p>
 <hr />
-<h1><A NAME="methods">METHODS</a></h1>
+<h1><A NAME="accessor_methods">ACCESSOR METHODS</a></h1>
+<p>All of the above properties have standard accessor methods of the same
+name. In general, no arguments retrieves the value, and one argument
+sets and returns the value.  For example:</p>
+<pre>
+    my $max_recurse_level = $m-&gt;max_recurse;
+    $m-&gt;autoflush(1);</pre>
+<p>
+</p>
+<hr />
+<h1><A NAME="other_methods">OTHER METHODS</a></h1>
 <A NAME="item_abort"></a><dl>
 <dt><strong><A NAME="item_abort">abort ([return value])</a></strong><br />
 </dt>
@@ -572,11 +583,14 @@ Returns the current component object.
 <dt><strong><A NAME="item_decline">decline</a></strong><br />
 </dt>
 <dd>
-Used from a top-level component or dhandler, this method clears the
-output buffer, aborts the current request and restarts with the next
-applicable dhandler up the tree. If no dhandler is available, an error
-occurs.  This method bears no relation to the Apache DECLINED status
-except in name.
+This method allows a dhandler or top-level component to decline to
+handle a request. Mason clears the output buffer and restarts with the
+next applicable dhandler up the tree. If no dhandler is available, a
+``not found'' error occurs.
+</dd>
+<dd>
+<p>This method bears no relation to the Apache DECLINED status except in
+name.</p>
 </dd>
 <A NAME="item_declined"></a><p></p>
 <dt><strong><A NAME="item_declined">declined ([$err])</a></strong><br />

@@ -28,12 +28,15 @@ local $| = 1;
 kill_httpd(1);
 test_load_apache();
 
-my $tests = 20; # multi conf & taint tests
-$tests += 63 if my $have_libapreq = have_module('Apache::Request');
-$tests += 41 if my $have_cgi      = have_module('CGI');
-$tests += 16 if my $have_tmp      = (-d '/tmp' and -w '/tmp');
-$tests++ if $have_cgi && $mod_perl::VERSION >= 1.24;
-$tests++ if my $have_filter = have_module('Apache::Filter');
+my $have_filter = (have_module('Apache::Filter') && Apache::Filter->VERSION >= 1.021 && $mod_perl::VERSION < 1.99);
+
+my $tests = 0;
+$tests += 67 if my $have_libapreq = have_module('Apache::Request');
+$tests++ if $have_libapreq &&     $have_filter;
+$tests += 18 if my $have_tmp      = (-d '/tmp' and -w '/tmp');
+$tests += 18;                     # taint tests
+$tests += 45 if my $have_cgi      = have_module('CGI');
+$tests += 4 ;                     # multi-conf tests
 
 plan( tests => $tests);
 
@@ -41,15 +44,15 @@ print STDERR "\n";
 
 write_test_comps();
 
-if ($have_libapreq) {        # 63 tests
+if ($have_libapreq) {    # 67 (+1?) tests
     cleanup_data_dir();
-    apache_request_tests(1); # 23 tests
+    apache_request_tests(1); # 24 tests
 
     cleanup_data_dir();
-    apache_request_tests(0); # 23 tests
+    apache_request_tests(0); # 25 tests
 
     cleanup_data_dir();
-    no_config_tests();       # 16 tests
+    no_config_tests();       # 18 tests
 
     if ($have_filter) {
         cleanup_data_dir();
@@ -59,18 +62,18 @@ if ($have_libapreq) {        # 63 tests
 
 if ($have_tmp) {
     cleanup_data_dir();
-    single_level_serverroot_tests();  # 16 tests
+    single_level_serverroot_tests();  # 18 tests
 }
 
 cleanup_data_dir();
-taint_tests();           # 16 tests
+taint_tests();           # 18 tests
 
-if ($have_cgi) {             # 41 tests (+ 1?)
+if ($have_cgi) {             # 45 tests
     cleanup_data_dir();
-    cgi_tests(1);            # 22 tests + 1 if mod_perl version > 1.24
+    cgi_tests(1);            # 24 tests
 
     cleanup_data_dir();
-    cgi_tests(0);            # 19 tests
+    cgi_tests(0);            # 21 tests
 }
 
 cleanup_data_dir();
@@ -84,7 +87,7 @@ if ( $> == 0 || $< == 0 )
     chmod 0777, File::Spec->catdir( $ENV{APACHE_DIR}, 'data' );
 }
 
-multi_conf_tests();     # 4 tests
+multi_conf_tests();          # 4 tests
 
 sub write_test_comps
 {
@@ -101,12 +104,12 @@ EOF
     write_comp( 'headers', <<'EOF',
 
 
-% $r->header_out('X-Mason-Test' => 'New value 2');
+% $r->headers_out->{'X-Mason-Test'} = 'New value 2';
 Blah blah
 blah
-% $r->header_out('X-Mason-Test' => 'New value 3');
+% $r->headers_out->{'X-Mason-Test'} = 'New value 3';
 <%init>
-$r->header_out('X-Mason-Test' => 'New value 1');
+$r->headers_out->{'X-Mason-Test'} = 'New value 1';
 $m->abort if $blank;
 </%init>
 <%args>
@@ -134,8 +137,18 @@ EOF
 
     write_comp( 'dhandler/dhandler', <<'EOF',
 I am the dhandler.
+dhandler_arg = <% $m->dhandler_arg %>
 EOF
 	      );
+
+    write_comp( 'dhandler/file', <<'EOF'
+File.
+dhandler_arg = <% $m->dhandler_arg %>
+path_info = <% $r->path_info %>
+EOF
+	      );
+
+    write_comp( 'dhandler/dir/file', '' );
 
     write_comp( 'die', <<'EOF',
 % die 'Mine heart is pierced';
@@ -218,7 +231,7 @@ EOF
 <%init>
 my $x = 1;
 foreach (sort keys %ARGS) {
-  $r->header_out( 'X-Mason-HEAD-Test' . $x++ => "$_: " . (ref $ARGS{$_} ? 'is a ref' : 'not a ref' ) );
+  $r->headers_out->{'X-Mason-HEAD-Test' . $x++} = "$_: " . (ref $ARGS{$_} ? 'is a ref' : 'not a ref' );
 }
 </%init>
 We should never see this.
@@ -226,9 +239,15 @@ EOF
 	      );
 
     write_comp( 'redirect', <<'EOF',
-<%init>
+% $m->print("\n");  # leading whitespace
+
+<%perl>
+$m->scomp('foo');
 $m->redirect('/comps/basic');
-</%init>
+</%perl>
+<%def foo>
+fum
+</%def>
 EOF
 	      );
 
@@ -243,6 +262,7 @@ EOF
 
     write_comp( 'internal_redirect', <<'EOF',
 <%init>
+if ($mod_perl::VERSION >= 1.99) { require Apache::SubRequest; }
 $r->internal_redirect('/comps/internal_redirect_target?foo=17');
 $m->auto_send_headers(0);
 $m->clear_buffer;
@@ -352,8 +372,15 @@ X-Mason-Test: Initial value
 Apache::Request
 Status code: 0
 EOF
+    if ($with_handler)
+    {
+        one_test( 1, '/comps/apache_request', 4, <<'EOF' );
+X-Mason-Test: Initial value
+Status code: 0
+EOF
+    }
 
-    unless ($with_handler)
+    else
     {
         one_test( $with_handler, '/comps/decline_dirs', 0, <<'EOF' );
 X-Mason-Test: Initial value
@@ -611,6 +638,25 @@ method = GET.
 
 Status code: 0
 EOF
+
+    unless ($with_handler) {
+	# the /ah=0/ stuff plays havoc with dhandlers
+	one_test( $with_handler, '/comps/dhandler/file/extra/stuff', 0, <<"EOF" );
+X-Mason-Test: Initial value
+File.
+dhandler_arg = 
+path_info = /extra/stuff
+Status code: 0
+EOF
+
+	one_test( $with_handler, '/comps/dhandler/dir/extra/stuff', 0, <<"EOF" );
+X-Mason-Test: Initial value
+I am the dhandler.
+dhandler_arg = dir/extra/stuff
+Status code: 0
+EOF
+    }
+
 }
 
 sub multi_conf_tests
@@ -645,15 +691,19 @@ EOF
 sub one_test
 {
     my ($with_handler, $fetch, $ah_num, $expect) = @_;
+    my $test_name;
 
     if ( ref $fetch )
     {
         $fetch->{uri} = "/ah=$ah_num$fetch->{uri}" if $with_handler;
+	$test_name = $fetch->{uri};
     }
     else
     {
         $fetch = "/ah=$ah_num$fetch" if $with_handler;
+	$test_name = $fetch;
     }
+    print "# $test_name\n" if $HTML::Mason::Tests::VERBOSE;
 
     my $response = Apache::test->fetch($fetch);
     my $actual = filter_response($response, $with_handler);

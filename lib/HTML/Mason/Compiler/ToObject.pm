@@ -195,6 +195,7 @@ sub compiled_component
 
 	$params->{dynamic_subs_init} =
 	    join '', ( "sub {\n",
+                       $self->_set_request,
 		       $self->_blocks('shared'),
 		       "return {\n",
 		       map( "'$_' => $subs{$_},\n", sort keys %subs ),
@@ -353,9 +354,9 @@ sub _body
 {
     my $self = shift;
 
-    return join '', ( $self->preamble,
-                      $self->_set_request,
-		      $self->_arg_declarations,
+    return join '', ( $self->_set_request,
+		      $self->preamble,
+                      $self->_arg_declarations,
                       $self->_filter,
 		      "\$m->debug_hook( \$m->current_comp->path ) if ( \%DB:: );\n\n",
 		      $self->_blocks('init'),
@@ -611,11 +612,15 @@ historical reasons, this defaults to C<HTML::Mason::Commands>.
 
 =item preamble
 
-Text given for this parameter is placed at the beginning of each component. See also L<postamble|HTML::Mason::Params/postamble>.
+Text given for this parameter is placed at the beginning of each component,
+but after the execution of any C<< <%once> >> block. See also
+L<postamble|HTML::Mason::Params/postamble>. The request will be available as C<$m> in preamble code.
 
 =item postamble
 
-Text given for this parameter is placed at the end of each component. See also L<preamble|HTML::Mason::Params/preamble>.
+Text given for this parameter is placed at the end of each
+component. See also L<preamble|HTML::Mason::Params/preamble>.  The request will be available as
+C<$m> in postamble code.
 
 =item use_strict
 

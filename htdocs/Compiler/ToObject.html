@@ -69,13 +69,17 @@ historical reasons, this defaults to <code>HTML::Mason::Commands</code>.
 <dt><strong><A NAME="item_preamble">preamble</a></strong><br />
 </dt>
 <dd>
-Text given for this parameter is placed at the beginning of each component. See also <A HREF="../Params.html#postamble">postamble</a>.
+Text given for this parameter is placed at the beginning of each component,
+but after the execution of any <code>&lt;%once&gt;</code> block. See also
+<A HREF="../Params.html#postamble">postamble</a>. The request will be available as <code>$m</code> in preamble code.
 </dd>
 <p></p>
 <dt><strong><A NAME="item_postamble">postamble</a></strong><br />
 </dt>
 <dd>
-Text given for this parameter is placed at the end of each component. See also <A HREF="../Params.html#preamble">preamble</a>.
+Text given for this parameter is placed at the end of each
+component. See also <A HREF="../Params.html#preamble">preamble</a>.  The request will be available as
+<code>$m</code> in postamble code.
 </dd>
 <p></p>
 <dt><strong><A NAME="item_use_strict">use_strict</a></strong><br />

@@ -166,7 +166,9 @@ B<% lines>
 Most useful for conditional and loop structures - if, while, foreach,
 , etc. - as well as side-effect commands like assignments. Examples:
 
-o Conditional code
+=over 4
+
+=item * Conditional code
 
     % my $ua = $r->header_in('User-Agent');
     % if ($ua =~ /msie/i) {
@@ -177,34 +179,37 @@ o Conditional code
     ...
     % }
 
-o HTML list formed from array
+=item * HTML list formed from array
 
     <ul>
     % foreach $item (@list) {
-    <li><% $item %>
+    <li><% $item %></li>
     % }
     </ul>
 
-o HTML list formed from hash
+=item * HTML list formed from hash
 
     <ul>
     % while (my ($key,$value) = each(%ENV)) {
     <li>
     <b><% $key %></b>: <% $value %>
+    </li>
     % }
     </ul>
 
-o HTML table formed from list of hashes
+=item * HTML table formed from list of hashes
 
     <table>
     % foreach my $h (@loh) {
     <tr>
     <td><% $h->{foo} %></td>
-    <td bgcolor=#ee0000><% $h->{bar} %></td>
+    <td class="highlight"><% $h->{bar} %></td>
     <td><% $h->{baz} %></td>
     </tr>
     % }
     </table>
+
+=back
 
 B<< <% xxx %> >>
 
@@ -230,10 +235,10 @@ are the request objects.
 
 =head2 Request Objects
 
-Two global per-request objects are available to all components: $r and
-$m.
+Two global per-request objects are available to all components: C<$r> and
+C<$m>.
 
-$r, the mod_perl request object, provides a Perl API to the current
+C<$r>, the mod_perl request object, provides a Perl API to the current
 Apache request.  It is fully described in Apache.pod. Here is a
 sampling of methods useful to component developers:
 
@@ -244,9 +249,9 @@ sampling of methods useful to component developers:
 
     $r->content         # don't use this one! (see Tips and Traps)
 
-$m, the Mason request object, provides an analogous API for
+C<$m>, the Mason request object, provides an analogous API for
 Mason. Almost all Mason features not activated by syntactic tags are
-accessed via $m methods.  You'll be introduced to these methods
+accessed via C<$m> methods.  You'll be introduced to these methods
 throughout this document as they are needed.  For a description of all
 methods see B<L<HTML::Mason::Request|HTML::Mason::Request>>.
 
@@ -260,8 +265,7 @@ Mason provides an object API for components, allowing you to query a
 component's various asociated files, arguments, etc. For a description
 of all methods see
 B<L<HTML::Mason::Component|HTML::Mason::Component>>.  Typically you
-get a handle on a component object from request methods like C<<
-$m->current_comp >> and C<< $m->fetch_comp >>.
+get a handle on a component object from request methods like C<< $m->current_comp >> and C<< $m->fetch_comp >>.
 
 Note that for many basic applications all you'll want to do with
 components is call them, for which no object method is needed. See
@@ -285,7 +289,7 @@ relevant parameter.
 Mason pages often are built not from a single component, but from
 multiple components that call each other in a hierarchical fashion.
 
-=head2 Components that output HTML
+=head2 Components that Output HTML
 
 To call one component from another, use the <& &> tag:
 
@@ -487,17 +491,47 @@ list_items component:
     <% $m->content %>
     % }
 
-=head2 Components that compute values
+=head2 Components that Return Values
 
 So far you have seen components used solely to output HTML.  However,
-components may also be used to compute a value. For example, you might
-have a component C<is_netscape> that analyzes the user agent to
-determine whether it is a Netscape browser:
+components may also be used to return values.
 
-    <%perl>
+While we will demonstrate how this is done, we strongly encourage you
+to put code like this in modules instead.  There are several reasons
+why this is a good idea:
+
+=over 4
+
+=item *
+
+You can re-use this code outside of Mason.
+
+=item *
+
+It is easy to preload module code when running under mod_perl, which
+can lower memory usage.
+
+=item *
+
+Using Mason components as subroutines is slower than just using
+modules to do the same thing.
+
+=item *
+
+It's easier to regression test module code.
+
+=back
+
+With that being said, there are times when you may want to write a
+component which returns a value.
+
+As an example, you might have a component C<is_netscape> that analyzes
+the user agent to determine whether it is a Netscape browser:
+
+    <%init>
     my $ua = $r->header_in('User-Agent');
     return ($ua =~ /Mozilla/i && $ua !~ /MSIE/i) ? 1 : 0;
-    </%perl>
+    </%init>
 
 Because components are implemented underneath with Perl subroutines,
 they can return values and even understand scalar/list
@@ -517,12 +551,12 @@ provide an empty default return value. To return your own value from a
 component, you I<must> use an explicit C<return> statement. You cannot
 rely on the usual Perl trick of letting return values "fall through".
 
-Generally components are divided into two types: those that output
-HTML, and those that return a value. There is very little reason for
-a component to do both. For example, it would not be very friendly
-for C<is_netscape> to output "hi Mom" while it was computing its value,
-thereby surprising the C<if> statement! Conversely, any value returned
-by an HTML component would typically be discarded by the <& &> tag
+While it is possible for a component to generate output B<and> return
+values, there is very little reason for a component to do both. For
+example, it would not be very friendly for C<is_netscape> to output
+"hi Mom" while it was computing its value, thereby surprising the
+C<if> statement! Conversely, any value returned by an output
+generating component would typically be discarded by the <& &> tag
 that invoked it.
 
 =head2 Subrequests
@@ -655,16 +689,14 @@ requests|HTML::Mason::Admin/allowing directory
 requests> section of the administrator's manual.
 
 A component or dhandler that does not want to handle a particular
-request may defer control to the next dhandler by calling C<<
-$m->decline >>.
+request may defer control to the next dhandler by calling C<< $m->decline >>.
 
 When using dhandlers under mod_perl, you may find that sometimes
 Apache will not set a content type for a response.  This usually
 happens when a dhandler handles a request for a non-existent file or
 directory.  You can add a C<< <Location> >> or C<< <LocationMatch> >>
 block containing a C<SetType> directive to your Apache config file, or
-you can just set the content type dynamically by calling C<<
-$r->content_type >>.
+you can just set the content type dynamically by calling C<< $r->content_type >>.
 
 The administrator can customize the file name used for dhandlers with
 the L<dhandler_name|HTML::Mason::Params/dhandler_name> parameter.
@@ -874,7 +906,7 @@ The following examples illustrate the different ways to pass and receive paramet
     query string, there is no detectable difference between a list or
     hash.)
 
-=head2 Using @_ instead
+=head2 Using @_ Instead
 
 If you don't like named parameters, you can pass a traditional
 list of ordered parameters:
@@ -1040,8 +1072,8 @@ In the current implementation, the scope sharing is done with
 closures, so variables will only be shared if they are visible at
 compile-time in the other parts of the component.  In addition, you
 can't rely on the specific destruction time of the shared variables,
-because they may not be destroyed until the first time the C<<
-<%shared> >> section executes in a future request.  C<< <%init> >>
+because they may not be destroyed until the first time the C<< <%shared> >>
+section executes in a future request.  C<< <%init> >>
 offers a more predictable execution and destruction time.
 
 Currently any component with a C<< <%shared> >> section incurs an
@@ -1265,7 +1297,7 @@ C<< </%text> >> itself! When all else fails, use C<< $m->print >>:
 
     % $m->print('The tags are <%text> and </%text>.');
 
-=head2 Escaping expressions
+=head2 Escaping Expressions
 
 Mason has facilities for I<escaping> the output from C<< <% %> >>
 tags, on either a site-wide or a per-expression basis.
@@ -1370,7 +1402,7 @@ method|HTML::Mason::Interp/item_apply_escapes>. e.g.
 
     $m->interp->apply_escapes( 'some html content', 'h' );
 
-=head2 Backslash at end of line
+=head2 Backslash at End of Line
 
 A backslash (\) at the end of a line suppresses the newline. In HTML
 components, this is mostly useful for fixed width areas like C<< <pre> >>
@@ -1668,8 +1700,11 @@ With autoflush off this code will always work.  Turn autoflush on and
 this code will only work as long as F</shared/get_user_cookie> doesn't
 output anything (given its functional nature, it shouldn't).
 
-The administrator can turn off automatic header sending via the
-L<auto_send_headers|HTML::Mason::Params/auto_send_headers> parameter.
+The administrator can change the default automatic header behavior via
+the L<auto_send_headers|HTML::Mason::Params/auto_send_headers> parameter. You can also turn it off on
+individual pages with
+
+    $m->auto_send_headers(0);
 
 =head2 Returning HTTP Status
 
@@ -1824,7 +1859,7 @@ implements them in a shallow way to solve a particular set of
 problems. Future redesigns may incorporate a deeper object
 architecture if the current prototype proves successful.
 
-=head2 Determining inheritance
+=head2 Determining Inheritance
 
 Every component may have a single I<parent>. The default parent is a
 component named C<autohandler> in the closest parent directory.  This
@@ -1844,7 +1879,7 @@ no one.  This is how to suppress templates.
 Currently there is no way to specify a parent dynamically at run-time,
 or to specify multiple parents.
 
-=head2 Content wrapping
+=head2 Content Wrapping
 
 At page execution time, Mason builds a chain of components from the
 called component, its parent, its parent's parent, and so
@@ -1853,7 +1888,7 @@ C<< $m->call_next >> passes control to the next component in the chain.  This
 is the familiar autohandler "wrapping" behavior, generalized for any
 number of arbitrarily named templates.
 
-=head2 Accessing methods and attributes
+=head2 Accessing Methods and Attributes
 
 A template can access methods and/or attributes of the requested
 page. First, use C<< $m->request_comp >> to get a handle on the
@@ -1942,7 +1977,7 @@ questionable attributes:
 
     my $color = $self->attr_if_exists('color'); # if it doesn't exist $color is undef
 
-=head2 Sharing data
+=head2 Sharing Data
 
 A component's main body and its methods occupy separate lexical
 scopes. Variables declared, say, in the C<< <%init> >> section of the main

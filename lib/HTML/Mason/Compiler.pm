@@ -484,8 +484,7 @@ sub component_call
     my $self = shift;
     my %p = @_;
 
-    my $call = $p{call};
-    for ($call) { s/^ +//; s/ +$//; }
+    my ($prespace, $call, $postspace) = ($p{call} =~ /(\s*)(.*)(\s*)/s);
     if ( $call =~ m,^[\w/.],)
     {
 	my $comma = index($call, ',');
@@ -493,8 +492,7 @@ sub component_call
 	(my $comp = substr($call, 0, $comma)) =~ s/\s+$//;
 	$call = "'$comp'" . substr($call, $comma);
     }
-
-    my $code = "\$m->comp( $call );\n";
+    my $code = "\$m->comp( $prespace $call $postspace \n); ";
     eval { $self->postprocess_perl->(\$code) } if $self->postprocess_perl;
     compiler_error $@ if $@;
 

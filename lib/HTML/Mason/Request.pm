@@ -415,7 +415,7 @@ sub make_subrequest
 
     unless ( $params{out_method} )
     {
-	$defaults{out_method} = sub { $self->top_buffer->receive(@_) };
+	$defaults{out_method} = sub { $self->print(@_) };
     }
 
     # Make subrequest, and set parent_request and request_depth appropriately.
@@ -1344,7 +1344,7 @@ subcomponent takes precedence.
 
 =head1 PARAMETERS TO THE new() CONSTRUCTOR
 
-=over 4
+=over
 
 =item autoflush
 
@@ -1451,7 +1451,16 @@ redirected to C<< $r->print >>.
 
 =back
 
-=head1 METHODS
+=head1 ACCESSOR METHODS
+
+All of the above properties have standard accessor methods of the same
+name. In general, no arguments retrieves the value, and one argument
+sets and returns the value.  For example:
+
+    my $max_recurse_level = $m->max_recurse;
+    $m->autoflush(1);
+
+=head1 OTHER METHODS
 
 =over
 
@@ -1798,11 +1807,13 @@ Returns the current component object.
 
 =item decline
 
-Used from a top-level component or dhandler, this method clears the
-output buffer, aborts the current request and restarts with the next
-applicable dhandler up the tree. If no dhandler is available, an error
-occurs.  This method bears no relation to the Apache DECLINED status
-except in name.
+This method allows a dhandler or top-level component to decline to
+handle a request. Mason clears the output buffer and restarts with the
+next applicable dhandler up the tree. If no dhandler is available, a
+"not found" error occurs.
+
+This method bears no relation to the Apache DECLINED status except in
+name.
 
 =for html <a name="item_declined"></a>
 
@@ -2059,7 +2070,7 @@ more details.
 This method is available when Mason is running under either the
 ApacheHandler or CGIHandler modules.
 
-=over 4
+=over
 
 =for html <a name="item_cgi_object"></a>
 
