@@ -5,42 +5,46 @@ available at http://www.masonhq.com/changes.html.
 
 ** denotes an incompatible change
 
+1.015 Tue Apr  3 10:49:07 PDT 2001
+
+    - Fixed incompatibility with mod_perl < 1.21_01, introduced in 1.01.
+    - Added 'use Apache.pm' to ApacheHandler.pm, necessary for some mod_perl installations.
+
 1.01  Tue Mar 27 16:55:46 PST 2001
 
     - Implemented configuration of Mason from httpd.conf via PerlSetVar
-directives.  This removes the need for a handler.pl file in many
-cases.
-.
+      directives.  This removes the need for a handler.pl file in many
+      cases.
     - Revamped ApacheHandler tests to use a real Apache web server and
-mod_perl (assuming this is installed).  This allows for much better
-testing of Mason.  However, the test suite takes a bit longer to run
-as starting and stopping the server can take a second or two each
-time.
+      mod_perl (assuming this is installed).  This allows for much better
+      testing of Mason.  However, the test suite takes a bit longer to run
+      as starting and stopping the server can take a second or two each
+      time.
     - ** Fixed handling of POST requests with query strings via CGI.pm;
-the query string arguments were previously ignored, and are now merged
-with POST arguments. This is an incompatible change only for those
-whose code relied on the arguments missing.
+      the query string arguments were previously ignored, and are now merged
+      with POST arguments. This is an incompatible change only for those
+      whose code relied on the arguments missing.
     - Added basic validation of arguments to Parser, Interp,
-and ApacheHandler constructors.
+      and ApacheHandler constructors.
     - Added interp->die_handler, allowing you to install your own
-subroutine as $SIG{__DIE__} to catch errors during component
-execution.  Alternately, you can simply turn the special error
-handling off.
+      subroutine as $SIG{__DIE__} to catch errors during component
+      execution.  Alternately, you can simply turn the special error
+      handling off.
     - Added interp->use_dhandlers and interp->use_autohandlers, more
-intuitive ways to turn on/off dhandlers and autohandlers.
+      intuitive ways to turn on/off dhandlers and autohandlers.
     - Eliminated interp->verbose_compile_error, which is no longer needed
-and has not worked for some time.
+      and has not worked for some time.
     - Wrapped each component call in eval, allowing us to simplify the
-request stack code.  No visible user change.
+      request stack code.  No visible user change.
     - Documented that you cannot call return() from a <%shared> or <%once>
-section.  (reported by Paolo Campanella)
+      section.  (reported by Paolo Campanella)
     - Fixed documentation of escaped newline behavior.
     - Fixed incorrect code for using mod_perl args method in
-eg/session_handler.pl.
+      eg/session_handler.pl.
 
 1.0  Wed Jan 31 08:56:31 PST 2001
 
-    - Identical to 0.896 except for       version.
+    - Identical to 0.896 except for version.
 
 0.896  Fri Jan  5 15:55:55 PST 2001
 
@@ -533,7 +537,8 @@ eg/session_handler.pl.
     - Added optional system logging of page requests, cache activity,
       component loading
     - Deny directory requests so that index files will work in mod_perl
-      1.16+
+
+1.16+
     - Removed reliance on several external packages (Date::Manip,
       CGI::Base, URI::Escape). This should reduce the amount of memory taken
       up by Mason processes and make Mason easier to install.

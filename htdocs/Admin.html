@@ -221,7 +221,8 @@ and set its permissions according to the web server User/Group.
 
 </A></H1>
 Mason's configuration parameters are set via mod_perl's <CODE>PerlSetVar</CODE>
-and <CODE>PerlAddVar</CODE> directives. Though these parameters are all strings, Mason treats them in
+and <CODE>PerlAddVar</CODE> directives. The latter directive is only available in mod_perl version 1.24
+and greater. Though these parameters are all strings, Mason treats them in
 different ways. The different parameter types are:
 
 
@@ -282,6 +283,12 @@ To set a list parameter, use <CODE>PerlAddVar</CODE> for the values, like this:
 <PRE> PerlAddVar  MasonPreloads  /foo/bar/baz.comp
  PerlAddVar  MasonPreloads  /foo/bar/quux.comp
 </PRE>
+
+<P>
+
+As noted above, <CODE>PerlAddVar</CODE> is only available in mod_perl 1.24 and up. This means that it is only
+possible to assign a single value (using <CODE>PerlSetVar</CODE>) to list parameters if you are using a mod_perl older than 1.24.
+
 
 <P>
 
@@ -700,6 +707,12 @@ permissions to create the data directories.
 To maximize shared memory, you should put your Mason configuration
 directives in the configuration file <STRONG>before</STRONG> you load the
 <CODE>HTML::Mason::ApacheHandler</CODE> module via a <CODE>PerlModule</CODE> directive.
+
+
+<P>
+
+Because certain features were not available in mod_perl before 1.21_01,
+Mason will be less memory efficient when using those older versions.
 
 
 <P>
