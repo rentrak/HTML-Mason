@@ -1,7 +1,6 @@
 #!/usr/bin/perl -w
 
 use strict;
-
 use HTML::Mason::Tests;
 
 my $tests = make_tests();
@@ -373,9 +372,9 @@ once Test
 my $message = "Hello World";
 </%once>
 
-<%perl_init>
+<%init>
 $message .= "!";
-</%perl_init>
+</%init>
 EOF
 		      expect => <<'EOF',
 <HTML>
@@ -427,10 +426,7 @@ perl Test
 </TITLE>
 </HEAD>
 <BODY>
-
-
 Hello World!
-
 How are you?
 </BODY>
 </HTML>
@@ -438,6 +434,8 @@ EOF
 		    );
 
 #------------------------------------------------------------
+
+=pod
 
     $group->add_test( name => 'perl_args',
 		      description => 'tests old <%perl_args> block',
@@ -458,27 +456,23 @@ f: bob=2,joe=1
 EOF
 		    );
 
+=cut
+
 #------------------------------------------------------------
 
     # Carp in 5.6.0 is broken so just skip it
     unless ($] == 5.006)
     {
-	$group->add_test( name => 'omitted args',
+	$group->add_test( name => 'omitted_args',
 			  description => 'tests error message when expect args are not passed',
-			  component => <<'EOF',
-% eval { mc_comp('support/perl_args_test', b=>[17,82,16], c=>{britain=>3, spain=>1}) };
-<& /shared/check_error, error=>$@ &>
-EOF
-			  expect => <<'EOF',
-Error: no value sent for required parameter 'a' 
-
-EOF
+			  component => '<& support/perl_args_test, b=>[17,82,16], c=>{britain=>3, spain=>1} &>',
+			  expect_error => qr{no value sent for required parameter 'a'},
 			);
     }
 
 #------------------------------------------------------------
 
-    $group->add_test( name => 'overridden args',
+    $group->add_test( name => 'overridden_args',
 		      description => 'tests overriding of default args values',
 		      component => <<'EOF',
 <& support/perl_args_test, a=>'fargo', b=>[17,82,16], c=>{britain=>3, spain=>1}, d=>103, e=>['a','b','c'], f=>{ralph=>15, sue=>37} &>
@@ -496,6 +490,8 @@ EOF
 		    );
 
 #------------------------------------------------------------
+
+=pod
 
     $group->add_test( name => 'perl_doc',
 		      description => 'tests old <%perl_doc> section',
@@ -566,6 +562,8 @@ Hello World!
 
 EOF
 		    );
+
+=cut
 
 #------------------------------------------------------------
 
@@ -652,7 +650,6 @@ EOF
 EOF
 		    );
 
-
 #------------------------------------------------------------
 
     $group->add_test( name => 'multiple',
@@ -682,8 +679,8 @@ color=>'Blue'
 </%attr>
 EOF
 		      expect => <<'EOF',
-VAR1 = FOO!
-VAR2 = BAR!
+VAR1 = FOO?
+VAR2 = BAR?
 NAME = JOE
 COLOR = BLUE
 EOF

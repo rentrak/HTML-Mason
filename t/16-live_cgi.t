@@ -1,15 +1,12 @@
 #!/usr/bin/perl -w
 
-# Skip test if no mod_perl
-eval { require mod_perl };
-# need to use it twice to avoid annoying warning
-unless ($mod_perl::VERSION || $mod_perl::VERSION)
+use strict;
+
+unless (-e "$ENV{APACHE_DIR}/CGIHandler.cgi")
 {
     print "1..0\n";
     exit;
 }
-
-use strict;
 
 use vars qw($VERBOSE $DEBUG);
 
@@ -33,36 +30,11 @@ local $| = 1;
 kill_httpd(1);
 test_load_apache();
 
-my $tests = 4; # multi conf tests
-$tests += 42 if my $have_libapreq = have_module('Apache::Request');
-$tests += 32 if my $have_cgi      = have_module('CGI');
-$tests++ if $have_cgi && $mod_perl::VERSION >= 1.24;
-print "1..$tests\n";
+print "1..3\n";
 
 print STDERR "\n";
 
 write_test_comps();
-
-if ($have_libapreq) {        # 42 tests
-    cleanup_data_dir();
-    apache_request_tests(1); # 18 tests
-
-    cleanup_data_dir();
-    apache_request_tests(0); # 13 tests
-
-    cleanup_data_dir();
-    no_config_tests();    # 11 tests
-}
-
-if ($have_cgi) {             # 32 tests
-    cleanup_data_dir();
-    cgi_tests(1);            # 18 tests + 1 if mod_perl version > 1.24
-
-    cleanup_data_dir();
-    cgi_tests(0);            # 14 tests
-}
-
-cleanup_data_dir();
 
 # This is a hack but otherwise the following tests fail if the Apache
 # server runs as any user other than root.  In real life, a user using
@@ -72,17 +44,14 @@ if ( $> == 0 || $< == 0 )
 {
     chmod 0777, "$ENV{APACHE_DIR}/data";
 }
-multi_conf_tests();     # 4 tests
+
+run_tests();
 
 sub write_test_comps
 {
     write_comp( 'basic', <<'EOF',
 Basic test.
 2 + 2 = <% 2 + 2 %>.
-uri = <% $r->uri =~ /basic$/ ? '/basic' : $r->uri %>.
-method = <% $r->method %>.
-
-
 EOF
 	      );
 
@@ -104,7 +73,7 @@ EOF
 	      );
 
     write_comp( 'cgi_object', <<'EOF',
-<% UNIVERSAL::isa(eval { $m->cgi_object } || undef, 'CGI') ? 'CGI' : 'NO CGI' %><% $@ || '' %>
+<% UNIVERSAL::isa(eval { $m->cgi_object }, 'CGI') ? 'CGI' : 'NO CGI' %>
 EOF
 	      );
 
@@ -150,7 +119,7 @@ EOF
 
     write_comp( 'multiconf1/autohandler_test', <<'EOF'
 <%args>
-$autohandler => 'misnamed'
+$autohandler => 'absent'
 </%args>
 autohandler is <% $autohandler %>
 EOF
@@ -245,8 +214,146 @@ sub cleanup_data_dir
     closedir DIR;
 }
 
-sub cgi_tests
+sub run_tests
 {
+    start_httpd();
+
+    {
+	my $path = '/comps/basic';
+	my $response = Apache::test->fetch($path);
+	my $success = HTML::Mason::Tests->check_output( actual => $response->content,
+							expect => <<'EOF',
+Basic test.
+2 + 2 = 4.
+EOF
+						      );
+
+	ok($success);
+    }
+
+    {
+	my $path = '/comps/print';
+	my $response = Apache::test->fetch($path);
+	my $success = HTML::Mason::Tests->check_output( actual => $response->content,
+							expect => <<'EOF',
+This is first.
+This is second.
+This is third.
+EOF
+						      );
+
+	ok($success);
+    }
+
+    {
+	my $path = '/comps/print/autoflush';
+	my $response = Apache::test->fetch($path);
+	my $success = HTML::Mason::Tests->check_output( actual => $response->content,
+							expect => <<'EOF',
+This is first.
+This is second.
+This is third.
+EOF
+						      );
+
+	ok($success);
+    }
+
+    kill_httpd();
+}
+
+sub get_pid {
+    local *PID;
+    open PID, "$ENV{APACHE_DIR}/httpd.pid"
+	or die "Can't open '$ENV{APACHE_DIR}/httpd.pid': $!";
+    my $pid = <PID>;
+    close PID;
+    chomp $pid;
+    return $pid;
+}
+
+sub test_load_apache
+{
+    print STDERR "\nTesting whether Apache can be started\n";
+    start_httpd('');
+    kill_httpd(1);
+}
+
+sub start_httpd
+{
+    my $cmd ="$ENV{APACHE_DIR}/httpd -DCGIHandler -f $ENV{APACHE_DIR}/httpd.conf";
+    print STDERR "Executing $cmd\n";
+    system ($cmd)
+	and die "Can't start httpd server as '$cmd': $!";
+
+    my $x = 0;
+    print STDERR "Waiting for httpd to start.\n";
+    until ( -e 't/httpd.pid' )
+    {
+	sleep (1);
+	$x++;
+	if ( $x > 10 )
+	{
+	    die "No t/httpd.pid file has appeared after 10 seconds.  ",
+		"There is probably a problem with the configuration file that was generated for these tests.";
+	}
+    }
+}
+
+sub kill_httpd
+{
+    my $wait = shift;
+    return unless -e "$ENV{APACHE_DIR}/httpd.pid";
+    my $pid = get_pid();
+
+    print STDERR "Killing httpd process ($pid)\n";
+    my $result = kill 'TERM', $pid;
+    if ( ! $result and $! =~ /no such (?:file|proc)/i )
+    {
+	# Looks like apache wasn't running, so we're done
+	unlink "$ENV{APACHE_DIR}/httpd.pid" or warn "Couldn't remove '$ENV{APACHE_DIR}/httpd.pid': $!";
+	return;
+    }
+    die "Can't kill process $pid: $!" if !$result;
+
+    if ($wait)
+    {
+	print STDERR "Waiting for httpd to shut down\n";
+	my $x = 0;
+	while ( -e "$ENV{APACHE_DIR}/httpd.pid" )
+	{
+	    sleep (1);
+	    $x++;
+	    if ( $x > 10 )
+	    {
+		my $result = kill 'TERM', $pid;
+		if ( ! $result and $! =~ /no such (?:file|proc)/i )
+		{
+		    # Looks like apache wasn't running, so we're done
+		    unlink "$ENV{APACHE_DIR}/httpd.pid" or warn "Couldn't remove '$ENV{APACHE_DIR}/httpd.pid': $!";
+		    return;
+		}
+		else
+		{
+		    die "$ENV{APACHE_DIR}/httpd.pid file still exists after 10 seconds.  Exiting.";
+		}
+	    }
+	}
+    }
+}
+
+use vars qw($TESTS);
+
+sub ok
+{
+    my $ok = !!shift;
+    print $ok ? 'ok ' : 'not ok ';
+    print ++$TESTS, "\n";
+}
+
+
+__END__
+
     my $with_handler = shift;
 
     my $def = $with_handler ? 'CGI' : 'CGI_no_handler';
@@ -306,18 +413,6 @@ EOF
 
     ok($success);
 
-    kill_httpd(1);
-}
-
-sub apache_request_tests
-{
-    my $with_handler = shift;
-
-    my $def = $with_handler ? 'mod_perl' : 'mod_perl_no_handler';
-    start_httpd($def);
-
-    standard_tests($with_handler);
-
     my $path = '/comps/apache_request';
     $path = "/ah=0$path" if $with_handler;
 
@@ -346,28 +441,12 @@ EOF
 	ok($success);
     }
 
-    kill_httpd(1);
-}
-
-sub no_config_tests
-{
-    start_httpd('no_config');
-
-    standard_tests(0);
-
-    kill_httpd(1);
-}
-
-sub standard_tests
-{
-    my $with_handler = shift;
-
-    my $path = '/comps/basic';
+    $path = '/comps/basic';
     $path = "/ah=0$path" if $with_handler;
 
-    my $response = Apache::test->fetch($path);
-    my $actual = filter_response($response, $with_handler);
-    my $success = HTML::Mason::Tests->check_output( actual => $actual,
+    $response = Apache::test->fetch($path);
+    $actual = filter_response($response, $with_handler);
+    $success = HTML::Mason::Tests->check_output( actual => $actual,
 						    expect => <<'EOF',
 X-Mason-Test: Initial value
 Basic test.
@@ -467,7 +546,7 @@ EOF
     if ($with_handler)
     {
 	# error_mode is fatal so we just get a 500
-	$response = Apache::test->fetch( "/ah=3/comps/die" );
+	$response = Apache::test->fetch( "/ah=4/comps/die" );
 	$actual = filter_response($response, $with_handler);
 	ok( $actual =~ m|500 Internal Server Error|,
 	    "die should have generated 500 error" );
@@ -631,183 +710,3 @@ EOF
 						   );
 	ok($success);
     }
-}
-
-sub multi_conf_tests
-{
-    start_httpd('multi_config');
-
-    my $response = Apache::test->fetch('/comps/multiconf1/foo');
-    my $actual = filter_response($response, 0);
-    my $success = HTML::Mason::Tests->check_output( actual => $actual,
-						    expect => <<'EOF',
-X-Mason-Test: Initial value
-I am foo in multiconf1
-comp root is multiconf1
-Status code: 0
-EOF
-						  );
-    ok($success);
-
-    $response = Apache::test->fetch('/comps/multiconf1/autohandler_test');
-    $actual = filter_response($response, 0);
-    $success = HTML::Mason::Tests->check_output( actual => $actual,
-						 expect => <<'EOF',
-X-Mason-Test: Initial value
-autohandler is misnamed
-Status code: 0
-EOF
-						  );
-    ok($success);
-
-    $response = Apache::test->fetch('/comps/multiconf2/foo');
-    $actual = filter_response($response, 0);
-    $success = HTML::Mason::Tests->check_output( actual => $actual,
-						 expect => <<'EOF',
-X-Mason-Test: Initial value
-I am foo in multiconf2
-comp root is multiconf2
-Status code: 0
-EOF
-					       );
-    ok($success);
-
-    $response = Apache::test->fetch('/comps/multiconf2/dhandler_test');
-    $actual = filter_response($response, 0);
-    ok( $actual =~ /404 not found/i,
-	"Attempt to request a non-existent component should not work with incorrect dhandler_name" );
-
-    kill_httpd(1);
-}
-
-# We're not interested in headers that are always going to be
-# different (like date or server type).
-sub filter_response
-{
-    my $response = shift;
-
-    my $with_handler = shift;
-
-    # because the header or content may be undef
-    local $^W = 0;
-    my $actual = ( 'X-Mason-Test: ' .
-		   # hack until I make a separate test
-		   # suite for the httpd.conf configuration
-		   # stuff
-		   ( $with_handler ?
-		     $response->headers->header('X-Mason-Test') :
-		     ( $response->headers->header('X-Mason-Test') ?
-		       $response->headers->header('X-Mason-Test') :
-		       'Initial value' ) ) );
-    $actual .= "\n";
-
-    # Any headers starting with X-Mason are added, excluding X-Mason-Test, which is handled above
-    my @headers;
-    $response->headers->scan( sub { return if $_[0] eq 'X-Mason-Test' || $_[0] !~ /^X-Mason/;
-				    push @headers, [ $_[0], "$_[0]: $_[1]\n" ] } );
-
-    foreach my $h ( sort { $a->[0] cmp $b->[0] } @headers )
-    {
-	$actual .= $h->[1];
-    }
-
-    $actual .= $response->content;
-
-    my $code = $response->code == 200 ? 0 : $response->code;
-    $actual .= "Status code: $code" unless $with_handler;
-
-    return $actual;
-}
-
-sub get_pid {
-    local *PID;
-    open PID, "$ENV{APACHE_DIR}/httpd.pid"
-	or die "Can't open '$ENV{APACHE_DIR}/httpd.pid': $!";
-    my $pid = <PID>;
-    close PID;
-    chomp $pid;
-    return $pid;
-}
-
-sub test_load_apache
-{
-    print STDERR "\nTesting whether Apache can be started\n";
-    start_httpd('');
-    kill_httpd(1);
-}
-
-sub start_httpd
-{
-    my $def = shift;
-    $def = "-D$def" if $def;
-
-    my $cmd ="$ENV{APACHE_DIR}/httpd $def -f $ENV{APACHE_DIR}/httpd.conf";
-    print STDERR "Executing $cmd\n";
-    system ($cmd)
-	and die "Can't start httpd server as '$cmd': $!";
-
-    my $x = 0;
-    print STDERR "Waiting for httpd to start.\n";
-    until ( -e 't/httpd.pid' )
-    {
-	sleep (1);
-	$x++;
-	if ( $x > 10 )
-	{
-	    die "No t/httpd.pid file has appeared after 10 seconds.  ",
-		"There is probably a problem with the configuration file that was generated for these tests.";
-	}
-    }
-}
-
-sub kill_httpd
-{
-    my $wait = shift;
-    return unless -e "$ENV{APACHE_DIR}/httpd.pid";
-    my $pid = get_pid();
-
-    print STDERR "Killing httpd process ($pid)\n";
-    my $result = kill 'TERM', $pid;
-    if ( ! $result and $! =~ /no such (?:file|proc)/i )
-    {
-	# Looks like apache wasn't running, so we're done
-	unlink "$ENV{APACHE_DIR}/httpd.pid" or warn "Couldn't remove '$ENV{APACHE_DIR}/httpd.pid': $!";
-	return;
-    }
-    die "Can't kill process $pid: $!" if !$result;
-
-    if ($wait)
-    {
-	print STDERR "Waiting for httpd to shut down\n";
-	my $x = 0;
-	while ( -e "$ENV{APACHE_DIR}/httpd.pid" )
-	{
-	    sleep (1);
-	    $x++;
-	    if ( $x > 10 )
-	    {
-		my $result = kill 'TERM', $pid;
-		if ( ! $result and $! =~ /no such (?:file|proc)/i )
-		{
-		    # Looks like apache wasn't running, so we're done
-		    unlink "$ENV{APACHE_DIR}/httpd.pid" or warn "Couldn't remove '$ENV{APACHE_DIR}/httpd.pid': $!";
-		    return;
-		}
-		else
-		{
-		    die "$ENV{APACHE_DIR}/httpd.pid file still exists after 10 seconds.  Exiting.";
-		}
-	    }
-	}
-    }
-}
-
-use vars qw($TESTS);
-
-sub ok
-{
-    my $ok = !!shift;
-    print $ok ? 'ok ' : 'not ok ';
-    print ++$TESTS, "\n";
-}
-
