@@ -1,19 +1,111 @@
-# http://module-build.sourceforge.net/META-spec.html
-#XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
-name:         HTML-Mason
-version:      1.28
-version_from: lib/HTML/Mason.pm
-installdirs:  site
+--- #YAML:1.0
+name: HTML-Mason
+version: 1.29_01
+author: ~
+abstract: |-
+  High-performance, dynamic web site authoring system
+license: perl
 requires:
-    Apache::Request:               0.32
-    Cache::Cache:                  1
-    CGI:                           2.46
-    Class::Container:              0.07
-    Exception::Class:              1.14
-    File::Spec:                    0.8
-    Params::Validate:              0.7
-    Scalar::Util:                  1.01
-    Test::More:                    0
-
-distribution_type: module
-generated_by: ExtUtils::MakeMaker version 6.17
+  Apache::Request: 0.32
+  CGI: 2.46
+  Cache::Cache: 1
+  Class::Container: 0.07
+  Exception::Class: 1.15
+  File::Spec: 0.8
+  Params::Validate: 0.7
+  Scalar::Util: 1.01
+  mod_perl: 1.24
+build_requires:
+  Test: 0
+  Test::Builder: 0
+provides:
+  Apache::Mason:
+    file: lib/Apache/Mason.pm
+    version: 0.4
+  Bundle::HTML::Mason:
+    file: lib/Bundle/HTML/Mason.pm
+    version: 0.09
+  HTML::Mason:
+    file: lib/HTML/Mason.pm
+    version: 1.29_01
+  HTML::Mason::ApacheHandler:
+    file: lib/HTML/Mason/ApacheHandler.pm
+  HTML::Mason::CGIHandler:
+    file: lib/HTML/Mason/CGIHandler.pm
+    version: 1.00
+  HTML::Mason::Cache::BaseCache:
+    file: lib/HTML/Mason/Cache/BaseCache.pm
+  HTML::Mason::Compiler:
+    file: lib/HTML/Mason/Compiler.pm
+  HTML::Mason::Compiler::ToObject:
+    file: lib/HTML/Mason/Compiler/ToObject.pm
+  HTML::Mason::Component:
+    file: lib/HTML/Mason/Component.pm
+  HTML::Mason::Component::FileBased:
+    file: lib/HTML/Mason/Component/FileBased.pm
+  HTML::Mason::Component::Subcomponent:
+    file: lib/HTML/Mason/Component/Subcomponent.pm
+  HTML::Mason::ComponentSource:
+    file: lib/HTML/Mason/ComponentSource.pm
+  HTML::Mason::Escapes:
+    file: lib/HTML/Mason/Escapes.pm
+  HTML::Mason::Exception:
+    file: lib/HTML/Mason/Exceptions.pm
+    version: 1.43
+  HTML::Mason::Exception::Compilation:
+    file: lib/HTML/Mason/Exceptions.pm
+    version: 1.43
+  HTML::Mason::Exception::Syntax:
+    file: lib/HTML/Mason/Exceptions.pm
+    version: 1.43
+  HTML::Mason::Exceptions:
+    file: lib/HTML/Mason/Exceptions.pm
+    version: 1.43
+  HTML::Mason::FakeApache:
+    file: lib/HTML/Mason/FakeApache.pm
+  HTML::Mason::FakeTable:
+    file: lib/HTML/Mason/FakeApache.pm
+  HTML::Mason::FakeTableHash:
+    file: lib/HTML/Mason/FakeApache.pm
+  HTML::Mason::Handler:
+    file: lib/HTML/Mason/Handler.pm
+  HTML::Mason::Interp:
+    file: lib/HTML/Mason/Interp.pm
+  HTML::Mason::Lexer:
+    file: lib/HTML/Mason/Lexer.pm
+  HTML::Mason::MethodMaker:
+    file: lib/HTML/Mason/MethodMaker.pm
+  HTML::Mason::Plugin:
+    file: lib/HTML/Mason/Plugin.pm
+  HTML::Mason::Plugin::Context:
+    file: lib/HTML/Mason/Plugin/Context.pm
+  HTML::Mason::Plugin::Context::EndComponent:
+    file: lib/HTML/Mason/Plugin/Context.pm
+  HTML::Mason::Plugin::Context::EndRequest:
+    file: lib/HTML/Mason/Plugin/Context.pm
+  HTML::Mason::Plugin::Context::StartComponent:
+    file: lib/HTML/Mason/Plugin/Context.pm
+  HTML::Mason::Plugin::Context::StartRequest:
+    file: lib/HTML/Mason/Plugin/Context.pm
+  HTML::Mason::Request:
+    file: lib/HTML/Mason/Request.pm
+  HTML::Mason::Request::ApacheHandler:
+    file: lib/HTML/Mason/ApacheHandler.pm
+  HTML::Mason::Request::CGI:
+    file: lib/HTML/Mason/CGIHandler.pm
+    version: 1.00
+  HTML::Mason::Resolver:
+    file: lib/HTML/Mason/Resolver.pm
+  HTML::Mason::Resolver::File:
+    file: lib/HTML/Mason/Resolver/File.pm
+  HTML::Mason::Resolver::Null:
+    file: lib/HTML/Mason/Resolver/Null.pm
+  HTML::Mason::Tests:
+    file: lib/HTML/Mason/Tests.pm
+  HTML::Mason::Tools:
+    file: lib/HTML/Mason/Tools.pm
+  HTML::Mason::Utils:
+    file: lib/HTML/Mason/Utils.pm
+  Tie::Handle::Mason:
+    file: lib/HTML/Mason/Request.pm
+generated_by: Module::Build version 0.2607

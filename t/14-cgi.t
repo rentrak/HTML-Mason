@@ -104,15 +104,11 @@ $group->add_test( name => 'fatal_error',
 		  expect_error => qr/dead at .+/,
 		);
 
-#------------------------------------------------------------
-
 $group->add_test( name => 'headers',
 		  description => 'Test header generation',
 		  component => q{% $r->header_out('foo' => 'bar');},
 		  expect    => qr/Foo: bar/i,
 		);
-
-#------------------------------------------------------------
 
 $group->add_test( name => 'redirect_headers',
 		  description => 'Test header generation',

@@ -1,16 +1,16 @@
-# Copyright (c) 1998-2003 by Jonathan Swartz. All rights reserved.
+# Copyright (c) 1998-2005 by Jonathan Swartz. All rights reserved.
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
 package HTML::Mason::Compiler;
 
 use strict;
-
+use Data::Dumper;
 use HTML::Mason::Component::FileBased;
 use HTML::Mason::Component::Subcomponent;
-use HTML::Mason::Lexer;
-
 use HTML::Mason::Exceptions( abbr => [qw(param_error compiler_error syntax_error)] );
+use HTML::Mason::Lexer;
+use HTML::Mason::Tools qw(checksum);
 use Params::Validate qw(:all);
 Params::Validate::validation_options( on_fail => sub { param_error join '', @_ } );
 
@@ -28,6 +28,10 @@ BEGIN
 	 default_escape_flags =>
          { parse => 'string', type => SCALAR|ARRAYREF, default => [],
            descr => "Escape flags that will apply by default to all Mason tag output" },
+
+	 enable_autoflush =>
+	 { parse => 'boolean', type => SCALAR, default => 1,
+	   descr => "Whether to include support for autoflush when compiling components" },
 
 	 lexer =>
          { isa => 'HTML::Mason::Lexer',
@@ -54,18 +58,30 @@ BEGIN
         ( lexer => { class => 'HTML::Mason::Lexer',
                      descr => "This class generates compiler events based on the components source" },
         );
+
+    # Define an IN_PERL_DB compile-time constant indicating whether we are
+    # in the Perl debugger. This is used in the object file to
+    # determine whether to call $m->debug_hook.
+    #
+    if (defined($DB::sub)) {
+	*IN_PERL_DB = sub () { 1 };
+    } else {
+	*IN_PERL_DB = sub () { 0 };
+    }
 }
 
 use HTML::Mason::MethodMaker
-    ( read_write => [ map { [ $_ => __PACKAGE__->validation_spec->{$_} ] }
-                      qw( lexer
-                          preprocess
-                          postprocess_perl
-                          postprocess_text
-			  use_source_line_numbers
-                        )
+    ( read_only => [qw(
+		       enable_autoflush
+		       lexer
+		       object_id
+		       preprocess
+		       postprocess_perl
+		       postprocess_text
+		       use_source_line_numbers
+		       )
 		    ],
-    );
+      );
 
 my $old_escape_re = qr/^[hnu]+$/;
 
@@ -80,10 +96,14 @@ sub new
     # Verify the validity of the global names
     $self->allow_globals( @{$self->{allow_globals}} );
 
+    # Compute object_id once, on the assumption that all of compiler's
+    # and lexer's parameters are read-only.
+    $self->compute_object_id;
+    
     return $self;
 }
 
-sub object_id
+sub compute_object_id
 {
     my $self = shift;
 
@@ -91,33 +111,16 @@ sub object_id
     # time the program is loaded, whether they are a reference to the
     # same object or not.
     my $spec = $self->validation_spec;
-
     my @id_keys =
 	( grep { ! exists $spec->{$_}{isa} && ! exists $spec->{$_}{can} }
 	  grep { $_ ne 'container' } keys %$spec );
 
-    my @vals;
-    foreach my $k ( @id_keys )
-    {
-	push @vals, $k;
-
-	# For coderef params we simply indicate whether or not it is
-	# present.  This is better than simply ignoring them but not
-	# by much.  We _could_ use B::Deparse's coderef2text method to
-	# do this properly but I'm not sure if that's a good idea or
-	# if it works for Perl 5.005.
-	push @vals,
-            $HTML::Mason::VERSION,
-            ( $spec->{$k}{parse} eq 'code'  ? ( $self->{$k} ? 1 : 0 ) :
-              UNIVERSAL::isa( $self->{$k}, 'HASH' )  ?
-              map { $_ => $self->{$k}{$_} } sort keys %{ $self->{$k} } :
-              UNIVERSAL::isa( $self->{$k}, 'ARRAY' ) ? sort @{ $self->{$k} } :
-              $self->{$k} );
+    my @vals = ('HTML::Mason::VERSION', $HTML::Mason::VERSION);
+    foreach my $k ( @id_keys ) {
+	push @vals, $k, $self->{$k};
     }
-
-    local $^W; # ignore undef warnings
-    # unpack('%32C*', $x) computes the 32-bit checksum of $x
-    return join '!', $self->lexer->object_id, unpack('%32C*', join "\0", @vals);
+    my $dumped_vals = Data::Dumper->new(\@vals)->Indent(0)->Dump;
+    $self->{object_id} = checksum($dumped_vals);
 }
 
 my %top_level_only_block = map { $_ => 1 } qw( cleanup once shared );
@@ -320,9 +323,13 @@ sub text
     eval { $self->postprocess_text->($tref) } if $self->postprocess_text;
     compiler_error $@ if $@;
 
-    $$tref =~ s,(['\\]),\\$1,g;
+    $$tref =~ s,([\'\\]),\\$1,g;
 
-    $self->_add_body_code("\$m->print( '", $$tref, "' );\n");
+    if ($self->enable_autoflush) {
+	$self->_add_body_code("\$m->print( '", $$tref, "' );\n");
+    } else {
+        $self->_add_body_code("\$\$_outbuf .= '", $$tref, "';\n");
+    }
 
     $self->{current_compile}{last_body_code_type} = 'text';
 }
@@ -360,11 +367,11 @@ sub variable_declaration
         if grep { "$_->{type}$_->{name}" eq $arg } @{ $self->{current_compile}{args} };
 
     push @{ $self->{current_compile}{args} }, { type => $p{type},
-                                                name => $p{name},
-                                                default => $p{default},
-                                                line => $self->lexer->line_number,
-                                                file => $self->lexer->name,
-                                              };
+					     name => $p{name},
+					     default => $p{default},
+					     line => $self->lexer->line_number,
+					     file => $self->lexer->name,
+					   };
 }
 
 sub key_value_pair
@@ -406,7 +413,7 @@ sub start_named_block
     # Error if def and method defined with same name
     my $other_type = $p{block_type} eq 'def' ? 'method' : 'def';
     $self->lexer->throw_syntax_error
-        ("Cannot define a method and subcomponent with the same name ($p{name}")
+        ("Cannot define a method and subcomponent with the same name ($p{name})")
             if exists $c->{$other_type}{ $p{name} };
 
     $c->{in_main}--;
@@ -433,6 +440,20 @@ sub substitution
     my %p = @_;
 
     my $text = $p{substitution};
+
+    # This is a comment tag if all lines of text contain only whitespace
+    # or start with whitespace and a comment marker, e.g.
+    #
+    #   <%
+    #     #
+    #     # foo
+    #   %>
+    #
+    my @lines = split(/\n/, $text);
+    unless (grep { /^\s*[^\s\#]/ } @lines) {
+	$self->{current_compile}{last_body_code_type} = 'substitution';
+	return;
+    }
 
     if ( ( exists $p{escape} && defined $p{escape} ) ||
          @{ $self->{default_escape_flags} }
@@ -469,7 +490,15 @@ sub substitution
         $text = "\$m->interp->apply_escapes( (join '', ($text)), $flags )" if $flags;
     }
 
-    my $code = "\$m->print( $text );\n";
+    my $code;
+
+    # Make sure to allow lists within <% %> tags.
+    #
+    if ($self->enable_autoflush) {
+	$code = "\$m->print( $text );\n";
+    } else {
+	$code = "for ($text) { \$\$_outbuf .= \$_ }\n";
+    }
 
     eval { $self->postprocess_perl->(\$code) } if $self->postprocess_perl;
     compiler_error $@ if $@;
@@ -512,6 +541,7 @@ sub component_content_call
     push @{ $c->{comp_with_content_stack} }, $call;
 
     my $code = "\$m->comp( { content => sub {\n";
+    $code .= $self->_set_buffer();
 
     eval { $self->postprocess_perl->(\$code) } if $self->postprocess_perl;
     compiler_error $@ if $@;
@@ -525,18 +555,33 @@ sub component_content_call_end
 {
     my $self = shift;
     my $c = $self->{current_compile};
+    my %p = @_;
 
-    $self->lexer->throw_syntax_error("found component with content ending tag but no beginning tag")
+    $self->lexer->throw_syntax_error("Found component with content ending tag but no beginning tag")
 	unless @{ $c->{comp_with_content_stack} };
 
     my $call = pop @{ $c->{comp_with_content_stack} };
+    my $call_end = $p{call_end};
+    for ($call_end) { s/^\s+//; s/\s+$//; }
 
+    my $comp = undef;
     if ( $call =~ m,^[\w/.],)
     {
 	my $comma = index($call, ',');
 	$comma = length $call if $comma == -1;
-	(my $comp = substr($call, 0, $comma)) =~ s/\s+$//;
+	($comp = substr($call, 0, $comma)) =~ s/\s+$//;
 	$call = "'$comp'" . substr($call, $comma);
+    }
+    if ($call_end) {
+	if ($call_end !~ m,^[\w/.],) {
+	    $self->lexer->throw_syntax_error("Cannot use an expression inside component with content ending tag; use a bare component name or </&> instead");
+	}
+	if (!defined($comp)) {
+	    $self->lexer->throw_syntax_error("Cannot match an expression as a component name; use </&> instead");
+	}
+	if ($call_end ne $comp) {
+	    $self->lexer->throw_syntax_error("Component name in ending tag ($call_end) does not match component name in beginning tag ($comp)");
+	}
     }
 
     my $code = "} }, $call\n );\n";
@@ -691,6 +736,13 @@ basis; see the L<escaping expressions|HTML::Mason::Devel/escaping expressions> s
 If you want to set I<multiple> flags as the default, this should be
 given as a reference to an array of flags.
 
+=item enable_autoflush
+
+True or false, default is true. Indicates whether components are
+compiled with support for L<autoflush|HTML::Mason::Params/autoflush>. The component can be compiled
+to a more efficient form if it does not have to check for autoflush
+mode, so you should set this to 0 if you can.
+
 =item lexer
 
 The Lexer object to associate with this Compiler. By default a new
@@ -738,6 +790,16 @@ may be more appropriate for in-depth debugging sessions.
 
 =back
 
+=head1 ACCESSOR METHODS
+
+All of the above properties have read-only accessor methods of the
+same name.
+
+You cannot change any property of a compiler after it has been created
+- among other things, this would potentially invalidate any existing
+cached component objects or object files. Your best bet is to create
+different compiler objects and load them into different interpreters.
+
 =head1 METHODS
 
 There are several methods besides the compilation callbacks below that
@@ -752,9 +814,8 @@ The "comp_class" parameter may be ignored by the compiler.
 =item object_id
 
 This method should return a unique id for the given compiler object.
-This is used by the interpreter when loading previously compiled
-objects in order to determine whether or not the object should be
-re-compiled.
+This is used by the interpreter when determining the object directory,
+for example.
 
 =back
 
@@ -870,6 +931,14 @@ because these calls don't have ending tags.
 Called by the Lexer when it encounters a C<%>-line.
 
 =back
+
+=head1 SUBCLASSING
+
+We recommend that any parameters you add to Compiler be read-only,
+because the compiler object_id is only computed once on creation
+and would not reflect any changes to Lexer parameters.
+
+=cut
 
 =head1 SEE ALSO
 

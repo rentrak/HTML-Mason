@@ -33,7 +33,7 @@
 	<li><A HREF="#calling_components">CALLING COMPONENTS</a></li>
 	<ul>
 
-		<li><A HREF="#components_that_output_html">Components that Output HTML</a></li>
+		<li><A HREF="#components_that_output_html">Components that output HTML</a></li>
 		<li><A HREF="#component_calls_with_content">Component Calls with Content</a></li>
 		<li><A HREF="#advanced_components_calls_with_c">Advanced Components Calls with Content</a></li>
 		<li><A HREF="#components_that_return_values">Components that Return Values</a></li>
@@ -55,7 +55,7 @@
 		<li><A HREF="#in_http_requests">In HTTP requests</a></li>
 		<li><A HREF="#accessing_parameters">Accessing Parameters</a></li>
 		<li><A HREF="#parameter_passing_examples">Parameter Passing Examples</a></li>
-		<li><A HREF="#using____instead">Using @_ Instead</a></li>
+		<li><A HREF="#using____instead">Using @_ instead</a></li>
 	</ul>
 
 	<li><A HREF="#initialization_and_cleanup">INITIALIZATION AND CLEANUP</a></li>
@@ -87,19 +87,28 @@
 		<li><A HREF="#__filter__section">&lt;%filter&gt; section</a></li>
 	</ul>
 
-	<li><A HREF="#other_syntax">OTHER SYNTAX</a></li>
+	<li><A HREF="#comment_markers">COMMENT MARKERS</a></li>
 	<ul>
 
 		<li><A HREF="#__doc_">&lt;%doc&gt;</a></li>
+		<li><A HREF="#_____comment______">&lt;% # comment... %&gt;</a></li>
+		<li><A HREF="#___comment">%# comment</a></li>
+		<li><A HREF="#__if__0_____">% if (0) { }</a></li>
+		<li><A HREF="#html_xml_____comments">HTML/XML/... comments</a></li>
+	</ul>
+
+	<li><A HREF="#other_syntax">OTHER SYNTAX</a></li>
+	<ul>
+
 		<li><A HREF="#__text_">&lt;%text&gt;</a></li>
-		<li><A HREF="#escaping_expressions">Escaping Expressions</a></li>
+		<li><A HREF="#escaping_expressions">Escaping expressions</a></li>
 		<ul>
 
 			<li><A HREF="#userdefined_escapes">User-defined Escapes</a></li>
 			<li><A HREF="#manually_applying_escapes">Manually applying escapes</a></li>
 		</ul>
 
-		<li><A HREF="#backslash_at_end_of_line">Backslash at End of Line</a></li>
+		<li><A HREF="#backslash_at_end_of_line">Backslash at end of line</a></li>
 	</ul>
 
 	<li><A HREF="#data_caching">DATA CACHING</a></li>
@@ -134,10 +143,10 @@
 	<li><A HREF="#objectoriented_techniques">OBJECT-ORIENTED TECHNIQUES</a></li>
 	<ul>
 
-		<li><A HREF="#determining_inheritance">Determining Inheritance</a></li>
-		<li><A HREF="#content_wrapping">Content Wrapping</a></li>
-		<li><A HREF="#accessing_methods_and_attributes">Accessing Methods and Attributes</a></li>
-		<li><A HREF="#sharing_data">Sharing Data</a></li>
+		<li><A HREF="#determining_inheritance">Determining inheritance</a></li>
+		<li><A HREF="#content_wrapping">Content wrapping</a></li>
+		<li><A HREF="#accessing_methods_and_attributes">Accessing methods and attributes</a></li>
+		<li><A HREF="#sharing_data">Sharing data</a></li>
 		<li><A HREF="#example">Example</a></li>
 	</ul>
 
@@ -287,10 +296,9 @@ another.</p>
 <h2><A NAME="examples_and_recommended_usage">Examples and Recommended Usage</a></h2>
 <p><strong>% lines</strong></p>
 <p>Most useful for conditional and loop structures - if, while, foreach,
-, etc. - as well as side-effect commands like assignments. Examples:</p>
-<ul>
-<li><strong><A NAME="item_conditional_code">Conditional code</a></strong><br />
-</li>
+, etc. - as well as side-effect commands like assignments. To improve
+readability, always put a space after the '%'. Examples:</p>
+<p>o Conditional code</p>
 <pre>
     % my $ua = $r-&gt;header_in('User-Agent');
     % if ($ua =~ /msie/i) {
@@ -300,40 +308,36 @@ another.</p>
     Welcome, Netscape users
     ...
     % }</pre>
-<li><strong><A NAME="item_html_list_formed_from_array">HTML list formed from array</a></strong><br />
-</li>
+<p>o HTML list formed from array</p>
 <pre>
     &lt;ul&gt;
     % foreach $item (@list) {
-    &lt;li&gt;&lt;% $item %&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;% $item %&gt;
     % }
     &lt;/ul&gt;</pre>
-<li><strong><A NAME="item_html_list_formed_from_hash">HTML list formed from hash</a></strong><br />
-</li>
+<p>o HTML list formed from hash</p>
 <pre>
     &lt;ul&gt;
     % while (my ($key,$value) = each(%ENV)) {
     &lt;li&gt;
     &lt;b&gt;&lt;% $key %&gt;&lt;/b&gt;: &lt;% $value %&gt;
-    &lt;/li&gt;
     % }
     &lt;/ul&gt;</pre>
-<li><strong><A NAME="item_html_table_formed_from_list">HTML table formed from list of hashes</a></strong><br />
-</li>
+<p>o HTML table formed from list of hashes</p>
 <pre>
     &lt;table&gt;
     % foreach my $h (@loh) {
     &lt;tr&gt;
     &lt;td&gt;&lt;% $h-&gt;{foo} %&gt;&lt;/td&gt;
-    &lt;td class=&quot;highlight&quot;&gt;&lt;% $h-&gt;{bar} %&gt;&lt;/td&gt;
+    &lt;td bgcolor=#ee0000&gt;&lt;% $h-&gt;{bar} %&gt;&lt;/td&gt;
     &lt;td&gt;&lt;% $h-&gt;{baz} %&gt;&lt;/td&gt;
     &lt;/tr&gt;
     % }
     &lt;/table&gt;</pre>
-</ul>
 <p><strong>&lt;% xxx %</strong> &gt;&gt;</p>
 <p>Most useful for printing out variables, as well as more complex
-expressions. Examples:</p>
+expressions. To improve readability, always separate the tag
+and expression with spaces. Examples:</p>
 <pre>
   Dear &lt;% $name %&gt;: We will come to your house at &lt;% $address %&gt; in the
   fair city of &lt;% $city %&gt; to deliver your $&lt;% $amount %&gt; dollar prize!</pre>
@@ -353,9 +357,9 @@ are the request objects.</p>
 <p>
 </p>
 <h2><A NAME="request_objects">Request Objects</a></h2>
-<p>Two global per-request objects are available to all components: <code>$r</code> and
-<code>$m</code>.</p>
-<p><code>$r</code>, the mod_perl request object, provides a Perl API to the current
+<p>Two global per-request objects are available to all components: $r and
+$m.</p>
+<p>$r, the mod_perl request object, provides a Perl API to the current
 Apache request.  It is fully described in Apache.pod. Here is a
 sampling of methods useful to component developers:</p>
 <pre>
@@ -365,9 +369,9 @@ sampling of methods useful to component developers:</p>
     $r-&gt;header_out(..)  # set or retrieve an outgoing header</pre>
 <pre>
     $r-&gt;content         # don't use this one! (see Tips and Traps)</pre>
-<p><code>$m</code>, the Mason request object, provides an analogous API for
+<p>$m, the Mason request object, provides an analogous API for
 Mason. Almost all Mason features not activated by syntactic tags are
-accessed via <code>$m</code> methods.  You'll be introduced to these methods
+accessed via $m methods.  You'll be introduced to these methods
 throughout this document as they are needed.  For a description of all
 methods see <strong><a HREF="Request.html">HTML::Mason::Request</a></strong>.</p>
 <p>Because these are always set inside components, you should not ever
@@ -380,7 +384,8 @@ in strange and mysterious ways.</p>
 component's various asociated files, arguments, etc. For a description
 of all methods see
 <strong><a HREF="Component.html">HTML::Mason::Component</a></strong>.  Typically you
-get a handle on a component object from request methods like <code>$m-&gt;current_comp</code> and <code>$m-&gt;fetch_comp</code>.</p>
+get a handle on a component object from request methods like <code>&lt;
+$m-</code>current_comp &gt;&gt; and <code>$m-&gt;fetch_comp</code>.</p>
 <p>Note that for many basic applications all you'll want to do with
 components is call them, for which no object method is needed. See
 next section.</p>
@@ -405,7 +410,7 @@ relevant parameter.</p>
 multiple components that call each other in a hierarchical fashion.</p>
 <p>
 </p>
-<h2><A NAME="components_that_output_html">Components that Output HTML</a></h2>
+<h2><A NAME="components_that_output_html">Components that output HTML</a></h2>
 <p>To call one component from another, use the &lt;&amp; &amp;&gt; tag:</p>
 <pre>
     &lt;&amp; comp_path, [name=&gt;value, ...] &amp;&gt;</pre>
@@ -479,6 +484,21 @@ component is called, with arguments and so forth.  The only difference
 between a filtering component and a normal component is that a
 filtering component is expected to fetch the content by calling
 $m-&gt;content and do something with it.</p>
+<p>The ending tag may optionally contain the name of the component, and Mason
+will verify that it matches the name in the starting tag.  This may
+be helpful when the tags are far apart or nested.  To avoid 
+ambiguous situations, this is only allowed when the component name
+is an unquoted literal (starting with <code>[\w/_.]</code>).  For anything
+more complicated, such as <code>&lt;|&amp; $var &amp;&gt;</code> or <code>&lt;&amp;| 'name' &amp;&gt;</code>,
+the simple <code>&lt;/&amp;&gt;</code> form must be used.</p>
+<pre>
+   &lt;&amp;| &quot;outer&quot; &amp;&gt;
+     &lt;&amp;| /inner/comp, arg=&gt;'this' &amp;&gt;
+       &lt;&amp;| .mycomp &amp;&gt;
+          Yada yada yada
+       &lt;/&amp; .mycomp &gt;
+     &lt;/&amp; /inner/comp &gt;
+   &lt;/&amp;&gt;</pre>
 <p>Here is an example of a component used for localization.  Its content
 is a series of strings in different languages, and it selects the
 correct one based on a global <code>$lang</code> variable, which could be setup
@@ -659,7 +679,7 @@ method.  This method can take any parameters belonging to
 as the <code>comp</code> method.</p>
 <p>Since subrequests inherit their parent request's parameters, output
 from a component called via a subrequest goes to the same desintation
-as output from components caled during the parent request.  Of course,
+as output from components called during the parent request.  Of course,
 you can change this.</p>
 <p>Here are some examples:</p>
 <pre>
@@ -755,13 +775,15 @@ deferred to Apache, which generates an index page or a FORBIDDEN
 error.  Often this is desirable, but if necessary the administrator
 can let in directory requests as well; see the <A HREF="Admin.html#allowing_directory_requests">allowing directory requests</a> section of the administrator's manual.</p>
 <p>A component or dhandler that does not want to handle a particular
-request may defer control to the next dhandler by calling <code>$m-&gt;decline</code>.</p>
+request may defer control to the next dhandler by calling <code>&lt;
+$m-</code>decline &gt;&gt;.</p>
 <p>When using dhandlers under mod_perl, you may find that sometimes
 Apache will not set a content type for a response.  This usually
 happens when a dhandler handles a request for a non-existent file or
 directory.  You can add a <code>&lt;Location&gt;</code> or <code>&lt;LocationMatch&gt;</code>
 block containing a <code>SetType</code> directive to your Apache config file, or
-you can just set the content type dynamically by calling <code>$r-&gt;content_type</code>.</p>
+you can just set the content type dynamically by calling <code>&lt;
+$r-</code>content_type &gt;&gt;.</p>
 <p>The administrator can customize the file name used for dhandlers with
 the <A HREF="Params.html#dhandler_name">dhandler_name</a> parameter.</p>
 <p>
@@ -948,7 +970,7 @@ have declared in <code>&lt;%args&gt;</code>.</p>
     hash.)</pre>
 <p>
 </p>
-<h2><A NAME="using____instead">Using @_ Instead</a></h2>
+<h2><A NAME="using____instead">Using @_ instead</a></h2>
 <p>If you don't like named parameters, you can pass a traditional
 list of ordered parameters:</p>
 <pre>
@@ -1025,16 +1047,16 @@ HTML without getting distracted or discouraged by Perl code. For example:</p>
 <p>This section contains cleanup code that executes just before the
 component exits. For example: closing a database connection or closing
 a file handle.</p>
-<p>Technically a &lt;&lt; &lt;%cleanup&gt; &gt;&gt; block is equivalent to a <code>&lt;%perl&gt;</code>
-block at the end of the component. Since a component corresponds a
-subroutine block, and since Perl is so darned good at cleaning up
-stuff at the end of blocks, <code>&lt;%cleanup&gt;</code> sections are rarely
+<p>A &lt;&lt; &lt;%cleanup&gt; &gt;&gt; block is equivalent to a <code>&lt;%perl&gt;</code> block at
+the end of the component. This means it will NOT execute if the
+component explicitly returns, or if an abort or error occurs in that
+component or one of its children. Because of this limitation, and
+because Perl is usually so good about cleaning up at the end of a
+lexical scope (e.g. component), <code>&lt;%cleanup&gt;</code> sections are rarely
 needed.</p>
-<p>The <code>&lt;%cleanup&gt;</code> block is not executed if the component returns
-(via an explicit <code>return</code> statement) or if an error or abort occurs
-in this component or one of its children. This makes <code>&lt;%cleanup&gt;</code> 
-useless for real cleanup code that needs a guarantee of execution.
-We hope to remedy this in the next major release.</p>
+<p>If you need code that is guaranteed to run when the component or
+request exits, consider using a mod_perl cleanup handler, or creating
+a custom class with a DESTROY method.</p>
 <p>
 </p>
 <h2><A NAME="__once_">&lt;%once&gt;</a></h2>
@@ -1094,8 +1116,8 @@ most once per request.</p>
 closures, so variables will only be shared if they are visible at
 compile-time in the other parts of the component.  In addition, you
 can't rely on the specific destruction time of the shared variables,
-because they may not be destroyed until the first time the <code>&lt;%shared&gt;</code>
-section executes in a future request.  <code>&lt;%init&gt;</code>
+because they may not be destroyed until the first time the <code>&lt;
+&lt;%shared</code> &gt;&gt; section executes in a future request.  <code>&lt;%init&gt;</code>
 offers a more predictable execution and destruction time.</p>
 <p>Currently any component with a <code>&lt;%shared&gt;</code> section incurs an
 extra performance penalty, because Mason must recreate its
@@ -1268,7 +1290,9 @@ than the entire component.</p>
 <p>
 </p>
 <hr />
-<h1><A NAME="other_syntax">OTHER SYNTAX</a></h1>
+<h1><A NAME="comment_markers">COMMENT MARKERS</a></h1>
+<p>There are several ways to place comments in components, i.e. arbitrary
+text that is ignored by the parser.</p>
 <p>
 </p>
 <h2><A NAME="__doc_">&lt;%doc&gt;</a></h2>
@@ -1276,18 +1300,66 @@ than the entire component.</p>
 for a component's main documentation.  One can easily write a program
 to sift through a set of components and pull out their <code>&lt;%doc&gt;</code>
 blocks to form a reference page.</p>
-<p>Can also be used for in-line comments, though it is an admittedly
-cumbersome comment marker.  Another option is '%#':</p>
+<p>
+</p>
+<h2><A NAME="_____comment______">&lt;% # comment... %&gt;</a></h2>
+<p>A <code>&lt;% %&gt;</code> tag is considered a comment if all of its lines are
+either whitespace, or begin with a '#' optionally preceded by
+whitespace. For example,</p>
 <pre>
-    %# this is a comment</pre>
-<p>These comments differ from HTML comments in that they do not appear in
-the HTML.</p>
+    &lt;% # This is a single-line comment %&gt;</pre>
+<pre>
+    &lt;%
+       # This is a
+       # multi-line comment
+    %&gt;</pre>
+<p>
+</p>
+<h2><A NAME="___comment">%# comment</a></h2>
+<p>Because a line beginning with <code>%</code> is treated as Perl, <code>%#</code>
+automatically works as a comment. However we prefer the <code>&lt;% #
+comment %&gt;</code> form over <code>%#</code>, because it stands out a little more
+as a comment and because it is more flexible with regards to preceding
+whitespace.</p>
+<p>
+</p>
+<h2><A NAME="__if__0_____">% if (0) { }</a></h2>
+<p>Anything between these two lines</p>
+<pre>
+   % if (0) {
+   ...
+   % }</pre>
+<p>will be skipped by Mason, including component calls.  While we don't
+recomend this for comments per se, it is a useful notation for
+``commenting out'' code that you don't want to run.</p>
+<p>
+</p>
+<h2><A NAME="html_xml_____comments">HTML/XML/... comments</a></h2>
+<p>HTML and other markup languages will have their own comment markers, for example
+<code>&lt;!-- --&gt;</code>. Note two important differences with these comments versus the
+above comments:</p>
+<ul>
+<li></li>
+They will be sent to the client and appear in the source of the page.
+<p></p>
+<li></li>
+They do not block component calls and other code from running,
+so don't try to use them to comment out code!
+<pre>
+   &lt;!-- Oops, the code below will still run
+      &lt;&amp; /shared/expensive.mhtml &amp;&gt;
+   --&gt;</pre>
+<p></p></ul>
+<p>
+</p>
+<hr />
+<h1><A NAME="other_syntax">OTHER SYNTAX</a></h1>
 <p>
 </p>
 <h2><A NAME="__text_">&lt;%text&gt;</a></h2>
-<p>Text in this section is passed through unmodified by Mason.  Any Mason
-syntax inside it is ignored.  This is useful, for example, when
-documenting Mason itself from a component:</p>
+<p>Text in this section is printed as-is with all Mason syntax ignored.
+This is useful, for example, when documenting Mason itself from a
+component:</p>
 <pre>
     &lt;%text&gt;
     % This is an example of a Perl line.
@@ -1299,7 +1371,7 @@ documenting Mason itself from a component:</p>
     % $m-&gt;print('The tags are &lt;%text&gt; and &lt;/%text&gt;.');</pre>
 <p>
 </p>
-<h2><A NAME="escaping_expressions">Escaping Expressions</a></h2>
+<h2><A NAME="escaping_expressions">Escaping expressions</a></h2>
 <p>Mason has facilities for <em>escaping</em> the output from <code>&lt;% %&gt;</code>
 tags, on either a site-wide or a per-expression basis.</p>
 <p>Any <code>&lt;% %&gt;</code> expression may be terminated by a '|' and one or more
@@ -1385,7 +1457,7 @@ naughty words filter for the easily offended:</p>
     $m-&gt;interp-&gt;apply_escapes( 'some html content', 'h' );</pre>
 <p>
 </p>
-<h2><A NAME="backslash_at_end_of_line">Backslash at End of Line</a></h2>
+<h2><A NAME="backslash_at_end_of_line">Backslash at end of line</a></h2>
 <p>A backslash (\) at the end of a line suppresses the newline. In HTML
 components, this is mostly useful for fixed width areas like <code>&lt;pre&gt;</code>
 tags, since browsers ignore white space for the most part. An example:</p>
@@ -1618,10 +1690,8 @@ the <A HREF="Devel.html#accessing_a_cache_externally">previous section</a>.</p>
 <p>
 </p>
 <h2><A NAME="sending_http_headers">Sending HTTP Headers</a></h2>
-<p>Under ApacheHandler and CGIHandler, Mason automatically sends HTTP
-headers, via <code>$r-&gt;send_http_header()</code> with ApacheHandler, and via
-<code>CGI-&gt;header()</code> with CGIHandler, but it will not send headers if
-they've already been sent manually.</p>
+<p>Mason automatically sends HTTP headers via <code>$r-&gt;send_http_header</code>
+but it will not send headers if they've already been sent manually.</p>
 <p>To determine the exact header behavior on your system, you need to
 know whether your server's default is to have <A HREF="Params.html#autoflush">autoflush</a> on or off.
 Your administrator should have this information.  If your administrator
@@ -1649,17 +1719,17 @@ into the header.</p>
 <p>With autoflush off this code will always work.  Turn autoflush on and
 this code will only work as long as <em>/shared/get_user_cookie</em> doesn't
 output anything (given its functional nature, it shouldn't).</p>
-<p>The administrator can change the default automatic header behavior via
-the <A HREF="Params.html#auto_send_headers">auto_send_headers</a> parameter. You can also turn it off on
+<p>The administrator can turn off automatic header sending via the
+<A HREF="Params.html#auto_send_headers">auto_send_headers</a> parameter. You can also turn it off on
 individual pages with</p>
 <pre>
     $m-&gt;auto_send_headers(0);</pre>
 <p>
 </p>
 <h2><A NAME="returning_http_status">Returning HTTP Status</a></h2>
-<p>When running under ApacheHandler, the value returned from the top-most
-component becomes the status code of the request. If no value is
-explicitly returned, it defaults to OK (0).</p>
+<p>The value returned from the top-most component becomes the status code
+of the request. If no value is explicitly returned, it defaults to OK
+(0).</p>
 <p>Simply returning an error status (such as 404) from the top-most
 component has two problems in practice. First, the decision to return
 an error status often resides further down in the component
@@ -1684,9 +1754,6 @@ or the status will not make it out:</p>
           # deal with non-abort exceptions
       }
    }</pre>
-<p>Note that when running under CGIHandler, the value you return from
-your components, or via <code>$m-&gt;abort()</code>, is not able to affect the
-status code of the request.</p>
 <p>
 </p>
 <h3><A NAME="filters_and__m_abort">Filters and $m-&gt;abort</a></h3>
@@ -1725,9 +1792,8 @@ immediately before calling <code>die()</code>.</p>
 client.</p>
 <p>First, you can use a Mason subrequest (see <A HREF="#subrequests">Subrequests</a>). This only
 works if you are redirecting to another Mason page.</p>
-<p>Second, if you're running under mod_perl with ApacheHandler, you can
-use Apache's internal_redirect method, which works whether or not the
-new URL will be handled by Mason.  Use it this way:</p>
+<p>Second, you can use Apache's internal_redirect method, which works
+whether or not the new URL will be handled by Mason.  Use it this way:</p>
 <pre>
     $r-&gt;internal_redirect($url);
     $m-&gt;auto_send_headers(0);
@@ -1793,7 +1859,7 @@ problems. Future redesigns may incorporate a deeper object
 architecture if the current prototype proves successful.</p>
 <p>
 </p>
-<h2><A NAME="determining_inheritance">Determining Inheritance</a></h2>
+<h2><A NAME="determining_inheritance">Determining inheritance</a></h2>
 <p>Every component may have a single <em>parent</em>. The default parent is a
 component named <code>autohandler</code> in the closest parent directory.  This
 rule applies to autohandlers too: an autohandler may not have itself
@@ -1810,7 +1876,7 @@ no one.  This is how to suppress templates.</p>
 or to specify multiple parents.</p>
 <p>
 </p>
-<h2><A NAME="content_wrapping">Content Wrapping</a></h2>
+<h2><A NAME="content_wrapping">Content wrapping</a></h2>
 <p>At page execution time, Mason builds a chain of components from the
 called component, its parent, its parent's parent, and so
 on. Execution begins with the top-most component; calling
@@ -1819,7 +1885,7 @@ is the familiar autohandler ``wrapping'' behavior, generalized for any
 number of arbitrarily named templates.</p>
 <p>
 </p>
-<h2><A NAME="accessing_methods_and_attributes">Accessing Methods and Attributes</a></h2>
+<h2><A NAME="accessing_methods_and_attributes">Accessing methods and attributes</a></h2>
 <p>A template can access methods and/or attributes of the requested
 page. First, use <code>$m-&gt;request_comp</code> to get a handle on the
 appropriate component:</p>
@@ -1850,6 +1916,9 @@ A component is called via its component object rather than its path,
 for example:
 <pre>
   &lt;&amp; $m-&gt;fetch_comp('/some/comp'), foo =&gt; 1 &amp;&gt;</pre>
+<p></p>
+<li></li>
+A subcomponent (defined with <code>&lt;%def&gt;</code>) is called.
 <p></p>
 <li></li>
 A method is called via the use of <code>SELF:</code>, <code>PARENT:</code>, or
@@ -1890,7 +1959,7 @@ questionable attributes:</p>
     my $color = $self-&gt;attr_if_exists('color'); # if it doesn't exist $color is undef</pre>
 <p>
 </p>
-<h2><A NAME="sharing_data">Sharing Data</a></h2>
+<h2><A NAME="sharing_data">Sharing data</a></h2>
 <p>A component's main body and its methods occupy separate lexical
 scopes. Variables declared, say, in the <code>&lt;%init&gt;</code> section of the main
 component cannot be seen from methods.</p>

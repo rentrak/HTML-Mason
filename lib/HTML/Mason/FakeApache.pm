@@ -11,7 +11,7 @@ package HTML::Mason::FakeApache;
 # Analogous to Apache request object $r (but not an actual Apache subclass)
 # In the future we'll probably want to switch this to Apache::Fake or similar
 
-use HTML::Mason::MethodMaker (read_write => [qw(query)]);
+use HTML::Mason::MethodMaker(read_write => [qw(query)]);
 
 sub new {
     my $class = shift;
@@ -159,14 +159,8 @@ sub http_header {
 }
 
 sub send_http_header {
-    my $self = shift;
-
-    print STDOUT $self->http_header;
-
-    $self->{http_header_sent} = 1;
+    print shift->http_header;
 }
-
-sub http_header_sent { shift->{http_header_sent} }
 
 # How do we know this under CGI?
 # sub get_basic_auth_pw {}
@@ -265,14 +259,14 @@ sub no_cache {
 }
 
 sub print {
-    print @_;
+    shift->query->print(@_);
 }
 
 sub send_fd {
     my ($self, $fd) = @_;
     local $_;
-
-    print STDOUT while defined ($_ = <$fd>);
+    my $p = $self->query->can('print');
+    $p->($_) while defined ($_ = <$fd>);
 }
 
 # Should this perhaps throw an exception?

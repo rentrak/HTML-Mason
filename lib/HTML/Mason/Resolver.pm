@@ -1,4 +1,4 @@
-# Copyright (c) 1998-2003 by Jonathan Swartz. All rights reserved.
+# Copyright (c) 1998-2005 by Jonathan Swartz. All rights reserved.
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
@@ -84,17 +84,18 @@ will need to override it in your subclass.
 
 =item get_info
 
-Given an absolute component path, returns a new
+Takes three arguments: an absolute component path, a component root key,
+and a component root path. Returns a new
 L<HTML::Mason::ComponentSource|HTML::Mason::ComponentSource> object.
 
 =item glob_path
 
-The only argument to this method is a path glob pattern, something
-like "/foo/*" or "/foo/*/bar".  Given this path, it should return a
-list of component paths for components which match this glob pattern.
+Takes two arguments: a path glob pattern, something
+like "/foo/*" or "/foo/*/bar", and a component root path. Returns
+a list of component paths for components which match this glob pattern.
 
 For example, the filesystem resolver simply appends this pattern to
-each component root in turn and calls the Perl C<glob()> function to
+the component root path and calls the Perl C<glob()> function to
 find matching files on the filesystem.
 
 =back
@@ -103,14 +104,14 @@ find matching files on the filesystem.
 
 If you are creating a new resolver that you intend to use with the
 L<HTML::Mason::ApacheHandler|HTML::Mason::ApacheHandler> module, then
-you must implement the following method as well, possibly in a
-different subclass.
+you must implement the following method as well.
 
 =over 4
 
-=item apache_request_to_comp_path ($r)
+=item apache_request_to_comp_path ($r, @comp_root_array)
 
-This method, given an Apache object, should return a component path.
+This method, given an Apache object and a list of component root pairs,
+should return a component path or undef if none exists.
 This method is used by the
 L<HTML::Mason::ApacheHandler|HTML::Mason::ApacheHandler> class to
 translate web requests into component paths.  You can omit this method
@@ -118,12 +119,6 @@ if your resolver subclass will never be used in conjunction with
 L<HTML::Mason::ApacheHandler|HTML::Mason::ApacheHandler>.
 
 =back
-
-For example, Mason includes the
-L<HTML::Mason::Resolver::File|HTML::Mason::Resolver::File> and
-HTML::Mason::Resolver::File::ApacheHandler classes.  The latter simply
-adds an implementation of the C<apache_request_to_comp_path> method
-for file based components.
 
 =head1 SEE ALSO
 

@@ -1,0 +1,65 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>HTML::Mason::Utils - Publically available functions useful outside of Mason</title>
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+<p><A NAME="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><A HREF="#name">NAME</a></li>
+	<li><A HREF="#description">DESCRIPTION</a></li>
+	<li><A HREF="#functions">FUNCTIONS</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><A NAME="name">NAME</a></h1>
+<p>HTML::Mason::Utils - Publically available functions useful outside of Mason</p>
+<p>
+</p>
+<hr />
+<h1><A NAME="description">DESCRIPTION</a></h1>
+<p>The functions in this module are useful when you need to interface
+code you have written with Mason.</p>
+<p>
+</p>
+<hr />
+<h1><A NAME="functions">FUNCTIONS</a></h1>
+<dl>
+<dt><strong><A NAME="item_data_cache_namespace">data_cache_namespace ($comp_id)</a></strong><br />
+</dt>
+<dd>
+Given a component id, this method returns its default
+<code>Cache::Cache</code> namespace.  This can be useful if you want to access
+the cached data outside of Mason.
+</dd>
+<dd>
+<p>With a single component root, the component id is just the component
+path. With multiple component roots, the component id is
+<code>key</code>/<code>path</code>, where <code>key</code> is the key corresponding to the root that
+the component falls under.</p>
+</dd>
+<p></p>
+<dt><strong><A NAME="item_cgi_request_args">cgi_request_args ($cgi, $method)</a></strong><br />
+</dt>
+<dd>
+This function expects to receive a <code>CGI.pm</code> object and the request
+method (GET, POST, etc).  Given these two things, it will return a
+hash in list context or a hashref in scalar context.  The <code>hash(ref)</code>
+will contain all the arguments passed via the CGI request.  The keys
+will be argument names and the values will be either scalars or array
+references.
+</dd>
+<p></p></dl>
+
+</body>
+
+</html>

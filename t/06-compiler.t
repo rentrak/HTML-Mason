@@ -9,6 +9,11 @@ use HTML::Mason::Tools qw(load_pkg);
 my $tests = make_tests();
 $tests->run;
 
+{ package HTML::Mason::Commands;
+  sub _make_interp {
+      $tests->_make_interp(@_);
+  }}
+
 sub make_tests {
     my $group = HTML::Mason::Tests->tests_class->new( name => 'compiler',
 						      description => 'compiler and lexer object functionality' );
@@ -239,28 +244,8 @@ EOF
 
     $group->add_test( name => 'preamble',
 		      description => 'tests preamble compiler parameter',
-                      interp_params =>
-                      { preamble =>
-                        qq{my \$msg = "This is the preamble.\\n"; \$m->print(\$msg);\n},
-		      },
-		      component => <<'EOF',
-This is the body.
-EOF
-		      expect => <<'EOF',
-This is the preamble.
-This is the body.
-EOF
-		    );
-
-#------------------------------------------------------------
-
-    $group->add_test( name => 'preamble_in_different_package',
-		      description => 'tests preamble compiler parameter with in_package set',
-		      interp_params =>
-                      { preamble =>
-                        qq{my \$msg = "This is the preamble.\\n"; \$m->print(\$msg);\n},
-                        in_package => 'HTML::Mason::NewPackage',
-		      },
+		      interp_params => { preamble => 'my $msg = "This is the preamble.\n"; $m->print($msg);
+'},
 		      component => <<'EOF',
 This is the body.
 EOF
@@ -275,28 +260,8 @@ EOF
 
     $group->add_test( name => 'postamble',
 		      description => 'tests postamble compiler parameter',
-		      interp_params =>
-                      { postamble =>
-                        qq{my \$msg = "This is the postamble.\\n"; \$m->print(\$msg);\n},
-                      },
-		      component => <<'EOF',
-This is the body.
-EOF
-		      expect => <<'EOF',
-This is the body.
-This is the postamble.
-EOF
-		    );
-
-#------------------------------------------------------------
-
-    $group->add_test( name => 'postamble_in_package',
-		      description => 'tests postamble compiler parameter with in_package set',
-		      interp_params =>
-                      { postamble =>
-                        qq{my \$msg = "This is the postamble.\\n"; \$m->print(\$msg);\n},
-                        in_package => 'HTML::Mason::NewPackage2',
-                      },
+		      interp_params => { postamble => 'my $msg = "This is the postamble.\n"; $m->print($msg);
+'},
 		      component => <<'EOF',
 This is the body.
 EOF
@@ -758,17 +723,6 @@ EOF
 
 #------------------------------------------------------------
 
-	$group->add_test( name => 'stale_object_file',
-			  description => 'Make sure object files always contain compiler ID',
-			  component => <<'EOF',
-<% $m->interp->compiler->assert_creatorship({object_file => $m->current_comp->object_file}) %>
-EOF
-                          expect => 1,
-                        );
-
-
-#------------------------------------------------------------
-
 	$group->add_test( name => 'subst_tag_comments',
 			  description => 'Make sure comments parse correctly in substitution tags',
 			  component => <<'EOF',
@@ -984,6 +938,40 @@ EOF
 
 #------------------------------------------------------------
 
+	$group->add_test( name => 'comment_in_sub',
+			  description => 'test a substitution that only contains a comment',
+			  component => <<'EOF',
+0
+<% # a one-line comment %>
+1
+<%
+   # a multiline
+  
+   # comment
+%>
+2
+<% # a multiline
+   # comment %>
+3
+<% %>
+4
+
+EOF
+                          expect => <<'EOF',
+0
+
+1
+
+2
+
+3
+
+4
+EOF
+                        );
+
+#------------------------------------------------------------
+
 	$group->add_test( name => 'in_package_shared',
 			  description => 'Make sure in_package works with %shared',
 		          interp_params => { in_package => 'HTML::Mason::Foo' },
@@ -1008,34 +996,65 @@ EOF
 my $dh = $m->dhandler_name;
 </%shared>
 <% $dh %>
-This is the body.
 EOF
                           expect => <<'EOF',
 dhandler
-This is the body.
 EOF
                         );
 
 #------------------------------------------------------------
 
-	$group->add_test( name => 'preamble_with_shared_in_package',
-			  description => 'Make sure $m works with %shared when in_package is set',
-		          interp_params =>
-                          { preamble =>
-                            qq{my \$msg = "This is the preamble.\\n"; \$m->print(\$msg);\n},
-                            in_package => 'HTML::Mason::Baz'
-	 	          },
+	$group->add_test( name => 'compiler_id_change',
+			  description => 'Make sure different compiler params use different object dirs',
 			  component => <<'EOF',
-<%shared>
-my $dh = $m->dhandler_name;
-</%shared>
-<% $dh %>
-This is the body.
+<%args>
+$count => 0
+$compiler_params => {}
+$object_id_hash => {}
+</%args>
+
+count = <% $count %>
+
+<%perl>
+my $object_id = $m->interp->compiler->object_id;
+if ($object_id_hash->{$object_id}++) {
+    die "object_id '$object_id' has been seen (count = $count)!";
+}
+if ($count == 0) {
+    $compiler_params->{enable_autoflush} = 0;
+} elsif ($count == 1) {
+    $compiler_params->{default_escape_flags} = 'h';
+} elsif ($count == 2) {
+    $compiler_params->{use_source_line_numbers} = 0;
+} elsif ($count == 3) {
+    $compiler_params->{postprocess_text} = sub { my $content = shift; $$content =~ tr/a-z/A-Z/ };
+} else {
+    return;
+}
+my $buf;
+my $interp = _make_interp(comp_root => $m->interp->comp_root,
+			  data_dir => $m->interp->data_dir,
+			  out_method => \$buf,
+			  %$compiler_params);
+$interp->exec($m->current_comp->path, count=>$count+1, compiler_params=>$compiler_params, object_id_hash=>$object_id_hash);
+$m->print($buf);
+</%perl>
 EOF
                           expect => <<'EOF',
-This is the preamble.
-dhandler
-This is the body.
+
+count = 0
+
+
+count = 1
+
+
+count = 2
+
+
+count = 3
+
+
+COUNT = 4
 EOF
                         );
 

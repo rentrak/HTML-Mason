@@ -217,7 +217,7 @@ EOF
 <% $m->current_comp->name %>
 <&| echo &>
 <% $m->current_comp->name %>
-<% $m->caller_args(0) %>
+<% join(", ", $m->caller_args(0)) %>
 </&>
 </&>
 EOF
@@ -227,7 +227,7 @@ test6
 test6
 
 test6
-arg1
+arg, 1
 EOF
 		);
 
@@ -428,6 +428,88 @@ I have no content.
 My content is: 
 This is the content
 EOF
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'ending_tag_match',
+		      description => 'Test </& comp >',
+		      component => <<'EOF',
+<&|.outer &>\
+<&| .inner, dummy=>1 &>\
+This is the content
+</&.inner >
+</& .outer>
+<%def .inner>\
+% $m->print("inner: ".$m->content);
+</%def>
+<%def .outer>\
+% $m->print("outer: ".$m->content);
+</%def>
+EOF
+		      expect => <<'EOF',
+outer: inner: This is the content
+EOF
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'ending_tag_nomatch',
+		      description => 'Test bad </& comp > match',
+		      component => <<'EOF',
+<&|.outer &>\
+<&| .inner&>\
+This is the content
+</&.outer >
+</& .inner>
+<%def .inner>\
+% $m->print("inner: ".$m->content);
+</%def>
+<%def .outer>\
+% $m->print("outer: ".$m->content);
+</%def>
+EOF
+		      expect_error => 'Component name in ending tag \(\.outer\) does not match component name in beginning tag \(\.inner\)',
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'ending_tag_expr',
+		      description => 'Test expr in <& expr> not matched',
+		      component => <<'EOF',
+<&| ".outer" &>\
+<&| ".inner" &>\
+This is the content
+</&>
+</& .outer >
+<%def .inner>\
+% $m->print("inner: ".$m->content);
+</%def>
+<%def .outer>\
+% $m->print("outer: ".$m->content);
+</%def>
+EOF
+		      expect_error => 'Cannot match an expression as a component name',
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'ending_tag_expr2',
+		      description => 'Test expr in </&> not allowed',
+		      component => <<'EOF',
+<&| ".outer" &>\
+<&| ".inner" &>\
+This is the content
+</&>
+</& ".inner" >
+<%def .inner>\
+% $m->print("inner: ".$m->content);
+</%def>
+<%def .outer>\
+% $m->print("outer: ".$m->content);
+</%def>
+EOF
+		      expect_error => 'Cannot use an expression inside component with content ending tag',
 		    );
 
 #------------------------------------------------------------

@@ -16,6 +16,7 @@
 	<li><A HREF="#synopsis">SYNOPSIS</a></li>
 	<li><A HREF="#description">DESCRIPTION</a></li>
 	<li><A HREF="#parameters_to_the_new___construc">PARAMETERS TO THE <code>new()</code> CONSTRUCTOR</a></li>
+	<li><A HREF="#accessor_methods">ACCESSOR METHODS</a></li>
 	<li><A HREF="#methods">METHODS</a></li>
 </ul>
 <!-- INDEX END -->
@@ -69,9 +70,10 @@ historical reasons, this defaults to <code>HTML::Mason::Commands</code>.
 <dt><strong><A NAME="item_preamble">preamble</a></strong><br />
 </dt>
 <dd>
-Text given for this parameter is placed at the beginning of each component,
-but after the execution of any <code>&lt;%once&gt;</code> block. See also
-<A HREF="../Params.html#postamble">postamble</a>. The request will be available as <code>$m</code> in preamble code.
+Text given for this parameter is placed at the beginning of each
+component, but after the execution of any <code>&lt;%once&gt;</code> block. See
+also <A HREF="../Params.html#postamble">postamble</a>. The request will be available as <code>$m</code> in preamble
+code.
 </dd>
 <p></p>
 <dt><strong><A NAME="item_postamble">postamble</a></strong><br />
@@ -107,6 +109,14 @@ to false negatives.</p>
 arguments, which can save memory and slightly improve execution speed.</p>
 </dd>
 <p></p></dl>
+<p>
+</p>
+<hr />
+<h1><A NAME="accessor_methods">ACCESSOR METHODS</a></h1>
+<p>All of the above properties have read-only accessor methods of the
+same name. You cannot change any property of a compiler after it has
+been created (but you can create multiple compilers with different
+properties).</p>
 <p>
 </p>
 <hr />

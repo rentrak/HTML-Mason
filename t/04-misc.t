@@ -244,24 +244,10 @@ EOF
 
 #------------------------------------------------------------
 
-    $group->add_test( name => 'dhandler7',
-		      description => 'test that $m->decline does not leak buffer objects',
-		      call_path => '/dhandler_test/buff/buffers',
-		      component => <<'EOF',
-% $m->decline;
-I'm buffers
-EOF
-		      expect => <<'EOF',
-Buffer stack size: 2
-EOF
-		    );
-
-#------------------------------------------------------------
-
     $group->add_test( name => 'accessor_validate',
 		      description => 'test accessor parameter validation',
 		      component => <<'EOF',
-% $m->interp->code_cache_max_size([1]);
+% $m->interp->ignore_warnings_expr([1]);
 EOF
 		      expect_error => qr/Parameter #1.*to .*? was an 'arrayref'/,
 		    );
@@ -278,11 +264,16 @@ EOF
 
 #------------------------------------------------------------
 
-    # this is sneaky and bad!
+    # define /dhandler that sometimes declines. test framework should provide a
+    # more supported way to define a top-level component!
     my $updir = File::Spec->updir;
     $group->add_support( path => "$updir/dhandler",
 			 component => <<'EOF',
-top-level dhandler
+% if ($m->request_args->{decline_from_top}) {
+%   $m->decline;
+% } else {
+top-level dhandler: path = <% $m->current_comp->path %>
+% }
 EOF
 		       );
 
@@ -296,7 +287,7 @@ EOF
 
 #------------------------------------------------------------
 
-    $group->add_test( name => 'top_level_dhandler',
+    $group->add_test( name => 'top_level_dhandler_handles',
 		      description => 'make sure dhandler at /dhandler is called correctly after decline from lower-level dhandler',
                       path      => '/notused',
                       call_path => '/nonexistent',
@@ -304,8 +295,21 @@ EOF
 not ever used
 EOF
 		      expect => <<'EOF',
-top-level dhandler
+top-level dhandler: path = /dhandler
 EOF
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'top_level_dhandler_declines',
+		      description => 'make sure /dhandler decline results in not-found error',
+                      path      => '/notused2',
+                      call_path => '/nonexistent',
+                      call_args => { decline_from_top => 1 },
+		      component => <<'EOF',
+not ever used
+EOF
+		      expect_error => qr/could not find component for initial path/,
 		    );
 
 #------------------------------------------------------------

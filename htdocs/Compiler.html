@@ -16,12 +16,14 @@
 	<li><A HREF="#synopsis">SYNOPSIS</a></li>
 	<li><A HREF="#description">DESCRIPTION</a></li>
 	<li><A HREF="#parameters_to_the_new___construc">PARAMETERS TO THE <code>new()</code> CONSTRUCTOR</a></li>
+	<li><A HREF="#accessor_methods">ACCESSOR METHODS</a></li>
 	<li><A HREF="#methods">METHODS</a></li>
 	<ul>
 
 		<li><A HREF="#compilation_callbacks">Compilation Callbacks</a></li>
 	</ul>
 
+	<li><A HREF="#subclassing">SUBCLASSING</a></li>
 	<li><A HREF="#see_also">SEE ALSO</a></li>
 </ul>
 <!-- INDEX END -->
@@ -89,6 +91,15 @@ basis; see the <A HREF="Devel.html#escaping_expressions">escaping expressions</a
 given as a reference to an array of flags.</p>
 </dd>
 <p></p>
+<dt><strong><A NAME="item_enable_autoflush">enable_autoflush</a></strong><br />
+</dt>
+<dd>
+True or false, default is true. Indicates whether components are
+compiled with support for <A HREF="Params.html#autoflush">autoflush</a>. The component can be compiled
+to a more efficient form if it does not have to check for autoflush
+mode, so you should set this to 0 if you can.
+</dd>
+<p></p>
 <dt><strong><A NAME="item_lexer">lexer</a></strong><br />
 </dt>
 <dd>
@@ -149,6 +160,16 @@ may be more appropriate for in-depth debugging sessions.
 <p>
 </p>
 <hr />
+<h1><A NAME="accessor_methods">ACCESSOR METHODS</a></h1>
+<p>All of the above properties have read-only accessor methods of the
+same name.</p>
+<p>You cannot change any property of a compiler after it has been created
+- among other things, this would potentially invalidate any existing
+cached component objects or object files. Your best bet is to create
+different compiler objects and load them into different interpreters.</p>
+<p>
+</p>
+<hr />
 <h1><A NAME="methods">METHODS</a></h1>
 <p>There are several methods besides the compilation callbacks below that
 a Compiler subclass needs to implement.</p>
@@ -163,9 +184,8 @@ The ``comp_class'' parameter may be ignored by the compiler.
 </dt>
 <dd>
 This method should return a unique id for the given compiler object.
-This is used by the interpreter when loading previously compiled
-objects in order to determine whether or not the object should be
-re-compiled.
+This is used by the interpreter when determining the object directory,
+for example.
 </dd>
 <p></p></dl>
 <p>
@@ -309,6 +329,13 @@ because these calls don't have ending tags.
 Called by the Lexer when it encounters a <code>%</code>-line.
 </dd>
 <p></p></dl>
+<p>
+</p>
+<hr />
+<h1><A NAME="subclassing">SUBCLASSING</a></h1>
+<p>We recommend that any parameters you add to Compiler be read-only,
+because the compiler object_id is only computed once on creation
+and would not reflect any changes to Lexer parameters.</p>
 <p>
 </p>
 <hr />

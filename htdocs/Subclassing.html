@@ -29,7 +29,6 @@
 	<li><A HREF="#resolver_and_componentsource">Resolver and ComponentSource</a></li>
 	<li><A HREF="#lexer">Lexer</a></li>
 	<li><A HREF="#compiler">Compiler</a></li>
-	<li><A HREF="#buffer">Buffer</a></li>
 	<li><A HREF="#apachehandler">ApacheHandler</a></li>
 	<li><A HREF="#cgihandler">CGIHandler</a></li>
 	<li><A HREF="#using_subclasses">USING SUBCLASSES</a></li>
@@ -47,7 +46,7 @@
 <hr />
 <h1><A NAME="description">DESCRIPTION</a></h1>
 <p>This is the deep voodoo guide, for folks who want to create their own
-custom subclasses for parts of Mason, such as the Request or Buffer
+custom subclasses for parts of Mason, such as the Request or Interp
 objects.</p>
 <p>
 </p>
@@ -103,12 +102,6 @@ The compiler takes the parsed chunks from the lexer and gives them
 meaning.  The default compiler, <code>HTML::Mason::Compiler::ToObject</code>,
 turns a Mason component into a Mason ``object file'', which contains
 actual Perl code.
-<p></p>
-<li><strong><A NAME="item_html_3a_3amason_3a_3abuffer">HTML::Mason::Buffer</a></strong><br />
-</li>
-Buffers are created and manipulated (mostly) by the request class and
-are responsible for handling output.  Buffers apply filters to output
-and buffer it (surprise) as well.
 <p></p>
 <li><strong><A NAME="item_html_3a_3amason_3a_3aapache">HTML::Mason::ApacheHandler</a></strong><br />
 </li>
@@ -273,20 +266,6 @@ output.</p>
 <p>
 </p>
 <hr />
-<h1><A NAME="buffer">Buffer</a></h1>
-<p>The public API documented in
-<a HREF="Buffer.html"><A HREF="#item_html_3a_3amason_3a_3abuffer"><code>HTML::Mason::Buffer</code></a></a> is the complete Buffer
-class API, except for one method, <code>_initialize</code>, which is called as
-part of the buffer's construction, from the <code>new</code> method.</p>
-<p>Those interested in subclassing this class should also know that the
-constructor may take an additional parameter, <code>parent</code>, which should
-be a Buffer object.  This parameter is automatically supplied by the
-<code>new_child</code> method.</p>
-<p>Any subclass of this class you create should declare itself to be a
-subclass of the <A HREF="#item_html_3a_3amason_3a_3abuffer"><code>HTML::Mason::Buffer</code></a> class.</p>
-<p>
-</p>
-<hr />
 <h1><A NAME="apachehandler">ApacheHandler</a></h1>
 <p>The methods that you are most likely to want to subclass are
 documented in the <a HREF="ApacheHandler.html"><code>ApacheHandler class</code></a>
@@ -323,7 +302,6 @@ class.</p>
   my $interp =
       My::Interp-&gt;new
           ( request_class  =&gt; 'HTML::Mason::Request::ApacheHandler',
-            resolver_class =&gt; 'HTML::Mason::Resolver::File::ApacheHandler',
             my_new_interp_param =&gt; 42,
           );</pre>
 <pre>

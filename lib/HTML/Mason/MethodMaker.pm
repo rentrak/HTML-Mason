@@ -1,4 +1,4 @@
-# Copyright (c) 1998-2003 by Jonathan Swartz. All rights reserved.
+# Copyright (c) 1998-2005 by Jonathan Swartz. All rights reserved.
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
@@ -160,7 +160,7 @@ itself has been created.
 
 The value of the 'read_write_contained' parameter should be a hash
 reference.  The keys are the internal name of the contained object,
-such as "request" or "buffer".  The values for the keys are the same
+such as "request" or "compiler".  The values for the keys are the same
 as the parameters given for 'read_write' accessors.
 
 =head1 SEE ALSO

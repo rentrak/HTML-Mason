@@ -103,6 +103,9 @@ methods.</p>
 in Mason, you must implement the methods listed above.  If you plan to
 use a custom Compiler class that you're writing, you can do whatever
 you want.</p>
+<p>We recommend that any parameters you add to Lexer be read-only,
+because the compiler object_id is only computed once on creation
+and would not reflect any changes to Lexer parameters.</p>
 
 </body>
 

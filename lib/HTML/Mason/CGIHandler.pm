@@ -50,12 +50,8 @@ sub new {
 				    error_format => 'html',
 				    %p);
 
-    # If the user passed an out_method parameter, then we don't want
-    # to overwrite it later.  This doesn't handle the case where the
-    # user creates their own Interp object with a custom out_method
-    # and passes that to this method, though (grrr).
-    $self->{has_custom_out_method} = $p{out_method} ? 1 : 0;
-
+    $self->interp->out_method(\$self->{output})
+        unless exists $p{out_method};
     $self->interp->compiler->add_allowed_globals('$r');
     
     return $self;
@@ -84,70 +80,26 @@ sub _handler {
     my $r = $self->create_delayed_object('cgi_request', cgi => $p->{cgi});
     $self->interp->set_global('$r', $r);
 
-    # hack for testing
-    if (@_) {
-        $self->{output} = '';
-        $self->interp->out_method( \$self->{output} );
-    } elsif (! $self->{has_custom_out_method}) {
-        my $sent_headers = 0;
-
-        my $out_method = sub {
-
-            # Send headers if they have not been sent by us or by user.
-            # We use instance here because if we store $request we get a
-            # circular reference and a big memory leak.
-            if (!$sent_headers and HTML::Mason::Request->instance->auto_send_headers) {
-                unless ($r->http_header_sent) {
-                    $r->send_http_header();
-                }
-                $sent_headers = 1;
-            }
-
-            # We could perhaps install a new, faster out_method here that
-            # wouldn't have to keep checking whether headers have been
-            # sent and what the $r->method is.  That would require
-            # additions to the Request interface, though.
-
-            print STDOUT grep {defined} @_;
-        };
-
-        $self->interp->out_method($out_method);
-    }
+    $self->{output} = '';
 
     $self->interp->delayed_object_params('request', cgi_request => $r);
 
     my %args = $self->request_args($r);
 
-    my @result;
-    if (wantarray) {
-        @result = eval { $self->interp->exec($p->{comp}, %args) };
-    } elsif ( defined wantarray ) {
-        $result[0] = eval { $self->interp->exec($p->{comp}, %args) };
-    } else {
-        eval { $self->interp->exec($p->{comp}, %args) };
-    }
-
+    eval { $self->interp->exec($p->{comp}, %args) };
     if (my $err = $@) {
-	my $retval = isa_mason_exception($err, 'Abort')   ? $err->aborted_value  :
-		     isa_mason_exception($err, 'Decline') ? $err->declined_value :
-		     rethrow_exception $err;
-
-
-        # Unlike under mod_perl, we cannot simply return a 301 or 302
-        # status and let Apache send headers, we need to explicitly
-        # send this header ourself.
-        $r->send_http_header if $retval && grep { $retval eq $_ } ( 200, 301, 302 );
-
-	return $retval;
+        rethrow_exception($err)
+          unless isa_mason_exception($err, 'Abort')
+          or isa_mason_exception($err, 'Decline');
     }
 
     if (@_) {
-	# This is a secret feature, and should stay secret (or go
-	# away) because it's just a hack for the test suite.
+	# This is a secret feature, and should stay secret (or go away) because it's just a hack for the test suite.
 	$_[0] .= $r->http_header . $self->{output};
+    } else {
+        $r->send_http_header;
+	print $self->{output};
     }
-
-    return wantarray ? @result : defined wantarray ? $result[0] : undef;
 }
 
 # This is broken out in order to make subclassing easier.
@@ -157,62 +109,21 @@ sub request_args {
     return $r->params;
 }
 
-
 ###########################################################
 package HTML::Mason::Request::CGI;
 # Subclass for HTML::Mason::Request object $m
 
-use HTML::Mason::Exceptions;
 use HTML::Mason::Request;
 use base qw(HTML::Mason::Request);
 
-use Params::Validate qw(BOOLEAN);
-Params::Validate::validation_options( on_fail => sub { param_error( join '', @_ ) } );
-
-__PACKAGE__->valid_params
-    ( cgi_request => { isa => 'HTML::Mason::FakeApache' },
-
-      auto_send_headers => { parse => 'boolean', type => BOOLEAN, default => 1,
-                             descr => "Whether HTTP headers should be auto-generated" },
-    );
-
 use HTML::Mason::MethodMaker
-    ( read_only  => [ 'cgi_request' ],
-      read_write => [ 'auto_send_headers' ] );
+    ( read_only => [ 'cgi_request' ] );
+
+__PACKAGE__->valid_params( cgi_request => {isa => 'HTML::Mason::FakeApache'} );
 
 sub cgi_object {
     my $self = shift;
     return $self->{cgi_request}->query(@_);
-}
-
-#
-# Override this method to send HTTP headers if necessary.
-#
-sub exec
-{
-    my $self = shift;
-    my $r = $self->cgi_request;
-    my $retval;
-
-    eval { $retval = $self->SUPER::exec(@_) };
-
-    if (my $err = $@)
-    {
-	$retval = isa_mason_exception($err, 'Abort')   ? $err->aborted_value  :
-                  isa_mason_exception($err, 'Decline') ? $err->declined_value :
-                  rethrow_exception $err;
-    }
-
-    # On a success code, send headers if they have not been sent and
-    # if we are the top-level request. Since the out_method sends
-    # headers, this will typically only apply after $m->abort.
-    if (!$self->is_subrequest
-	and $self->auto_send_headers
-	and !$r->http_header_sent
-	and (!$retval or $retval==200)) {
-	$r->send_http_header();
-    }
-
 }
 
 sub redirect {
@@ -239,10 +150,17 @@ HTML::Mason::CGIHandler - Use Mason in a CGI environment
 
 In httpd.conf or .htaccess:
 
-   Action html-mason /cgi-bin/mason_handler.cgi
-   <LocationMatch "\.html$">
-    SetHandler html-mason
-   </LocationMatch>
+    <LocationMatch "\.html$">
+        Action html-mason /cgi-bin/mason_handler.cgi
+        AddHandler html-mason .html
+    </LocationMatch>
+    <LocationMatch "^/cgi-bin/">
+        RemoveHandler .html
+    </LocationMatch>
+    <FilesMatch "(autohandler|dhandler)$">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
 
 A script at /cgi-bin/mason_handler.pl :
 
@@ -342,20 +260,6 @@ Returns the Mason Interpreter associated with this handler.  The
 Interpreter lasts for the entire lifetime of the handler.
 
 =back
-
-=head2 Calling abort() Under CGIHandler
-
-If you call C<< $m->abort() >> under CGIHandler, request execution
-stops, just as when running ApacheHandler.  For compatibility with
-ApacheHandler, if you call C<< $m->abort() >> with no argument, or
-with an argument of 0 or 200 (OK statuses), then headers will be sent.
-Otherwise, they are not.  However, unlike with ApacheHandler, calling
-C<< $m->abort() >> with an HTTP status code does not cause the web
-server to return that status code to the browser.
-
-It would be theoretically possible to use CGI's "Status:" header to
-set the status in response to the top-level component's return value
-or the aborted value. We will try this in a later version.
 
 =head2 $r Methods
 

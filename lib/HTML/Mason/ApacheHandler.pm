@@ -1,16 +1,12 @@
-# Copyright (c) 1998-2003 by Jonathan Swartz. All rights reserved.
+# -*- cperl-indent-level: 4; cperl-continued-brace-offset: -4; cperl-continued-statement-offset: 4 -*-
+
+# Copyright (c) 1998-2005 by Jonathan Swartz. All rights reserved.
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
-package HTML::Mason::ApacheHandler;
 
 use strict;
 # This is the version that introduced PerlAddVar
 use mod_perl 1.24;
-
-# This needs to come before any mention of $mod_perl::VERSION
-use vars qw($VERSION);
-
-$VERSION = 1.69;
 
 #----------------------------------------------------------------------
 #
@@ -110,7 +106,7 @@ sub exec
         # no need to go through all the rigamorale below for
         # subrequests, and it may even break things to do so, since
         # $r's print should only be redefined once.
-	eval { $retval = $self->SUPER::exec(@_) };
+	$retval = $self->SUPER::exec(@_);
     }
     else
     {
@@ -131,17 +127,7 @@ sub exec
 	    return $self->print(@_) if $local_r eq $r;
 	    return $local_r->$real_apache_print(@_);
 	};
-	eval { $retval = $self->SUPER::exec(@_) };
-    }
-
-    if ($@) {
-	if (isa_mason_exception($@, 'TopLevelNotFound')) {
-	    # Log the error the same way that Apache does (taken from default_handler in http_core.c)
-	    $r->log_error("[Mason] File does not exist: ", $r->filename . ($r->path_info ? $r->path_info : ""));
-	    return $self->ah->return_not_found($r);
-	} else {
-	    rethrow_exception $@;
-	}
+	$retval = $self->SUPER::exec(@_);
     }
 
     # On a success code, send headers if they have not been sent and
@@ -182,67 +168,11 @@ sub redirect
     my ($self, $url, $status) = @_;
     my $r = $self->apache_req;
 
-    $self->clear_buffer;
     $r->method('GET');
     $r->headers_in->unset('Content-length');
     $r->err_headers_out->{Location} = $url;
-    $self->abort($status || REDIRECT);
+    $self->clear_and_abort($status || REDIRECT);
 }
-
-#----------------------------------------------------------------------
-#
-# APACHE-SPECIFIC FILE RESOLVER OBJECT
-#
-package HTML::Mason::Resolver::File::ApacheHandler;
-
-use strict;
-
-use HTML::Mason::Tools qw(paths_eq);
-
-use HTML::Mason::Resolver::File;
-use base qw(HTML::Mason::Resolver::File);
-use Params::Validate qw(SCALAR ARRAYREF);
-
-BEGIN
-{
-    __PACKAGE__->valid_params
-	(
-	 comp_root =>   # This is optional in superclass, but required for us.
-	 { parse => 'list',
-	   type => SCALAR|ARRAYREF,
-	   descr => "A string or array of arrays indicating the search path for component calls" },
-	);
-}
-
-#
-# Given an apache request object, return the associated component
-# path or undef if none exists. This is called for top-level web
-# requests that resolve to a particular file.
-#
-sub apache_request_to_comp_path {
-    my ($self, $r) = @_;
-
-    my $file = $r->filename;
-    $file .= $r->path_info unless -f $file;
-
-    # Clear up any weirdness here so that paths_eq compares two
-    # 'canonical' paths (canonpath is called on comp roots when
-    # resolver object is created.  Seems to be needed on Win32 (see
-    # bug #356).
-    $file = File::Spec->canonpath($file);
-
-    foreach my $root (map $_->[1], $self->comp_root_array) {
-	if (paths_eq($root, substr($file, 0, length($root)))) {
-	    my $path = substr($file, length $root);
-            $path = length $path ? join '/', File::Spec->splitdir($path) : '/';
-            chop $path if $path ne '/' && substr($path, -1) eq '/';
-
-            return $path;
-	}
-    }
-    return undef;
-}
-
 
 #----------------------------------------------------------------------
 #
@@ -282,12 +212,21 @@ BEGIN {
 
 unless ( APACHE2 )
 {
+    # No modern distro/OS packages a mod_perl without all of this
+    # stuff turned on, does it?
+
     error "mod_perl must be compiled with PERL_METHOD_HANDLERS=1 (or EVERYTHING=1) to use ", __PACKAGE__, "\n"
 	unless Apache::perl_hook('MethodHandlers');
+
+    error "mod_perl must be compiled with PERL_TABLE_API=1 (or EVERYTHING=1) to use ", __PACKAGE__, "\n"
+	unless Apache::perl_hook('TableApi');
 }
 
-use Class::Container;
-use base qw(Class::Container);
+use vars qw($VERSION);
+# do not change the version number
+$VERSION = 1.69;
+
+use base qw(HTML::Mason::Handler);
 
 BEGIN
 {
@@ -332,28 +271,36 @@ use HTML::Mason::MethodMaker
 
 my ($STARTED);
 
-# hack to let the make_params_pod.pl script work
+# The "if Apache->server" bit is a hack to let the make_params_pod.pl script work
 __PACKAGE__->_startup() if Apache->server;
 sub _startup
 {
     my $pack = shift;
-    return if $STARTED++; # Allows a subclass to call us, without running twice
+    return if $STARTED++; # Allows a subclass to call this method without running it twice
 
     if ( my $args_method = $pack->_get_string_param('MasonArgsMethod') )
     {
 	if ($args_method eq 'CGI')
 	{
-	    require CGI unless defined $CGI::VERSION;
+	    require CGI unless defined CGI->VERSION;
 	}
 	elsif ($args_method eq 'mod_perl')
 	{
-	    require Apache::Request unless defined $Apache::Request::VERSION;
+	    require Apache::Request unless defined Apache::Request->VERSION;
 	}
     }
 }
 
-use constant
-    HAS_TABLE_API => $mod_perl::VERSION >= 1.99 || Apache::perl_hook('TableApi');
+# Register with Apache::Status at module startup.  Will get replaced
+# with a more informative status once an interpreter has been created.
+my $status_name = 'mason0001';
+if ( load_pkg('Apache::Status') )
+{
+    Apache::Status->menu_item
+	($status_name => __PACKAGE__->allowed_params->{apache_status_title}{default},
+         sub { ["<b>(no interpreters created in this child yet)</b>"] });
+}
+
 
 my %AH_BY_CONFIG;
 sub make_ah
@@ -374,7 +321,7 @@ sub make_ah
     my $key =
         ( join $;,
           $r->document_root,
-          map { $_, HAS_TABLE_API ? sort $config->get($_) : $config->{$_} }
+          map { $_, sort $config->get($_) }
           grep { /^Mason/ }
           keys %$config
         );
@@ -452,12 +399,12 @@ sub _get_mason_params
     # values here for later use.
     #
     return ( map { $_ =>
-                   scalar $self->get_param( $_, \%candidates, $config, $r )
+                   scalar $self->_get_param( $_, \%candidates, $config, $r )
                  }
              keys %candidates );
 }
 
-sub get_param {
+sub _get_param {
     # Gets a single config item from dir_config.
 
     my ($self, $key, $candidates, $config, $r) = @_;
@@ -533,7 +480,7 @@ sub _get_hash_list_param
     {
         my ($key, $val) = split /\s*=>\s*/, $pair, 2;
         param_error "Configuration parameter $_[0] must be a key/value pair ".
-                    qq|like "foo => 'bar'".  Invalid parameter:\n$pair|
+                    qq|like "foo => bar".  Invalid parameter:\n$pair|
                 unless defined $key && defined $val;
 
         $hash{$key} = $val;
@@ -552,12 +499,12 @@ sub _get_val
         if ($config)
         {
             my $c = $r ? $r : Apache->server;
-            @val = HAS_TABLE_API ? $config->get($p) : $config->{$p};
+            @val = $config->get($p);
         }
         else
         {
             my $c = $r ? $r : Apache->server;
-            @val = HAS_TABLE_API ? $c->dir_config->get($p) : $c->dir_config($p);
+            @val = $c->dir_config->get($p);
         }
     }
     else
@@ -583,8 +530,6 @@ sub new
     my %defaults;
     $defaults{request_class}  = 'HTML::Mason::Request::ApacheHandler'
         unless exists $params{request};
-    $defaults{resolver_class} = 'HTML::Mason::Resolver::File::ApacheHandler'
-        unless exists $params{resolver};
 
     my $allowed_params = $class->allowed_params(%defaults, %params);
 
@@ -630,7 +575,7 @@ sub new
 
     my $self = eval { $class->SUPER::new(%defaults, %params) };
 
-    # We catch & throw this exception just to provide a better error message
+    # We catch this exception just to provide a better error message
     if ( $@ && isa_mason_exception( $@, 'Params' ) && $@->message =~ /comp_root/ )
     {
 	param_error "No comp_root specified and cannot determine DocumentRoot." .
@@ -665,7 +610,8 @@ sub get_uid_gid
 	# Apache2 lacks $s->uid.
 	# Workaround by searching the config tree.
 	require Apache::Directive;
-	my $conftree = Apache::Directive->conftree;
+	# for mod_perl <= 1.99_16, use "Apache::Directive->conftree()"
+	my $conftree = Apache::Directive::conftree();
 	my $user = $conftree->lookup('User');
 	my $group = $conftree->lookup('Group');
 	$user =~ s/^["'](.*)["']$/$1/;
@@ -676,29 +622,18 @@ sub get_uid_gid
 }
 	
 
-# Register with Apache::Status at module startup.  Will get replaced
-# with a more informative status once an interpreter has been created.
-my $status_name = 'mason0001';
-if ( load_pkg('Apache::Status') )
-{
-    Apache::Status->menu_item
-	($status_name => __PACKAGE__->allowed_params->{apache_status_title}{default},
-         sub { ["<b>(no interpreters created in this child yet)</b>"] });
-}
-
-
 sub _initialize {
     my ($self) = @_;
 
     if ($self->args_method eq 'mod_perl') {
-	unless (defined $Apache::Request::VERSION) {
+	unless (defined Apache::Request->VERSION) {
 	    warn "Loading Apache::Request at runtime.  You could " .
                  "increase shared memory between Apache processes by ".
                  "preloading it in your httpd.conf or handler.pl file\n";
 	    require Apache::Request;
 	}
     } else {
-	unless (defined $CGI::VERSION) {
+	unless (defined CGI->VERSION) {
 	    warn "Loading CGI at runtime.  You could increase shared ".
                  "memory between Apache processes by preloading it in ".
                  "your httpd.conf or handler.pl file\n";
@@ -708,7 +643,7 @@ sub _initialize {
     }
 
     # Add an HTML::Mason menu item to the /perl-status page.
-    if (defined $Apache::Status::VERSION) {
+    if (defined Apache::Status->VERSION) {
 	# A closure, carries a reference to $self
 	my $statsub = sub {
 	    my ($r,$q) = @_; # request and CGI objects
@@ -730,6 +665,9 @@ sub _initialize {
 
     #
     # Allow global $r in components
+    #
+    # This is somewhat redundant with code in new, but seems to be
+    # needed since the user may simply create their own interp.
     #
     $interp->compiler->add_allowed_globals('$r')
 	if $interp->compiler->can('add_allowed_globals');
@@ -827,58 +765,29 @@ sub handle_request
     return $req->exec;
 }
 
-my $do_filter = sub { $_[0]->filter_register };
-my $no_filter = sub { $_[0] };
 sub prepare_request
 {
     my $self = shift;
 
-    my $r_sub = lc $_[0]->dir_config('Filter') eq 'on' ? $do_filter : $no_filter;
-    my $instance_method = APACHE2 ? 'new' : 'instance';
-
-    # This gets the proper request object all in one fell swoop.  We
-    # don't want to copy it because if we do something like assign an
-    # Apache::Request object to a variable currently containing a
-    # plain Apache object, we leak memory.  This means we'd have to
-    # use multiple variables to avoid this, which is annoying.
-    my $r =
-        $r_sub->( $self->args_method eq 'mod_perl' ?
-                  Apache::Request->$instance_method( $_[0] ) :
-                  $_[0]
-                );
+    my $r = $self->_apache_request_object(@_);
 
     my $interp = $self->interp;
 
-    #
-    # If filename is a directory, then either decline or simply reset
-    # the content type, depending on the value of decline_dirs.
-    #
-    # ** We should be able to use $r->finfo here, but finfo is broken
-    # in some versions of mod_perl (e.g. see Shane Adams message on
-    # mod_perl list on 9/10/00)
-    #
-    my $is_dir = -d $r->filename;
-    my $is_file = -f _;
+    my $fs_type = $self->_request_fs_type($r);
 
-    if ($is_dir) {
-	if ($self->decline_dirs) {
-	    return DECLINED;
-	} else {
-	    $r->content_type(undef);
-	}
-    }
+    return DECLINED if $fs_type eq 'dir' && $self->decline_dirs;
 
     #
     # Compute the component path via the resolver. Return NOT_FOUND on failure.
     #
-    my $comp_path = $interp->resolver->apache_request_to_comp_path($r);
+    my $comp_path = $interp->resolver->apache_request_to_comp_path($r, $interp->comp_root_array);
     unless ($comp_path) {
 	#
 	# Append path_info if filename does not represent an existing file
 	# (mainly for dhandlers).
 	#
 	my $pathname = $r->filename;
-	$pathname .= $r->path_info unless $is_file;
+	$pathname .= $r->path_info unless $fs_type eq 'file';
 
 	warn "[Mason] Cannot resolve file to component: " .
              "$pathname (is file outside component root?)";
@@ -895,86 +804,92 @@ sub prepare_request
     # If someone is using a custom request class that doesn't accept
     # 'ah' and 'apache_req' that's their problem.
     #
-    my $request = eval {
-        $interp->make_request( comp => $comp_path,
-                               args => [%$args],
-                               ah => $self,
-                               apache_req => $r,
-                             );
+    my $m = eval {
+	$interp->make_request( comp => $comp_path,
+			       args => [%$args],
+			       ah => $self,
+			       apache_req => $r,
+			     );
     };
+
     if (my $err = $@) {
-        # Mason doesn't currently throw any exceptions in the above, but some
-        # subclasses might. So be sure to handle them appropriately. We
-        # rethrow everything but TopLevelNotFound, Abort, and Decline errors.
-	if ( isa_mason_exception($err, 'TopLevelNotFound') ) {
-            # Return a 404.
-	    $r->log_error("[Mason] File does not exist: ", $r->filename .
-                          ($r->path_info || ""));
+	# We rethrow everything but TopLevelNotFound, Abort, and Decline errors.
+	
+	if ( isa_mason_exception($@, 'TopLevelNotFound') ) {
+	    $r->log_error("[Mason] File does not exist: ", $r->filename . ($r->path_info || ""));
 	    return $self->return_not_found($r);
 	}
-        # Abort or decline.
-	my $retval = (isa_mason_exception($err, 'Abort')   ? $err->aborted_value  :
-		      (isa_mason_exception($err, 'Decline') ? $err->declined_value :
-		     rethrow_exception $err));
-
-	if (!$r->headers_out->{"Content-type"} &&
-	    ($retval == 0 or $retval == 200) &&
-	    !APACHE2) {
-		$r->send_http_header();
+	my $retval = ( isa_mason_exception($err, 'Abort')   ? $err->aborted_value  :
+		       isa_mason_exception($err, 'Decline') ? $err->declined_value :
+		       rethrow_exception $err );
+	$retval = OK if $retval == 200;
+	unless ($retval) {
+	    unless (APACHE2) {
+		unless ($r->headers_out->{"Content-type"}) { 
+		    $r->send_http_header();
+		}
+	    }
 	}
-	return OK if $retval == 200;
 	return $retval;
     }
 
-    my $final_output_method = ($r->method eq 'HEAD' ?
-			       sub {} :
-			       $r->can('print'));
+    $self->_set_mason_req_out_method($m, $r);
 
-    # Craft the request's out method to handle http headers, content
-    # length, and HEAD requests.
-    my $sent_headers = 0;
-    my $out_method;
-    if (APACHE2) {
+    $m->cgi_object($cgi_object) if $m->can('cgi_object') && $cgi_object;
 
-	# mod_perl-2 does not need to call $r->send_httpd_headers
-	$out_method = sub {
-  	    $r->$final_output_method( grep { defined } @_ );
-  	    $r->rflush;
-  	};
-  	 
-    } else {
+    return $m;
+}
 
-	$out_method = sub {
+my $do_filter = sub { $_[0]->filter_register };
+my $no_filter = sub { $_[0] };
+sub _apache_request_object
+{
+    my $self = shift;
 
-	# Send headers if they have not been sent by us or by user.
-        # We use instance here because if we store $request we get a
-        # circular reference and a big memory leak.
-	if (!$sent_headers and HTML::Mason::Request->instance->auto_send_headers) {
-	    unless (http_header_sent($r)) {
-		$r->send_http_header();
-	    }
-	    $sent_headers = 1;
-	}
+    my $r_sub;
+    if ( lc $_[0]->dir_config('Filter') eq 'on' )
+    {
+        die "To use Apache::Filter with Mason you must have at least version 1.021 of Apache::Filter\n"
+            unless Apache::Filter->VERSION >= 1.021;
 
-	# We could perhaps install a new, faster out_method here that
-	# wouldn't have to keep checking whether headers have been
-	# sent and what the $r->method is.  That would require
-	# additions to the Request interface, though.
-
-	
-	# Call $r->print (using the real Apache method, not our
-	# overriden method).
-	$r->$final_output_method(grep {defined} @_);
-	$r->rflush;
-	};
-
+        $r_sub = $do_filter;
+    }
+    else
+    {
+        $r_sub = $no_filter;
     }
 
-    $request->out_method($out_method);
+    my $instance_method = APACHE2 ? 'new' : 'instance';
 
-    $request->cgi_object($cgi_object) if $cgi_object;
+    # This gets the proper request object all in one fell swoop.  We
+    # don't want to copy it because if we do something like assign an
+    # Apache::Request object to a variable currently containing a
+    # plain Apache object, we leak memory.  This means we'd have to
+    # use multiple variables to avoid this, which is annoying.
+    return
+        $r_sub->( $self->args_method eq 'mod_perl' ?
+                  Apache::Request->$instance_method( $_[0] ) :
+                  $_[0]
+                );
+}
 
-    return $request;
+sub _request_fs_type
+{
+    my ($self, $r) = @_;
+
+    #
+    # If filename is a directory, then either decline or simply reset
+    # the content type, depending on the value of decline_dirs.
+    #
+    # ** We should be able to use $r->finfo here, but finfo is broken
+    # in some versions of mod_perl (e.g. see Shane Adams message on
+    # mod_perl list on 9/10/00)
+    #
+    my $is_dir = -d $r->filename;
+
+    $r->content_type(undef) unless $self->decline_dirs;
+
+    return $is_dir ? 'dir' : -f _ ? 'file' : 'other';
 }
 
 sub request_args
@@ -1015,7 +930,7 @@ sub _cgi_args
 #
 sub _mod_perl_args
 {
-    my ($self, $apr, $request) = @_;
+    my ($self, $apr) = @_;
 
     my %args;
     foreach my $key ( $apr->param ) {
@@ -1030,6 +945,51 @@ sub _mod_perl_args
 # Determines whether the http header has been sent.
 #
 sub http_header_sent { shift->headers_out->{"Content-type"} }
+
+sub _set_mason_req_out_method
+{
+    my ($self, $m, $r) = @_;
+
+    my $final_output_method = ($r->method eq 'HEAD' ?
+			       sub {} :
+			       $r->can('print'));
+
+    # Craft the request's out method to handle http headers, content
+    # length, and HEAD requests.
+    my $out_method;
+    if (APACHE2) {
+
+	# mod_perl-2 does not need to call $r->send_http_headers
+	$out_method = sub {
+            $r->$final_output_method( grep { defined } @_ );
+	    $r->rflush;
+	};
+
+    } else {
+
+	my $sent_headers = 0;
+	$out_method = sub {
+
+	    # Send headers if they have not been sent by us or by user.
+            # We use instance here because if we store $m we get a
+            # circular reference and a big memory leak.
+	    if (!$sent_headers and HTML::Mason::Request->instance->auto_send_headers) {
+	        unless (http_header_sent($r)) {
+		    $r->send_http_header();
+	        }
+	        $sent_headers = 1;
+	    }
+
+	    # Call $r->print (using the real Apache method, not our
+	    # overriden method).
+	    $r->$final_output_method( grep {defined} @_ );
+	    $r->rflush;
+        };
+
+    }
+
+    $m->out_method($out_method);
+}
 
 # Utility function to prepare $r before returning NOT_FOUND.
 sub return_not_found

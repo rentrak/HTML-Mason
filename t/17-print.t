@@ -5,7 +5,7 @@ use File::Spec;
 
 use HTML::Mason::Tests;
 
-print "1..8\n";
+print "1..9\n";
 
 my $comp_root = File::Spec->catdir( getcwd(), 'mason_tests', 'comps' );
 ($comp_root) = $comp_root =~ /(.*)/;
@@ -17,7 +17,7 @@ my $tests = HTML::Mason::Tests->tests_class->new( name => 'print',
 
 my $interp = HTML::Mason::Tests->tests_class->_make_interp
     ( comp_root => $comp_root,
-      data_dir => $data_dir,
+      data_dir => $data_dir
       );
 
 {
@@ -53,6 +53,7 @@ ok 5
 % print "ok 6\n";
 ok 7
 % print "ok 8\n";
+% print "", "ok ", "9", "\n";
 EOF
 
     my $comp = $interp->make_component( comp_source => $source );

@@ -30,12 +30,11 @@
 		<li><A HREF="#auto_send_headers">auto_send_headers</a></li>
 		<li><A HREF="#autoflush">autoflush</a></li>
 		<li><A HREF="#autohandler_name">autohandler_name</a></li>
-		<li><A HREF="#buffer_class">buffer_class</a></li>
+		<li><A HREF="#buffer_preallocate_size">buffer_preallocate_size</a></li>
 		<li><A HREF="#code_cache_max_size">code_cache_max_size</a></li>
 		<li><A HREF="#comp_class">comp_class</a></li>
 		<li><A HREF="#comp_root">comp_root</a></li>
 		<li><A HREF="#compiler_class">compiler_class</a></li>
-		<li><A HREF="#current_time">current_time</a></li>
 		<li><A HREF="#data_cache_api">data_cache_api</a></li>
 		<li><A HREF="#data_cache_defaults">data_cache_defaults</a></li>
 		<li><A HREF="#data_dir">data_dir</a></li>
@@ -43,6 +42,8 @@
 		<li><A HREF="#default_escape_flags">default_escape_flags</a></li>
 		<li><A HREF="#define_args_hash">define_args_hash</a></li>
 		<li><A HREF="#dhandler_name">dhandler_name</a></li>
+		<li><A HREF="#dynamic_comp_root">dynamic_comp_root</a></li>
+		<li><A HREF="#enable_autoflush">enable_autoflush</a></li>
 		<li><A HREF="#error_format">error_format</a></li>
 		<li><A HREF="#error_mode">error_mode</a></li>
 		<li><A HREF="#escape_flags">escape_flags</a></li>
@@ -51,7 +52,9 @@
 		<li><A HREF="#interp_class">interp_class</a></li>
 		<li><A HREF="#lexer_class">lexer_class</a></li>
 		<li><A HREF="#max_recurse">max_recurse</a></li>
+		<li><A HREF="#object_file_extension">object_file_extension</a></li>
 		<li><A HREF="#out_method">out_method</a></li>
+		<li><A HREF="#plugins">plugins</a></li>
 		<li><A HREF="#postamble">postamble</a></li>
 		<li><A HREF="#postprocess_perl">postprocess_perl</a></li>
 		<li><A HREF="#postprocess_text">postprocess_text</a></li>
@@ -61,6 +64,7 @@
 		<li><A HREF="#request_class">request_class</a></li>
 		<li><A HREF="#resolver_class">resolver_class</a></li>
 		<li><A HREF="#static_source">static_source</a></li>
+		<li><A HREF="#static_source_touch_file">static_source_touch_file</a></li>
 		<li><A HREF="#subcomp_class">subcomp_class</a></li>
 		<li><A HREF="#use_object_files">use_object_files</a></li>
 		<li><A HREF="#use_source_line_numbers">use_source_line_numbers</a></li>
@@ -133,13 +137,13 @@ pass any of the <code>HTML::Mason::Request</code> parameters to
 <ul>
 <li><strong><A NAME="item_perl_name_3a_allow_globals">Perl name:           allow_globals</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masonallowgl">Apache name:         MasonAllowGlobals</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_allowglobals">Apache name:         AllowGlobals</a></strong><br />
 </li>
 <li><strong><A NAME="item_type_in_httpd_2econf_3a_lis">Type in httpd.conf:  list</a></strong><br />
 </li>
 <li><strong><A NAME="item_default_3a__5b_5d">Default:             []</a></strong><br />
 </li>
-<li><strong><A NAME="item_belongs_to_3a_html_3a_3amas">Belongs to:          <a HREF="Compiler.html">HTML::Mason::Compiler</a></a></strong><br />
+<li><strong><A NAME="item_belongs_to_3a_html_3a_3amas">Belongs to:          <code>HTML::Mason::Compiler</code></a></strong><br />
 </li>
 </ul>
 <p>List of variable names, complete with prefix (<code>$@%</code>), that you intend
@@ -156,13 +160,13 @@ added to this list.</p>
 <ul>
 <li><strong><A NAME="item_perl_name_3a_apache_status_">Perl name:           apache_status_title</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masonapaches">Apache name:         MasonApacheStatusTitle</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_apachestatus">Apache name:         ApacheStatusTitle</a></strong><br />
 </li>
 <li><strong><A NAME="item_type_in_httpd_2econf_3a_str">Type in httpd.conf:  string</a></strong><br />
 </li>
 <li><strong><A NAME="item_default_3a_html_3a_3amason_">Default:             HTML::Mason status</a></strong><br />
 </li>
-<li><strong><A NAME="item_belongs_to_3a_html_3a_3amas">Belongs to:          <a HREF="ApacheHandler.html">HTML::Mason::ApacheHandler</a></a></strong><br />
+<li><strong><A NAME="item_belongs_to_3a_html_3a_3amas">Belongs to:          <code>HTML::Mason::ApacheHandler</code></a></strong><br />
 </li>
 </ul>
 <p>Title that you want this ApacheHandler to appear as under
@@ -175,13 +179,13 @@ visible via Apache::Status.</p>
 <ul>
 <li><strong><A NAME="item_perl_name_3a_args_method">Perl name:           args_method</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masonargsmet">Apache name:         MasonArgsMethod</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_argsmethod">Apache name:         ArgsMethod</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  string</strong><br />
 </li>
 <li><strong><A NAME="item_default_3a_mod_perl">Default:             mod_perl</a></strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="ApacheHandler.html">HTML::Mason::ApacheHandler</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::ApacheHandler</code></strong><br />
 </li>
 </ul>
 <p>Method to use for unpacking GET and POST arguments. The valid options
@@ -206,7 +210,7 @@ is recommended that you preload the relevant module either in your
 <ul>
 <li><strong><A NAME="item_perl_name_3a_auto_send_head">Perl name:           auto_send_headers</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masonautosen">Apache name:         MasonAutoSendHeaders</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_autosendhead">Apache name:         AutoSendHeaders</a></strong><br />
 </li>
 <li><strong><A NAME="item_type_in_httpd_2econf_3a_boo">Type in httpd.conf:  boolean</a></strong><br />
 </li>
@@ -215,43 +219,51 @@ is recommended that you preload the relevant module either in your
 <li><strong><A NAME="item_belongs_to_3a_html_3a_3amas">Belongs to:          <code>HTML::Mason::Request::ApacheHandler</code></a></strong><br />
 </li>
 </ul>
-<p>True or false, default is true.  Indicates whether Mason should
+<A NAME="item_auto_send_headers"></a><p>True or false, default is true.  Indicates whether Mason should
 automatically send HTTP headers before sending content back to the
 client. If you set to false, you should call <code>$r-&gt;send_http_header</code>
 manually.</p>
 <p>See the <A HREF="Devel.html#sending_http_headers">sending HTTP headers</a> section of the developer's manual for more details about the automatic
 header feature.</p>
+<p>NOTE: This parameter has no effect under mod_perl-2, since calling
+<code>$r-&gt;send_http_header</code> is no longer needed.</p>
 <p>
 </p>
 <h2><A NAME="autoflush">autoflush</a></h2>
 <ul>
 <li><strong><A NAME="item_perl_name_3a_autoflush">Perl name:           autoflush</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masonautoflu">Apache name:         MasonAutoflush</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_autoflush">Apache name:         Autoflush</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  boolean</strong><br />
 </li>
 <li><strong><A NAME="item_default_3a_0">Default:             0</a></strong><br />
 </li>
-<li><strong><A NAME="item_belongs_to_3a_html_3a_3amas">Belongs to:          <a HREF="Request.html">HTML::Mason::Request</a></a></strong><br />
+<li><strong><A NAME="item_belongs_to_3a_html_3a_3amas">Belongs to:          <code>HTML::Mason::Request</code></a></strong><br />
 </li>
 </ul>
-<p>True or false, default is false. Indicates whether to flush the output buffer
-after every string is output. Turn on autoflush if you need to send partial
-output to the client, for example in a progress meter.</p>
+<p>True or false, default is false. Indicates whether to flush the output
+buffer (<code>$m-&gt;flush_buffer</code>) after every string is output. Turn on
+autoflush if you need to send partial output to the client, for
+example in a progress meter.</p>
+<p>As of Mason 1.3, autoflush will only work if <A HREF="Params.html#enable_autoflush">enable_autoflush</a> has
+been set.  Components can be compiled more efficiently if they don't
+have to check for autoflush. Before using autoflush you might consider
+whether a few manual <code>$m-&gt;flush_buffer</code> calls would work nearly
+as well.</p>
 <p>
 </p>
 <h2><A NAME="autohandler_name">autohandler_name</a></h2>
 <ul>
 <li><strong><A NAME="item_perl_name_3a_autohandler_na">Perl name:           autohandler_name</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masonautohan">Apache name:         MasonAutohandlerName</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_autohandlern">Apache name:         AutohandlerName</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  string</strong><br />
 </li>
 <li><strong><A NAME="item_default_3a_autohandler">Default:             autohandler</a></strong><br />
 </li>
-<li><strong><A NAME="item_belongs_to_3a_html_3a_3amas">Belongs to:          <a HREF="Interp.html">HTML::Mason::Interp</a></a></strong><br />
+<li><strong><A NAME="item_belongs_to_3a_html_3a_3amas">Belongs to:          <code>HTML::Mason::Interp</code></a></strong><br />
 </li>
 </ul>
 <p>File name used for
@@ -260,52 +272,57 @@ output to the client, for example in a progress meter.</p>
 autohandlers are turned off entirely.</p>
 <p>
 </p>
-<h2><A NAME="buffer_class">buffer_class</a></h2>
+<h2><A NAME="buffer_preallocate_size">buffer_preallocate_size</a></h2>
 <ul>
-<li><strong><A NAME="item_perl_name_3a_buffer_class">Perl name:           buffer_class</a></strong><br />
+<li><strong><A NAME="item_perl_name_3a_buffer_preallo">Perl name:           buffer_preallocate_size</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masonbufferc">Apache name:         MasonBufferClass</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_bufferpreall">Apache name:         BufferPreallocateSize</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  string</strong><br />
 </li>
-<li><strong><A NAME="item_default_3a_html_3a_3amason_">Default:             HTML::Mason::Buffer</a></strong><br />
+<li><strong>Default:             0</strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="Request.html">HTML::Mason::Request</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Interp</code></strong><br />
 </li>
 </ul>
-<p>The class to use when creating buffers. Defaults to
-<a HREF="Buffer.html">HTML::Mason::Buffer</a>.</p>
+<A NAME="item_buffer_preallocate_size"></a><p>Number of bytes to preallocate in the output buffer for each request.
+Defaults to 0. Setting this to, say, your maximum page size (or close
+to it) can reduce the number of reallocations Perl performs as
+components add to the output buffer.</p>
 <p>
 </p>
 <h2><A NAME="code_cache_max_size">code_cache_max_size</a></h2>
 <ul>
 <li><strong><A NAME="item_perl_name_3a_code_cache_max">Perl name:           code_cache_max_size</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masoncodecac">Apache name:         MasonCodeCacheMaxSize</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_codecachemax">Apache name:         CodeCacheMaxSize</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  string</strong><br />
 </li>
-<li><strong><A NAME="item_default_3a_10485760">Default:             10485760</a></strong><br />
+<li><strong><A NAME="item_default_3a_unlimited">Default:             unlimited</a></strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="Interp.html">HTML::Mason::Interp</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Interp</code></strong><br />
 </li>
 </ul>
-<p>Specifies the maximum size, in bytes, of the in-memory code cache
-where components are stored. Default is 10 MB. See the <A HREF="Admin.html#code_cache">code cache</a> section of the administrator's manual
-for further details.</p>
+<A NAME="item_code_cache_max_size"></a><p>Specifies the maximum number of components that should be held in the
+in-memory code cache. The default is 'unlimited', meaning no
+components will ever be discarded; Mason can perform certain
+optimizations in this mode. Setting this to zero disables the code
+cache entirely. See the <A HREF="Admin.html#code_cache">code cache</a>
+section of the administrator's manual for further details.</p>
 <p>
 </p>
 <h2><A NAME="comp_class">comp_class</a></h2>
 <ul>
 <li><strong><A NAME="item_perl_name_3a_comp_class">Perl name:           comp_class</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masoncompcla">Apache name:         MasonCompClass</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_compclass">Apache name:         CompClass</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  string</strong><br />
 </li>
 <li><strong><A NAME="item_default_3a_html_3a_3amason_">Default:             HTML::Mason::Component</a></strong><br />
 </li>
-<li><strong><A NAME="item_belongs_to_3a_html_3a_3amas">Belongs to:          <a HREF="Compiler/ToObject.html">HTML::Mason::Compiler::ToObject</a></a></strong><br />
+<li><strong><A NAME="item_belongs_to_3a_html_3a_3amas">Belongs to:          <code>HTML::Mason::Compiler::ToObject</code></a></strong><br />
 </li>
 </ul>
 <p>The class into which component objects are blessed.  This defaults to
@@ -316,16 +333,16 @@ for further details.</p>
 <ul>
 <li><strong><A NAME="item_perl_name_3a_comp_root">Perl name:           comp_root</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masoncomproo">Apache name:         MasonCompRoot</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_comproot">Apache name:         CompRoot</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  list</strong><br />
 </li>
 <li><strong><A NAME="item_default_3a_varies">Default:             Varies</a></strong><br />
 </li>
-<li><strong><A NAME="item_belongs_to_3a_html_3a_3amas">Belongs to:          <code>HTML::Mason::Resolver::File::ApacheHandler</code></a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Interp</code></strong><br />
 </li>
 </ul>
-<p>The component root marks the top of your component hierarchy and
+<A NAME="item_comp_root"></a><p>The component root marks the top of your component hierarchy and
 defines how component paths are translated into real file paths. For
 example, if your component root is <em>/usr/local/httpd/docs</em>, a component
 path of <em>/products/index.html</em> translates to the file
@@ -338,59 +355,72 @@ working directory.</p>
 a scalar, it should be a filesystem path indicating the component
 root. If it is an array reference, it should be of the following form:</p>
 <pre>
- [ [ key1 =&gt; '/path/to/root' ],
-   [ key2 =&gt; '/path/to/other/root' ] ]</pre>
-<p>The ``keys'' for each path must be unique names and their ``values'' must
-be filesystem paths.  These paths will be searched in the provided
-order whenever a component path must be resolved to a filesystem path.</p>
-<p>If no component root is specified, the current working directory is
-used.</p>
+ [ [ foo =&gt; '/usr/local/foo' ],
+   [ bar =&gt; '/usr/local/bar' ] ]</pre>
+<p>This is an array of two-element array references, not a hash.  The
+``keys'' for each path must be unique and their ``values'' must be
+filesystem paths.  These paths will be searched in the provided order
+whenever a component path is resolved. For example, given the above
+component roots and a component path of <em>/products/index.html</em>, Mason
+would search first for <em>/usr/local/foo/products/index.html</em>, then for
+<em>/usr/local/bar/products/index.html</em>.</p>
+<p>The keys are used in several ways. They help to distinguish component
+caches and object files between different component roots, and they
+appear in the <code>title()</code> of a component.</p>
+<p>When you specify a single path for a component root, this is actually
+translated into</p>
+<pre>
+  [ [ MAIN =&gt; path ] ]</pre>
+<p>If you have turned on <A HREF="Params.html#dynamic_comp_root">dynamic_comp_root</a>, you may modify the
+component <code>root(s)</code> of an interpreter between requests by calling
+<code>$interp-&gt;comp_root</code> with a value. However, the path associated
+with any given key may not change between requests. For example,
+if the initial component root is</p>
+<pre>
+ [ [ foo =&gt; '/usr/local/foo' ],
+   [ bar =&gt; '/usr/local/bar' ], ]</pre>
+<p>then it may not be changed to</p>
+<pre>
+ [ [ foo =&gt; '/usr/local/bar' ],
+   [ bar =&gt; '/usr/local/baz' ],</pre>
+<p>but it may be changed to</p>
+<pre>
+ [ [ foo   =&gt; '/usr/local/foo' ],
+   [ blarg =&gt; '/usr/local/blarg' ] ]</pre>
+<p>In other words, you may add or remove key/path pairs but not modify an
+already-used key/path pair. The reason for this restriction is that
+the interpreter maintains a component cache per key that would become
+invalid if the associated paths were to change.</p>
 <p>
 </p>
 <h2><A NAME="compiler_class">compiler_class</a></h2>
 <ul>
 <li><strong><A NAME="item_perl_name_3a_compiler_class">Perl name:           compiler_class</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masoncompile">Apache name:         MasonCompilerClass</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_compilerclas">Apache name:         CompilerClass</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  string</strong><br />
 </li>
 <li><strong><A NAME="item_default_3a_html_3a_3amason_">Default:             HTML::Mason::Compiler::ToObject</a></strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="Interp.html">HTML::Mason::Interp</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Interp</code></strong><br />
 </li>
 </ul>
 <p>The class to use when creating a compiler. Defaults to
 <a HREF="Compiler.html">HTML::Mason::Compiler</a>.</p>
 <p>
 </p>
-<h2><A NAME="current_time">current_time</a></h2>
-<ul>
-<li><strong><A NAME="item_perl_name_3a_current_time">Perl name:           current_time</a></strong><br />
-</li>
-<li><strong><A NAME="item_apache_name_3a_masoncurrent">Apache name:         MasonCurrentTime</a></strong><br />
-</li>
-<li><strong>Type in httpd.conf:  string</strong><br />
-</li>
-<li><strong><A NAME="item_default_3a_real">Default:             real</a></strong><br />
-</li>
-<li><strong>Belongs to:          <a HREF="Interp.html">HTML::Mason::Interp</a></strong><br />
-</li>
-</ul>
-<p>Interpreter's notion of the current time (deprecated).</p>
-<p>
-</p>
 <h2><A NAME="data_cache_api">data_cache_api</a></h2>
 <ul>
 <li><strong><A NAME="item_perl_name_3a_data_cache_api">Perl name:           data_cache_api</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masondatacac">Apache name:         MasonDataCacheApi</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_datacacheapi">Apache name:         DataCacheApi</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  string</strong><br />
 </li>
 <li><strong><A NAME="item_default_3a_1_2e1">Default:             1.1</a></strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="Request.html">HTML::Mason::Request</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Request</code></strong><br />
 </li>
 </ul>
 <p>The <code>$m-&gt;cache</code> API to use. '1.1', the default, indicates the newer
@@ -404,13 +434,13 @@ from older versions of Mason, but will not be supported indefinitely.</p>
 <ul>
 <li><strong><A NAME="item_perl_name_3a_data_cache_def">Perl name:           data_cache_defaults</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masondatacac">Apache name:         MasonDataCacheDefaults</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_datacachedef">Apache name:         DataCacheDefaults</a></strong><br />
 </li>
 <li><strong><A NAME="item_type_in_httpd_2econf_3a_has">Type in httpd.conf:  hash_list</a></strong><br />
 </li>
 <li><strong><A NAME="item_default_3a_none">Default:             None</a></strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="Request.html">HTML::Mason::Request</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Request</code></strong><br />
 </li>
 </ul>
 <p>A hash reference of default options to use for the <code>$m-&gt;cache</code>
@@ -426,13 +456,13 @@ by default,</p>
 <ul>
 <li><strong><A NAME="item_perl_name_3a_data_dir">Perl name:           data_dir</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masondatadir">Apache name:         MasonDataDir</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_datadir">Apache name:         DataDir</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  string</strong><br />
 </li>
 <li><strong>Default:             None</strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="Interp.html">HTML::Mason::Interp</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Interp</code></strong><br />
 </li>
 </ul>
 <p>The data directory is a writable directory that Mason uses for various
@@ -453,13 +483,13 @@ unspecified, Mason will not use <A HREF="Admin.html#object_files">object files</
 <ul>
 <li><strong><A NAME="item_perl_name_3a_decline_dirs">Perl name:           decline_dirs</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masondecline">Apache name:         MasonDeclineDirs</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_declinedirs">Apache name:         DeclineDirs</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  boolean</strong><br />
 </li>
 <li><strong>Default:             1</strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="ApacheHandler.html">HTML::Mason::ApacheHandler</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::ApacheHandler</code></strong><br />
 </li>
 </ul>
 <p>True or false, default is true. Indicates whether Mason should decline
@@ -472,13 +502,13 @@ for more information about handling directories with Mason.</p>
 <ul>
 <li><strong><A NAME="item_perl_name_3a_default_escape">Perl name:           default_escape_flags</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masondefault">Apache name:         MasonDefaultEscapeFlags</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_defaultescap">Apache name:         DefaultEscapeFlags</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  string</strong><br />
 </li>
 <li><strong>Default:             []</strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="Compiler.html">HTML::Mason::Compiler</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Compiler</code></strong><br />
 </li>
 </ul>
 <p>Escape flags to apply to all &lt;% %&gt; expressions by default. The current
@@ -496,13 +526,13 @@ given as a reference to an array of flags.</p>
 <ul>
 <li><strong><A NAME="item_perl_name_3a_define_args_ha">Perl name:           define_args_hash</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masondefinea">Apache name:         MasonDefineArgsHash</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_defineargsha">Apache name:         DefineArgsHash</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  string</strong><br />
 </li>
 <li><strong><A NAME="item_default_3a_auto">Default:             auto</a></strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="Compiler/ToObject.html">HTML::Mason::Compiler::ToObject</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Compiler::ToObject</code></strong><br />
 </li>
 </ul>
 <p>One of ``always'', ``auto'', or ``never''.  This determines whether or not
@@ -520,13 +550,13 @@ arguments, which can save memory and slightly improve execution speed.</p>
 <ul>
 <li><strong><A NAME="item_perl_name_3a_dhandler_name">Perl name:           dhandler_name</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masondhandle">Apache name:         MasonDhandlerName</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_dhandlername">Apache name:         DhandlerName</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  string</strong><br />
 </li>
 <li><strong><A NAME="item_default_3a_dhandler">Default:             dhandler</a></strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="Request.html">HTML::Mason::Request</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Request</code></strong><br />
 </li>
 </ul>
 <p>File name used for <A HREF="Devel.html#dhandlers">dhandlers</a>. Default
@@ -534,17 +564,55 @@ is ``dhandler''.  If this is set to an empty string (``'') then dhandlers
 are turned off entirely.</p>
 <p>
 </p>
+<h2><A NAME="dynamic_comp_root">dynamic_comp_root</a></h2>
+<ul>
+<li><strong><A NAME="item_perl_name_3a_dynamic_comp_r">Perl name:           dynamic_comp_root</a></strong><br />
+</li>
+<li><strong><A NAME="item_apache_name_3a_dynamiccompr">Apache name:         DynamicCompRoot</a></strong><br />
+</li>
+<li><strong>Type in httpd.conf:  boolean</strong><br />
+</li>
+<li><strong>Default:             0</strong><br />
+</li>
+<li><strong>Belongs to:          <code>HTML::Mason::Interp</code></strong><br />
+</li>
+</ul>
+<p>True or false, defaults to false. Indicates whether the <A HREF="Params.html#comp_root">comp_root</a>
+can be modified on this interpreter between requests. Mason can
+perform a few optimizations with a fixed component root, so you
+should only set this to true if you actually need it.</p>
+<p>
+</p>
+<h2><A NAME="enable_autoflush">enable_autoflush</a></h2>
+<ul>
+<li><strong><A NAME="item_perl_name_3a_enable_autoflu">Perl name:           enable_autoflush</a></strong><br />
+</li>
+<li><strong><A NAME="item_apache_name_3a_enableautofl">Apache name:         EnableAutoflush</a></strong><br />
+</li>
+<li><strong>Type in httpd.conf:  boolean</strong><br />
+</li>
+<li><strong>Default:             1</strong><br />
+</li>
+<li><strong>Belongs to:          <code>HTML::Mason::Compiler</code></strong><br />
+</li>
+</ul>
+<p>True or false, default is true. Indicates whether components are
+compiled with support for <A HREF="Params.html#autoflush">autoflush</a>. The component can be compiled
+to a more efficient form if it does not have to check for autoflush
+mode, so you should set this to 0 if you can.</p>
+<p>
+</p>
 <h2><A NAME="error_format">error_format</a></h2>
 <ul>
 <li><strong><A NAME="item_perl_name_3a_error_format">Perl name:           error_format</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masonerrorfo">Apache name:         MasonErrorFormat</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_errorformat">Apache name:         ErrorFormat</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  string</strong><br />
 </li>
 <li><strong>Default:             Varies</strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="Request.html">HTML::Mason::Request</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Request</code></strong><br />
 </li>
 </ul>
 <p>Indicates how errors are formatted. The built-in choices are</p>
@@ -576,13 +644,13 @@ the built-in methods.</p>
 <ul>
 <li><strong><A NAME="item_perl_name_3a_error_mode">Perl name:           error_mode</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masonerrormo">Apache name:         MasonErrorMode</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_errormode">Apache name:         ErrorMode</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  string</strong><br />
 </li>
 <li><strong>Default:             Varies</strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="Request.html">HTML::Mason::Request</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Request</code></strong><br />
 </li>
 </ul>
 <p>Indicates how errors are returned to the caller.  The choices are
@@ -598,13 +666,13 @@ displayed in the browser.  The default for standalone mode is
 <ul>
 <li><strong><A NAME="item_perl_name_3a_escape_flags">Perl name:           escape_flags</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masonescapef">Apache name:         MasonEscapeFlags</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_escapeflags">Apache name:         EscapeFlags</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  hash_list</strong><br />
 </li>
 <li><strong>Default:             None</strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="Interp.html">HTML::Mason::Interp</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Interp</code></strong><br />
 </li>
 </ul>
 <p>A hash reference of escape flags to set for this object.  See the
@@ -615,13 +683,13 @@ section on the <A HREF="Interp.html#item_set_escape">set_escape method</a> for m
 <ul>
 <li><strong><A NAME="item_perl_name_3a_ignore_warning">Perl name:           ignore_warnings_expr</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masonignorew">Apache name:         MasonIgnoreWarningsExpr</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_ignorewarnin">Apache name:         IgnoreWarningsExpr</a></strong><br />
 </li>
 <li><strong><A NAME="item_type_in_httpd_2econf_3a_reg">Type in httpd.conf:  regex</a></strong><br />
 </li>
 <li><strong><A NAME="item_default_3a_qr_2fsubroutine_">Default:             qr/Subroutine .* redefined/i</a></strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="Interp.html">HTML::Mason::Interp</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Interp</code></strong><br />
 </li>
 </ul>
 <p>Regular expression indicating which warnings to ignore when loading
@@ -641,13 +709,13 @@ an error when the component is reloaded.</p>
 <ul>
 <li><strong><A NAME="item_perl_name_3a_in_package">Perl name:           in_package</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masoninpacka">Apache name:         MasonInPackage</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_inpackage">Apache name:         InPackage</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  string</strong><br />
 </li>
 <li><strong><A NAME="item_default_3a_html_3a_3amason_">Default:             HTML::Mason::Commands</a></strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="Compiler/ToObject.html">HTML::Mason::Compiler::ToObject</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Compiler::ToObject</code></strong><br />
 </li>
 </ul>
 <p>This is the package in which a component's code is executed.  For
@@ -658,13 +726,13 @@ historical reasons, this defaults to <code>HTML::Mason::Commands</code>.</p>
 <ul>
 <li><strong><A NAME="item_perl_name_3a_interp_class">Perl name:           interp_class</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masoninterpc">Apache name:         MasonInterpClass</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_interpclass">Apache name:         InterpClass</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  string</strong><br />
 </li>
 <li><strong><A NAME="item_default_3a_html_3a_3amason_">Default:             HTML::Mason::Interp</a></strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="ApacheHandler.html">HTML::Mason::ApacheHandler</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::ApacheHandler</code></strong><br />
 </li>
 </ul>
 <p>The class to use when creating a interpreter. Defaults to
@@ -675,13 +743,13 @@ historical reasons, this defaults to <code>HTML::Mason::Commands</code>.</p>
 <ul>
 <li><strong><A NAME="item_perl_name_3a_lexer_class">Perl name:           lexer_class</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masonlexercl">Apache name:         MasonLexerClass</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_lexerclass">Apache name:         LexerClass</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  string</strong><br />
 </li>
 <li><strong><A NAME="item_default_3a_html_3a_3amason_">Default:             HTML::Mason::Lexer</a></strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="Compiler.html">HTML::Mason::Compiler</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Compiler</code></strong><br />
 </li>
 </ul>
 <p>The class to use when creating a lexer. Defaults to <a HREF="Lexer.html">HTML::Mason::Lexer</a>.</p>
@@ -691,13 +759,13 @@ historical reasons, this defaults to <code>HTML::Mason::Commands</code>.</p>
 <ul>
 <li><strong><A NAME="item_perl_name_3a_max_recurse">Perl name:           max_recurse</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masonmaxrecu">Apache name:         MasonMaxRecurse</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_maxrecurse">Apache name:         MaxRecurse</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  string</strong><br />
 </li>
 <li><strong><A NAME="item_default_3a_32">Default:             32</a></strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="Request.html">HTML::Mason::Request</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Request</code></strong><br />
 </li>
 </ul>
 <p>The maximum recursion depth for the component stack, for the request
@@ -705,17 +773,33 @@ stack, and for the inheritance stack. An error is signalled if the
 maximum is exceeded.  Default is 32.</p>
 <p>
 </p>
+<h2><A NAME="object_file_extension">object_file_extension</a></h2>
+<ul>
+<li><strong><A NAME="item_perl_name_3a_object_file_ex">Perl name:           object_file_extension</a></strong><br />
+</li>
+<li><strong><A NAME="item_apache_name_3a_objectfileex">Apache name:         ObjectFileExtension</a></strong><br />
+</li>
+<li><strong>Type in httpd.conf:  string</strong><br />
+</li>
+<li><strong><A NAME="item_default_3a__2eobj">Default:             .obj</a></strong><br />
+</li>
+<li><strong>Belongs to:          <code>HTML::Mason::Interp</code></strong><br />
+</li>
+</ul>
+<p>Extension to add to the end of object files. Default is ``.obj''.</p>
+<p>
+</p>
 <h2><A NAME="out_method">out_method</a></h2>
 <ul>
 <li><strong><A NAME="item_perl_name_3a_out_method">Perl name:           out_method</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masonoutmeth">Apache name:         MasonOutMethod</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_outmethod">Apache name:         OutMethod</a></strong><br />
 </li>
 <li><strong><A NAME="item_type_in_httpd_2econf_3a_cod">Type in httpd.conf:  code</a></strong><br />
 </li>
 <li><strong><A NAME="item_default_3a_print_to_stdout">Default:             Print to STDOUT</a></strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="Request.html">HTML::Mason::Request</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Request</code></strong><br />
 </li>
 </ul>
 <p>Indicates where to send output. If out_method is a reference to a
@@ -731,17 +815,35 @@ string. For example, to send output to a file called ``mason.out'':</p>
 redirected to <code>$r-&gt;print</code>.</p>
 <p>
 </p>
+<h2><A NAME="plugins">plugins</a></h2>
+<ul>
+<li><strong><A NAME="item_perl_name_3a_plugins">Perl name:           plugins</a></strong><br />
+</li>
+<li><strong><A NAME="item_apache_name_3a_plugins">Apache name:         Plugins</a></strong><br />
+</li>
+<li><strong><A NAME="item_type_in_httpd_2econf_3a_arr">Type in httpd.conf:  arrayref</a></strong><br />
+</li>
+<li><strong>Default:             []</strong><br />
+</li>
+<li><strong>Belongs to:          <code>HTML::Mason::Request</code></strong><br />
+</li>
+</ul>
+<p>An array of plugins that will be called at various stages of request
+processing.  Please see <a HREF="Plugin.html">HTML::Mason::Plugin</a> for
+details.</p>
+<p>
+</p>
 <h2><A NAME="postamble">postamble</a></h2>
 <ul>
 <li><strong><A NAME="item_perl_name_3a_postamble">Perl name:           postamble</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masonpostamb">Apache name:         MasonPostamble</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_postamble">Apache name:         Postamble</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  string</strong><br />
 </li>
 <li><strong>Default:             None</strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="Compiler/ToObject.html">HTML::Mason::Compiler::ToObject</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Compiler::ToObject</code></strong><br />
 </li>
 </ul>
 <p>Text given for this parameter is placed at the end of each
@@ -753,13 +855,13 @@ component. See also <A HREF="Params.html#preamble">preamble</a>.  The request wi
 <ul>
 <li><strong><A NAME="item_perl_name_3a_postprocess_pe">Perl name:           postprocess_perl</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masonpostpro">Apache name:         MasonPostprocessPerl</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_postprocessp">Apache name:         PostprocessPerl</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  code</strong><br />
 </li>
 <li><strong>Default:             None</strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="Compiler.html">HTML::Mason::Compiler</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Compiler</code></strong><br />
 </li>
 </ul>
 <p>Sub reference that is called to postprocess the Perl portion of a
@@ -774,13 +876,13 @@ to process the string in-place. See also
 <ul>
 <li><strong><A NAME="item_perl_name_3a_postprocess_te">Perl name:           postprocess_text</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masonpostpro">Apache name:         MasonPostprocessText</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_postprocesst">Apache name:         PostprocessText</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  code</strong><br />
 </li>
 <li><strong>Default:             None</strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="Compiler.html">HTML::Mason::Compiler</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Compiler</code></strong><br />
 </li>
 </ul>
 <p>Sub reference that is called to postprocess the text portion of a
@@ -795,31 +897,32 @@ to process the string in-place. See also
 <ul>
 <li><strong><A NAME="item_perl_name_3a_preamble">Perl name:           preamble</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masonpreambl">Apache name:         MasonPreamble</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_preamble">Apache name:         Preamble</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  string</strong><br />
 </li>
 <li><strong>Default:             None</strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="Compiler/ToObject.html">HTML::Mason::Compiler::ToObject</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Compiler::ToObject</code></strong><br />
 </li>
 </ul>
-<p>Text given for this parameter is placed at the beginning of each component,
-but after the execution of any <code>&lt;%once&gt;</code> block. See also
-<A HREF="Params.html#postamble">postamble</a>. The request will be available as <code>$m</code> in preamble code.</p>
+<p>Text given for this parameter is placed at the beginning of each
+component, but after the execution of any <code>&lt;%once&gt;</code> block. See
+also <A HREF="Params.html#postamble">postamble</a>. The request will be available as <code>$m</code> in preamble
+code.</p>
 <p>
 </p>
 <h2><A NAME="preloads">preloads</a></h2>
 <ul>
 <li><strong><A NAME="item_perl_name_3a_preloads">Perl name:           preloads</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masonpreload">Apache name:         MasonPreloads</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_preloads">Apache name:         Preloads</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  list</strong><br />
 </li>
 <li><strong>Default:             None</strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="Interp.html">HTML::Mason::Interp</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Interp</code></strong><br />
 </li>
 </ul>
 <p>A list of component paths, optionally with glob wildcards, to load
@@ -840,13 +943,13 @@ request exist, so preloading a component that uses <code>$m</code> or <code>$r</
 <ul>
 <li><strong><A NAME="item_perl_name_3a_preprocess">Perl name:           preprocess</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masonpreproc">Apache name:         MasonPreprocess</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_preprocess">Apache name:         Preprocess</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  code</strong><br />
 </li>
 <li><strong>Default:             None</strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="Compiler.html">HTML::Mason::Compiler</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Compiler</code></strong><br />
 </li>
 </ul>
 <p>Sub reference that is called to preprocess each component before the compiler does
@@ -861,13 +964,13 @@ more flexible way is to subclass the Lexer or Compiler class. See also
 <ul>
 <li><strong><A NAME="item_perl_name_3a_request_class">Perl name:           request_class</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masonrequest">Apache name:         MasonRequestClass</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_requestclass">Apache name:         RequestClass</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  string</strong><br />
 </li>
 <li><strong><A NAME="item_default_3a_html_3a_3amason_">Default:             HTML::Mason::Request</a></strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="Interp.html">HTML::Mason::Interp</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Interp</code></strong><br />
 </li>
 </ul>
 <p>The class to use when creating requests. Defaults to
@@ -878,13 +981,13 @@ more flexible way is to subclass the Lexer or Compiler class. See also
 <ul>
 <li><strong><A NAME="item_perl_name_3a_resolver_class">Perl name:           resolver_class</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masonresolve">Apache name:         MasonResolverClass</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_resolverclas">Apache name:         ResolverClass</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  string</strong><br />
 </li>
 <li><strong><A NAME="item_default_3a_html_3a_3amason_">Default:             HTML::Mason::Resolver::File</a></strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="Interp.html">HTML::Mason::Interp</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Interp</code></strong><br />
 </li>
 </ul>
 <p>The class to use when creating a resolver. Defaults to
@@ -895,13 +998,13 @@ more flexible way is to subclass the Lexer or Compiler class. See also
 <ul>
 <li><strong><A NAME="item_perl_name_3a_static_source">Perl name:           static_source</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masonstatics">Apache name:         MasonStaticSource</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_staticsource">Apache name:         StaticSource</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  boolean</strong><br />
 </li>
 <li><strong>Default:             0</strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="Interp.html">HTML::Mason::Interp</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Interp</code></strong><br />
 </li>
 </ul>
 <p>True or false, default is false. When false, Mason checks the
@@ -913,23 +1016,47 @@ entail a file stat for each component executed.</p>
 it will not check component source files to determine if the memory
 cache or object file has expired.  This can save many file stats per
 request. However, in order to get Mason to recognize a component
-source change, you must remove object files and restart the server (so
-as to clear the memory cache).</p>
-<p>Use this feature for live sites where performance is crucial and
-where updates are infrequent and well-controlled.</p>
+source change, you must flush the memory cache and remove object files.
+See <A HREF="Params.html#static_source_touch_file">static_source_touch_file</a> for one easy way to arrange this.</p>
+<p>We recommend turning this mode on in your production sites if
+possible, if performance is of any concern.</p>
+<p>
+</p>
+<h2><A NAME="static_source_touch_file">static_source_touch_file</a></h2>
+<ul>
+<li><strong><A NAME="item_perl_name_3a_static_source_">Perl name:           static_source_touch_file</a></strong><br />
+</li>
+<li><strong><A NAME="item_apache_name_3a_staticsource">Apache name:         StaticSourceTouchFile</a></strong><br />
+</li>
+<li><strong>Type in httpd.conf:  string</strong><br />
+</li>
+<li><strong>Default:             None</strong><br />
+</li>
+<li><strong>Belongs to:          <code>HTML::Mason::Interp</code></strong><br />
+</li>
+</ul>
+<p>Specifies a filename that Mason will check once at the beginning of
+of every request. When the file timestamp changes, Mason will (1) clear
+its in-memory component cache, and (2) remove object files if
+they have not already been deleted by another process.</p>
+<p>This provides a convenient way to implement <A HREF="Params.html#static_source">static_source</a> mode.
+All you need to do is make sure that a single file gets touched
+whenever components change. For Mason's part, checking a single
+file at the beginning of a request is much cheaper than checking
+every component file when static_source=0.</p>
 <p>
 </p>
 <h2><A NAME="subcomp_class">subcomp_class</a></h2>
 <ul>
 <li><strong><A NAME="item_perl_name_3a_subcomp_class">Perl name:           subcomp_class</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masonsubcomp">Apache name:         MasonSubcompClass</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_subcompclass">Apache name:         SubcompClass</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  string</strong><br />
 </li>
 <li><strong><A NAME="item_default_3a_html_3a_3amason_">Default:             HTML::Mason::Component::Subcomponent</a></strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="Compiler/ToObject.html">HTML::Mason::Compiler::ToObject</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Compiler::ToObject</code></strong><br />
 </li>
 </ul>
 <p>The class into which subcomponent objects are blessed.  This defaults
@@ -940,13 +1067,13 @@ to <a HREF="Component/Subcomponent.html">HTML::Mason::Component::Subcomponent</a
 <ul>
 <li><strong><A NAME="item_perl_name_3a_use_object_fil">Perl name:           use_object_files</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masonuseobje">Apache name:         MasonUseObjectFiles</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_useobjectfil">Apache name:         UseObjectFiles</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  boolean</strong><br />
 </li>
 <li><strong>Default:             1</strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="Interp.html">HTML::Mason::Interp</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Interp</code></strong><br />
 </li>
 </ul>
 <p>True or false, default is true.  Specifies whether Mason creates
@@ -959,13 +1086,13 @@ should be left alone.</p>
 <ul>
 <li><strong><A NAME="item_perl_name_3a_use_source_lin">Perl name:           use_source_line_numbers</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masonusesour">Apache name:         MasonUseSourceLineNumbers</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_usesourcelin">Apache name:         UseSourceLineNumbers</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  boolean</strong><br />
 </li>
 <li><strong>Default:             1</strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="Compiler.html">HTML::Mason::Compiler</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Compiler</code></strong><br />
 </li>
 </ul>
 <p>True or false, default is true. Indicates whether component line
@@ -980,13 +1107,13 @@ may be more appropriate for in-depth debugging sessions.</p>
 <ul>
 <li><strong><A NAME="item_perl_name_3a_use_strict">Perl name:           use_strict</a></strong><br />
 </li>
-<li><strong><A NAME="item_apache_name_3a_masonusestri">Apache name:         MasonUseStrict</a></strong><br />
+<li><strong><A NAME="item_apache_name_3a_usestrict">Apache name:         UseStrict</a></strong><br />
 </li>
 <li><strong>Type in httpd.conf:  boolean</strong><br />
 </li>
 <li><strong>Default:             1</strong><br />
 </li>
-<li><strong>Belongs to:          <a HREF="Compiler/ToObject.html">HTML::Mason::Compiler::ToObject</a></strong><br />
+<li><strong>Belongs to:          <code>HTML::Mason::Compiler::ToObject</code></strong><br />
 </li>
 </ul>
 <p>True or false, default is true. Indicates whether or not a given

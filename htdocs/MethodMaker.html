@@ -1,0 +1,91 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>HTML::Mason::MethodMaker - Used to create simple get &amp; get/set methods in other classes</title>
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+<p><A NAME="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><A HREF="#name">NAME</a></li>
+	<li><A HREF="#synopsis">SYNOPSIS</a></li>
+	<li><A HREF="#description">DESCRIPTION</a></li>
+	<li><A HREF="#usage">USAGE</a></li>
+	<li><A HREF="#see_also">SEE ALSO</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<hr />
+<h1><A NAME="name">NAME</a></h1>
+<p>HTML::Mason::MethodMaker - Used to create simple get &amp; get/set methods in other classes</p>
+<p>
+</p>
+<hr />
+<h1><A NAME="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use HTML::Mason::MethodMaker
+     ( read_only =&gt; 'foo',
+       read_write =&gt; [
+                      [ bar =&gt; { type =&gt; SCALAR } ],
+                      [ baz =&gt; { isa =&gt; 'HTML::Mason::Baz' } ],
+                      'quux', # no validation
+                     ],
+       read_write_contained =&gt; { other_object =&gt;
+                                 [
+                                  [ 'thing1' =&gt; { isa =&gt; 'Thing1' } ],
+                                  'thing2', # no validation
+                                 ]
+                               },
+     );</pre>
+<p>
+</p>
+<hr />
+<h1><A NAME="description">DESCRIPTION</a></h1>
+<p>This automates the creation of simple accessor methods.</p>
+<p>
+</p>
+<hr />
+<h1><A NAME="usage">USAGE</a></h1>
+<p>This module creates methods when it is <code>use</code>'d by another module.
+There are three types of methods: 'read_only', 'read_write',
+'read_write_contained'.</p>
+<p>Attributes specified as 'read_only' get an accessor that only returns
+the value of the attribute.  Presumably, these attributes are set via
+more complicated methods in the class or as a side effect of one of
+its methods.</p>
+<p>Attributes specified as 'read_write' will take a single optional
+parameter.  If given, this parameter will become the new value of the
+attribute.  This value is then returned from the method.  If no
+parameter is given, then the current value is returned.</p>
+<p>If you want the accessor to use <code>Params::Validate</code> to validate any
+values passed to the accessor (and you _do_), then the the accessor
+specification should be an array reference containing two elements.
+The first element is the accessor name and the second is the
+validation spec.</p>
+<p>The 'read_write_contained' parameter is used to create accessor for
+delayed contained objects.  A <em>delayed</em> contained object is one that
+is <strong>not</strong> created in the containing object's accessor, but rather at
+some point after the containing object is constructed.  For example,
+the Interpreter object creates Request objects after the Interpreter
+itself has been created.</p>
+<p>The value of the 'read_write_contained' parameter should be a hash
+reference.  The keys are the internal name of the contained object,
+such as ``request'' or ``compiler''.  The values for the keys are the same
+as the parameters given for 'read_write' accessors.</p>
+<p>
+</p>
+<hr />
+<h1><A NAME="see_also">SEE ALSO</a></h1>
+<p><a HREF="Mason.html">HTML::Mason</a></p>
+
+</body>
+
+</html>

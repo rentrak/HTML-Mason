@@ -1,4 +1,6 @@
-# Copyright (c) 1998-2003 by Jonathan Swartz. All rights reserved.
+# -*- cperl-indent-level: 4; cperl-continued-brace-offset: -4; cperl-continued-statement-offset: 4 -*-
+
+# Copyright (c) 1998-2005 by Jonathan Swartz. All rights reserved.
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
@@ -33,12 +35,21 @@ package HTML::Mason::Request;
 use strict;
 
 use File::Spec;
-use HTML::Mason::Tools qw(read_file compress_path load_pkg pkg_loaded absolute_comp_path);
+use HTML::Mason::Plugin::Context;
+use HTML::Mason::Tools qw(can_weaken read_file compress_path load_pkg pkg_loaded absolute_comp_path);
 use HTML::Mason::Utils;
-use HTML::Mason::Buffer;
-
 use Class::Container;
 use base qw(Class::Container);
+
+# Stack frame constants
+use constant STACK_COMP      	=> 0;
+use constant STACK_ARGS      	=> 1;
+use constant STACK_BUFFER    	=> 2;
+use constant STACK_MODS      	=> 3;
+use constant STACK_PATH      	=> 4;
+use constant STACK_DEPTH     	=> 5;
+use constant STACK_BASE_COMP 	=> 6;
+use constant STACK_IN_CALL_SELF => 7;
 
 # HTML::Mason::Exceptions always exports rethrow_exception() and isa_mason_exception()
 use HTML::Mason::Exceptions( abbr => [qw(param_error syntax_error
@@ -105,34 +116,53 @@ BEGIN
 
 	 out_method =>
          { parse => 'code',type => CODEREF|SCALARREF,
-           default => sub { print STDOUT grep {defined} @_ },
+           default => sub { print STDOUT $_[0] },
            descr => "A subroutine or scalar reference through which all output will pass" },
-        );
 
-    __PACKAGE__->contained_objects
-	(
-	 buffer     => { class => 'HTML::Mason::Buffer',
-			 delayed => 1,
-			 descr => "This class receives component output and dispatches it appropriately" },
-	);
+         # Only used when creating subrequests
+	 parent_request =>
+         { isa => __PACKAGE__,
+           default => undef,
+           public  => 0,
+         },
+
+ 	 plugins =>
+         { parse => 'arrayref', default => [],
+ 	   descr => 'List of plugin classes or objects to run hooks around components and requests' },
+
+         # Only used when creating subrequests
+	 request_depth =>
+         { type => SCALAR,
+           default => 1,
+           public  => 0,
+         },
+
+        );
 }
 
 my @read_write_params;
-BEGIN { @read_write_params = qw( autoflush
-				 data_cache_api
-				 data_cache_defaults
-				 dhandler_name
-				 error_format
-				 error_mode
-                                 max_recurse
-                                 out_method ); }
+BEGIN { @read_write_params = qw(
+				autoflush
+				data_cache_api
+				data_cache_defaults
+				dhandler_name
+				error_format
+				error_mode
+				max_recurse
+				out_method
+				); }
+
 use HTML::Mason::MethodMaker
-    ( read_only => [ qw( count
-			 dhandler_arg
-			 interp
-			 parent_request
-			 request_depth
-			 request_comp ) ],
+    ( read_only => [ qw(
+			count
+			dhandler_arg
+			initialized
+			interp
+			parent_request
+			plugin_instances
+			request_depth
+			request_comp
+			) ],
 
       read_write => [ map { [ $_ => __PACKAGE__->validation_spec->{$_} ] }
                       @read_write_params ]
@@ -145,17 +175,18 @@ sub new
     my $class = shift;
     my $self = $class->SUPER::new(@_);
 
-    %$self = (%$self, buffer_stack => undef,
-		      count => 0,
-		      dhandler_arg => undef,
-	              execd => 0,
-		      parent_request => undef,
-		      request_depth => 0,
-		      stack => undef,
-		      wrapper_chain => undef,
-		      wrapper_index => undef,
-		      notes => {},
-	     );
+    # These are mandatory values for all requests.
+    #
+    %$self = (%$self,
+	      dhandler_arg   => undef,
+	      execd 	     => 0,
+	      initialized    => 0,
+	      stack 	     => [],
+	      top_stack      => undef,
+	      wrapper_chain  => undef,
+	      wrapper_index  => undef,
+	      notes 	     => {},
+	      );
 
     $self->{request_comp} = delete($self->{comp});
     $self->{request_args} = delete($self->{args});
@@ -163,7 +194,14 @@ sub new
 	$self->{request_args} = [%{$self->{request_args}}];
     }
     $self->{count} = ++$self->{interp}{request_count};
+    if (ref($self->{out_method}) eq 'SCALAR') {
+	my $bufref = $self->{out_method};
+	$self->{out_method} = sub { $$bufref .= $_[0] };
+    }
+    $self->{use_internal_component_caches} =
+	$self->{interp}->use_internal_component_caches;
     $self->_initialize;
+
     return $self;
 }
 
@@ -173,20 +211,16 @@ sub instance {
     return $HTML::Mason::Commands::m; #; this comment fixes a parsing bug in Emacs cperl-mode
 }
 
+# Attempt to load each plugin module once per process
+my %plugin_loaded;
+
 sub _initialize {
     my ($self) = @_;
     my $interp = $self->interp;
 
-    # All errors returned from this routine will be converted to a
-    # Mason exception and placed in the {prepare_error} slot.  exec()
-    # will then trigger the error. This makes for an easier new + exec
-    # API.
     local $SIG{'__DIE__'} = \&rethrow_exception;
-    
-    eval {
-	$self->{buffer_stack} = [];
-	$self->{stack} = [];
 
+    eval {
 	# request_comp can be an absolute path or component object.  If a path,
 	# load into object.
 	my $request_comp = $self->{request_comp};
@@ -195,6 +229,7 @@ sub _initialize {
 	    $request_comp =~ s{/+}{/}g;
 	    $self->{top_path} = $path = $request_comp;
 
+	    my $retry_count = 0;
 	    search: {
 		$request_comp = $self->interp->load($path);
 
@@ -208,29 +243,81 @@ sub _initialize {
 		    }
 		}
 
-		# If the component was declined previously in this request,
-		# look for the next dhandler up the tree.
+		# If the component was declined previously in this
+		# request, look for the next dhandler up the
+		# tree. 
 		if ($request_comp and $self->{declined_comps}->{$request_comp->comp_id}) {
 		    $path = $request_comp->dir_path;
-		    unless ($path eq '/' and $request_comp->name eq $self->dhandler_name) {
-			if ($request_comp->name eq $self->dhandler_name) {
+		    if ($request_comp->name eq $self->dhandler_name) {
+			if ($path eq '/') {
+			    undef $request_comp;
+			    last search;  # End search if /dhandler declined
+			} else {
 			    $path =~ s:/[^\/]+$::;
-                            $path ||= '/';
+			    $path ||= '/';
 			}
+		    }
+		    if ($retry_count++ > $self->max_recurse) {
+			error "could not find dhandler after " . $self->max_recurse . " tries (infinite loop bug?)";
 		    }
 		    redo search;
 		}
 	    }
 
 	    unless ($self->{request_comp} = $request_comp) {
-		top_level_not_found_error "could not find component for initial path '$self->{top_path}'\n";
+		top_level_not_found_error "could not find component for initial path '$self->{top_path}' " .
+		    "(component roots are: " .
+	            join(", ", map { "'" . $_->[1] . "'" } $self->{interp}->comp_root_array) .
+	            ")";
 	    }
 
 	} elsif ( ! UNIVERSAL::isa( $request_comp, 'HTML::Mason::Component' ) ) {
 	    param_error "comp ($request_comp) must be a component path or a component object";
 	}
+
+ 	# Construct a plugin instance for each plugin class in each request.
+	#
+	$self->{has_plugins} = 0;
+        $self->{plugin_instances} = [];
+ 	foreach my $plugin (@{ delete $self->{plugins} }) {
+	    $self->{has_plugins} = 1;
+ 	    my $plugin_instance = $plugin;
+ 	    unless (ref $plugin) {
+
+		# Load information about each plugin class once per
+		# process.  Right now the only information we need is
+		# whether there is a new() method.
+		#
+		unless ($plugin_loaded{$plugin}) {
+		    # Load plugin package if it isn't already loaded.
+		    #
+		    { no strict 'refs';
+		      unless (defined(%{$plugin . "::"})) {
+			  eval "use $plugin;";
+			  die $@ if $@;
+		      }}
+		    $plugin_loaded{$plugin} = 1;
+		}
+ 	        $plugin_instance = $plugin->new();
+ 	    }
+ 	    push @{$self->{plugin_instances}}, $plugin_instance;
+ 	}
+	$self->{plugin_instances_reverse} = [reverse(@{$self->{plugin_instances}})];
+
+	# Check for autoflush and !enable_autoflush
+	#
+	if ($self->{autoflush} && !$self->interp->compiler->enable_autoflush) {
+	    die "Cannot use autoflush unless enable_autoflush is set";
+	}
+
     };
-    $self->{prepare_error} = $@ if $@;
+
+    my $err = $@;
+    if ($err and !$self->_aborted_or_declined($err)) {
+	$self->_handle_error($err);
+    } else {
+	$self->{initialized} = 1;
+    }
 }
 
 sub use_dhandlers
@@ -276,13 +363,27 @@ sub exec {
     my ($self) = @_;
     my $interp = $self->interp;
 
+    # If the request failed to initialize, the error has already been handled
+    # at the bottom of _initialize(); just return.
+    return unless $self->initialized();
+
+    # All errors returned from this routine will be in exception form.
+    local $SIG{'__DIE__'} = \&rethrow_exception;
+
     # Cheap way to prevent users from executing the same request twice.
+    #
     if ($self->{execd}++) {
 	error "Can only call exec() once for a given request object. Did you want to use a subrequest?";
     }
 
-    # All errors returned from this routine will be in exception form.
-    local $SIG{'__DIE__'} = \&rethrow_exception;
+    # Check for infinite subrequest loop.
+    #
+    error "subrequest depth > " . $self->max_recurse . " (infinite subrequest loop?)"
+	if $self->request_depth > $self->max_recurse;
+
+    # Check the static_source touch file, if it exists.
+    #
+    $self->interp->check_static_source_touch_file();
 
     #
     # $m is a dynamically scoped global containing this
@@ -291,20 +392,21 @@ sub exec {
     #
     local $HTML::Mason::Commands::m = $self;
 
+    # Dynamically scoped global pointing at the top of the request stack.
+    #
+    $self->{top_stack} = undef;
+
     # Save context of subroutine for use inside eval.
     my $wantarray = wantarray;
     my @result;
+
+    # Initialize output buffer to interpreter's preallocated buffer
+    # before clearing, to reduce memory reallocations.
+    #
+    $self->{request_buffer} = $self->interp->preallocated_output_buffer;
+    $self->{request_buffer} = '';
+
     eval {
-	# Create base buffer.
-	my $buffer = $self->create_delayed_object( 'buffer', sink => $self->out_method );
-	push @{ $self->{buffer_stack} }, $buffer;
-        push @{ $self->{buffer_stack} }, $buffer->new_child;
-
-	# If there was an error during request preparation, throw it now.
-	if (my $err = $self->{prepare_error}) {
-	    $err->throw;
-	}
-
 	# Build wrapper chain and index.
 	my $request_comp = $self->request_comp;
 	my $first_comp;
@@ -332,36 +434,70 @@ sub exec {
 	    tie *SELECTED, 'Tie::Handle::Mason';
 
 	    my $old = select SELECTED;
-	    if ($wantarray) {
-		@result = eval {$self->comp({base_comp=>$request_comp}, $first_comp, @$request_args)};
-	    } elsif (defined($wantarray)) {
-		$result[0] = eval {$self->comp({base_comp=>$request_comp}, $first_comp, @$request_args)};
-	    } else {
-		eval {$self->comp({base_comp=>$request_comp}, $first_comp, @$request_args)};
+	    my $mods = {base_comp=>$request_comp, store=>\ ($self->{request_buffer})};
+
+	    if ($self->{has_plugins}) {
+		my $context = bless
+		    [$self, $request_args],
+		    'HTML::Mason::Plugin::Context::StartRequest';
+		eval {
+		    foreach my $plugin_instance (@{$self->plugin_instances}) {
+			$plugin_instance->start_request_hook( $context );
+		    }
+		};
+		if ($@) {
+		    select $old;
+		    rethrow_exception $@;
+		}
 	    }
+
+	    if ($wantarray) {
+		@result = eval {$self->comp($mods, $first_comp, @$request_args)};
+	    } elsif (defined($wantarray)) {
+		$result[0] = eval {$self->comp($mods, $first_comp, @$request_args)};
+	    } else {
+		eval {$self->comp($mods, $first_comp, @$request_args)};
+	    }
+ 
+ 	    my $error = $@;
+
+	    if ($self->{has_plugins}) {
+		# plugins called in reverse order when exiting.
+		my $context = bless
+		    [$self, $request_args, \$self->{request_buffer}, $wantarray, \@result, \$error],
+		    'HTML::Mason::Plugin::Context::EndRequest';
+		eval {
+		    foreach my $plugin_instance (@{$self->{plugin_instances_reverse}}) {
+			$plugin_instance->end_request_hook( $context );
+		    }
+		};
+		if ($@) {
+		    # plugin errors take precedence over component errors
+		    $error = $@;
+		}
+	    }
+	    
 	    select $old;
-	    rethrow_exception $@;
+	    rethrow_exception $error;
 	}
     };
+
+    # Purge code cache if necessary.
+    $interp->purge_code_cache;
 
     # Handle errors.
     my $err = $@;
     if ($err and !$self->_aborted_or_declined($err)) {
-	pop @{ $self->{buffer_stack} };
-	pop @{ $self->{buffer_stack} };
-	$interp->purge_code_cache;
 	$self->_handle_error($err);
 	return;
     }
 
-    # Flush output buffer.
-    $self->flush_buffer;
-    pop @{ $self->{buffer_stack} };
-    pop @{ $self->{buffer_stack} };
-
-    # Purge code cache if necessary. We do this at the end so as not
-    # to affect the response of the request as much.
-    $interp->purge_code_cache;
+    # If there's anything in the output buffer, send it to out_method.
+    # Otherwise skip out_method call to avoid triggering side effects
+    # (e.g. HTTP header sending).
+    if (length($self->{request_buffer}) > 0) {
+	$self->out_method->($self->{request_buffer});
+    }
 
     # Return aborted value or result.
     @result = ($err->aborted_value) if $self->aborted($err);
@@ -375,6 +511,8 @@ sub exec {
 sub _handle_error
 {
     my ($self, $err) = @_;
+
+    $self->interp->purge_code_cache;
 
     rethrow_exception $err if $self->is_subrequest;
 
@@ -415,15 +553,16 @@ sub make_subrequest
 
     unless ( $params{out_method} )
     {
-	$defaults{out_method} = sub { $self->print(@_) };
+	$defaults{out_method} = sub {
+	    $self->print($_[0]);
+	};
     }
 
     # Make subrequest, and set parent_request and request_depth appropriately.
-    my $subreq = $interp->make_request(%defaults, %params);
-    $subreq->{parent_request} = $self;
-    $subreq->{request_depth}  = $self->request_depth+1;
-    error "subrequest depth > " . $self->max_recurse . " (infinite subrequest loop?)"
-	if $subreq->request_depth > $self->max_recurse;
+    my $subreq =
+        $interp->make_request(%defaults, %params,
+                              parent_request => $self,
+                              request_depth => $self->request_depth + 1);
 
     return $subreq;
 }
@@ -435,9 +574,14 @@ sub is_subrequest
     return $self->parent_request ? 1 : 0;
 }
 
-#
-# Abort out of current execution.
-#
+sub clear_and_abort
+{
+    my $self = shift;
+
+    $self->clear_buffer;
+    $self->abort(@_);
+}
+
 sub abort
 {
     my ($self, $aborted_value) = @_;
@@ -606,7 +750,7 @@ sub _cache_1_x
 sub cache_self {
     my ($self, %options) = @_;
 
-    return if $self->top_stack->{in_call_self};
+    return if $self->{top_stack}->[STACK_IN_CALL_SELF]->{'CACHE_SELF'};
 
     my (%store_options, %retrieve_options);
     my ($expires_in, $key, $cache);
@@ -631,7 +775,7 @@ sub cache_self {
 	$cache = $self->cache(%options);
     }
 
-    my ($output, @retval);
+    my ($output, @retval, $error);
 
     my $cached =
         ( $self->data_cache_api eq '1.0' ?
@@ -640,13 +784,16 @@ sub cache_self {
         );
 
     if ($cached) {
-        $self->top_buffer->remove_filter
-            if $self->top_stack->{comp}->has_filter;
-
         ($output, my $retval) = @$cached;
         @retval = @$retval;
     } else {
-        $self->call_self( \$output, \@retval );
+        $self->call_self( \$output, \@retval, \$error, 'CACHE_SELF' );
+
+	# If user aborted or declined, store in cache and print output
+	# before repropagating.
+	#
+	rethrow_exception $error
+	    unless ($self->_aborted_or_declined($error));
 
         my $value = [$output, \@retval];
         if ($self->data_cache_api eq '1.0') {
@@ -662,83 +809,73 @@ sub cache_self {
     $self->print($output);
 
     #
+    # Rethrow abort/decline exception if any.
+    #
+    rethrow_exception $error;
+
+    #
     # Return the component return value in case the caller is interested,
     # followed by 1 indicating the cache retrieval success.
     #
     return (@retval, 1);
-
 }
 
-my $do_nothing = sub {};
 sub call_self
 {
-    my ($self, $output, $retval) = @_;
+    my ($self, $output, $retval, $error, $tag) = @_;
 
-    return if $self->top_stack->{in_call_self};
+    # Keep track of each individual invocation of call_self in the
+    # component, via $tag.  $tag is 'CACHE_SELF' or 'FILTER' when used
+    # by $m->cache_self and <%filter> sections respectively.
+    #
+    $tag ||= 'DEFAULT';
+    my $top_stack = $self->{top_stack};
+    $top_stack->[STACK_IN_CALL_SELF] ||= {};
+    return if $top_stack->[STACK_IN_CALL_SELF]->{$tag};
+    local $top_stack->[STACK_IN_CALL_SELF]->{$tag} = 1;
 
-    # If the top buffer has a filter we need to remove it because
-    # we'll be adding the filter buffer again in a moment.  This is
-    # done because we might have been called via cache_self, and we
-    # want to capture the _filtered_ component ou caching.
-    $self->top_buffer->remove_filter
-        if $self->top_stack->{comp}->has_filter;
+    # Determine wantarray based on retval reference
+    my $wantarray =
+	( defined $retval ?
+	  ( UNIVERSAL::isa( $retval, 'ARRAY' ) ? 1 : 0 ) :
+	  undef
+	  );
 
-    unless (defined $output) {
-        # don't bother accumulating output that will never be seen
-        $output = $do_nothing;
+    # If output or retval references were left undefined, just point
+    # them to a dummy variable.
+    #
+    my $dummy;
+    $output ||= \$dummy;
+    $retval ||= \$dummy;
+
+    # Temporarily put $output in place of the current top buffer.
+    local $top_stack->[STACK_BUFFER] = $output;
+
+    # Call the component again, capturing output, return value and
+    # error. Don't catch errors unless the error reference was specified.
+    #
+    my $comp = $top_stack->[STACK_COMP];
+    my $args = $top_stack->[STACK_ARGS];
+    my @result;
+    eval {
+	if ($wantarray) {
+	    @$retval = $comp->run(@$args);
+	} elsif (defined $wantarray) {
+	    $$retval = $comp->run(@$args);
+	} else {
+	    $comp->run(@$args);
+	}
+    };
+    if ($@) {
+	if ($error) {
+	    $$error = $@;
+	} else {
+	    die $@;
+	}
     }
 
-    eval
-    {
-        my $top_stack = $self->top_stack;
-        my $comp = $top_stack->{comp};
-        my @args = @{ $top_stack->{args} };
-
-        push @{ $self->{buffer_stack} },
-            $self->top_buffer->new_child( sink => $output,
-                                          ignore_flush => 1,
-                                          ignore_clear => 1,
-                                        );
-
-        push @{ $self->{buffer_stack} },
-            $self->top_buffer->new_child( filter_from => $comp )
-                if $comp->has_filter;
-
-        local $top_stack->{in_call_self} = 1;
-
-        my $wantarray =
-            ( defined $retval ?
-              ( UNIVERSAL::isa( $retval, 'ARRAY' ) ? 1 : 0 ) :
-              undef
-            );
-
-        my @result;
-        eval {
-            if ($wantarray) {
-                @$retval = $comp->run(@args);
-            } elsif (defined $wantarray) {
-                $$retval = $comp->run(@args);
-            } else {
-                $comp->run(@args);
-            }
-        };
-
-        #
-        # Whether there was an error or not we need to pop the buffer
-        # stack (twice if we added a filter buffer).
-        #
-        if ( $comp->has_filter ) {
-            my $filter = pop @{ $self->{buffer_stack} };
-            $filter->flush;
-        }
-
-        pop @{ $self->{buffer_stack} };
-
-        rethrow_exception $@;
-    };
-
-    rethrow_exception $@ unless $self->declined;
-
+    # Return 1, indicating that this invocation of call_self is done.
+    #
     return 1;
 }
 
@@ -773,11 +910,12 @@ sub callers
 {
     my ($self, $levels_back) = @_;
     if (defined($levels_back)) {
-	my $entry = $self->stack_entry($levels_back);
-	return unless defined $entry;
-	return $entry->{comp};
+	my $frame = $self->stack_frame($levels_back);
+	return unless defined $frame;
+	return $frame->[STACK_COMP];
     } else {
-	return map($_->{comp}, reverse $self->stack);
+	my $depth = $self->depth;
+	return map($_->[STACK_COMP], $self->stack_frames);
     }
 }
 
@@ -789,16 +927,20 @@ sub caller_args
     my ($self, $levels_back) = @_;
     param_error "caller_args expects stack level as argument" unless defined $levels_back;
 
-    my $entry = $self->stack_entry($levels_back);
-    return unless $entry;
-    my $args = $entry->{args};
+    my $frame = $self->stack_frame($levels_back);
+    return unless $frame;
+    my $args = $frame->[STACK_ARGS];
     return wantarray ? @$args : { @$args };
 }
 
 sub comp_exists
 {
     my ($self, $path) = @_;
-    return $self->interp->comp_exists(absolute_comp_path($path, $self->current_comp->dir_path)) ? 1 : 0;
+
+    # In order to support SELF, PARENT, REQUEST, subcomponents and
+    # methods, it is easiest just to defer to fetch_comp.
+    #
+    return $self->fetch_comp($path) ? 1 : 0;
 }
 
 sub decline
@@ -824,7 +966,7 @@ sub depth
 
     # direct access for speed because this method is called on every
     # call to $m->comp
-    return scalar @{ $self->{stack} };
+    return $self->{top_stack}->[STACK_DEPTH];
 }
 
 #
@@ -832,20 +974,56 @@ sub depth
 # Handles SELF, PARENT, REQUEST, comp:method, relative->absolute
 # conversion, and local subcomponents.
 #
+# fetch_comp handles caching if use_internal_component_caches is on.
+# _fetch_comp does the real work.
+#
 sub fetch_comp
 {
-    my ($self,$path) = @_;
-    param_error "fetch_comp: requires path as first argument" unless defined($path);
+    my ($self, $path, $current_comp, $error, $exists_only) = @_;
+
+    $current_comp ||= $self->{top_stack}->[STACK_COMP];
+
+    if ($self->{use_internal_component_caches}) {
+	my $fetch_comp_cache = $current_comp->{fetch_comp_cache};
+	unless (defined($fetch_comp_cache->{$path})) {
+
+	    # Cache the component objects associated with
+	    # uncanonicalized paths like ../foo/bar.html.  SELF and
+	    # REQUEST are dynamic and cannot be cached. Weaken the
+	    # references in this cache so that we don't hang on to the
+	    # coponent if it disappears from the main code cache.
+	    #
+	    # See Interp::_initialize for the definition of
+	    # use_internal_component_caches and the conditions under
+	    # which we can create this cache safely.
+	    #
+	    if ($path =~ /^(?:SELF|REQUEST)/) {
+		return $self->_fetch_comp($path, $current_comp, $error);
+	    } else {
+		$fetch_comp_cache->{$path} =
+		    $self->_fetch_comp($path, $current_comp, $error);
+		Scalar::Util::weaken($fetch_comp_cache->{$path}) if can_weaken;
+	    }
+	}
+	return $fetch_comp_cache->{$path};
+    } else {
+	return $self->_fetch_comp($path, $current_comp, $error);
+    }
+}
+
+sub _fetch_comp
+{
+    my ($self, $path, $current_comp, $error) = @_;
 
     #
-    # Handle paths SELF and PARENT
+    # Handle paths SELF, PARENT, and REQUEST
     #
     if ($path eq 'SELF') {
 	return $self->base_comp;
     }
     if ($path eq 'PARENT') {
-	my $c = $self->current_comp->parent
-	    or error "PARENT designator used from component with no parent";
+	my $c = $current_comp->parent;
+	$$error = "PARENT designator used from component with no parent" if !$c && defined($error);
 	return $c;
     }
     if ($path eq 'REQUEST') {
@@ -858,10 +1036,16 @@ sub fetch_comp
     if (index($path,':') != -1) {
 	my $method_comp;
 	my ($owner_path,$method_name) = split(':',$path,2);
-	my $owner_comp = $self->fetch_comp($owner_path)
-	    or error "could not find component for path '$owner_path'\n";
-	$owner_comp->_locate_inherited('methods',$method_name,\$method_comp)
-	    or error "no method '$method_name' for component " . $owner_comp->title;
+	if (my $owner_comp = $self->fetch_comp($owner_path, $current_comp, $error)) {
+	    if ($owner_comp->_locate_inherited('methods',$method_name,\$method_comp)) {
+		return $method_comp;
+	    } else {
+		$$error = "no such method '$method_name' for component " . $owner_comp->title if defined($error);
+	    }
+	} else {
+	    $$error ||= "could not find component for path '$owner_path'\n" if defined($error);
+	}
+
 	return $method_comp;
     }
 
@@ -870,25 +1054,21 @@ sub fetch_comp
     # current component first.
     #
     if ($path !~ /\//) {
-	my $cur_comp = $self->current_comp;
 	# Check my subcomponents.
-	if (my $subcomp = $cur_comp->subcomps($path)) {
+	if (my $subcomp = $current_comp->subcomps($path)) {
 	    return $subcomp;
 	}
 	# If I am a subcomponent, also check my owner's subcomponents.
 	# This won't work when we go to multiply embedded subcomponents...
-	if ($cur_comp->is_subcomp and my $subcomp = $cur_comp->owner->subcomps($path)) {
+	if ($current_comp->is_subcomp and my $subcomp = $current_comp->owner->subcomps($path)) {
 	    return $subcomp;
 	}
     }
 
     #
-    # Otherwise pass the absolute path to interp->load.
+    # Otherwise pass the canonicalized absolute path to interp->load.
     #
-    # For speed, don't call ->current_comp, instead access it directly
-    $path = absolute_comp_path($path, $self->{stack}[-1]{comp}->dir_path)
-	unless substr($path, 0, 1) eq '/';
-
+    $path = absolute_comp_path($path, $current_comp->dir_path);
     my $comp = $self->interp->load($path);
 
     return $comp;
@@ -961,10 +1141,12 @@ sub print
 {
     my $self = shift;
 
-    # direct access for optimization cause $m->print is called a lot
-    $self->{buffer_stack}[-1]->receive(@_);
-
-    # ditto
+    my $bufref = defined($self->{top_stack}) ?
+	$self->{top_stack}->[STACK_BUFFER] :
+	    \($self->{request_buffer});
+    foreach my $text (@_) {
+	$$bufref .= $text if defined($text);
+    }
     $self->flush_buffer if $self->{autoflush};
 }
 
@@ -975,133 +1157,111 @@ sub print
 #
 sub comp {
     my $self = shift;
+    my $top_stack = $self->{top_stack};
 
     # Get modifiers: optional hash reference passed in as first argument.
-    # merge multiple hash references to simplify user and internal usage.
-    my %mods = ();
-    %mods = (%{shift()},%mods) while ref($_[0]) eq 'HASH';
-
-    my $comp = shift;
-
-    param_error "comp: requires path or component as first argument"
-	unless defined($comp);
-
+    # Merge multiple hash references to simplify user and internal usage.
     #
-    # $comp can be an absolute path or component object.  If a path,
-    # load into object.
+    my %mods;
+    %mods = (%{shift()}, %mods) while ref($_[0]) eq 'HASH';
+
+    # Get component path or object. If a path, load into object.
     #
     my $path;
+    my $comp = shift;
     if (!ref($comp)) {
+	die "comp called without component - must pass a path or component object"
+	    unless defined($comp);
 	$path = $comp;
-	$comp = $self->fetch_comp($path)
-	    or error "could not find component for path '$path'\n";
+	my $error;
+	$comp = $self->fetch_comp($path, undef, \$error)
+	    or error($error || "could not find component for path '$path'\n");
+    }
+    
+    # Increment depth and check for maximum recursion. Depth starts at 1.
+    #
+    my $depth = defined($top_stack) ? $top_stack->[STACK_DEPTH] + 1 : 1;
+    error ($depth-1 . " levels deep in component stack (infinite recursive call?)\n")
+        if ($depth > $self->{max_recurse});
+
+    # Keep the same output buffer unless store modifier was passed. If we have
+    # a filter, put the filter buffer on the stack instead of the regular buffer.
+    #
+    my $filter_buffer = '';
+    my $top_buffer = defined($mods{store}) ? $mods{store} : $top_stack->[STACK_BUFFER];
+    my $stack_buffer = $comp->{has_filter} ? \$filter_buffer : $top_buffer;
+
+    # Add new stack frame and point dynamically scoped $self->{top_stack} at it.
+    local $self->{top_stack} = $self->{stack}->[$depth-1] =
+	[
+	 $comp,          # STACK_COMP
+	 \@_,            # STACK_ARGS
+	 $stack_buffer,  # STACK_BUFFER
+	 \%mods,         # STACK_MODS
+	 $path,          # STACK_PATH
+	 $depth,         # STACK_DEPTH
+	 undef,          # STACK_BASE_COMP
+	 undef,          # STACK_IN_CALL_SELF
+	 ];
+
+    # Run start_component hooks for each plugin.
+    #
+    if ($self->{has_plugins}) {
+	my $context = bless
+	    [$self, $comp, \@_],
+	    'HTML::Mason::Plugin::Context::StartComponent';
+	
+	foreach my $plugin_instance (@{$self->{plugin_instances}}) {
+	    $plugin_instance->start_component_hook( $context );
+	}
     }
 
+    # Finally, call the component.
     #
-    # Check for maximum recursion.
-    #
-    my $depth = $self->depth;
-    error "$depth levels deep in component stack (infinite recursive call?)\n"
-        if ($depth >= $self->max_recurse);
-
-    #
-    # Determine base_comp (base component for method and attribute inheritance)
-    # User may override with { base_comp => $compref }
-    # Don't change on SELF:x and PARENT:x calls
-    # Assume they know what they are doing if a component ref is passed in
-    #
-    my $base_comp =
-        ( exists($mods{base_comp}) ?
-          $mods{base_comp} :
-          # access data structure directly to optimize common case
-          $self->{stack}[-1]{base_comp}
-        );
-
-    unless ( $mods{base_comp} ||	# base_comp override
-	     !$path || 		# path is undef if $comp is a reference
-	     ($comp->is_subcomp && ! $comp->is_method) ||
-	     $path =~ m/^(?:SELF|PARENT|REQUEST)(?:\:..*)?$/ ) {
-	$base_comp = ( $path =~ m/(.*):/ ?
-		       $self->fetch_comp($1) :
-		       $comp );
-	$base_comp = $base_comp->owner if $base_comp->is_subcomp;
-    }
-
-    # Push new frame onto stack.
-    push @{ $self->{stack} }, { comp => $comp,
-                                args => \@_,
-                                base_comp => $base_comp,
-                                content => $mods{content},
-                              };
-
-    if ($mods{store}) {
-	# This extra buffer is to catch flushes (in the given scalar ref).
-	# The component's main buffer can then be cleared without
-	# affecting previously flushed output.
-        push @{ $self->{buffer_stack} },
-            $self->top_buffer->new_child( sink => $mods{store},
-                                          ignore_flush => 1,
-                                          ignore_clear => 1,
-                                        );
-
-        # This extra buffer is here so that flushes get passed through
-        # to the parent (storing buffer) but clears can be handled
-        # properly as well.
-        push @{ $self->{buffer_stack} }, $self->{buffer_stack}[-1]->new_child;
-    }
-
-    if ( $comp->has_filter )
-    {
-        push @{ $self->{buffer_stack} },
-            $self->{buffer_stack}[-1]->new_child( filter_from => $comp );
-    }
-
-    my @result;
-
-    # The eval block creates a new context so we need to get this
-    # here.
     my $wantarray = wantarray;
-
-    #
-    # Finally, call component subroutine.
-    #
+    my @result;
+    
     eval {
-        if ($wantarray) {
-            @result = $comp->run(@_);
-        } elsif (defined $wantarray) {
-            $result[0] = $comp->run(@_);
-        } else {
-            $comp->run(@_);
-        }
+	if ($wantarray) {
+	    @result = $comp->run(@_);
+	} elsif (defined $wantarray) {
+	    $result[0] = $comp->run(@_);
+	} else {
+	    $comp->run(@_);
+	}
     };
+    my $error = $@;
 
-    my $err = $@;
-
-    if ( $comp->has_filter )
-    {
-        my $buffer = pop @{ $self->{buffer_stack} };
-
-        # we don't want to send output if there was a real error
-        unless ( $err && ! $self->aborted )
-        {
-            # have to catch errors from filter code too
-            $self->print( $buffer->output );
-        }
+    # Run component's filter if there is one, and restore true top buffer
+    # (e.g. in case a plugin prints something).
+    #
+    if ($comp->{has_filter}) {
+	# We have to check $comp->filter because abort or error may
+	# occur before filter gets defined in component. In such cases
+	# there should be no output, but should look into this more.
+	#
+	if (defined($comp->filter)) {
+	    $$top_buffer .= $comp->filter->($filter_buffer);
+	}
+	$self->{top_stack}->[STACK_BUFFER] = $top_buffer;
     }
 
-    pop @{ $self->{stack} };
-
-    if ( $mods{store} )
-    {
-        $self->flush_buffer;
-
-        pop @{ $self->{buffer_stack} };
-        pop @{ $self->{buffer_stack} };
+    # Run end_component hooks for each plugin, in reverse order.
+    #
+    if ($self->{has_plugins}) {
+	my $context = bless
+	    [$self, $comp, \@_, $wantarray, \@result, \$error],
+	    'HTML::Mason::Plugin::Context::EndComponent';
+	
+	foreach my $plugin_instance (@{$self->{plugin_instances_reverse}}) {
+	    $plugin_instance->end_component_hook( $context );
+	}
     }
 
-    rethrow_exception $err;
-
-    return wantarray ? @result : $result[0];  # Will return undef in void context (correct)
+    # Repropagate error if one occurred, otherwise return result.
+    # 
+    rethrow_exception $error if $error;
+    return $wantarray ? @result : $result[0];
 }
 
 #
@@ -1116,28 +1276,27 @@ sub scomp {
 
 sub has_content {
     my $self = shift;
-    return defined($self->top_stack->{content});
+    return defined($self->{top_stack}->[STACK_MODS]->{content});
 }
 
 sub content {
     my $self = shift;
-    my $content = $self->top_stack->{content};
+    my $content = $self->{top_stack}->[STACK_MODS]->{content};
     return undef unless defined($content);
 
-    # make the stack frame look like we are still the previous component
-    my $old_frame = pop @{ $self->{stack} };
+    # Run the content routine with the previous stack frame active and
+    # with output going to a new buffer.
+    #
+    my $buffer;
+    my $save_frame = $self->{top_stack};
+    { local $self->{top_stack} = $self->{stack}->[$self->{top_stack}->[STACK_DEPTH]-2];
+      local $self->{top_stack}->[STACK_BUFFER] = \$buffer;
+      $content->(); }
+    $self->{top_stack} = $save_frame;
 
-    push @{ $self->{buffer_stack} }, $self->top_buffer->new_child( ignore_flush => 1 );
-    eval { $content->(); };
-    my $err = $@;
-
-    my $buffer = pop @{ $self->{buffer_stack} };
-
-    push @{ $self->{stack} }, $old_frame;
-
-    rethrow_exception $err;
-
-    return $buffer->output;
+    # Return the output from the content routine.
+    #
+    return $buffer;
 }
 
 sub notes {
@@ -1154,16 +1313,18 @@ sub clear_buffer
 {
     my $self = shift;
 
-    $_->clear for $self->buffer_stack;
+    foreach my $frame (@{$self->{stack}}) {
+	my $bufref = $frame->[STACK_BUFFER];
+	$$bufref = '';
+    }
 }
 
 sub flush_buffer
 {
     my $self = shift;
-    for ($self->buffer_stack) {
-	last if $_->ignore_flush;
-	$_->flush;
-    }
+
+    $self->out_method->($self->{request_buffer});
+    $self->{request_buffer} = '';
 }
 
 sub request_args
@@ -1203,64 +1364,74 @@ sub debug_hook
 # stack handling
 #
 
-# Return the current stack as an array.
-sub stack {
+# Return the stack frame $levels down from the top of the stack.
+# If $levels is negative, count from the bottom of the stack.
+# 
+sub stack_frame {
+    my ($self, $levels) = @_;
+    my $depth = $self->{top_stack}->[STACK_DEPTH];
+    my $index;
+    if ($levels < 0) {
+	$index = (-1 * $levels) - 1;
+    } else {
+	$index = $depth-1 - $levels;
+    }
+    return if $index < 0 or $index >= $depth;
+    return $self->{stack}->[$index];
+}
+
+# Return all stack frames, in order from the top of the stack to the
+# initial frame.
+sub stack_frames {
     my ($self) = @_;
-    return @{ $self->{stack} };
+    my $depth = $self->{top_stack}->[STACK_DEPTH];
+    return reverse map { $self->{stack}->[$_] } (0..$depth-1);
 }
-
-# Return the stack entry 'i' slots from the /back/ of the array
-sub stack_entry {
-    my ($self, $i) = @_;
-    return $self->{stack}->[-1 - $i];
-}
-
-# Set or retrieve the hashref at the top of the stack.
-sub top_stack {
-    my ($self,$href) = @_;
-    error "top_stack: nothing on component stack"
-	unless $self->depth > 0;
-    $self->{stack}->[-1] = $href if defined($href);
-    return $self->{stack}->[-1];
-}
-
-# These push/pop interfaces are not used internally (for speed) but
-# may be useful externally.  For example, Component.pm pushes and pops
-# a buffer object.
-sub push_buffer_stack {
-    my $self = shift;
-
-    push @{ $self->{buffer_stack} }, shift;
-}
-
-sub pop_buffer_stack {
-    my ($self) = @_;
-    return pop @{ $self->{buffer_stack} };
-}
-
-sub push_stack {
-    my ($self,$href) = @_;
-    push @{ $self->{stack} }, $href;
-}
-
-sub pop_stack {
-    my ($self) = @_;
-    return pop @{ $self->{stack} };
-}
-
-sub buffer_stack {
-    my ($self) = @_;
-    return wantarray ? reverse @{ $self->{buffer_stack} } : @{ $self->{buffer_stack} };
-}
-
 
 #
 # Accessor methods for top of stack elements.
 #
-sub current_comp { return $_[0]->top_stack->{comp} }
-sub current_args { return $_[0]->top_stack->{args} }
-sub top_buffer { return $_[0]->{buffer_stack}->[-1] }
-sub base_comp { return $_[0]->top_stack->{base_comp} }
+sub current_comp { return $_[0]->{top_stack}->[STACK_COMP] }
+sub current_args { return $_[0]->{top_stack}->[STACK_ARGS] }
+
+sub base_comp {
+    my ($self) = @_;
+    unless (defined($self->{top_stack}->[STACK_BASE_COMP])) {
+	return $self->compute_base_comp_for_frame_($self->{top_stack}->[STACK_DEPTH] - 1);
+    }
+    return $self->{top_stack}->[STACK_BASE_COMP];
+}
+
+#
+# Determine the base_comp for a stack frame. See the user
+# documentation for base_comp for a description of these rules.
+#
+sub compute_base_comp_for_frame_ {
+    my ($self, $frame_num) = @_;
+    my $frame = $self->{stack}->[$frame_num];
+
+    unless (defined($frame->[STACK_BASE_COMP])) {
+	my $mods = $frame->[STACK_MODS];
+	my $path = $frame->[STACK_PATH];
+	my $comp = $frame->[STACK_COMP];
+	
+	my $base_comp;
+	if (exists($mods->{base_comp})) {
+	    $base_comp = $mods->{base_comp};
+	} elsif (!$path ||
+		 $path =~ m/^(?:SELF|PARENT|REQUEST)(?:\:..*)?$/ ||
+		 ($comp->is_subcomp && !$comp->is_method)) {
+	    $base_comp = $self->compute_base_comp_for_frame_($frame_num-1);
+	} elsif ($path =~ m/(.*):/) {
+	    my $calling_comp = $self->{stack}->[$frame_num-1]->[STACK_COMP];
+	    $base_comp = $self->fetch_comp($1, $calling_comp);
+	} else {
+	    $base_comp = $comp;
+	}
+	$frame->[STACK_BASE_COMP] = $base_comp;
+    }
+    return $frame->[STACK_BASE_COMP];
+}
 
 package Tie::Handle::Mason;
 
@@ -1344,18 +1515,20 @@ subcomponent takes precedence.
 
 =head1 PARAMETERS TO THE new() CONSTRUCTOR
 
-=over
+=over 4
 
 =item autoflush
 
-True or false, default is false. Indicates whether to flush the output buffer
-after every string is output. Turn on autoflush if you need to send partial
-output to the client, for example in a progress meter.
+True or false, default is false. Indicates whether to flush the output
+buffer (C<$m-E<gt>flush_buffer>) after every string is output. Turn on
+autoflush if you need to send partial output to the client, for
+example in a progress meter.
 
-=item buffer_class
-
-The class to use when creating buffers. Defaults to
-L<HTML::Mason::Buffer|HTML::Mason::Buffer>.
+As of Mason 1.3, autoflush will only work if L<enable_autoflush|HTML::Mason::Params/enable_autoflush> has
+been set.  Components can be compiled more efficiently if they don't
+have to check for autoflush. Before using autoflush you might consider
+whether a few manual C<$m-E<gt>flush_buffer> calls would work nearly
+as well.
 
 =item data_cache_api
 
@@ -1449,6 +1622,12 @@ By default, out_method prints to standard output. Under
 L<Apache|HTML::Mason::ApacheHandler>, standard output is
 redirected to C<< $r->print >>.
 
+=item plugins
+
+An array of plugins that will be called at various stages of request
+processing.  Please see L<HTML::Mason::Plugin|HTML::Mason::Plugin> for
+details.
+
 =back
 
 =head1 ACCESSOR METHODS
@@ -1464,9 +1643,9 @@ sets and returns the value.  For example:
 
 =over
 
-=for html <a name="item_abort"></a>
-
 =item abort ([return value])
+
+=for html <a name="item_abort"></a>
 
 Ends the current request, finishing the page without returning
 through components. The optional argument specifies the return
@@ -1482,9 +1661,18 @@ If C<abort> is called from a component that has a C<< <%filter> >>,
 than any output generated up to that point is filtered, I<unless>
 C<abort> is called from a C<< <%shared> >> block.
 
-=for html <a name="item_aborted"></a>
+=item clear_and_abort ([return value])
+
+=for html <a name="item_clear_and_abort"></a>
+
+This method is syntactic sugar for calling C<clear_buffer()> and then
+C<abort()>.  If you are aborting the request because of an error, you
+will often want to clear the buffer first so that any output generated
+up to that point is not sent to the client.
 
 =item aborted ([$err])
+
+=for html <a name="item_aborted"></a>
 
 Returns true or undef indicating whether the specified C<$err>
 was generated by C<abort>. If no C<$err> was passed, uses C<$@>.
@@ -1502,20 +1690,44 @@ C<$@> can lose its value quickly, so if you are planning to call
 $m->aborted more than a few lines after the eval, you should save $@
 to a temporary variable.
 
-=for html <a name="item_base_comp"></a>
-
 =item base_comp
 
-Returns the current base component for method and attributes.
-Initially, the base component is the same as the requested component
-(returned by C<< $m->request_comp >>.  However, whenever a component
-call is made, the base component changes to the called component,
-unless the component call was made uses a component object for its
-first argument, or the call starts with SELF:, PARENT:, or REQUEST.
+=for html <a name="item_base_comp"></a>
 
-=for html <a name="item_cache"></a>
+Returns the current base component for method and attributes.
+This is the component referred to by SELF:.
+
+Here are the rules that determine base_comp as you move from
+component to component.
+
+=over
+
+=item * At the beginning of a request, the base component is
+initialized to the requested component (C<< $m->request_comp >>.
+
+=item * When a component call is made to a regular component via a
+path, the base component changes to the called component.
+
+=item * When a component call is made to a component method via a path
+(/foo/bar:baz), the base component changes to the method's owner.
+
+=item * The base component does not change when:
+
+=over
+
+=item * a component call is made to a component object
+
+=item * a component call is made to SELF:x or PARENT:x or REQUEST:x
+
+=item * a component call is made to a subcomponent (<%def>)
+
+=back
+
+=back
 
 =item cache (cache_class=>'...', [cache_options])
+
+=for html <a name="item_cache"></a>
 
 C<$m-E<gt>cache> returns a new L<cache
 object|HTML::Mason::Cache::BaseCache> with a namespace specific to
@@ -1539,9 +1751,9 @@ Note: users upgrading from 1.0x and earlier can continue to use the
 old C<$m-E<gt>cache> API by setting L<data_cache_api|HTML::Mason::Params/data_cache_api> to '1.0'.  This
 support will be removed at a later date.
 
-=for html <a name="item_cache_self"></a>
-
 =item cache_self ([expires_in => '...'], [key => '...'], [get_options], [cache_options])
+
+=for html <a name="item_cache_self"></a>
 
 C<$m-E<gt>cache_self> caches the entire output and return result of a
 component.
@@ -1610,9 +1822,9 @@ This support will be removed at a later date.
 See the the L<DATA CACHING|HTML::Mason::Devel/DATA CACHING> section of the developer's manual section for more details on how to
 exercise finer control over caching.
 
-=for html <a name="item_caller_args"></a>
-
 =item caller_args
+
+=for html <a name="item_caller_args"></a>
 
 Returns the arguments passed by the component at the specified stack
 level. Use a positive argument to count from the current component and
@@ -1628,9 +1840,9 @@ called in list context, a list of arguments (which may be assigned to
 a hash) is returned.  Returns undef or an empty list, depending on
 context, if the specified stack level does not exist.
 
-=for html <a name="item_callers"></a>
-
 =item callers
+
+=for html <a name="item_callers"></a>
 
 With no arguments, returns the current component stack as a list of
 component objects, starting with the current component and ending with
@@ -1647,16 +1859,16 @@ the component at the bottom of the stack. e.g.
 Returns undef or an empty list, depending on context, if the specified
 stack level does not exist.
 
-=for html <a name="item_caller"></a>
-
 =item caller
+
+=for html <a name="item_caller"></a>
 
 A synonym for C<< $m->callers(1) >>, i.e. the component that called the
 currently executing component.
 
-=for html <a name="item_call_next"></a>
-
 =item call_next ([args...])
+
+=for html <a name="item_call_next"></a>
 
 Calls the next component in the content wrapping chain; usually called
 from an autohandler. With no arguments, the original arguments are
@@ -1665,26 +1877,35 @@ augment and override (in case of conflict) the original
 arguments. Works like C<$m-E<gt>comp> in terms of return value and
 scalar/list context.  See the L<autohandlers|HTML::Mason::Devel/autohandlers> section of the developer's manual for examples.
 
-=for html <a name="item_call_self"></a>
-
-=item call_self (output, return)
+=item call_self (output, return, error, tag)
 
 This method allows a component to call itself so that it can filter
 both its output and return values.  It is fairly advanced; for most
 purposes the C<< <%filter> >> tag will be sufficient and simpler.
 
-C<< $m->call_self >> takes two arguments.  The first is a scalar
-reference and will be populated with the component output.  The second
-is either a scalar or list reference and will be populated with the
-component return value; the type of reference determines whether the
-component will be called in scalar or list context.  Both of these
-arguments are optional; you may pass undef for either of them.
+C<< $m->call_self >> takes four arguments, all of them optional.
+
+=over
+
+=item output - scalar reference that will be populated with the
+component output.
+
+=item return - scalar reference that will be populated with the
+component return value.
+
+=item error - scalar reference that will be populated with the error
+thrown by the component, if any. If this parameter is not defined,
+then call_self will not catch errors.
+
+=item tag - a name for this call_self invocation; can almost always be omitted.
+
+=back
 
 C<< $m->call_self >> acts like a C<fork()> in the sense that it will
 return twice with different values.  When it returns 0, you allow
 control to pass through to the rest of your component.  When it
-returns 1, that means the component has finished and you can begin
-filtering the output and/or return value. (Don't worry, it doesn't
+returns 1, that means the component has finished and you can
+examine the output, return value and error. (Don't worry, it doesn't
 really do a fork! See next section for explanation.)
 
 The following examples would generally appear at the top of a C<<
@@ -1703,31 +1924,33 @@ Here is a simple output filter that makes the output all uppercase.
 Note that we ignore both the original and the final return value.
 
     <%init>
-    my $output;
+    my ($output, $error);
     if ($m->call_self(\$output, undef)) {
         $m->print(uc $output);
         return;
     }
     ...
 
-Here is a piece of code that traps all errors occuring anywhere in the
+Here is a piece of code that traps all errors occuring anywhere in a
 component or its children, e.g. for the purpose of handling
 application-specific exceptions. This is difficult to do with a manual
 C<eval> because it would have to span multiple code sections and the
 main component body.
 
     <%init>
-    # Run this component with an eval around it
-    my $in_parent = eval { $m->call_self() };
-    if ($@) {
-        # check $@ and do something with it
+    my ($output, undef, $error);
+    if ($m->call_self(\$output, undef, \$error)) {
+        if ($error) {
+            # check $error and do something with it
+        }
+        $m->print($output);
+        return;
     }
-    return if $in_parent;
     ...
 
-=for html <a name="item_clear_buffer"></a>
-
 =item clear_buffer
+
+=for html <a name="item_clear_buffer"></a>
 
 Clears the Mason output buffer. Any output sent before this line is
 discarded. Useful for handling error conditions that can only be
@@ -1735,9 +1958,9 @@ detected in the middle of a request.
 
 clear_buffer is, of course, thwarted by C<flush_buffer>.
 
-=for html <a name="item_comp"></a>
-
 =item comp (comp, args...)
+
+=for html <a name="item_comp"></a>
 
 Calls the component designated by I<comp> with the specified
 option/value pairs. I<comp> may be a component path or a component
@@ -1764,74 +1987,80 @@ This modifier can be used with the <& &> tag as well, for example:
 
   <& { store => \$buf }, '/some/comp', size => 'medium' &>
 
-=for html <a name="item_comp_exists"></a>
-
 =item comp_exists (comp_path)
 
-Returns 1 if I<comp_path> is the path of an existing component, 0
-otherwise.  That path given may be relative, in which case the current
-component's directory path will be prepended.
+=for html <a name="item_comp_exists"></a>
 
-=for html <a name="content"></a>
+Returns 1 if I<comp_path> is the path of an existing component, 0
+otherwise.  I<comp_path> may be any path accepted by
+L<comp|HTML::Mason::Request/item_comp> or
+L<fetch_comp|HTML::Mason::Request/item_fetch_comp>, including method or
+subcomponent paths.
+
+Depending on implementation, <comp_exists> may try to load the
+component referred to by the path, and may throw an error if the
+component contains a syntax error.
 
 =item content
+
+=for html <a name="content"></a>
 
 Evaluates the content (passed between <&| comp &> and </&> tags) of the 
 current component, and returns the resulting text.
 
 Returns undef if there is no content.
 
-=for html <a name="has_content"></a>
-
 =item has_content
+
+=for html <a name="has_content"></a>
 
 Returns true if the component was called with content (i.e. with <&|
 comp &> and </&> tags instead of a single <& comp &> tag). This is
 generally better than checking the defined'ness of C<< $m->content >>
 because it will not try to evaluate the content.
 
-=for html <a name="item_count"></a>
-
 =item count
+
+=for html <a name="item_count"></a>
 
 Returns the number of this request, which is unique for a given
 request and interpreter.
 
-=for html <a name="item_current_comp"></a>
-
 =item current_comp
+
+=for html <a name="item_current_comp"></a>
 
 Returns the current component object.
 
-=for html <a name="item_decline"></a>
-
 =item decline
 
-This method allows a dhandler or top-level component to decline to
-handle a request. Mason clears the output buffer and restarts with the
-next applicable dhandler up the tree. If no dhandler is available, a
-"not found" error occurs.
+=for html <a name="item_decline"></a>
+
+Used from a top-level component or dhandler, this method clears the
+output buffer, aborts the current request and restarts with the next
+applicable dhandler up the tree. If no dhandler is available, a
+not-found error occurs.
 
 This method bears no relation to the Apache DECLINED status except in
 name.
 
-=for html <a name="item_declined"></a>
-
 =item declined ([$err])
+
+=for html <a name="item_declined"></a>
 
 Returns true or undef indicating whether the specified C<$err> was
 generated by C<decline>. If no C<$err> was passed, uses C<$@>.
 
-=for html <a name="item_depth"></a>
-
 =item depth
+
+=for html <a name="item_depth"></a>
 
 Returns the current size of the component stack.  The lowest possible
 value is 1, which indicates we are in the top-level component.
 
-=for html <a name="item_dhandler_arg"></a>
-
 =item dhandler_arg
+
+=for html <a name="item_dhandler_arg"></a>
 
 If the request has been handled by a dhandler, this method returns the
 remainder of the URI or C<Interp::exec> path when the dhandler directory is
@@ -1840,9 +2069,9 @@ removed. Otherwise returns undef.
 C<dhandler_arg> may be called from any component in the request, not just
 the dhandler.
 
-=for html <a name="item_exec"></a>
-
 =item exec (comp, args...)
+
+=for html <a name="item_exec"></a>
 
 Starts the request by executing the top-level component and
 arguments. This is normally called for you on the main request, but
@@ -1851,39 +2080,39 @@ you can use it to execute subrequests.
 A request can only be executed once; e.g. it is an error to call this
 recursively on the same request.
 
-=for html <a name="item_fetch_comp"></a>
-
 =item fetch_comp (comp_path)
+
+=for html <a name="item_fetch_comp"></a>
 
 Given a I<comp_path>, returns the corresponding component object or
 undef if no such component exists.
 
-=for html <a name="item_fetch_next"></a>
-
 =item fetch_next
+
+=for html <a name="item_fetch_next"></a>
 
 Returns the next component in the content wrapping chain, or undef if
 there is no next component. Usually called from an autohandler.  See
 the L<autohandlers|HTML::Mason::Devel/autohandlers> section of the developer's manual for usage and examples.
 
-=for html <a name="item_fetch_next_all"></a>
-
 =item fetch_next_all
+
+=for html <a name="item_fetch_next_all"></a>
 
 Returns a list of the remaining components in the content wrapping
 chain. Usually called from an autohandler.  See the L<autohandlers|HTML::Mason::Devel/autohandlers> section of the developer's manual
 for usage and examples.
 
-=for html <a name="item_file"></a>
-
 =item file (filename)
+
+=for html <a name="item_file"></a>
 
 Returns the contents of I<filename> as a string. If I<filename> is a
 relative path, Mason prepends the current component directory.
 
-=for html <a name="item_flush_buffer"></a>
-
 =item flush_buffer
+
+=for html <a name="item_flush_buffer"></a>
 
 Flushes the Mason output buffer. Under mod_perl, also sends HTTP
 headers if they haven't been sent and calls C<< $r->rflush >> to flush
@@ -1895,14 +2124,13 @@ to C<< $m->scomp >> or when output is being stored in a scalar
 reference, as with the C< { store =E<gt> \$out } > component call
 modifier.
 
-Additionally, if a component has a C<< <%filter> >> block, that
-component is buffered until its entire output is generated.  This
-means that inside that component and any components that it calls,
-the buffer cannot be flushed.
-
-=for html <a name="item_instance"></a>
+C<< <%filter> >> blocks will process the output whenever the buffers
+are flushed.  If C<autoflush> is on, your data may be filtered in 
+small pieces.
 
 =item instance
+
+=for html <a name="item_instance"></a>
 
 This class method returns the C<HTML::Mason::Request> currently in
 use.  If called when no Mason request is active it will return
@@ -1910,15 +2138,15 @@ C<undef>.
 
 If called inside a subrequest, it returns the subrequest object.
 
-=for html <a name="item_interp"></a>
-
 =item interp
+
+=for html <a name="item_interp"></a>
 
 Returns the Interp object associated with this request.
 
-=for html <a name="item_make_subrequest"></a>
-
 =item make_subrequest (comp => path, args => arrayref, other parameters)
+
+=for html <a name="item_make_subrequest"></a>
 
 This method creates a new Request object which inherits its parent's
 settable properties, such as L<autoflush|HTML::Mason::Params/autoflush> and L<out_method|HTML::Mason::Params/out_method>.  These
@@ -1930,9 +2158,9 @@ relative to the current component.
 
 See the L<subrequests|HTML::Mason::Devel/subrequests> section of the developer's manual for more information about subrequests.
 
-=for html <a name="notes"></a>
-
 =item notes (key, value)
+
+=for html <a name="notes"></a>
 
 The C<notes()> method provides a place to store application data,
 giving developers a way to share data among multiple components.  Any
@@ -1952,15 +2180,15 @@ I<Mason> request object, not the I<Apache> request object.  In
 particular, a Mason subrequest has its own C<notes()> structure, but
 would access the same C<< $r->pnotes() >> structure.
 
-=for html <a name="item_out"></a>
-
 =item out (string)
+
+=for html <a name="item_out"></a>
 
 A synonym for C<$m-E<gt>print>.
 
-=for html <a name="item_print"></a>
-
 =item print (string)
+
+=for html <a name="item_print"></a>
 
 Print the given I<string>. Rarely needed, since normally all text is just
 placed in the component body and output implicitly. C<$m-E<gt>print> is useful
@@ -1970,9 +2198,9 @@ In 1.1 and on, C<print> and C<$r-E<gt>print> are remapped to C<$m-E<gt>print>,
 so they may be used interchangeably. Before 1.1, one should only use
 C<$m-E<gt>print>.
 
-=for html <a name="item_request_args"></a>
-
 =item request_args
+
+=for html <a name="item_request_args"></a>
 
 Returns the arguments originally passed to the top level component
 (see L<request_comp|HTML::Mason::Request/item_request_comp> for
@@ -1980,26 +2208,35 @@ definition).  When called in scalar context, a hash reference is
 returned. When called in list context, a list of arguments (which may
 be assigned to a hash) is returned.
 
-=for html <a name="item_request_comp"></a>
-
 =item request_comp
+
+=for html <a name="item_request_comp"></a>
 
 Returns the component originally called in the request. Without
 autohandlers, this is the same as the first component executed.  With
 autohandlers, this is the component at the end of the
 C<$m-E<gt>call_next> chain.
 
-=for html <a name="item_scomp"></a>
+=item request_depth
+
+=for html <a name="request_depth"></a>
+
+Returns the current size of the request/subrequest stack.  The lowest
+possible value is 1, which indicates we are in the top-level request.
+A value of 2 indicates we are inside a subrequest of the top-level request,
+and so on.
 
 =item scomp (comp, args...)
+
+=for html <a name="item_scomp"></a>
 
 Like L<comp|HTML::Mason::Request/item_comp>, but returns the component output as a string
 instead of printing it. (Think sprintf versus printf.) The
 component's return value is discarded.
 
-=for html <a name="item_subexec"></a>
-
 =item subexec (comp, args...)
+
+=for html <a name="item_subexec"></a>
 
 This method creates a new subrequest with the specified top-level
 component and arguments, and executes it. This is most often used
@@ -2007,6 +2244,8 @@ to perform an "internal redirect" to a new component such that
 autohandlers and dhandlers take effect.
 
 =item time
+
+=for html <a name="item_time"></a>
 
 Returns the interpreter's notion of the current time (deprecated).
 
@@ -2019,22 +2258,22 @@ and the ApacheHandler.
 
 =over
 
-=for html <a name="item_ah"></a>
-
 =item ah
+
+=for html <a name="item_ah"></a>
 
 Returns the ApacheHandler object associated with this request.
 
-=for html <a name="item_apache_req"></a>
-
 =item apache_req
+
+=for html <a name="item_apache_req"></a>
 
 Returns the Apache request object.  This is also available in the
 global C<$r>.
 
-=for html <a name="item_auto_send_headers"></a>
-
 =item auto_send_headers
+
+=for html <a name="item_auto_send_headers"></a>
 
 True or false, default is true.  Indicates whether Mason should
 automatically send HTTP headers before sending content back to the
@@ -2043,6 +2282,9 @@ manually.
 
 See the L<sending HTTP headers|HTML::Mason::Devel/sending HTTP headers> section of the developer's manual for more details about the automatic
 header feature.
+
+NOTE: This parameter has no effect under mod_perl-2, since calling
+C<$r-E<gt>send_http_header> is no longer needed.
 
 =back
 
@@ -2053,9 +2295,9 @@ CGIHandler module.
 
 =over
 
-=for html <a name="item_cgi_request"></a>
-
 =item cgi_request
+
+=for html <a name="item_cgi_request"></a>
 
 Returns the Apache request emulation object, which is available as
 C<$r> inside components.
@@ -2070,11 +2312,11 @@ more details.
 This method is available when Mason is running under either the
 ApacheHandler or CGIHandler modules.
 
-=over
-
-=for html <a name="item_cgi_object"></a>
+=over 4
 
 =item cgi_object
+
+=for html <a name="item_cgi_object"></a>
 
 Returns the CGI object used to parse any CGI parameters submitted to
 the component, assuming that you have not changed the default value of
@@ -2083,14 +2325,14 @@ the ApacheHandler L<args_method|HTML::Mason::Params/args_method> parameter.  If 
 See the L<ApacheHandler|HTML::Mason::ApacheHandler> and
 L<CGIHandler|HTML::Mason::CGIHandler> documentation for more details.
 
-=for html <a name="item_redirect_url_status_"></a>
-
 =item redirect ($url, [$status])
 
+=for html <a name="item_redirect_url_status_"></a>
+
 Given a url, this generates a proper HTTP redirect for that URL. It
-uses C<< $m->clear_buffer >> to clear out any previous output, and C<<
-$m->abort >> to abort the request.  By default, the status code used
-is 302, but this can be overridden by the user.
+uses C<< $m->clear_and_abort >> to clear out any previous output, and
+abort the request.  By default, the status code used is 302, but this
+can be overridden by the user.
 
 Since this is implemented using C<< $m->abort >>, it will be trapped
 by an C< eval {} > block.  If you are using an C< eval {} > block in

@@ -35,20 +35,15 @@ Dewitt Clinton's <code>Cache::Cache</code> package.</p>
 </p>
 <hr />
 <h1><A NAME="methods">METHODS</a></h1>
-<A NAME="item_clear"></a><dl>
+<dl>
 <dt><strong><A NAME="item_clear">clear ()</a></strong><br />
 </dt>
-<dd>
-Remove all values in the cache.
-</dd>
-<A NAME="item_get"></a><p></p>
+<A NAME="item_clear"></a><p>Remove all values in the cache.</p>
 <dt><strong><A NAME="item_get">get (key, [%params])</a></strong><br />
 </dt>
-<dd>
-Returns the value associated with <em>key</em> or undef if it is
+<A NAME="item_get"></a><p>Returns the value associated with <em>key</em> or undef if it is
 non-existent or expired. This is extended with the following optional
-name/value parameters:
-</dd>
+name/value parameters:</p>
 <dl>
 <dt><strong><A NAME="item_busy_lock__3d_3e_duration">busy_lock =&gt; duration</a></strong><br />
 </dt>
@@ -68,49 +63,34 @@ object as a single parameter. If <em>sub</em> returns a true value, expire
 the value.
 </dd>
 <p></p></dl>
-<A NAME="item_get_object"></a><dt><strong><A NAME="item_get_object">get_object (key)</a></strong><br />
+<dt><strong><A NAME="item_get_object">get_object (key)</a></strong><br />
 </dt>
-<dd>
-Returns the underlying <code>Cache::Object</code> object associated with <em>key</em>.
-The most useful methods on this object are
-</dd>
-<dd>
+<A NAME="item_get_object"></a><p>Returns the underlying <code>Cache::Object</code> object associated with <em>key</em>.
+The most useful methods on this object are</p>
 <pre>
     $co-&gt;get_created_at();    # when was object stored in cache
     $co-&gt;get_accessed_at();   # when was object last accessed
     $co-&gt;get_expires_at();    # when does object expire</pre>
-</dd>
-<A NAME="item_expire"></a><p></p>
 <dt><strong><A NAME="item_expire">expire (key)</a></strong><br />
 </dt>
-<dd>
-Expires the value associated with <em>key</em>, if it exists. Differs from
+<A NAME="item_expire"></a><p>Expires the value associated with <em>key</em>, if it exists. Differs from
 <A HREF="../Cache/BaseCache.html#item_remove">remove</a> only in that
 the cache object is left around, e.g. for retrieval by
-<A HREF="../Cache/BaseCache.html#item_get_object">get_object</a>.
-</dd>
-<A NAME="item_remove"></a><p></p>
+<A HREF="../Cache/BaseCache.html#item_get_object">get_object</a>.</p>
 <dt><strong><A NAME="item_remove">remove (key)</a></strong><br />
 </dt>
-<dd>
-Removes the cache object associated with <em>key</em>, if it exists.
-</dd>
-<A NAME="item_set"></a><p></p>
+<A NAME="item_remove"></a><p>Removes the cache object associated with <em>key</em>, if it exists.</p>
 <dt><strong><A NAME="item_set">set (key, data, [duration])</a></strong><br />
 </dt>
-<dd>
-Associates <em>data</em> with <em>key</em> in the cache. <em>duration</em>
+<A NAME="item_set"></a><p>Associates <em>data</em> with <em>key</em> in the cache. <em>duration</em>
 indicates the time until the value should be erased.  If
 <em>duration</em> is unspecified, the value will never expire
-by time.
-</dd>
-<dd>
+by time.</p>
 <p><em>$expires_in</em> may be a simple number of seconds, or a string of the
 form ``[number] [unit]'', e.g., ``10 minutes''.  The valid units are s,
 second, seconds, sec, m, minute, minutes, min, h, hour, hours, d, day,
 days, w, week, weeks, M, month, months, y, year, and years.</p>
-</dd>
-<p></p></dl>
+</dl>
 
 </body>
 

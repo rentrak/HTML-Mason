@@ -63,6 +63,8 @@ Executing subrequest
 I can print before the subrequest
 My depth is 1.
 
+I am a subrequest.
+
 The top-level component is /shared/display_req_obj.
 
 My stack looks like:
@@ -148,8 +150,8 @@ EOF
 
 #------------------------------------------------------------
 
-    $group->add_test( name => 'subrequest_inherits_autoflush',
-		      description => 'make sure that a subrequest inherits its parent autoflush setting (autoflush on)',
+    $group->add_test( name => 'autoflush_subrequest',
+		      description => 'make sure that a subrequest respects its parent autoflush setting',
 		      interp_params => { autoflush => 1 },
 		      component => <<'EOF',
 My child says:
@@ -193,6 +195,25 @@ EOF
 My child says:
 EOF
 		    );
+
+#------------------------------------------------------------
+
+    # SKIPPING THIS TEST FOR NOW - NOT SURE OF DESIRED BEHAVIOR
+    if (0) {
+	$group->add_test( name => 'autoflush_in_parent_not_subrequest',
+			  description => 'make sure that a subrequest with autoflush can clear its own buffers',
+			  interp_params => { autoflush => 1 },
+			  component => <<'EOF',
+My child says:
+% $m->flush_buffer;
+% $m->subexec('/subrequest/support/autoflush_subrequest', autoflush => 0, clear => 1);
+% $m->clear_buffer;
+EOF
+			  expect => <<'EOF',
+My child says:
+EOF
+			  );
+    }
 
 #------------------------------------------------------------
 
@@ -333,6 +354,58 @@ More output
 EOF
 		    );
 
+
+#------------------------------------------------------------
+
+    $group->add_support( path => 'support/subexec_recurse_test',
+			 component => <<'EOF',
+Entering <% $m->request_depth %><p>
+% if ($count < $max) {
+%   $m->subexec('subexec_recurse_test', count=>$count+1, max=>$max)
+% }
+Exiting <% $m->request_depth %><p>
+<%args>
+$count=>0
+$max
+</%args>
+EOF
+		       );
+
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'max_recurse_1',
+		      description => 'Test that recursion 8 levels deep is allowed',
+		      component => '<& support/subexec_recurse_test, max=>8 &>',
+		      expect => <<'EOF',
+Entering 1<p>
+Entering 2<p>
+Entering 3<p>
+Entering 4<p>
+Entering 5<p>
+Entering 6<p>
+Entering 7<p>
+Entering 8<p>
+Entering 9<p>
+Exiting 9<p>
+Exiting 8<p>
+Exiting 7<p>
+Exiting 6<p>
+Exiting 5<p>
+Exiting 4<p>
+Exiting 3<p>
+Exiting 2<p>
+Exiting 1<p>
+EOF
+		      );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'max_recurse_2',
+		      description => 'Test that recursion is stopped after 32 subexecs',
+		      component => '<& support/subexec_recurse_test, max=>48 &>',
+		      expect_error => qr{subrequest depth > 32 \(infinite subrequest loop\?\)},
+		    );
 
 #------------------------------------------------------------
 

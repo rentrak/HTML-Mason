@@ -41,7 +41,7 @@ EOF
 
     $group->add_support( path => '/support/various_test',
 			 component => <<'EOF',
-Caller is <% $m->caller->title %> or <% $m->callers(1)->title %>.
+Caller is <% $m->caller->title %> or <% $m->callers(1)->title %> or <% $m->callers(-2)->title %>.
 The top level component is <% $m->callers(-1)->title %> or <% $m->request_comp->title %>.
 The full component stack is <% join(",",map($_->title,$m->callers)) %>.
 My argument list is (<% join(",",$m->caller_args(0)) %>).
@@ -81,7 +81,6 @@ EOF
     $group->add_test( name => 'abort',
 		      description => 'test $m->abort method (autoflush on)',
 		      interp_params => { autoflush => 1 },
-
 		      component => <<'EOF',
 Some text
 
@@ -219,6 +218,8 @@ Sending list of arguments:
 
 <%perl>
  $m->print(3,4,5);
+ my @lst = (7,8,9);
+ $m->print(@lst);
 </%perl>
 EOF
 		      expect => <<'EOF',
@@ -226,7 +227,7 @@ Sending list of arguments:
 
 blahboombah
 
-345
+345789
 EOF
 		    );
 
@@ -266,6 +267,8 @@ EOF
 One level request:
 My depth is 2.
 
+I am not a subrequest.
+
 The top-level component is /request/req_obj.
 
 My stack looks like:
@@ -286,6 +289,8 @@ Many level request:
 
 
 My depth is 8.
+
+I am not a subrequest.
 
 The top-level component is /request/req_obj.
 
@@ -323,7 +328,7 @@ EOF
 <& various_helper, junk=>$ARGS{junk}+1 &>
 EOF
 		      expect => <<'EOF',
-Caller is /request/various_helper or /request/various_helper.
+Caller is /request/various_helper or /request/various_helper or /request/various_helper.
 The top level component is /request/various or /request/various.
 The full component stack is /request/support/various_test,/request/various_helper,/request/various.
 My argument list is (junk,6).
@@ -496,6 +501,17 @@ EOF
 
 #------------------------------------------------------------
 
+    $group->add_test( name => 'autoflush_disabled',
+		      description => 'Using autoflush when disabled generates an error',
+		      interp_params => { autoflush => 1, enable_autoflush => 0 },
+		      component => <<'EOF',
+Hi
+EOF
+		      expect_error => qr/Cannot use autoflush unless enable_autoflush is set/,
+		    );
+
+#------------------------------------------------------------
+
     $group->add_test( name => 'instance',
 		      description => 'Test HTML::Mason::Request->instance',
 		      component => <<'EOF',
@@ -571,17 +587,16 @@ EOF
 
 #------------------------------------------------------------
 
-    $group->add_test( name => 'abort_and_scomp',
-		      description => 'Test that an abort in an scomp generates no output (it cannot, unfortunately)',
+    $group->add_test( name => 'clear_and_abort',
+		      description => 'Test the clear_and_abort() method',
 		      component => <<'EOF',
-filter
-
-% my $foo = eval { $m->scomp('support/abort_test') };
-<% $foo %>
+Some output
+% $m->flush_buffer;
+More output
+% $m->clear_and_abort();
 EOF
 		      expect => <<'EOF',
-filter
-
+Some output
 EOF
 		    );
 
@@ -627,6 +642,105 @@ EOF
 caller is undefined
 callers(5) is undefined
 caller_args(7) is undefined
+EOF
+		    );
+
+
+#------------------------------------------------------------
+
+    $group->add_support( path => '/support/longjump_test3',
+			 component => <<'EOF',
+Depth is <% $m->depth %>.
+The full component stack is <% join(",",map($_->title,$m->callers)) %>.
+EOF
+                       );
+
+    $group->add_support( path => '/support/subdir/longjump_test2',
+			 component => <<'EOF',
+This is longjump_test2
+% next;
+EOF
+                       );
+
+    $group->add_support( path => '/support/longjump_test1',
+			 component => <<'EOF',
+<& longjump_test3 &>
+% foreach my $i (0..2) {
+<& subdir/longjump_test2 &>
+% }
+<& longjump_test3 &>
+EOF
+                       );
+
+
+
+
+#------------------------------------------------------------
+
+    # It is possible to accidentally call 'next' from a component and
+    # jump out to the last loop or block in a previous component.
+    # While this cannot be supported behavior (since necessary cleanup
+    # and plugin code is skipped), we'd like to avoid a Mason request
+    # stack corruption at a minimum.
+    #
+    $group->add_test( name => 'longjump',
+		      description => 'Accidentally calling next to exit a component does not corrupt stack',
+		      component => <<'EOF',
+<& support/longjump_test1 &>
+EOF
+		      expect => <<'EOF',
+Depth is 3.
+The full component stack is /request/support/longjump_test3,/request/support/longjump_test1,/request/longjump.
+
+This is longjump_test2
+
+This is longjump_test2
+
+This is longjump_test2
+
+Depth is 3.
+The full component stack is /request/support/longjump_test3,/request/support/longjump_test1,/request/longjump.
+EOF
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_support( path => '/support/callers_out_of_bounds2',
+			 component => <<'EOF',
+hi
+EOF
+		       );
+
+#------------------------------------------------------------
+
+    $group->add_support( path => '/support/callers_out_of_bounds1',
+			 component => <<'EOF',
+<& callers_out_of_bounds2 &>
+% foreach my $i (-4 .. 4) {
+callers(<% $i %>) is <% defined($m->callers($i)) ? $m->callers($i)->title : 'not defined' %>
+% }
+EOF
+		       );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'callers_out_of_bounds',
+		      description => 'tests $m->callers() for out of bounds indexes',
+		      component => <<'EOF',
+<& support/callers_out_of_bounds1 &>
+EOF
+		      expect => <<'EOF',
+hi
+
+callers(-4) is not defined
+callers(-3) is not defined
+callers(-2) is /request/support/callers_out_of_bounds1
+callers(-1) is /request/callers_out_of_bounds
+callers(0) is /request/support/callers_out_of_bounds1
+callers(1) is /request/callers_out_of_bounds
+callers(2) is not defined
+callers(3) is not defined
+callers(4) is not defined
 EOF
 		    );
 

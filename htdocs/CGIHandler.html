@@ -18,7 +18,6 @@
 	<ul>
 
 		<li><A HREF="#html__mason__cgihandler_methods"><code>HTML::Mason::CGIHandler</code> Methods</a></li>
-		<li><A HREF="#calling_abort___under_cgihandler">Calling <code>abort()</code> Under CGIHandler</a></li>
 		<li><A HREF="#_r_methods">$r Methods</a></li>
 		<li><A HREF="#added__m_methods">Added <code>$m</code> methods</a></li>
 		<li><A HREF="#html__mason__faketable_methods"><code>HTML::Mason::FakeTable</code> Methods</a></li>
@@ -39,10 +38,17 @@
 <h1><A NAME="synopsis">SYNOPSIS</a></h1>
 <p>In httpd.conf or .htaccess:</p>
 <pre>
-   Action html-mason /cgi-bin/mason_handler.cgi
-   &lt;LocationMatch &quot;\.html$&quot;&gt;
-    SetHandler html-mason
-   &lt;/LocationMatch&gt;</pre>
+    &lt;LocationMatch &quot;\.html$&quot;&gt;
+        Action html-mason /cgi-bin/mason_handler.cgi
+        AddHandler html-mason .html
+    &lt;/LocationMatch&gt;
+    &lt;LocationMatch &quot;^/cgi-bin/&quot;&gt;
+        RemoveHandler .html
+    &lt;/LocationMatch&gt;
+    &lt;FilesMatch &quot;(autohandler|dhandler)$&quot;&gt;
+        Order allow,deny
+        Deny from all
+    &lt;/FilesMatch&gt;</pre>
 <p>A script at /cgi-bin/mason_handler.pl :</p>
 <pre>
    #!/usr/bin/perl
@@ -133,19 +139,6 @@ subclass.
 Returns the Mason Interpreter associated with this handler.  The
 Interpreter lasts for the entire lifetime of the handler.
 <p></p></ul>
-<p>
-</p>
-<h2><A NAME="calling_abort___under_cgihandler">Calling <code>abort()</code> Under CGIHandler</a></h2>
-<p>If you call <code>$m-&gt;abort()</code> under CGIHandler, request execution
-stops, just as when running ApacheHandler.  For compatibility with
-ApacheHandler, if you call <code>$m-&gt;abort()</code> with no argument, or
-with an argument of 0 or 200 (OK statuses), then headers will be sent.
-Otherwise, they are not.  However, unlike with ApacheHandler, calling
-<code>$m-&gt;abort()</code> with an HTTP status code does not cause the web
-server to return that status code to the browser.</p>
-<p>It would be theoretically possible to use CGI's ``Status:'' header to
-set the status in response to the top-level component's return value
-or the aborted value. We will try this in a later version.</p>
 <p>
 </p>
 <h2><A NAME="_r_methods">$r Methods</a></h2>

@@ -142,9 +142,8 @@ Mason allows you to flexibly configure its behavior via F<httpd.conf>
 configuration parameters.
 
 These configuration parameters are set via mod_perl's C<PerlSetVar>
-and C<PerlAddVar> directives (the latter is only available in mod_perl
-version 1.24 and greater).  Though these parameters are all strings in
-your F<httpd.conf> file, Mason treats different directives as
+and C<PerlAddVar> directives.  Though these parameters are all strings
+in your F<httpd.conf> file, Mason treats different directives as
 containing different types of values:
 
 =over 4
@@ -180,11 +179,6 @@ To set a list parameter, use C<PerlAddVar> for the values, like this:
 
  PerlAddVar  MasonPreloads  /foo/bar/baz.comp
  PerlAddVar  MasonPreloads  /foo/bar/quux.comp
-
-As noted above, C<PerlAddVar> is only available in mod_perl 1.24 and
-up.  This means that it is only possible to assign a single value
-(using C<PerlSetVar>) to list parameters if you are using a mod_perl
-older than 1.24.
 
 =item * hash_list
 
@@ -234,7 +228,9 @@ respected ala C<@INC>, so I<private> is searched first and I<main>
 second.
 
 The component root keys must be unique in a case-insensitive
-comparison.
+comparison. The keys are used in several ways. They help to
+distinguish component caches and object files between different
+component roots, and they appear in the C<title()> of a component.
 
 =head2 Data Directory
 
@@ -740,26 +736,31 @@ implements the cache API but never stores data.
 =head1 PERFORMANCE
 
 This section explains Mason's various performance enhancements and how
-to administer them.
+to administer them. One of the best ways to maximize performance on
+your production server is run in L<static_source|HTML::Mason::Params/static_source> mode; see the third
+subsection below.
 
 =head2 Code Cache
 
-When Mason loads a component, it places it in a memory cache.
+When Mason loads a component, it places it in a memory cache. By
+default, the cache has no limit, but you can specify a maximum number
+of components to cache with the L<code_cache_max_size|HTML::Mason::Params/code_cache_max_size> parameter. In
+this case, Mason will free up space as needed by discarding
+components. The discard algorithm is least frequently used (LFU), with
+a periodic decay to gradually eliminate old frequency information. In
+a nutshell, the components called most often in recent history should
+remain in the cache.
 
-The maximum size of the cache is specified with the
-L<code_cache_max_size|HTML::Mason::Params/code_cache_max_size> parameter.  When the cache fills up, Mason
-frees up space by discarding a number of components. The discard
-algorithm is least frequently used (LFU), with a periodic decay to
-gradually eliminate old frequency information. In a nutshell, the
-components called most often in recent history should remain in the
-cache.  Very large components (over 20% of the maximum cache size)
-never get cached, on the theory that they would force out too many
-other components.
+Previous versions of Mason attempted to estimate the size of each
+component, but this proved so inaccurate as to be virtually useless
+for cache policy. The max size is now specified purely in number of
+components.
 
-Note that the "size" of a component in memory cannot literally be
-measured.  It is estimated by the length of the source text plus some
-overhead.  Your process growth will not match the code cache
-size exactly.
+Mason can use certain optimizations with an unlimited cache,
+especially in conjunction with L<static_source|HTML::Mason::Params/static_source>, so don't limit the
+cache unless experience shows that your servers are growing too
+large. Many dynamic sites can be served comfortably with all
+components in memory.
 
 You can prepopulate the cache with components that you know will be
 accessed often; see L<Preloading Components|"Preloading Components">.
@@ -784,6 +785,20 @@ server process can eval the object file and save time on parsing the
 component source file.  The object file is recreated whenever the
 source file changes.
 
+The object file pathname is formed from three parts:
+
+=over
+
+=item * the compiler L<object_id|HTML::Mason::Compiler/item_object_id> -
+this prevents different versions of Mason or compilers from using the same
+object file, such as after an upgrade
+
+=item * the component path
+
+=item * L<object_file_extension|HTML::Mason::Params/object_file_extension>, by default ".obj"
+
+=back
+
 Besides improving performance, object files can be useful for
 debugging.  If you feel the need to see what your source has been
 translated into, you can peek inside an object file to see exactly how
@@ -794,25 +809,40 @@ object file rather than the source file.
 If for some reason you don't want Mason to create object files, set
 L<use_object_files|HTML::Mason::Params/use_object_files> to 0.
 
+=head2 Static Source Mode
+
+In L<static_source|HTML::Mason::Params/static_source> mode, Mason assumes that the component hierarchy
+is unchanging and thus does not check source timestamps when using an
+in-memory cached component or object file. This significantly reduces
+filesystem stats and other overhead. We've seen speedups by a factor
+of two or three as a result of this mode, though of course YMMV.
+
+When in L<static_source|HTML::Mason::Params/static_source> mode, you must remove object files and call
+$interp->flush_code_cache in order for the server to recognize
+component changes. The easiest way to arrange this is to point
+L<static_source_touch_file|HTML::Mason::Params/static_source_touch_file> to a file that can be touched whenever
+components change.
+
+We highly recommend running in this mode in production if you can
+manage it. Many of Mason's future optimizations will be designed for
+this mode. On development servers, of course, it makes sense to keep
+this off so that components are reloaded automatically.
+
+=head2 Disabling Autoflush
+
+To support the dynamic L<autoflush|HTML::Mason::Params/autoflush> feature, Mason has to check for
+autoflush mode after printing every piece of text.  If you can commit
+to not using autoflush, setting L<enable_autoflush|HTML::Mason::Params/enable_autoflush> to 0 will allow
+Mason to compile components more efficiently. Consider whether a few
+well-placed C<< $m->flush_buffer >> calls would be just as good as
+L<autoflush|HTML::Mason::Params/autoflush>.
+
 =head2 Write a handler subroutine
 
 Writing your own C<handler()> subroutine which uses an ApacheHandler
 object (or objects) created during server startup is slightly faster
 (around 5% or so) than configuring mason via your F<httpd.conf> file
 and letting Mason create its own ApacheHandler objects internally.
-
-=head2 Static Source Mode
-
-As described above, Mason checks the timestamp of a component source
-file every time that component is called. This can add up to a lot
-of file stats.
-
-If you have a live site with infrequent and well-controlled updates,
-you may choose to use L<static_source|HTML::Mason::Params/static_source> mode. In this mode Mason will
-not check source timestamps when it uses an in-memory cache or object
-file.  The disadvantage is that you must remove object files and
-restart the server whenever you change component source; however this
-process can be easily automated.
 
 =head2 Preloading Components
 
@@ -839,6 +869,12 @@ modules only in the parent process.
 Try to preload components that are used frequently and do not change
 often.  (If a preloaded component changes, all the children will have
 to reload it from scratch.)
+
+=head2 Preallocating the Output Buffer
+
+You can set L<buffer_preallocate_size|HTML::Mason::Params/buffer_preallocate_size> to set the size of the
+preallocated output buffer for each request. This can reduce the
+number of reallocations Perl performs as components output text.
 
 =head1 ERROR REPORTING AND EXCEPTIONS
 
@@ -1015,13 +1051,28 @@ The relevant portions of the F<httpd.conf> file look like:
     DocumentRoot /path/to/comp/root
     ScriptAlias /cgi-bin/ /path/to/cgi-bin/
 
-    Action html-mason /cgi-bin/mason_handler.cgi
     <LocationMatch "\.html$">
-      SetHandler html-mason
+       Action html-mason /cgi-bin/mason_handler.cgi
+       AddHandler html-mason .html
     </LocationMatch>
+    <LocationMatch "^/cgi-bin/">
+        RemoveHandler .html
+    </LocationMatch>
+    <FilesMatch "(autohandler|dhandler)$">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
 
 This simply causes Apache to call the mason_handler.cgi script every
 time a URL ending in ".html" under the component root is requested.
+
+To exclude certian directories from being under Mason control, you can
+use something like the following:
+
+    <LocationMatch "^/(dir1|dir2|dir3)/">
+        RemoveHandler .html
+    </LocationMatch>
+
 This script uses the L<CGIHandler class|HTML::Mason::CGIHandler> to do
 most of the heavy lifting.  See that class's documentation for more
 details.
@@ -1040,12 +1091,10 @@ the result to standard output:
     use strict;
 
     my $interp = HTML::Mason::Interp->new ();
-    $interp->exec(<path-to-file-from-cwd>, <args>...);
+    $interp->exec(<relative path to file>, <args>...);
 
 Because no component root was specified, the root is set to your
-current working directory. (The path supplied to C<exec> still needs
-to start with a slash, even though it is effectively a relative path
-from the current directory.) If you have a well defined and contained
+current working directory.  If you have a well defined and contained
 component tree, you'll probably want to specify a component root.
 
 Because no data directory was specified, object files will not be

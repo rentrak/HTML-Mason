@@ -1,4 +1,4 @@
-# Copyright (c) 1998-2003 by Jonathan Swartz. All rights reserved.
+# Copyright (c) 1998-2005 by Jonathan Swartz. All rights reserved.
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
@@ -97,31 +97,15 @@ sub lex
 	$current->{compiler}->start_component;
 	$self->start;
     };
-    # Call this out here because it may be needed to break circular
-    # refs inside the compiler
-    $current->{compiler}->end_component;
-
-    rethrow_exception $@;
-}
-
-sub object_id
-{
-    my $self = shift;
-
-    my @vals;
-    foreach my $k ( sort keys %{ $self->validation_spec } )
+    my $err = $@;
+    # Always call end_component, but throw the first error
+    eval
     {
-	next if $k eq 'container';
+        $current->{compiler}->end_component;
+    };
+    $err ||= $@;
 
-	push @vals, $k;
-	push @vals, ( UNIVERSAL::isa( $self->{$k}, 'HASH' )  ? map { $_ => $self->{$k}{$_} } sort keys %{ $self->{$k} } :
-		      UNIVERSAL::isa( $self->{$k}, 'ARRAY' ) ? sort @{ $self->{$k} } :
-		      $self->{$k} );
-    }
-
-    local $^W; # ignore undef warnings
-    # unpack('%32C*', $x) computes the 32-bit checksum of $x
-    return unpack('%32C*', join "\0", class => ref($self), @vals);
+    rethrow_exception $err;
 }
 
 sub start
@@ -480,9 +464,11 @@ sub match_comp_content_call_end
 {
     my $self = shift;
 
-    if ( $self->{current}{comp_source} =~ m,\G</&>,gc )
+    if ( $self->{current}{comp_source} =~ m,\G</&(.*?)>,gc )
     {
-        $self->{current}{compiler}->component_content_call_end;
+	my $call = $1 || '';
+        $self->{current}{compiler}->component_content_call_end( call_end => $call );
+	$self->{current}{lines} += $call =~ tr/\n//;
 
         return 1;
     }
@@ -674,5 +660,9 @@ If you want your subclass to work with the existing Compiler classes
 in Mason, you must implement the methods listed above.  If you plan to
 use a custom Compiler class that you're writing, you can do whatever
 you want.
+
+We recommend that any parameters you add to Lexer be read-only,
+because the compiler object_id is only computed once on creation
+and would not reflect any changes to Lexer parameters.
 
 =cut

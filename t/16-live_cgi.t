@@ -2,7 +2,13 @@
 
 use strict;
 
-unless ($ENV{MASON_MAINTAINER} && -e "$ENV{APACHE_DIR}/CGIHandler.cgi")
+use Module::Build;
+
+my $test_data = Module::Build->current->notes('test_data');
+
+unless ($test_data->{is_maintainer} &&
+        $test_data->{apache_dir} &&
+	-e "$test_data->{apache_dir}/CGIHandler.cgi")
 {
     print "1..0\n";
     exit;
@@ -27,10 +33,13 @@ require File::Spec->catfile( 't', 'live_server_lib.pl' );
 use Apache::test qw(skip_test have_httpd have_module);
 skip_test unless have_httpd;
 
+# needed for Apache::test->fetch to work
+local $ENV{PORT} = $test_data->{port};
+
 kill_httpd(1);
 test_load_apache();
 
-plan(tests => 13);
+plan(tests => 9);
 
 write_test_comps();
 run_tests();
@@ -70,45 +79,11 @@ EOF
 	      );
 
     write_comp( 'error_as_html', <<'EOF',
-% my $x = undef; @$x;
+% my $x = 
 EOF
 	      );
-
-    write_comp( 'abort_with_ok', <<'EOF',
-All is well
-% $m->abort(200);
-Will not be seen
-EOF
-	      );
-
-    write_comp( 'abort_with_not_ok', <<'EOF',
-All is well
-% $m->abort(500);
-Will not be seen
-EOF
-	      );
-
-    write_comp( 'foo/dhandler', <<'EOF',
-dhandler
-% $m->decline;
-EOF
-	      );
-
-    write_comp( 'cgi_dh/dhandler', <<'EOF' );
-dhandler
-dhandler_arg = <% $m->dhandler_arg %>
-EOF
-
-    write_comp( 'cgi_dh/file', <<'EOF' );
-file
-dhandler_arg = <% $m->dhandler_arg %>
-path_info = <% $ENV{PATH_INFO} %>
-EOF
-
-    write_comp( 'cgi_dh/dir/file', '' );
 
 }
-
 
 sub run_tests
 {
@@ -200,52 +175,6 @@ EOF
         my $path = '/comps/error_as_html';
         my $response = Apache::test->fetch($path);
         ok $response->content, qr{<b>error:</b>.*Error during compilation}s;
-    }
-
-    {
-        my $path = '/comps/abort_with_ok';
-        my $response = Apache::test->fetch($path);
-        ok $response->content, <<'EOF';
-All is well
-EOF
-    }
-
-    {
-        my $path = '/comps/abort_with_not_ok';
-        my $response = Apache::test->fetch($path);
-        ok $response->content, <<'EOF';
-All is well
-EOF
-    }
-
-    # Having decline generate an error like this is bad, but there's
-    # not much else we can do without rewriting more of CGIHandler,
-    # which isn't a good idea for stable, methinks.
-    {
-        my $path = '/comps/foo/will_decline';
-        my $response = Apache::test->fetch($path);
-        ok $response->content, qr{could not find component for initial path}is;
-    }
-
-## CGIHandler.pm does not do this the same as ApacheHandler.pm
-## but we do not want to rewrite CGIHandler in stable
-#    {
-#	my $path = '/comps/cgi_dh/file/extra/stuff';
-#        my $response = Apache::test->fetch($path);
-#        ok $response->content, <<'EOF';
-#file
-#dhandler_arg = 
-#path_info = /extra/stuff
-#EOF
-#    }
-
-    {
-	my $path = '/comps/cgi_dh/dir/extra/stuff';
-        my $response = Apache::test->fetch($path);
-        ok $response->content, <<'EOF';
-dhandler
-dhandler_arg = dir/extra/stuff
-EOF
     }
 
     kill_httpd();

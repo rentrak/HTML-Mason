@@ -9,6 +9,15 @@ use HTML::Mason::Tools qw(load_pkg);
 my $tests = make_tests();
 $tests->run;
 
+# Using this as an error_format with error_mode='output' causes just
+# the error string to be output
+sub HTML::Mason::Exception::as_munged
+{
+    my $err = shift->error;
+    
+    return $err =~ /^(.+?) at/ ? $1 : $err;
+}
+
 sub make_tests
 {
     my $group = HTML::Mason::Tests->tests_class->new( name => 'errors',
@@ -134,13 +143,21 @@ EOF
 
 #------------------------------------------------------------
 
-    # this is easy to check for as an exact string
-    sub HTML::Mason::Exception::as_munged
-    {
-        my $err = shift->error;
+    $group->add_test( name => 'error_mode_output',
+		      description => 'Make sure that existing output is cleared when an error occurs in error_mode=output',
+                      interp_params => { error_format => 'munged',
+                                         error_mode => 'output',
+                                       },
+		      component => <<'EOF',
+Should not appear in output!
+% $m->comp( '/errors/support/error1' );
+EOF
+                      expect => <<'EOF',
+terrible error
+EOF
+		    );
 
-        return $err =~ /^(.+?) at/ ? $1 : $err;
-    }
+#------------------------------------------------------------
 
     $group->add_test( name => 'error_in_subrequest',
 		      description => 'Make sure that an error in a subrequest is propogated back to the main request',
@@ -171,6 +188,39 @@ EOF
                           expect => qr{^\s+<html>.*Horrible death}is,
                         );
     }
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'check_exec_not_found',
+                      description => 'Request to non-existent component',
+                      component => <<'EOF',
+% $m->subexec("/does/not/exist");
+EOF
+                      expect_error => qr{could not find component for initial path}is,
+		      );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'check_exec_not_found_html_format',
+                      description => 'Request to non-existent component in html format',
+                      interp_params => { error_format => 'html',
+                                         error_mode => 'output',
+                                       },
+                      component => <<'EOF',
+% $m->subexec("/does/not/exist");
+EOF
+                      expect => qr{^\s+<html>.*could not find component for initial path}is,
+		      );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'check_comp_not_found',
+                      description => 'Component call to non-existent component',
+                      component => <<'EOF',
+% $m->comp("/does/not/exist");
+EOF
+                      expect_error => qr{could not find component for path}is,
+		      );
 
 #------------------------------------------------------------
 
@@ -267,6 +317,37 @@ foo
 </%def>
 EOF
 		      expect_error => qr/Invalid def name/,
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'content_comp_wrong_error',
+		      description => "Make sure syntax error inside <&|> </&> tags is thrown correctly",
+		      component => <<'EOF',
+<&| ttt &>
+<%
+</&>
+<%def ttt>
+</%def>
+EOF
+		      expect_error => qr/'<%' without matching '%>'/,
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'top_level_compilation_error',
+		      description => "Make sure top-level compiler errors work in output mode",
+                      interp_params => {
+					 error_format => 'text',
+					 error_mode => 'output',
+                                       },
+		      component => <<'EOF',
+% my $x = 
+EOF
+			# match "Error during compilation" followed by 
+			# exactly one occurance of "Stack:"
+			# (Mason should stop after the first error)
+		      expect => qr/Error during compilation((?!Stack:).)*Stack:((?!Stack:).)*$/s,
 		    );
 
 #------------------------------------------------------------
