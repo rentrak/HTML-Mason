@@ -1,0 +1,264 @@
+    <HTML> 
+	<HEAD> 
+	    <TITLE>HTML::Mason::Interp - Mason Component Interpreter
+
+</TITLE> 
+	</HEAD>
+
+	<BODY>
+
+<!-- INDEX BEGIN -->
+
+<UL>
+
+	<LI><A HREF="#name">NAME</A>
+	<LI><A HREF="#synopsis">SYNOPSIS</A>
+	<LI><A HREF="#description">DESCRIPTION</A>
+	<LI><A HREF="#parameters_for_new_constructor">PARAMETERS FOR new() CONSTRUCTOR</A>
+	<LI><A HREF="#standalone_mode">STANDALONE MODE</A>
+	<LI><A HREF="#author">AUTHOR</A>
+	<LI><A HREF="#see_also">SEE ALSO</A>
+</UL>
+<!-- INDEX END -->
+
+<HR>
+<P>
+<H1><A NAME="name">NAME
+
+</A></H1>
+HTML::Mason::Interp - Mason Component Interpreter
+
+
+<P>
+
+<P>
+<HR>
+<H1><A NAME="synopsis">SYNOPSIS
+
+</A></H1>
+<PRE>    my $i = new HTML::Mason::Interp (data_dir=&gt;'/usr/local/mason',
+                                     comp_root=&gt;'/usr/local/www/htdocs/',
+                                     &lt; other params &gt;);
+</PRE>
+
+<P>
+
+<P>
+<HR>
+<H1><A NAME="description">DESCRIPTION
+
+</A></H1>
+Interp is the Mason workhorse, executing components and routing their
+output and errors to all the right places. In a web environment, Interp
+objects are handed off immediately to an ApacheHandler object which
+internally calls the Interp implementation methods. In that case the only
+user method is the <CODE>new()</CODE> constructor.
+
+
+<P>
+
+The special case of Mason running in standalone mode (in which case you
+interact with an Interp directly) is described in a separate section below.
+
+
+<P>
+
+<P>
+<HR>
+<H1><A NAME="parameters_for_new_constructor">PARAMETERS FOR new() CONSTRUCTOR
+
+</A></H1>
+<DL>
+<DT><STRONG><A NAME="item_comp_root">comp_root
+
+</A></STRONG><DD>
+A required argument, this specifies the root of your component source tree.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_current_time">current_time
+
+</A></STRONG><DD>
+Overrides the time and date returned by mc_time and mc_date with a fixed
+value. This is useful for testing time-based components, e.g. seeing what a
+page will look like tomorrow. The argument may be specified as a
+<CODE>time()</CODE> value (seconds since 1/1/70) or as a
+<STRONG>Date::Manip</STRONG> date string. For example:
+
+
+<P>
+
+<PRE>    current_time =&gt; 891963000              # simulate 4/7/1998 at 8:30 AM
+    current_time =&gt; 'Apr 7, 1998 8:30 AM'  # same
+    current_time =&gt; 'tomorrow'             # simulate tomorrow at midnight
+</PRE>
+
+<P>
+
+With no current_time parameter (the default), mc_time and mc_date report
+the true time.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_data_dir">data_dir
+
+</A></STRONG><DD>
+The other required argument. Mason's various data directories (obj, cache,
+debug, etc), live within the data_dir.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_max_recurse">max_recurse
+
+</A></STRONG><DD>
+The maximum component stack depth the interpreter is allowed to descend
+before signalling an error. Default is 16.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_out_method">out_method
+
+</A></STRONG><DD>
+Indicates where to send output. If out_method is a reference to a scalar,
+output is appended to the scalar. If out_method is a reference to a
+subroutine, the subroutine is called with each output string. For example,
+to send output to a file called ``mason.out'':
+
+
+<P>
+
+<PRE>    my $fh = new IO::File &quot;&gt;mason.out&quot;;
+    ...
+    out_method =&gt; sub { $fh-&gt;print($_[0]) }
+</PRE>
+
+<P>
+
+In standalone mode, out_method prints to standard output. In a web
+environment, out_method defaults to using <CODE>$r-</CODE>print&gt;.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_parser">parser
+
+</A></STRONG><DD>
+Parser object for compiling components on the fly. If omitted, creates a
+parser with default parameters.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_preloads">preloads
+
+</A></STRONG><DD>
+A set of component paths and/or component directories to load when the
+interpreter initializes. This should only be used for components that are
+frequently viewed and rarely updated. See the <A HREF="././Admin.html#preloading">preloading</A>
+section of the <EM>Admin Guide</EM> for further details.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_static_file_root">static_file_root
+
+</A></STRONG><DD>
+Absolute path to prepend to relative filenames passed to <A HREF="././Commands.html#item_mc_file">mc_file()</A>. Does not require a trailing slash. For example, if the file root is
+'/foo/bar', then <A HREF="././Commands.html#item_mc_file">mc_file('baz/bap')</A> will read the file '/foo/bar/baz/bap'.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_use_data_cache">use_data_cache
+
+</A></STRONG><DD>
+True or undef, default is true. You may need to disable data caching
+temporarily for debugging purposes, but normally this should be left alone.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_use_reload_file">use_reload_file
+
+</A></STRONG><DD>
+True or undef, default undef. If true, disables Mason's automatic timestamp
+checking on component source files, relying instead on an explicitly
+updated <A HREF="././Admin.html#reload_file">reload file</A>.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_verbose_compile_error">verbose_compile_error
+
+</A></STRONG><DD>
+True or undef, default undef. If true, component compile errors are
+followed with the full component source, annotated with line numbers, to
+better interpret the error message. Does not affect runtime errors.
+
+
+<P>
+
+</DL>
+<P>
+<HR>
+<H1><A NAME="standalone_mode">STANDALONE MODE
+
+</A></H1>
+In a web environment, Interp objects don't stand by themselves. Instead
+each is kept as an ApacheHandler property, which internally invokes the
+Interp as needed.
+
+
+<P>
+
+You can call components outside a web environment by using Interp's
+<CODE>exec()</CODE> method:
+
+
+<P>
+
+<PRE>        $i-&gt;exec(compPath [,&lt;..list of component params..&gt;]);
+</PRE>
+
+<P>
+
+Component parameters are given as a series of name/value pairs, just as
+they are with <CODE>mc_comp().</CODE>
+
+
+<P>
+
+<P>
+<HR>
+<H1><A NAME="author">AUTHOR
+
+</A></H1>
+Jonathan Swartz, <A
+HREF="MAILTO:swartz@transbay.net">swartz@transbay.net</A>
+
+
+<P>
+
+<P>
+<HR>
+<H1><A NAME="see_also">SEE ALSO
+
+</A></H1>
+<A HREF="././Mason.html#">HTML::Mason</A>,
+<A HREF="././Parser.html#">HTML::Mason::Parser</A>,
+<A HREF="././ApacheHandler.html#">HTML::Mason::ApacheHandler</A>,
+<A HREF="././Admin.html#">HTML::Mason::Admin</A>
+
+
+
+
+<P>
+
+</DL>
+    </BODY>
+
+    </HTML>

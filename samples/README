@@ -1,0 +1,14 @@
+Component Samples
+=================
+
+cd-me/		Online CD store example.
+                NOTE: This example was removed at the last second because of a data
+		representation problem between different architectures.
+		It will be in the next release.
+
+dump-request	Dumps request parameters, great for debugging.
+		Converted from Apache documentation.
+
+show-env	Dumps current environment.
+
+preview		The Mason Previewer

@@ -1,0 +1,135 @@
+=head1 NAME
+
+HTML::Mason::Interp - Mason Component Interpreter
+
+=head1 SYNOPSIS
+
+    my $i = new HTML::Mason::Interp (data_dir=>'/usr/local/mason',
+                                     comp_root=>'/usr/local/www/htdocs/',
+                                     < other params >);
+
+=head1 DESCRIPTION
+
+Interp is the Mason workhorse, executing components and routing their
+output and errors to all the right places. In a web environment,
+Interp objects are handed off immediately to an ApacheHandler object
+which internally calls the Interp implementation methods. In that case
+the only user method is the new() constructor.
+
+The special case of Mason running in standalone mode (in which case
+you interact with an Interp directly) is described in a separate
+section below.
+
+=head1 PARAMETERS FOR new() CONSTRUCTOR
+
+=over
+
+=item comp_root
+
+A required argument, this specifies the root of your component source
+tree.
+
+=item current_time
+
+Overrides the time and date returned by mc_time and mc_date with a
+fixed value. This is useful for testing time-based components,
+e.g. seeing what a page will look like tomorrow. The argument may be
+specified as a time() value (seconds since 1/1/70) or as a
+B<Date::Manip> date string. For example:
+
+    current_time => 891963000              # simulate 4/7/1998 at 8:30 AM
+    current_time => 'Apr 7, 1998 8:30 AM'  # same
+    current_time => 'tomorrow'             # simulate tomorrow at midnight
+
+With no current_time parameter (the default), mc_time and mc_date
+report the true time.
+
+=item data_dir
+
+The other required argument. Mason's various data directories (obj, cache,
+debug, etc), live within the data_dir.
+
+=item max_recurse
+
+The maximum component stack depth the interpreter is allowed to
+descend before signalling an error.  Default is 16.
+
+=item out_method
+
+Indicates where to send output. If out_method is a reference to a
+scalar, output is appended to the scalar.  If out_method is a
+reference to a subroutine, the subroutine is called with each output
+string. For example, to send output to a file called "mason.out":
+
+    my $fh = new IO::File ">mason.out";
+    ...
+    out_method => sub { $fh->print($_[0]) }
+
+In standalone mode, out_method prints to standard output. In a web
+environment, out_method defaults to using C<$r->print>.
+
+=item parser
+
+Parser object for compiling components on the fly. If omitted, creates
+a parser with default parameters.
+
+=item preloads
+
+A set of component paths and/or component directories to load when the
+interpreter initializes. This should only be used for components that
+are frequently viewed and rarely updated.  See the L<Admin/preloading>
+section of the I<Admin Guide> for further details.
+
+=item static_file_root
+
+Absolute path to prepend to relative filenames passed to C<mc_file()>. Does
+not require a trailing slash. For example, if the file root is
+'/foo/bar', then C<mc_file('baz/bap')> will read the file
+'/foo/bar/baz/bap'.
+
+=item use_data_cache
+
+True or undef, default is true. You may need to disable data caching
+temporarily for debugging purposes, but normally this should be left
+alone.
+
+=item use_reload_file
+
+True or undef, default undef. If true, disables Mason's automatic
+timestamp checking on component source files, relying instead on an
+explicitly updated L<Admin/reload file>.
+
+=item verbose_compile_error
+
+True or undef, default undef. If true, component compile errors are
+followed with the full component source, annotated with line numbers,
+to better interpret the error message. Does not affect runtime errors.
+
+=back
+
+=head1 STANDALONE MODE
+
+In a web environment, Interp objects don't stand by themselves.
+Instead each is kept as an ApacheHandler property, which internally
+invokes the Interp as needed.
+
+You can call components outside a web environment by using Interp's
+exec() method:
+
+	$i->exec(compPath [,<..list of component params..>]);
+
+Component parameters are given as a series of name/value pairs, just
+as they are with mc_comp().
+
+=head1 AUTHOR
+
+Jonathan Swartz, swartz@transbay.net
+
+=head1 SEE ALSO
+
+L<HTML::Mason>,
+L<HTML::Mason::Parser>,
+L<HTML::Mason::ApacheHandler>,
+L<HTML::Mason::Admin>
+
+=cut
