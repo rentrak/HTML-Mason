@@ -41,6 +41,7 @@
 		<li><A HREF="#data_dir">data_dir</a></li>
 		<li><A HREF="#decline_dirs">decline_dirs</a></li>
 		<li><A HREF="#default_escape_flags">default_escape_flags</a></li>
+		<li><A HREF="#define_args_hash">define_args_hash</a></li>
 		<li><A HREF="#dhandler_name">dhandler_name</a></li>
 		<li><A HREF="#error_format">error_format</a></li>
 		<li><A HREF="#error_mode">error_mode</a></li>
@@ -62,6 +63,7 @@
 		<li><A HREF="#static_source">static_source</a></li>
 		<li><A HREF="#subcomp_class">subcomp_class</a></li>
 		<li><A HREF="#use_object_files">use_object_files</a></li>
+		<li><A HREF="#use_source_line_numbers">use_source_line_numbers</a></li>
 		<li><A HREF="#use_strict">use_strict</a></li>
 	</ul>
 
@@ -317,7 +319,7 @@ for further details.</p>
 </li>
 <li><strong><A NAME="item_default_3a_varies">Default:             Varies</a></strong><br />
 </li>
-<li><strong><A NAME="item_belongs_to_3a_html_3a_3amas">Belongs to:          <a HREF="Resolver/File.html">HTML::Mason::Resolver::File</a></a></strong><br />
+<li><strong><A NAME="item_belongs_to_3a_html_3a_3amas">Belongs to:          <code>HTML::Mason::Resolver::File::ApacheHandler</code></a></strong><br />
 </li>
 </ul>
 <p>The component root marks the top of your component hierarchy and
@@ -485,6 +487,30 @@ basis; see the <A HREF="Devel.html#escaping_expressions">escaping expressions</a
 given as a reference to an array of flags.</p>
 <p>
 </p>
+<h2><A NAME="define_args_hash">define_args_hash</a></h2>
+<ul>
+<li><strong><A NAME="item_perl_name_3a_define_args_ha">Perl name:           define_args_hash</a></strong><br />
+</li>
+<li><strong><A NAME="item_apache_name_3a_masondefinea">Apache name:         MasonDefineArgsHash</a></strong><br />
+</li>
+<li><strong>Type in httpd.conf:  string</strong><br />
+</li>
+<li><strong><A NAME="item_default_3a_auto">Default:             auto</a></strong><br />
+</li>
+<li><strong>Belongs to:          <a HREF="Compiler/ToObject.html">HTML::Mason::Compiler::ToObject</a></strong><br />
+</li>
+</ul>
+<p>One of ``always'', ``auto'', or ``never''.  This determines whether or not
+an <code>%ARGS</code> hash is created in components.  If it is set to ``always'',
+one is always defined.  If set to ``never'', it is never defined.</p>
+<p>The default, ``auto'', will cause the hash to be defined only if some
+part of the component contains the string ``ARGS''.  This is somewhat
+crude, and may result in some false positives, but this is preferable
+to false negatives.</p>
+<p>Not defining the args hash means that we can avoid copying component
+arguments, which can save memory and slightly improve execution speed.</p>
+<p>
+</p>
 <h2><A NAME="dhandler_name">dhandler_name</a></h2>
 <ul>
 <li><strong><A NAME="item_perl_name_3a_dhandler_name">Perl name:           dhandler_name</a></strong><br />
@@ -597,7 +623,8 @@ component from being loaded and executed. For example:</p>
 <pre>
     ignore_warnings_expr =&gt;
         'Global symbol.*requires explicit package'</pre>
-<p>If undef, all warnings are heeded; if '.', all warnings are ignored.</p>
+<p>If set to undef, all warnings are heeded. If set to '.', warnings
+are turned off completely as a specially optimized case.</p>
 <p>By default, this is set to 'Subroutine .* redefined'.  This allows you
 to declare global subroutines inside &lt;%once&gt; sections and not receive
 an error when the component is reloaded.</p>
@@ -915,6 +942,27 @@ to <a HREF="Component/Subcomponent.html">HTML::Mason::Component::Subcomponent</a
 object files to save the results of component parsing. You may want to
 turn off object files for disk space reasons, but otherwise this
 should be left alone.</p>
+<p>
+</p>
+<h2><A NAME="use_source_line_numbers">use_source_line_numbers</a></h2>
+<ul>
+<li><strong><A NAME="item_perl_name_3a_use_source_lin">Perl name:           use_source_line_numbers</a></strong><br />
+</li>
+<li><strong><A NAME="item_apache_name_3a_masonusesour">Apache name:         MasonUseSourceLineNumbers</a></strong><br />
+</li>
+<li><strong>Type in httpd.conf:  boolean</strong><br />
+</li>
+<li><strong>Default:             1</strong><br />
+</li>
+<li><strong>Belongs to:          <a HREF="Compiler.html">HTML::Mason::Compiler</a></strong><br />
+</li>
+</ul>
+<p>True or false, default is true. Indicates whether component line
+numbers that appear in error messages, stack traces, etc. are in terms
+of the source file instead of the object file. Mason does this by
+inserting '#line' directives into compiled components.  While source
+line numbers are more immediately helpful, object file line numbers
+may be more appropriate for in-depth debugging sessions.</p>
 <p>
 </p>
 <h2><A NAME="use_strict">use_strict</a></h2>

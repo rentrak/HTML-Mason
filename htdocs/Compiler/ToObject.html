@@ -84,6 +84,24 @@ Text given for this parameter is placed at the end of each component. See also <
 True or false, default is true. Indicates whether or not a given
 component should <A HREF="#item_use_strict"><code>use strict</code></a>.
 </dd>
+<p></p>
+<dt><strong><A NAME="item_define_args_hash">define_args_hash</a></strong><br />
+</dt>
+<dd>
+One of ``always'', ``auto'', or ``never''.  This determines whether or not
+an <code>%ARGS</code> hash is created in components.  If it is set to ``always'',
+one is always defined.  If set to ``never'', it is never defined.
+</dd>
+<dd>
+<p>The default, ``auto'', will cause the hash to be defined only if some
+part of the component contains the string ``ARGS''.  This is somewhat
+crude, and may result in some false positives, but this is preferable
+to false negatives.</p>
+</dd>
+<dd>
+<p>Not defining the args hash means that we can avoid copying component
+arguments, which can save memory and slightly improve execution speed.</p>
+</dd>
 <p></p></dl>
 <p>
 </p>

@@ -12,14 +12,6 @@ unless ( $ENV{MASON_MAINTAINER} &&
 
 use strict;
 
-use vars qw($VERBOSE $DEBUG);
-
-BEGIN
-{
-    $VERBOSE = $ENV{MASON_DEBUG} || $ENV{MASON_VERBOSE};
-    $DEBUG = $ENV{MASON_DEBUG};
-}
-
 use File::Spec;
 use HTML::Mason::Tests;
 use Test;
@@ -36,7 +28,7 @@ local $| = 1;
 kill_httpd(1);
 test_load_apache();
 
-my $tests = 4; # multi conf tests
+my $tests = 19; # multi conf & taint tests
 $tests += 58 if my $have_libapreq = have_module('Apache::Request');
 $tests += 40 if my $have_cgi      = have_module('CGI');
 $tests += 15 if my $have_tmp      = (-d '/tmp' and -w '/tmp');
@@ -61,7 +53,7 @@ if ($have_libapreq) {        # 57 tests
 
     if ($have_filter) {
         cleanup_data_dir();
-        filter_tests();      # 1 tests
+        filter_tests();      # 1 test
     }
 }
 
@@ -70,6 +62,8 @@ if ($have_tmp) {
     single_level_serverroot_tests();  # 15 tests
 }
 
+cleanup_data_dir();
+taint_tests();           # 15 tests
 
 if ($have_cgi) {             # 40 tests (+ 1?)
     cleanup_data_dir();
@@ -449,6 +443,13 @@ sub no_config_tests
 sub single_level_serverroot_tests
 {
     start_httpd('single_level_serverroot');
+    standard_tests(0);
+    kill_httpd(1);
+}
+
+sub taint_tests
+{
+    start_httpd('taint');
     standard_tests(0);
     kill_httpd(1);
 }

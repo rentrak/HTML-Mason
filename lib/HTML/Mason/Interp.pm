@@ -1,4 +1,4 @@
-# Copyright (c) 1998-2002 by Jonathan Swartz. All rights reserved.
+# Copyright (c) 1998-2003 by Jonathan Swartz. All rights reserved.
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
@@ -135,8 +135,6 @@ BEGIN {
 	eval 'sub PERL_BUG_INFINITE_LOOP () { 0 }';
     }
 }
-	
-
 
 sub new
 {
@@ -222,8 +220,9 @@ sub cache_dir  { my $self = shift; return $self->data_dir ? File::Spec->catdir( 
 # in a new request.
 #
 sub exec {
-    my ($self, $comp, @args) = @_;
-    $self->make_request(comp=>$comp, args=>\@args)->exec;
+    my $self = shift;
+    my $comp = shift;
+    $self->make_request(comp=>$comp, args=>\@_)->exec;
 }
 
 sub make_request {
@@ -525,24 +524,24 @@ sub code_cache_decay_factor { 0.75 }
 sub eval_object_code
 {
     my ($self, %p) = @_;
-    my $code = ref($p{object_code}) ? $p{object_code} : \($p{object_code} || '');
 
     $self->compiler->assert_creatorship(\%p);
 
     #
-    # Evaluate object file or text with warnings on
+    # Evaluate object file or text with warnings on, unless
+    # ignore_warnings_expr is '.'.
     #
     my $ignore_expr = $self->ignore_warnings_expr;
     my ($comp, $err);
     my $warnstr = '';
 
     {
-	local $^W = 1;
+	local $^W = 1 unless $ignore_expr eq '.';
 	local $SIG{__WARN__} =
 	    ( $ignore_expr ?
 	      sub { $warnstr .= $_[0] if $_[0] !~ /$ignore_expr/ } :
-	      sub { $warnstr .= $_[0] } );
-
+	      sub { $warnstr .= $_[0] } ) unless $ignore_expr eq '.';
+	
 	local $SIG{ALRM} = sub { die $warnstr } if PERL_BUG_INFINITE_LOOP;
 	alarm 5 if PERL_BUG_INFINITE_LOOP;
 	
@@ -771,7 +770,7 @@ sub current_time {
     my $self = shift;
     if (@_) {
 	my $newtime = shift;
-	die "Interp::current_time: invalid value '$newtime' - must be 'real' or a numeric time value" if $newtime ne 'real' && $newtime !~ /^[0-9]+$/;
+	param_error "Interp::current_time: invalid value '$newtime' - must be 'real' or a numeric time value" if $newtime ne 'real' && $newtime !~ /^[0-9]+$/;
 	return $self->{current_time} = $newtime;
     } else {
 	return $self->{current_time};
@@ -860,7 +859,8 @@ component from being loaded and executed. For example:
     ignore_warnings_expr =>
         'Global symbol.*requires explicit package'
 
-If undef, all warnings are heeded; if '.', all warnings are ignored.
+If set to undef, all warnings are heeded. If set to '.', warnings
+are turned off completely as a specially optimized case.
 
 By default, this is set to 'Subroutine .* redefined'.  This allows you
 to declare global subroutines inside <%once> sections and not receive

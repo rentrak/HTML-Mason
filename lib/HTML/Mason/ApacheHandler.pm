@@ -1,4 +1,4 @@
-# Copyright (c) 1998-2002 by Jonathan Swartz. All rights reserved.
+# Copyright (c) 1998-2003 by Jonathan Swartz. All rights reserved.
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
@@ -140,7 +140,7 @@ sub exec
 	    $r->log_error("[Mason] File does not exist: ", $r->filename . ($r->path_info ? $r->path_info : ""));
 	    return $self->ah->return_not_found($r);
 	} else {
-	    die $@;
+	    rethrow_exception $@;
 	}
     }
 
@@ -167,7 +167,7 @@ sub _handle_error
     my ($self, $err) = @_;
 
     if (isa_mason_exception($err, 'TopLevelNotFound')) {
-	die $err;
+	rethrow_exception $err;
     } else {
         if ( $self->error_format eq 'html' ) {
             $self->apache_req->content_type('text/html');
@@ -200,6 +200,18 @@ use HTML::Mason::Tools qw(paths_eq);
 
 use HTML::Mason::Resolver::File;
 use base qw(HTML::Mason::Resolver::File);
+use Params::Validate qw(SCALAR ARRAYREF);
+
+BEGIN
+{
+    __PACKAGE__->valid_params
+	(
+	 comp_root =>   # This is optional in superclass, but required for us.
+	 { parse => 'list',
+	   type => SCALAR|ARRAYREF,
+	   descr => "A string or array of arrays indicating the search path for component calls" },
+	);
+}
 
 #
 # Given an apache request object, return the associated component
@@ -254,7 +266,7 @@ use mod_perl 1.22;
 
 if ( $mod_perl::VERSION < 1.99 )
 {
-    die "mod_perl must be compiled with PERL_METHOD_HANDLERS=1 (or EVERYTHING=1) to use ", __PACKAGE__, "\n"
+    error "mod_perl must be compiled with PERL_METHOD_HANDLERS=1 (or EVERYTHING=1) to use ", __PACKAGE__, "\n"
 	unless Apache::perl_hook('MethodHandlers');
 }
 
@@ -275,9 +287,7 @@ BEGIN
 
 	 args_method =>
          { parse => 'string',  type => SCALAR,       default => 'mod_perl',
-           callbacks =>
-           { "must be either 'CGI' or 'mod_perl'" =>
-             sub { $_[0] =~ /^(?:CGI|mod_perl)$/ } },
+           regex => qr/^(?:CGI|mod_perl)$/,
            descr => "Whether to use CGI.pm or Apache::Request for parsing the incoming HTTP request",
          },
 
@@ -576,11 +586,11 @@ sub new
     {
 	# constructs path to <server root>/mason
 	my $def = $defaults{data_dir} = Apache->server_root_relative('mason');
-	die "Default data_dir (MasonDataDir) '$def' must be an absolute path"
+	param_error "Default data_dir (MasonDataDir) '$def' must be an absolute path"
 	    unless File::Spec->file_name_is_absolute($def);
 	  
 	my @levels = File::Spec->splitdir($def);
-	die "Default data_dir (MasonDataDir) '$def' must be more than two levels deep (or must be set explicitly)"
+	param_error "Default data_dir (MasonDataDir) '$def' must be more than two levels deep (or must be set explicitly)"
 	    if @levels <= 3;
     }
 
@@ -601,16 +611,15 @@ sub new
 	}
     }
 
-    # Don't allow resolver to get created without comp_root, if it needs one
-    if ( exists $allowed_params->{comp_root} &&
-         ! $defaults{comp_root} &&
-         ! $params{comp_root} )
-    {
-	die "No comp_root specified and cannot determine DocumentRoot." .
-            " Please provide comp_root explicitly.";
-    }
+    my $self = eval { $class->SUPER::new(%defaults, %params) };
 
-    my $self = $class->SUPER::new(%defaults, %params);
+    # We catch & throw this exception just to provide a better error message
+    if ( $@ && isa_mason_exception( $@, 'Params' ) && $@->message =~ /comp_root/ )
+    {
+	param_error "No comp_root specified and cannot determine DocumentRoot." .
+                    " Please provide comp_root explicitly.";
+    }
+    rethrow_exception $@;
 
     unless ( $self->interp->resolver->can('apache_request_to_comp_path') )
     {
@@ -977,7 +986,7 @@ sub handler %s
 }
 EOF
     eval $handler_code;
-    die $@ if $@;
+    rethrow_exception $@;
 }
 
 1;

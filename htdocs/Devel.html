@@ -242,10 +242,10 @@ profile their performance.</p>
 <pre>
     &lt;%perl&gt;
     my $noun = 'World';
-    my @time = split /[\s:]/, localtime;
+    my @time = localtime;
     &lt;/%perl&gt;
     Hello &lt;% $noun %&gt;,
-    % if ( $time[3] &lt; 12 ) {
+    % if ( $time[2] &lt; 12 ) {
     good morning.
     % } else {
     good afternoon.
@@ -311,13 +311,13 @@ another.</p>
 <p>o HTML table formed from list of hashes</p>
 <pre>
     &lt;table&gt;
-    &lt;tr&gt;
     % foreach my $h (@loh) {
+    &lt;tr&gt;
     &lt;td&gt;&lt;% $h-&gt;{foo} %&gt;&lt;/td&gt;
     &lt;td bgcolor=#ee0000&gt;&lt;% $h-&gt;{bar} %&gt;&lt;/td&gt;
     &lt;td&gt;&lt;% $h-&gt;{baz} %&gt;&lt;/td&gt;
-    % }
     &lt;/tr&gt;
+    % }
     &lt;/table&gt;</pre>
 <p><strong>&lt;% xxx %</strong> &gt;&gt;</p>
 <p>Most useful for printing out variables, as well as more complex
@@ -928,6 +928,15 @@ list of ordered parameters:</p>
 readability, syntax checking, and default value automation.  However
 using <code>@_</code> may be convenient for very small components, especially
 subcomponents created with <code>&lt;%def&gt;</code>.</p>
+<p>Before Mason 1.21, @_ contained <em>copies</em> of the caller's arguments.
+In Mason 1.21 and beyond, this unnecessary copying was eliminated and
+@_ now contains <em>aliases</em> to the caller's arguments, just as with
+regular Perl subroutines. For example, if a component updates $_[0],
+the corresponding argument is updated (or an error occurs if it is not
+updatable).</p>
+<p>Most users won't notice this change because &lt;%args&gt; variables and the
+%ARGS hash always contain copies of arguments.</p>
+<p>See perlsub for more information on @_ aliasing.</p>
 <p>
 </p>
 <hr />
@@ -1673,6 +1682,11 @@ components using a conditional on $_[1]:</p>
 <pre>
     mb
     mb $_[1] =~ /component name/</pre>
+<p>Mason normally inserts '#line' directives into compiled components so
+that line numbers are reported relative to the source file. Depending
+on your task, this can be a help or a hindrance when using the
+debugger.  The administrator can turn off '#line' directives with
+the <A HREF="Params.html#use_source_line_numbers">use_source_line_numbers</a> parameter.</p>
 <p>
 </p>
 <hr />

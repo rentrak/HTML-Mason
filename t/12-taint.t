@@ -2,18 +2,7 @@
 
 use strict;
 
-BEGIN
-{
-    # Cwd in taint mode spits out weird errors with older Perls and
-    # may or may not work at all
-    if ( $] < 5.006 )
-    {
-        print "1..0\n";
-        exit;
-    }
-
-    $ENV{PATH} = '';
-}
+BEGIN { $ENV{PATH} = '/bin:/usr/bin' }
 
 # Cwd has to be loaded after sanitizing $ENV{PATH}
 use Cwd;
@@ -118,5 +107,5 @@ ok $@, '', "Unable to eval a tainted object file";
 
 ###########################################################
 sub is_tainted {
-  return not eval { "+@_" && kill 0; 1 };
+  return not eval { "+@_" && eval 1 };
 }

@@ -1,4 +1,4 @@
-# Copyright (c) 1998-2002 by Jonathan Swartz. All rights reserved.
+# Copyright (c) 1998-2003 by Jonathan Swartz. All rights reserved.
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
@@ -181,10 +181,30 @@ sub load_pkg {
     return 1;
 }
 
+# This code seems to be very fragile!  Please don't check in changes
+# unless you've tested it with Perl 5.00503, 5.6.1, and 5.8.0, or at
+# least tell Dave to run the tests.
+my $TaintIsOn;
 sub taint_is_on
 {
-    local $^W;
-    return not eval { "$0$^X" && kill 0; 1 };
+    return $TaintIsOn if defined $TaintIsOn;
+    return $TaintIsOn = _taint_is_on();
+}
+
+sub _taint_is_on
+{
+    if ( $] >= 5.008 )
+    {
+        # We have to eval a string because this variable name causes
+        # earlier Perls to not compile at all.
+        return eval '${^TAINT}' ? 1 : 0;
+    }
+    else
+    {
+        local $^W;
+        eval { "+$0$^X" && eval 1 };
+        return $@ ? 1 : 0;
+    }
 }
 
 sub make_fh

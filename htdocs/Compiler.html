@@ -134,6 +134,17 @@ reference to the Perl portion of the component.  The sub is expected
 to process the string in-place. See also
 <A HREF="Params.html#preprocess">preprocess</a> and <A HREF="Params.html#postprocess_text">postprocess_text</a>.
 </dd>
+<p></p>
+<dt><strong><A NAME="item_use_source_line_numbers">use_source_line_numbers</a></strong><br />
+</dt>
+<dd>
+True or false, default is true. Indicates whether component line
+numbers that appear in error messages, stack traces, etc. are in terms
+of the source file instead of the object file. Mason does this by
+inserting '#line' directives into compiled components.  While source
+line numbers are more immediately helpful, object file line numbers
+may be more appropriate for in-depth debugging sessions.
+</dd>
 <p></p></dl>
 <p>
 </p>

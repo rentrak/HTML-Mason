@@ -845,6 +845,79 @@ EOF
 
 #------------------------------------------------------------
 
+	$group->add_test( name => 'use_source_line_numbers_1',
+			  description => 'test presence of line directives when use_source_line_numbers is 1 (default)',
+			  component => <<'EOF',
+This is line <% __LINE__ %>.
+<%doc>
+
+</%doc>
+This is line <% __LINE__ %>.
+EOF
+                          expect => <<'EOF',
+This is line 1.
+This is line 5.
+EOF
+                        );
+
+#------------------------------------------------------------
+
+	$group->add_test( name => 'use_source_line_numbers_0',
+			  description => 'test absence of line directives when use_source_line_numbers is 1',
+		          interp_params => { use_source_line_numbers => 0 },
+			  component => <<'EOF',
+This line number is <% __LINE__ < 3 ? 'less than 3' : 'not less than 3' %>.
+EOF
+                          expect => <<'EOF',
+This line number is not less than 3.
+EOF
+                        );
+
+#------------------------------------------------------------
+
+	$group->add_test( name => 'define_args_hash_never',
+                          description => 'test setting define_args_hash to never',
+                          interp_params => { define_args_hash => 'never' },
+                          component => <<'EOF',
+% $ARGS{foo} = 1;
+no error?
+EOF
+
+                          expect_error => qr/Global symbol.*%ARGS/
+                        );
+
+#------------------------------------------------------------
+
+	$group->add_test( name => 'define_args_hash_always',
+			  description => 'test setting define_args_hash to always',
+		          interp_params => { define_args_hash => 'always' },
+			  component => <<'EOF',
+% eval '$AR' . 'GS{foo} = 1';
+<% $@ ? $@ : 'no error' %>
+EOF
+                          expect => <<'EOF',
+no error
+EOF
+                        );
+
+#------------------------------------------------------------
+
+	$group->add_test( name => 'define_args_hash_auto',
+			  description => 'test setting define_args_hash to always',
+                          call_args => { bar => 7 },
+			  component => <<'EOF',
+<%args>
+$foo => $ARGS{bar}
+</%args>
+foo is <% $foo %>
+EOF
+                          expect => <<'EOF',
+foo is 7
+EOF
+                        );
+
+#------------------------------------------------------------
+
     return $group;
 }
 

@@ -28,6 +28,15 @@ $useless=>17
 </%args>
 </%def>
 
+<%method meth>
+% my $adj = 'sad';
+I am a <% $adj %> method.
+<%args>
+$crucial
+$useless=>17
+</%args>
+</%method>
+
 % my $anon = $m->interp->make_component(comp_source=>join("\n",'% my $adj = "flummoxed";','I am a <% $adj %> anonymous component.'),name=>'anonymous');
 
 <% '-' x 60 %>
@@ -39,6 +48,11 @@ File-based:
 
 Subcomponent:
 <& /shared/display_comp_obj, comp=>$m->fetch_comp('.subcomp')  &>
+
+<% '-' x 60 %>
+
+Method:
+<& /shared/display_comp_obj, comp=>$m->fetch_comp('SELF:meth')  &>
 
 <% '-' x 60 %>
 
@@ -54,6 +68,7 @@ EOF
 		      expect => <<'EOF',
 
 
+
 ------------------------------------------------------------
 
 File-based:
@@ -61,6 +76,7 @@ Declared args:
 @animals=>('lions','tigers')
 
 I am not a subcomponent.
+I am not a method.
 I am file-based.
 My short name is comp_obj.
 My directory is /component/comp_obj_test.
@@ -80,6 +96,7 @@ $crucial
 $useless=>17
 
 I am a subcomponent.
+I am not a method.
 I am not file-based.
 My short name is .subcomp.
 My parent component is /component/comp_obj_test/comp_obj.
@@ -93,21 +110,39 @@ My comp_id is [subcomponent '.subcomp' of /component/comp_obj_test/comp_obj].
 
 ------------------------------------------------------------
 
+Method:
+Declared args:
+$crucial
+$useless=>17
+
+I am a subcomponent.
+I am a method.
+I am not file-based.
+My short name is meth.
+My parent component is /component/comp_obj_test/comp_obj.
+My directory is /component/comp_obj_test.
+I have 0 subcomponent(s).
+My title is /component/comp_obj_test/comp_obj:meth.
+
+My path is /component/comp_obj_test/comp_obj:meth.
+My comp_id is [method 'meth' of /component/comp_obj_test/comp_obj].
+
+
+------------------------------------------------------------
+
 Anonymous component:
 I am a flummoxed anonymous component.
 I am a flummoxed anonymous component.
 Declared args:
 
 I am not a subcomponent.
+I am not a method.
 I am not file-based.
 My short name is [anon something].
 I have 0 subcomponent(s).
 My title is [anon something].
 
 My comp_id is [anon something].
-
-
-
 EOF
 		     );
 
@@ -362,6 +397,83 @@ EOF
 x
 y
 EOF
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_support( path => 'args_copying_helper',
+			 component => <<'EOF',
+<%init>
+$_[1] = 4;
+$b = 5;
+$ARGS{'c'} = 6;
+</%init>
+
+<%args>
+$a
+$b
+</%args>
+EOF
+		       );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'component_args_copying',
+		      description => 'Test that @_ contains aliases, <%args> and %ARGS contain copies after comp',
+		      component => <<'EOF',
+$a is <% $a %>
+$b is <% $b %>
+$c is <% $c %>
+
+<%init>;
+my $a = 1;
+my $b = 2;
+my $c = 3;
+$m->comp('args_copying_helper', a=>$a, b=>$b, c=>$c);
+</%init>
+EOF
+		      expect => <<'EOF',
+
+$a is 4
+$b is 2
+$c is 3
+EOF
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'subrequest_args_copying',
+		      description => 'Test that @_ contains aliases, <%args> and %ARGS contain copies after subrequest',
+		      component => <<'EOF',
+$a is <% $a %>
+$b is <% $b %>
+$c is <% $c %>
+
+<%init>;
+my $a = 1;
+my $b = 2;
+my $c = 3;
+$m->subexec('/component/args_copying_helper', a=>$a, b=>$b, c=>$c);
+</%init>
+EOF
+		      expect => <<'EOF',
+
+$a is 4
+$b is 2
+$c is 3
+EOF
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'modification_read_only_arg',
+		      description => 'Test that read-only argument cannot be modified through @_',
+		      component => <<'EOF',
+<%init>;
+$m->comp('args_copying_helper', a=>1, b=>2, c=>3);
+</%init>
+EOF
+		      expect_error => 'Modification of a read-only value',
 		    );
 
 #------------------------------------------------------------

@@ -327,7 +327,7 @@ L<HTML::Mason::Component|HTML::Mason::Component>.
 
 =item * Default:             Varies
 
-=item * Belongs to:          L<HTML::Mason::Resolver::File|HTML::Mason::Resolver::File>
+=item * Belongs to:          C<HTML::Mason::Resolver::File::ApacheHandler>
 
 
 
@@ -549,6 +549,38 @@ If you want to set I<multiple> flags as the default, this should be
 given as a reference to an array of flags.
 
 
+=head2 define_args_hash
+
+=over 4
+
+=item * Perl name:           define_args_hash
+
+=item * Apache name:         MasonDefineArgsHash
+
+=item * Type in httpd.conf:  string
+
+=item * Default:             auto
+
+=item * Belongs to:          L<HTML::Mason::Compiler::ToObject|HTML::Mason::Compiler::ToObject>
+
+
+
+
+=back
+
+One of "always", "auto", or "never".  This determines whether or not
+an C<%ARGS> hash is created in components.  If it is set to "always",
+one is always defined.  If set to "never", it is never defined.
+
+The default, "auto", will cause the hash to be defined only if some
+part of the component contains the string "ARGS".  This is somewhat
+crude, and may result in some false positives, but this is preferable
+to false negatives.
+
+Not defining the args hash means that we can avoid copying component
+arguments, which can save memory and slightly improve execution speed.
+
+
 =head2 dhandler_name
 
 =over 4
@@ -703,7 +735,8 @@ component from being loaded and executed. For example:
     ignore_warnings_expr =>
         'Global symbol.*requires explicit package'
 
-If undef, all warnings are heeded; if '.', all warnings are ignored.
+If set to undef, all warnings are heeded. If set to '.', warnings
+are turned off completely as a specially optimized case.
 
 By default, this is set to 'Subroutine .* redefined'.  This allows you
 to declare global subroutines inside <%once> sections and not receive
@@ -1123,6 +1156,33 @@ True or false, default is true.  Specifies whether Mason creates
 object files to save the results of component parsing. You may want to
 turn off object files for disk space reasons, but otherwise this
 should be left alone.
+
+
+=head2 use_source_line_numbers
+
+=over 4
+
+=item * Perl name:           use_source_line_numbers
+
+=item * Apache name:         MasonUseSourceLineNumbers
+
+=item * Type in httpd.conf:  boolean
+
+=item * Default:             1
+
+=item * Belongs to:          L<HTML::Mason::Compiler|HTML::Mason::Compiler>
+
+
+
+
+=back
+
+True or false, default is true. Indicates whether component line
+numbers that appear in error messages, stack traces, etc. are in terms
+of the source file instead of the object file. Mason does this by
+inserting '#line' directives into compiled components.  While source
+line numbers are more immediately helpful, object file line numbers
+may be more appropriate for in-depth debugging sessions.
 
 
 =head2 use_strict

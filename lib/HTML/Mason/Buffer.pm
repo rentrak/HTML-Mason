@@ -1,4 +1,4 @@
-# Copyright (c) 1998-2002 by Jonathan Swartz. All rights reserved.
+# Copyright (c) 1998-2003 by Jonathan Swartz. All rights reserved.
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
@@ -82,6 +82,7 @@ sub receive
     if ( $self->{buffer} )
     {
         # grep { defined } is marginally faster than local $^W;
+        # foreach is a little slower than join, but avoids a memory copy.
         ${ $self->{buffer} } .= $_ foreach grep { defined } @_;
     }
     else

@@ -1,4 +1,4 @@
-# Copyright (c) 1998-2002 by Jonathan Swartz. All rights reserved.
+# Copyright (c) 1998-2003 by Jonathan Swartz. All rights reserved.
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
@@ -78,12 +78,13 @@ sub new
     my $class = shift;
     my $self = bless { %defaults, @_ }, $class;
 
-    # Initialize subcomponent and method properties.
+    # Initialize subcomponent and method properties: owner, name, and
+    # is_method flag.
     while (my ($name,$c) = each(%{$self->{subcomps}})) {
-	$c->assign_subcomponent_properties($self,$name);
+	$c->assign_subcomponent_properties($self,$name,0);
     }
     while (my ($name,$c) = each(%{$self->{methods}})) {
-	$c->assign_subcomponent_properties($self,$name);
+	$c->assign_subcomponent_properties($self,$name,1);
     }
 
     return $self;
@@ -91,16 +92,16 @@ sub new
 
 my $comp_count = 0;
 sub assign_runtime_properties {
-    my ($self, $interp, $info) = @_;
+    my ($self, $interp, $source) = @_;
     $self->interp($interp);
-    $self->{comp_id} = defined $info->comp_id ? $info->comp_id : "[anon ". ++$comp_count . "]";
+    $self->{comp_id} = defined $source->comp_id ? $source->comp_id : "[anon ". ++$comp_count . "]";
 
-    $self->{path} = $info->comp_path;
+    $self->{path} = $source->comp_path;
 
     $self->_determine_inheritance;
 
-    foreach my $c (values(%{$self->{subcomps}})) {
-	$c->assign_runtime_properties($interp, $info);
+    foreach my $c (values(%{$self->{subcomps}}), values(%{$self->{methods}})) {
+	$c->assign_runtime_properties($interp, $source);
     }
 }
 

@@ -1,4 +1,4 @@
-# Copyright (c) 1998-2002 by Jonathan Swartz. All rights reserved.
+# Copyright (c) 1998-2003 by Jonathan Swartz. All rights reserved.
 # This program is free software; you can redistribute it and/or modify
 # it under the same terms as Perl itself.
 
@@ -44,12 +44,18 @@ BEGIN
 	 use_strict =>
          { parse => 'boolean', type => SCALAR, default => 1,
            descr => "Whether to turn on Perl's 'strict' pragma in components" },
+
+         define_args_hash =>
+         { parse => 'string', type => SCALAR, default => 'auto',
+           regex => qr/^(?:always|auto|never)$/,
+           descr => "Whether or not to create the %ARGS hash" },
 	);
 }
 
 use HTML::Mason::MethodMaker
     ( read_write => [ map { [ $_ => __PACKAGE__->validation_spec->{$_} ] }
 		      qw( comp_class
+                          define_args_hash
                           in_package
 			  postamble
 			  preamble
@@ -145,12 +151,11 @@ sub _output_chunk
 sub compiled_component
 {
     my ($self, %p) = @_;
+    my $c = $self->{current_compile};
     my $obj_text = '';
 
-    local $self->{compiled_def} = $self->_compile_subcomponents if %{ $self->{def} };
-    local $self->{compiled_method} = $self->_compile_methods if %{ $self->{method} };
-
-    $self->{current_comp} = $self;
+    local $c->{compiled_def} = $self->_compile_subcomponents if %{ $c->{def} };
+    local $c->{compiled_method} = $self->_compile_methods if %{ $c->{method} };
 
     # Create the file header to assert creatorship
     my $id = $self->object_id;
@@ -167,19 +172,19 @@ sub compiled_component
     $params->{compiler_id} = "'$id'";
     $params->{load_time} = time;
 
-    $params->{subcomps} = '\%_def' if %{ $self->{def} };
-    $params->{methods} = '\%_method' if %{ $self->{method} };
+    $params->{subcomps} = '\%_def' if %{ $c->{def} };
+    $params->{methods} = '\%_method' if %{ $c->{method} };
 
     if ( $self->_blocks('shared') )
     {
 	my %subs;
-	while ( my ($name, $pref) = each %{ $self->{compiled_def} } )
+	while ( my ($name, $pref) = each %{ $c->{compiled_def} } )
 	{
 	    my $key = "subcomponent_$name";
 	    $subs{$key} = $pref->{code};
 	    $pref->{code} = "sub {\n\$m->call_dynamic('$key',\@_)\n}";
 	}
-	while (my ($name, $pref) = each %{ $self->{compiled_method} } )
+	while (my ($name, $pref) = each %{ $c->{compiled_method} } )
 	{
 	    my $key = "method_$name";
 	    $subs{$key} = $pref->{code};
@@ -211,7 +216,6 @@ sub compiled_component
 			 ';',
 			);
 
-    delete $self->{current_comp};
     return \$obj_text;
 }
 
@@ -258,9 +262,9 @@ sub _compile_subcomponents_or_methods
     my $type = shift;
 
     my %compiled;
-    foreach ( keys %{ $self->{$type} } )
+    foreach ( keys %{ $self->{current_compile}{$type} } )
     {
-	$self->{current_comp} = $self->{$type}{$_};
+	local $self->{current_compile} = $self->{current_compile}{$type}{$_};
 	$compiled{$_} = $self->_component_params;
     }
 
@@ -298,16 +302,17 @@ sub _methods_footer
 sub _subcomponent_or_method_footer
 {
     my $self = shift;
+    my $c = $self->{current_compile};
     my $type = shift;
 
-    return '' unless %{ $self->{current_comp}{$type} };
+    return '' unless %{ $c->{$type} };
 
     return join('',
 		"my %_$type =\n(\n",
 		map( {("'$_' => " ,
 		       $self->_constructor( $self->{subcomp_class},
-					    $self->{"compiled_$type"}{$_} ) ,
-		       ",\n")} keys %{ $self->{"compiled_$type"} } ) ,
+					    $c->{"compiled_$type"}{$_} ) ,
+		       ",\n")} keys %{ $c->{"compiled_$type"} } ) ,
 		"\n);\n"
 	       );
 }
@@ -330,13 +335,13 @@ sub _component_params
 		 );
 
     $params{flags} = join '', "{\n", $self->_flags, "\n}"
-        if keys %{ $self->{current_comp}{flags} };
+        if keys %{ $self->{current_compile}{flags} };
 
     $params{attr}  = join '', "{\n", $self->_attr, "\n}"
-        if keys %{ $self->{current_comp}{attr} };
+        if keys %{ $self->{current_compile}{attr} };
 
     $params{declared_args} = join '', "{\n", $self->_declared_args, "\n}"
-	if @{ $self->{current_comp}{args} };
+	if @{ $self->{current_compile}{args} };
 
     $params{has_filter} = 1 if $self->_blocks('filter');
 
@@ -347,28 +352,13 @@ sub _body
 {
     my $self = shift;
 
-    my @args;
-    if ( @{ $self->{current_comp}{args} } )
-    {
-	@args = ( <<'EOF',
-if (@_ % 2 == 0) { %ARGS = @_ } else { HTML::Mason::Exception::Params->throw( error => "Odd number of parameters passed to component expecting name/value pairs" ) }
-EOF
-		  $self->_arg_declarations,
-		);
-    }
-    else
-    {
-	@args = ( "{ local \$^W; \%ARGS = \@_ unless (\@_ % 2); }\n" );
-    }
-
     return join '', ( $self->preamble,
                       $self->_set_request,
-		      "my \%ARGS;\n",
-		      @args,
+		      $self->_arg_declarations,
                       $self->_filter,
 		      "\$m->debug_hook( \$m->current_comp->path ) if ( \%DB:: );\n\n",
 		      $self->_blocks('init'),
-		      $self->{current_comp}{body},
+		      $self->{current_compile}{body},
 		      $self->_blocks('cleanup'),
 		      $self->postamble,
 		      "return undef;\n",
@@ -391,66 +381,131 @@ sub _arg_declarations
 {
     my $self = shift;
 
+    my $init;
+    my @args_hash;
+    my $pos;
+    my @req_check;
     my @decl;
     my @assign;
-    my @required;
 
-    foreach ( @{ $self->{current_comp}{args} } )
+    my $define_args_hash = $self->_define_args_hash;
+
+    unless ( @{ $self->{current_compile}{args} } )
     {
-	my $var_name = "$_->{type}$_->{name}";
-	push @decl, $var_name;
+        return unless $define_args_hash;
 
-	my $coerce;
-	if ( $coercion_funcs{ $_->{type} } )
-	{
-	    $coerce = $coercion_funcs{ $_->{type} } . "(\$ARGS{'$_->{name}'}, '$var_name')";
-	}
-	else
-	{
-	    $coerce = "\$ARGS{'$_->{name}'}";
-	}
-
-	push @assign, "#line $_->{line} $_->{file}\n"
-	    if defined $_->{line} && defined $_->{file};
-	if ( defined $_->{default} )
-	{
-	    my $default_val = $_->{default};
-	    # allow for comments after default declaration
-	    $default_val .= "\n" if defined $_->{default} && $_->{default} =~ /\#/;
-
-	    push @assign,
-		"$_->{type}$_->{name} = exists \$ARGS{'$_->{name}'} ? $coerce : $default_val;\n";
-	}
-	else
-	{
-	    push @required, $_->{name};
-
-	    push @assign,
-		"$var_name = $coerce;\n";
-	}
+        return ( "my \%ARGS;\n",
+                 "{ local \$^W; \%ARGS = \@_ unless (\@_ % 2); }\n"
+               );
     }
 
-    my @req_check;
+    $init = <<'EOF';
+HTML::Mason::Exception::Params->throw
+    ( error =>
+      "Odd number of parameters passed to component expecting name/value pairs"
+    ) if @_ % 2;
+EOF
+
+    if ( $define_args_hash )
+    {
+        @args_hash = "my \%ARGS = \@_;\n";
+    }
+
+    # opening brace will be closed later.  we want this in a separate
+    # block so that the rest of the component can't see %pos
+    $pos = <<'EOF';
+{
+    my %pos;
+    for ( my $x = 0; $x < @_; $x += 2 )
+    {
+        $pos{ $_[$x] } = $x + 1;
+    }
+EOF
+
+    my @required =
+        ( map { $_->{name} }
+          grep { ! defined $_->{default} }
+          @{ $self->{current_compile}{args} }
+        );
+
     if (@required)
     {
         # just to be sure
         local $" = ' ';
         @req_check = <<"EOF";
 
-foreach my \$arg ( qw( @required ) )
-{
-    HTML::Mason::Exception::Params->throw
-        ( error => "no value sent for required parameter '\$arg'" )
-        unless exists \$ARGS{\$arg};
-}
+    foreach my \$arg ( qw( @required ) )
+    {
+        HTML::Mason::Exception::Params->throw
+            ( error => "no value sent for required parameter '\$arg'" )
+                unless exists \$pos{\$arg};
+    }
 EOF
+    }
+
+    foreach ( @{ $self->{current_compile}{args} } )
+    {
+	my $var_name = "$_->{type}$_->{name}";
+	push @decl, $var_name;
+
+        my $arg_in_array = "\$_[ \$pos{'$_->{name}'} ]";
+
+	my $coerce;
+	if ( $coercion_funcs{ $_->{type} } )
+	{
+	    $coerce = $coercion_funcs{ $_->{type} } . "( $arg_in_array, '$var_name')";
+	}
+	else
+	{
+	    $coerce = $arg_in_array;
+	}
+
+	push @assign, "#line $_->{line} $_->{file}\n"
+	    if defined $_->{line} && defined $_->{file} && $self->use_source_line_numbers;
+
+	if ( defined $_->{default} )
+	{
+	    my $default_val = $_->{default};
+	    # allow for comments after default declaration
+	    $default_val .= "\n" if defined $_->{default} && $_->{default} =~ /\#/;
+
+	    push @assign, <<"EOF";
+     $var_name = exists \$pos{'$_->{name}'} ? $coerce : $default_val;
+EOF
+	}
+	else
+	{
+	    push @assign,
+		"    $var_name = $coerce;\n";
+	}
     }
 
     my $decl = 'my ( ';
     $decl .= join ', ', @decl;
     $decl .= " );\n";
 
-    return @req_check, $decl, @assign;
+    # closing brace closes opening of @pos
+    return $init, @args_hash, $decl, $pos, @req_check, @assign, "}\n";
+}
+
+sub _define_args_hash
+{
+    my $self = shift;
+
+    return 1 if $self->define_args_hash eq 'always';
+    return 0 if $self->define_args_hash eq 'never';
+
+    foreach ( $self->preamble,
+              $self->_blocks('filter'),
+              $self->_blocks('init'),
+              $self->{current_compile}{body},
+              $self->_blocks('cleanup'),
+              $self->postamble,
+              grep { defined } map { $_->{default} } @{ $self->{current_compile}{args} }
+            )
+    {
+        return 1 if /ARGS/;
+    }
 }
 
 sub _filter
@@ -490,8 +545,8 @@ sub _flags_or_attr
     my $self = shift;
     my $type = shift;
 
-    return join "\n,", ( map { "$_ => $self->{current_comp}{$type}{$_}" }
-			 keys %{ $self->{current_comp}{$type} } );
+    return join "\n,", ( map { "$_ => $self->{current_compile}{$type}{$_}" }
+			 keys %{ $self->{current_compile}{$type} } );
 }
 
 sub _declared_args
@@ -501,7 +556,7 @@ sub _declared_args
     my @args;
 
     foreach my $arg ( sort {"$a->{type}$a->{name}" cmp "$b->{type}$b->{name}" }
-		      @{ $self->{current_comp}{args} } )
+		      @{ $self->{current_compile}{args} } )
     {
 	my $def = defined $arg->{default} ? "$arg->{default}" : 'undef';
 	$def =~ s,([\\']),\\$1,g;
@@ -565,6 +620,20 @@ Text given for this parameter is placed at the end of each component. See also L
 
 True or false, default is true. Indicates whether or not a given
 component should C<use strict>.
+
+=item define_args_hash
+
+One of "always", "auto", or "never".  This determines whether or not
+an C<%ARGS> hash is created in components.  If it is set to "always",
+one is always defined.  If set to "never", it is never defined.
+
+The default, "auto", will cause the hash to be defined only if some
+part of the component contains the string "ARGS".  This is somewhat
+crude, and may result in some false positives, but this is preferable
+to false negatives.
+
+Not defining the args hash means that we can avoid copying component
+arguments, which can save memory and slightly improve execution speed.
 
 =back
 

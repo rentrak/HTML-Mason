@@ -113,10 +113,10 @@ Here is a simple component example:
 
     <%perl>
     my $noun = 'World';
-    my @time = split /[\s:]/, localtime;
+    my @time = localtime;
     </%perl>
     Hello <% $noun %>,
-    % if ( $time[3] < 12 ) {
+    % if ( $time[2] < 12 ) {
     good morning.
     % } else {
     good afternoon.
@@ -197,13 +197,13 @@ o HTML list formed from hash
 o HTML table formed from list of hashes
 
     <table>
-    <tr>
     % foreach my $h (@loh) {
+    <tr>
     <td><% $h->{foo} %></td>
     <td bgcolor=#ee0000><% $h->{bar} %></td>
     <td><% $h->{baz} %></td>
-    % }
     </tr>
+    % }
     </table>
 
 B<< <% xxx %> >>
@@ -886,6 +886,18 @@ We generally recommend named parameters for the benefits of
 readability, syntax checking, and default value automation.  However
 using C<@_> may be convenient for very small components, especially
 subcomponents created with C<< <%def> >>.
+
+Before Mason 1.21, @_ contained I<copies> of the caller's arguments.
+In Mason 1.21 and beyond, this unnecessary copying was eliminated and
+@_ now contains I<aliases> to the caller's arguments, just as with
+regular Perl subroutines. For example, if a component updates $_[0],
+the corresponding argument is updated (or an error occurs if it is not
+updatable).
+
+Most users won't notice this change because <%args> variables and the
+%ARGS hash always contain copies of arguments.
+
+See perlsub for more information on @_ aliasing.
 
 =head1 INITIALIZATION AND CLEANUP
 
@@ -1725,6 +1737,12 @@ which reduces the previous examples to just:
 
     mb
     mb $_[1] =~ /component name/
+
+Mason normally inserts '#line' directives into compiled components so
+that line numbers are reported relative to the source file. Depending
+on your task, this can be a help or a hindrance when using the
+debugger.  The administrator can turn off '#line' directives with
+the L<use_source_line_numbers|HTML::Mason::Params/use_source_line_numbers> parameter.
 
 =head1 OBJECT-ORIENTED TECHNIQUES
 

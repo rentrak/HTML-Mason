@@ -75,6 +75,7 @@ t/02a-filter.t
 t/04-misc.t
 t/05-request.t
 t/06-compiler.t
+t/06a-compiler_obj.t
 t/07-interp.t
 t/08-ah.t
 t/09-component.t
@@ -95,4 +96,4 @@ t/live_server_lib.pl
 t/single_test.pl
 t/taint.comp
 UPGRADE
-META.yml                                Module meta-data in YAML
+META.yml                                Module meta-data (added by MakeMaker)

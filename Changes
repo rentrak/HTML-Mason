@@ -5,30 +5,73 @@ available at http://www.masonhq.com/code/history.html.
 
 ** denotes an incompatible change
 
+1.21  June 4, 2003
+
+    [ INCOMPATIBLE CHANGES ]
+
+      ** The semantics of @_ for components now match Perl subroutines: @_
+      contains aliases to the caller's arguments, instead of copies.  For
+      example, if a component updates $_[0], the corresponding argument is
+      updated (or an error occurs if it is not updatable). The only users
+      that will notice this are those that update elements of @_ in
+      components and do not expect those changes to affect the caller. If
+      you have any doubts, grep your component tree for '\$_\[' and look for
+      assignment statements.
+
+    [ ENHANCEMENTS ]
+
+    - Cache the result of taint_is_on() for performance.
+    - Mason was copying arguments several times for a request, and several
+      more times for each component call. The unnecessary copies have been
+      eliminated.  As part of eliminating these copies, a new compiler
+      parameter has been added, "define_args_hash".  The default setting,
+      "auto", should work with all existing Mason components.  See the
+      HTML::Mason::Compiler::ToObject docs for details.  Task id #464.
+      Suggested by Doug Treder.
+    - Add more details about subclassing the compiler to the Subclassing
+      documentation.
+    - There is now a compiler parameter called "use_source_line_numbers",
+      which can be used to turn off line numbering based on the source file.
+      This can be useful when single stepping a component through the
+      debugger.  Task id #461.
+
+    [ BUG FIXES ]
+
+    - Fixed a serious error in which a Compiler that was used on a
+      component containing certain kinds of syntax errors would claim that
+      any future components also contained syntax errors.  Task id #467.
+    - Now assigning runtime properties (such as interp) to method
+      component objects as well as subcomponent objects.  Task id #462.
+    - Fixed the HTML error display.  Errors were not being properly
+      HTML-escaped.  Task id #468.  Reported by Jeremy Blain.
+    - A bad interaction between the XS version of Params::Validate, Perl
+      5.00503 and taint mode has been "fixed" by requiring Params::Validate
+      0.59, where the problem is fixed.  Task id #470.
+    - The test suite now runs the taint mode tests is no longer skipped on
+      earlier versions of Perl.  Task id #471.
+    - The ApacheHandler module would go into an infinite memory-eating
+      loop when run in taint mode with Perl 5.6.1.  Task id #469.  Reported
+      by William McKee.
+
 1.20  May 1, 2003 (May Day)
 
     [ ENHANCEMENTS ]
 
     - Added an $m->notes() method, which is similar to $r->pnotes() but
       may be used outside a mod_perl environment.  Task id #449.
-
     - Mason will now only convert non-reference exceptions to
       HTML::Mason::Exception objects, so it should cooperate better with
       modules like Error.pm.  Task id #446.
-
     - Added more documentation on Mason's error handling and exception
       system.  Task id #446.
-
     - If Mason was configured via the Apache httpd.conf file, it could in
       many cases be quite a bit slower than configuration via a custom
       handler subroutine.  Now configuration via the httpd.conf is much
       faster, and is only about 5% slower than a custom handler subroutine.
       Reported by Jeremy Blain.
-
     - Mason's test harness now gives verbose output when the TEST_VERBOSE
       environment variable is true.  This eliminates the need for setting
       MASON_VERBOSE.
-
     - ** It is now an error to have a subcomponent and method with the
       same name in a single component.
 
@@ -36,17 +79,13 @@ available at http://www.masonhq.com/code/history.html.
 
     - Mason would die if asked to compile a component that evaluates
       to a false value.  Task id #444.  Reported by David Wheeler.
-
     - Mason now gives a better error message if you try to call a
       component's methods or subcomponents from its <%shared> block.  Task
       id #448.  Reported by Randy Harmon.
-
     - If in_package was set, Mason would die if output was generated after
       a subrequest.  Task id #453.  Reported by David R. Baird.
-
     - If Perl's print() was called after a subrequest, Mason would die
       when run with any Perl before 5.8.0.  Task id #458.
-
     - If a component called $m->cache_self, and then $m->decline, no
       output would be generated.  Task id #454.  Patch by Vadim Ustiansky.
 

@@ -1,4 +1,4 @@
-# Copyright (c) 1998-2002 by Jonathan Swartz. All rights reserved.
+# Copyright (c) 1998-2003 by Jonathan Swartz. All rights reserved.
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
@@ -67,8 +67,7 @@ BEGIN
 
          data_cache_api =>
          { parse => 'string', default => '1.1', type => SCALAR,
-           callbacks => { "must be one of '1.0' or '1.1'" =>
-                          sub { $_[0] eq '1.0' or $_[0] eq '1.1'; } },
+           regex => qr/^(?:1\.0|1\.1)$/,
            descr => "Data cache API to use: 1.0 or 1.1" },
 
 	 data_cache_defaults =>
@@ -97,8 +96,7 @@ BEGIN
 
 	 error_mode =>
          { parse => 'string', type => SCALAR, default => 'fatal',
-           callbacks => { "must be one of 'output' or 'fatal'" =>
-                          sub { $_[0] =~ /^(?:output|fatal)$/ } },
+           regex => qr/^(?:output|fatal)$/,
            descr => "How error conditions are manifest (output or fatal)" },
 
 	 max_recurse =>
@@ -273,7 +271,7 @@ sub exec {
 
     # Cheap way to prevent users from executing the same request twice.
     if ($self->{execd}++) {
-	die "Can only call exec() once for a given request object. Did you want to use a subrequest?";
+	error "Can only call exec() once for a given request object. Did you want to use a subrequest?";
     }
 
     # All errors returned from this routine will be in exception form.
@@ -302,7 +300,6 @@ sub exec {
 
 	# Build wrapper chain and index.
 	my $request_comp = $self->request_comp;
-        my @request_args = $self->request_args;
 	my $first_comp;
 	{
 	    my @wrapper_chain = ($request_comp);
@@ -321,20 +318,22 @@ sub exec {
                                      };
 	}
 
+	# Get original request_args array reference to avoid copying.
+        my $request_args = $self->{request_args};
 	{
 	    local *SELECTED;
 	    tie *SELECTED, 'Tie::Handle::Mason';
 
 	    my $old = select SELECTED;
 	    if ($wantarray) {
-		@result = eval {$self->comp({base_comp=>$request_comp}, $first_comp, @request_args)};
+		@result = eval {$self->comp({base_comp=>$request_comp}, $first_comp, @$request_args)};
 	    } elsif (defined($wantarray)) {
-		$result[0] = eval {$self->comp({base_comp=>$request_comp}, $first_comp, @request_args)};
+		$result[0] = eval {$self->comp({base_comp=>$request_comp}, $first_comp, @$request_args)};
 	    } else {
-		eval {$self->comp({base_comp=>$request_comp}, $first_comp, @request_args)};
+		eval {$self->comp({base_comp=>$request_comp}, $first_comp, @$request_args)};
 	    }
 	    select $old;
-	    die $@ if $@;
+	    rethrow_exception $@;
 	}
     };
 
@@ -370,7 +369,7 @@ sub _handle_error
 {
     my ($self, $err) = @_;
 
-    die $err if $self->is_subrequest;
+    rethrow_exception $err if $self->is_subrequest;
 
     # Set error format for when error is stringified.
     if (UNIVERSAL::can($err, 'format')) {
@@ -379,7 +378,7 @@ sub _handle_error
 
     # In fatal mode, die with error. In display mode, output stringified error.
     if ($self->error_mode eq 'fatal') {
-	die $err;
+	rethrow_exception $err;
     } else {
 	UNIVERSAL::isa( $self->out_method, 'CODE' ) ? $self->out_method->("$err") : ( ${ $self->out_method } = "$err" );
     }
@@ -387,9 +386,10 @@ sub _handle_error
 
 sub subexec
 {
-    my ($self, $comp, @args) = @_;
+    my $self = shift;
+    my $comp = shift;
 
-    $self->make_subrequest(comp=>$comp, args=>\@args)->exec;
+    $self->make_subrequest(comp=>$comp, args=>\@_)->exec;
 }
 
 sub make_subrequest
@@ -494,7 +494,7 @@ sub cache
         # need to break up mention of VERSION var or else CPAN/EU::MM can choke when running 'r'
 	eval sprintf('package %s; use base qw(HTML::Mason::Cache::BaseCache %s); use vars qw($' . 'VERSION); $' . 'VERSION = 1.0;',
 		     $mason_cache_class, $cache_class);
-	die "Error constructing mason cache class $mason_cache_class: $@" if $@;
+	error "Error constructing mason cache class $mason_cache_class: $@" if $@;
     }
 
     my $cache = $mason_cache_class->new (\%options)
@@ -524,7 +524,7 @@ sub _cache_1_x
 	
 	# Validate parameters.
 	if (my @invalids = grep(!/^(expire_if|action|key|busy_lock|keep_in_memory|tie_class)$/, keys(%options))) {
-	    die "cache: invalid parameter '$invalids[0]' for action '$action'\n";
+	    param_error "cache: invalid parameter '$invalids[0]' for action '$action'\n";
 	}
 
 	# Handle expire_if.
@@ -547,9 +547,9 @@ sub _cache_1_x
 
 	# Validate parameters	
 	if (my @invalids = grep(!/^(expire_(at|next|in)|action|key|value|keep_in_memory|tie_class)$/, keys(%options))) {
-	    die "cache: invalid parameter '$invalids[0]' for action '$action'\n";
+	    param_error "cache: invalid parameter '$invalids[0]' for action '$action'\n";
 	}
-	die "cache: no store value provided" unless exists($options{value});
+	param_error "cache: no store value provided" unless exists($options{value});
 
 	# Determine $expires_in if expire flag given. For the "next"
 	# options, we're jumping through hoops to find the *top* of
@@ -558,7 +558,7 @@ sub _cache_1_x
 	my $expires_in;
 	my $time = time;
 	if (exists($options{expire_at})) {
-	    die "cache: invalid expire_at value '$options{expire_at}' - must be a numeric time value\n" if $options{expire_at} !~ /^[0-9]+$/;
+	    param_error "cache: invalid expire_at value '$options{expire_at}' - must be a numeric time value\n" if $options{expire_at} !~ /^[0-9]+$/;
 	    $expires_in = $options{expire_at} - $time;
 	} elsif (exists($options{expire_next})) {
             my $term = $options{expire_next};
@@ -568,7 +568,7 @@ sub _cache_1_x
             } elsif ($term eq 'day') {
 		$expires_in = 3600*(23-$hour)+60*(59-$min)+(60-$sec);
             } else {
-                die "cache: invalid expire_next value '$term' - must be 'hour' or 'day'\n";
+                param_error "cache: invalid expire_next value '$term' - must be 'hour' or 'day'\n";
             }
 	} elsif (exists($options{expire_in})) {
 	    $expires_in = $options{expire_in};
@@ -790,7 +790,7 @@ sub decline
     $self->clear_buffer;
     my $subreq = $self->make_subrequest
 	(comp => $self->{top_path},
-	 args => [$self->request_args],
+	 args => $self->{request_args},
 	 declined_comps => {$self->request_comp->comp_id, 1, %{$self->{declined_comps}}});
     my $retval = $subreq->exec;
     HTML::Mason::Exception::Decline->throw( error => 'Request->decline was called', declined_value => $retval );
@@ -963,7 +963,7 @@ sub comp {
     my %mods = ();
     %mods = (%{shift()},%mods) while ref($_[0]) eq 'HASH';
 
-    my ($comp,@args) = @_;
+    my $comp = shift;
 
     param_error "comp: requires path or component as first argument"
 	unless defined($comp);
@@ -1011,7 +1011,7 @@ sub comp {
 
     # Push new frame onto stack.
     push @{ $self->{stack} }, { comp => $comp,
-                                args => [@args],
+                                args => \@_,
                                 base_comp => $base_comp,
                                 content => $mods{content},
                               };
@@ -1049,11 +1049,11 @@ sub comp {
     #
     eval {
         if ($wantarray) {
-            @result = $comp->run(@args);
+            @result = $comp->run(@_);
         } elsif (defined $wantarray) {
-            $result[0] = $comp->run(@args);
+            $result[0] = $comp->run(@_);
         } else {
-            $comp->run(@args);
+            $comp->run(@_);
         }
     };
 
@@ -1259,7 +1259,8 @@ sub PRINT
     my $self = shift;
 
     my $old = select STDOUT;
-    HTML::Mason::Request->instance->print(@_);
+    # Use direct $m access instead of Request->instance() to optimize common case
+    $HTML::Mason::Commands::m->print(@_);
 
     select $old;
 }
