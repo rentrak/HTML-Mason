@@ -68,23 +68,23 @@ visible via Apache::Status.
 <dd>
 Method to use for unpacking GET and POST arguments. The valid options
 are 'CGI' and 'mod_perl'; these indicate that a <code>CGI.pm</code> or
-<code>Apache::Request</code> object (respectively) will be created for the purposes
-of argument handling.
+<code>Apache::Request</code> object (respectively) will be created for the
+purposes of argument handling.
 </dd>
 <dd>
 <p>'mod_perl' is the default and requires that you have installed the
 <code>Apache::Request</code> package.</p>
 </dd>
 <dd>
-<p>If the args_method is 'CGI', the Mason request object (<code>$m</code>) will have a
-method called <code>cgi_object</code> available.  This method returns the CGI
-object used for argument processing.</p>
-</dd>
-<dd>
 <p>If args_method is 'mod_perl', the <code>$r</code> global is upgraded to an
 Apache::Request object. This object inherits all Apache methods and
 adds a few of its own, dealing with parameters and file uploads.  See
 <code>Apache::Request</code> for more information.</p>
+</dd>
+<dd>
+<p>If the args_method is 'CGI', the Mason request object (<code>$m</code>) will have a
+method called <code>cgi_object</code> available.  This method returns the CGI
+object used for argument processing.</p>
 </dd>
 <dd>
 <p>While Mason will load <code>Apache::Request</code> or <code>CGI</code> as needed at runtime, it
@@ -183,8 +183,9 @@ The first item is a hash reference containing the arguments passed by
 the client's request.
 </dd>
 <dd>
-<p>The second is an Apache request object, possibly the one originally
-passed to the method.</p>
+<p>The second is an Apache request object.  This is returned for
+backwards compatibility from when this method was responsible for
+turning a plain Apache object into an Apache::Request object.</p>
 </dd>
 <dd>
 <p>The third item may be a CGI.pm object or <code>undef</code>, depending on the

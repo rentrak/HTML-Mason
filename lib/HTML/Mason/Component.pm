@@ -12,7 +12,18 @@ use Params::Validate qw(:all);
 Params::Validate::validation_options( on_fail => sub { param_error join '', @_  } );
 
 # for weakrefs
-BEGIN { require Scalar::Util if $] >= 5.006 }
+BEGIN
+{
+    my $can_weaken = 0;
+    if ( $] >= 5.006 )
+    {
+        require Scalar::Util;
+
+        $can_weaken = defined &Scalar::Util::weaken;
+    }
+
+    sub CAN_WEAKEN () { $can_weaken }
+}
 
 use HTML::Mason::Exceptions( abbr => ['error'] );
 use HTML::Mason::MethodMaker
@@ -192,6 +203,11 @@ sub methods {
 }
 
 #
+# Get all attributes
+#
+sub attributes { $_[0]->{attr} }
+
+#
 # Get attribute by name
 #
 sub attr {
@@ -313,7 +329,7 @@ sub interp {
 
         $self->{interp} = $_[0];
 
-        Scalar::Util::weaken( $self->{interp} ) if $] >= 5.006;
+        Scalar::Util::weaken( $self->{interp} ) if CAN_WEAKEN;
     } elsif ( ! defined $self->{interp} ) {
         die "The Interp object that this object contains has gone out of scope.\n";
     }
@@ -421,6 +437,12 @@ attribute does not exist.
 Returns true if the specified attribute exists in this component or
 one of its parents, undef otherwise.
 
+=item attributes
+
+Returns a hashref containing the attributes defined in this component,
+with the attribute names as keys.  This does not return attributes
+inherited from parent components.
+
 =item call_method (name, args...)
 
 Looks for the specified user-defined method in this component and its
@@ -502,7 +524,8 @@ component or one of its parents, undef otherwise.
 
 This method works exactly like the
 L<subcomps|HTML::Mason::Component/item_subcomps> method, but it
-returns methods, not subcomponents.
+returns methods, not subcomponents.  This does not return methods
+inherited from parent components.
 
 Methods are declared in C<E<lt>%methodE<gt>> sections.
 

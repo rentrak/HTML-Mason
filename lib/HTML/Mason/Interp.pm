@@ -35,7 +35,7 @@ BEGIN
 
 	 code_cache_max_size =>
          { parse => 'string',  default => 10*1024*1024, type => SCALAR,  # 10M
-           descr => "The maximum size of the component code cache" },
+           descr => "The maximum size of the component code cache, in bytes" },
 
 	 compiler =>
          { isa => 'HTML::Mason::Compiler',
@@ -184,7 +184,11 @@ sub _initialize
 		unless File::Spec->file_name_is_absolute($pattern);
 	    my @paths = $self->resolver->glob_path($pattern)
 		or warn "Didn't find any components for preload pattern '$pattern'";
-	    foreach (@paths) { $self->load($_) }
+	    foreach (@paths)
+            {
+                $self->load($_)
+                    or error "Cannot preload component $_, found via pattern $pattern";
+            }
 	}
     }
 
@@ -539,19 +543,12 @@ sub eval_object_code
 	      sub { $warnstr .= $_[0] if $_[0] !~ /$ignore_expr/ } :
 	      sub { $warnstr .= $_[0] } );
 
-	if ( PERL_BUG_INFINITE_LOOP )
-	{
-           local $SIG{ALRM} = sub { die $warnstr };
-           alarm 5;
-
-           $comp = $self->_do_or_eval(\%p);
-
-           alarm 0;
-	}
-	else
-	{
-           $comp = $self->_do_or_eval(\%p);
-	}
+	local $SIG{ALRM} = sub { die $warnstr } if PERL_BUG_INFINITE_LOOP;
+	alarm 5 if PERL_BUG_INFINITE_LOOP;
+	
+	$comp = $self->_do_or_eval(\%p);
+	
+	alarm 0 if PERL_BUG_INFINITE_LOOP;
     }
 
     $err = $warnstr . $@;
@@ -1099,8 +1096,13 @@ When using Perl 5.00503 or earlier, using the code cache creates a
 circular reference between Interp and component objects.  This means
 that Interp objects will not be destroyed unless you call
 L<flush_code_cache|HTML::Mason::Interp/flush_code_cache>.  If you are
-using Perl 5.6.0 or greater, Mason uses weak references to prevent
-this problem.
+using Perl 5.6.0 or greater, and you have the XS version of
+Scalar::Util installed, Mason uses weak references to prevent this
+problem.
+
+Win32 users should note that as of this writing, ActiveState's PPD for
+Scalar-List-Utils only includes the pure Perl version of these
+modules, which don't include the weak references functionality.
 
 =head1 SEE ALSO
 

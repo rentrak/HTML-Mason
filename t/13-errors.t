@@ -4,6 +4,7 @@ use strict;
 
 use File::Spec;
 use HTML::Mason::Tests;
+use HTML::Mason::Tools qw(load_pkg);
 
 my $tests = make_tests();
 $tests->run;
@@ -84,7 +85,7 @@ EOF
                           component => <<"EOF",
 <%init>
 chmod 0222, '$file'
-    or die "Cannot chmod \\Q$file\\E: \$!";
+    or die "Cannot chmod file for " . '$file' . ": \$!";
 \$m->comp('support/unreadable');
 </%init>
 EOF
@@ -157,16 +158,19 @@ EOF
 
 #------------------------------------------------------------
 
-    $group->add_test( name => 'check_error_format',
-		      description => 'Make sure setting error_format => "html" works',
-                      interp_params => { error_format => 'html',
-					 error_mode => 'output',
-                                       },
-		      component => <<'EOF',
+    if ( load_pkg('HTML::Entities') )
+    {
+        $group->add_test( name => 'check_error_format',
+                          description => 'Make sure setting error_format => "html" works',
+                          interp_params => { error_format => 'html',
+                                             error_mode => 'output',
+                                           },
+                          component => <<'EOF',
 % die("Horrible death");
 EOF
-                      expect => qr{^\s+<html>.*Horrible death}is,
-		    );
+                          expect => qr{^\s+<html>.*Horrible death}is,
+                        );
+    }
 
 #------------------------------------------------------------
 

@@ -109,6 +109,14 @@ Returns true if the specified attribute exists in this component or
 one of its parents, undef otherwise.
 </dd>
 <p></p>
+<dt><strong><A NAME="item_attributes">attributes</a></strong><br />
+</dt>
+<dd>
+Returns a hashref containing the attributes defined in this component,
+with the attribute names as keys.  This does not return attributes
+inherited from parent components.
+</dd>
+<p></p>
 <dt><strong><A NAME="item_call_method">call_method (name, args...)</a></strong><br />
 </dt>
 <dd>
@@ -203,7 +211,8 @@ component or one of its parents, undef otherwise.
 <dd>
 This method works exactly like the
 <A HREF="Component.html#item_subcomps">subcomps</a> method, but it
-returns methods, not subcomponents.
+returns methods, not subcomponents.  This does not return methods
+inherited from parent components.
 </dd>
 <dd>
 <p>Methods are declared in <code>&lt;%method&gt;</code> sections.</p>

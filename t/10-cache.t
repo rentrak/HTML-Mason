@@ -351,6 +351,7 @@ return if $m->cache_self( key => $key );
 </%init>
 <%filter>
 $_ = uc $_;
+$_ .= ' filtered';
 </%filter>
 EOF
 			);
@@ -365,8 +366,9 @@ EOF
 EOF
 		      expect => <<'EOF',
 X IS 1
-
+ filtered
 X IS 1
+ filtered
 EOF
 		    );
 
@@ -380,8 +382,44 @@ EOF
 EOF
 		      expect => <<'EOF',
 X IS 1
-
+ filtered
 X IS 1
+ filtered
+EOF
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_support ( path => 'support/cache_self_filtered_2',
+			  component => <<'EOF',
+x is <% $x %>
+<%args>
+$x
+</%args>
+<%init>
+return if $m->cache_self;
+</%init>
+<%filter>
+$Global::foo ||= 1;
+$Global::foo++;
+$_ .= "global is $Global::foo";
+</%filter>
+EOF
+			);
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'cache_self_filtered_2',
+		      description => 'make sure that results are cached _after_ filtering',
+		      component => <<'EOF',
+<& support/cache_self_filtered_2, x => 1 &>
+<& support/cache_self_filtered_2, x => 99 &>
+EOF
+		      expect => <<'EOF',
+x is 1
+global is 2
+x is 1
+global is 2
 EOF
 		    );
 

@@ -401,8 +401,12 @@ The lines above, for example, are equivalent to:</p>
 circular reference between Interp and component objects.  This means
 that Interp objects will not be destroyed unless you call
 <A HREF="Interp.html#flush_code_cache">flush_code_cache</a>.  If you are
-using Perl 5.6.0 or greater, Mason uses weak references to prevent
-this problem.</p>
+using Perl 5.6.0 or greater, and you have the XS version of
+Scalar::Util installed, Mason uses weak references to prevent this
+problem.</p>
+<p>Win32 users should note that as of this writing, ActiveState's PPD for
+Scalar-List-Utils only includes the pure Perl version of these
+modules, which don't include the weak references functionality.</p>
 <p>
 </p>
 <hr />

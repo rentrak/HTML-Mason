@@ -182,8 +182,7 @@ sub _initialize {
     # will then trigger the error. This makes for an easier new + exec
     # API.
     local $SIG{'__DIE__'} = sub {
-	my $err = $_[0];
-	UNIVERSAL::can($err, 'rethrow') ? $err->rethrow : error $err;
+        rethrow_exception( $_[0] );
     };
 
     eval {
@@ -240,7 +239,7 @@ sub alter_superclass
     my $self = shift;
     my $new_super = shift;
 
-    my $class = ref $self || $self;
+    my $class = caller;
 
     my $isa_ref;
     {
@@ -279,8 +278,7 @@ sub exec {
 
     # All errors returned from this routine will be in exception form.
     local $SIG{'__DIE__'} = sub {
-	my $err = $_[0];
-	UNIVERSAL::can($err, 'rethrow') ? $err->rethrow : error $err;
+        rethrow_exception( $_[0] );
     };
 
     #
@@ -584,7 +582,7 @@ sub _cache_1_x
 sub cache_self {
     my ($self, %options) = @_;
 
-    return if $self->top_stack->{in_cache_self};
+    return if $self->top_stack->{in_call_self};
 
     my (%store_options, %retrieve_options);
     my ($expires_in, $key, $cache);
@@ -609,89 +607,30 @@ sub cache_self {
 	$cache = $self->cache(%options);
     }
 
-    # If the top buffer has a filter we need to remove it because
-    # either:
-    #
-    # 1. We have no cached output and we'll be calling the component
-    # again in a moment.  And when the component is called it'll stick
-    # _another_ filtering buffer on the stack.
-    #
-    # ... or ...
-    #
-    # 2. We do have cached output, and that output has already passed
-    # through the filter in the past so we don't want to filter it
-    # again.
-    #
-    # We'll put it back later no matter what in order to let it be
-    # taken off for real in Component.pm
-    #
-    my $filter;
-    $filter = pop @{ $self->{buffer_stack} }
-        if $self->top_stack->{comp}->has_filter;
+    my ($output, @retval);
 
-    my ($output, $retval);
-    eval
-    {
-	my $cached = ($self->data_cache_api eq '1.0') ? $self->cache(%retrieve_options) : $cache->get($key, %retrieve_options);
-        if ($cached) {
-            ($output, $retval) = @$cached;
+    my $cached =
+        ( $self->data_cache_api eq '1.0' ?
+          $self->cache(%retrieve_options) :
+          $cache->get($key, %retrieve_options)
+        );
+
+    if ($cached) {
+        $self->top_buffer->remove_filter
+            if $self->top_stack->{comp}->has_filter;
+
+        ($output, my $retval) = @$cached;
+        @retval = @$retval;
+    } else {
+        $self->call_self( \$output, \@retval );
+
+        my $value = [$output, \@retval];
+        if ($self->data_cache_api eq '1.0') {
+            $self->cache(action=>'store', key=>$key, value=>$value, %store_options);
         } else {
-            my $top_stack = $self->top_stack;
-            my $comp = $top_stack->{comp};
-            my @args = @{ $top_stack->{args} };
-
-            push @{ $self->{buffer_stack} },
-                $self->top_buffer->new_child( sink => \$output,
-                                              ignore_flush => 1,
-                                              ignore_clear => 1,
-                                            );
-
-            local $top_stack->{in_cache_self} = 1;
-            #
-            # Go back and find the context that the component was first
-            # called in (back up there in the comp method).
-            #
-
-            my $wantarray = (caller(1))[5];
-            my @result;
-            eval {
-                if ($wantarray) {
-                    @result = $comp->run(@args);
-                } elsif (defined $wantarray) {
-                    $result[0] = $comp->run(@args);
-                } else {
-                    $comp->run(@args);
-                }
-            };
-            $retval = \@result;
-
-            #
-            # Whether there was an error or not we need to pop the buffer
-            # stack.
-            #
-            pop @{ $self->{buffer_stack} };
-
-            if ($@) {
-                UNIVERSAL::can($@, 'rethrow') ? $@->rethrow : error $@;
-            }
-
-	    my $value = [$output, $retval];
-            if ($self->data_cache_api eq '1.0') {
-		$self->cache(action=>'store', key=>$key, value=>$value, %store_options);
-	    } else {
-		$cache->set($key, $value, $expires_in);
-	    }
+            $cache->set($key, $value, $expires_in);
         }
-    };
-
-    if ($@) {
-        push @{ $self->{buffer_stack} }, $filter
-            if $filter;
-        UNIVERSAL::can($@, 'rethrow') ? $@->rethrow : error $@;
     }
-
-    push @{ $self->{buffer_stack} }, $filter
-        if $filter;
 
     #
     # Print the component output.
@@ -702,8 +641,80 @@ sub cache_self {
     # Return the component return value in case the caller is interested,
     # followed by 1 indicating the cache retrieval success.
     #
-    return (@$retval, 1);
+    return (@retval, 1);
 
+}
+
+my $do_nothing_sub;
+sub call_self
+{
+    my ($self, $output, $retval) = @_;
+
+    return if $self->top_stack->{in_call_self};
+
+    # If the top buffer has a filter we need to remove it because
+    # we'll be adding the filter buffer again in a moment in order to
+    # capture the _filtered_ component output for caching.
+    $self->top_buffer->remove_filter
+        if $self->top_stack->{comp}->has_filter;
+
+    unless (defined $output) {
+        # don't bother accumulating output that will never be seen
+        $output = $do_nothing_sub;
+    }
+
+    eval
+    {
+        my $top_stack = $self->top_stack;
+        my $comp = $top_stack->{comp};
+        my @args = @{ $top_stack->{args} };
+
+        push @{ $self->{buffer_stack} },
+            $self->top_buffer->new_child( sink => $output,
+                                          ignore_flush => 1,
+                                          ignore_clear => 1,
+                                        );
+
+        push @{ $self->{buffer_stack} },
+            $self->top_buffer->new_child( filter_from => $comp )
+                if $comp->has_filter;
+
+        local $top_stack->{in_call_self} = 1;
+
+        my $wantarray =
+            ( defined $retval ?
+              ( UNIVERSAL::isa( $retval, 'ARRAY' ) ? 1 : 0 ) :
+              undef
+            );
+
+        my @result;
+        eval {
+            if ($wantarray) {
+                @$retval = $comp->run(@args);
+            } elsif (defined $wantarray) {
+                $$retval = $comp->run(@args);
+            } else {
+                $comp->run(@args);
+            }
+        };
+
+        #
+        # Whether there was an error or not we need to pop the buffer
+        # stack (twice if we added a filter buffer).
+        #
+        if ( $comp->has_filter ) {
+            my $filter = pop @{ $self->{buffer_stack} };
+            $filter->flush;
+        }
+
+        pop @{ $self->{buffer_stack} };
+
+        rethrow_exception($@);
+    };
+
+    rethrow_exception($@);
+
+    return 1;
 }
 
 sub call_dynamic {
@@ -789,7 +800,7 @@ sub depth
 
 #
 # Given a component path (absolute or relative), returns a component.
-# Handles SELF and PARENT, comp:method, relative->absolute
+# Handles SELF, PARENT, REQUEST, comp:method, relative->absolute
 # conversion, and local subcomponents.
 #
 sub fetch_comp
@@ -807,6 +818,9 @@ sub fetch_comp
 	my $c = $self->current_comp->parent
 	    or error "PARENT designator used from component with no parent";
 	return $c;
+    }
+    if ($path eq 'REQUEST') {
+        return $self->request_comp;
     }
 
     #
@@ -897,8 +911,14 @@ sub file
     my ($self,$file) = @_;
     my $interp = $self->interp;
     unless ( File::Spec->file_name_is_absolute($file) ) {
-	if ($self->current_comp->is_file_based) {
-	    my $source_dir = $self->current_comp->source_dir;
+        # use owner if current comp is a subcomp
+        my $context_comp =
+            ( $self->current_comp->is_subcomp ?
+              $self->current_comp->owner :
+              $self->current_comp );
+
+	if ($context_comp->is_file_based) {
+	    my $source_dir = $context_comp->source_dir;
 	    $file = File::Spec->catfile( $source_dir, $file );
 	} else {
 	    $file = File::Spec->catfile( File::Spec->rootdir, $file );
@@ -971,7 +991,7 @@ sub comp {
     unless ( $mods{base_comp} ||	# base_comp override
 	     !$path || 		# path is undef if $comp is a reference
 	     ($comp->is_subcomp && ! $comp->is_method) ||
-	     $path =~ m/^(?:SELF|PARENT)(?:\:..*)?$/ ) {
+	     $path =~ m/^(?:SELF|PARENT|REQUEST)(?:\:..*)?$/ ) {
 	$base_comp = ( $path =~ m/(.*):/ ?
 		       $self->fetch_comp($1) :
 		       $comp );
@@ -1053,11 +1073,7 @@ sub comp {
         pop @{ $self->{buffer_stack} };
     }
 
-    if ($err)
-    {
-        UNIVERSAL::can($err, 'rethrow') ? $err->rethrow : error $err;
-    }
-
+    rethrow_exception($err);
 
     return wantarray ? @result : $result[0];  # Will return undef in void context (correct)
 }
@@ -1088,9 +1104,7 @@ sub content {
 
     push @{ $self->{stack} }, $old_frame;
 
-    if ($err) {
-	UNIVERSAL::can($err, 'rethrow') ? $err->rethrow : error $err;
-    }
+    rethrow_exception($err);
 
     return $buffer->output;
 }
@@ -1415,6 +1429,10 @@ object and can thus be caught by eval(). The C<aborted> method is a
 shortcut for determining whether a caught error was generated by
 C<abort>.
 
+If C<abort> is called from a component that has a C<< <%filter> >>,
+than any output generated up to that point is filtered, I<unless>
+C<abort> is called from a C<< <%shared> >> block.
+
 =for html <a name="item_aborted"></a>
 
 =item aborted ([$err])
@@ -1444,7 +1462,7 @@ Initially, the base component is the same as the requested component
 (returned by C<< $m->request_comp >>.  However, whenever a component
 call is made, the base component changes to the called component,
 unless the component call was made uses a component object for its
-first argument, or the call starts with SELF: or PARENT:.
+first argument, or the call starts with SELF:, PARENT:, or REQUEST.
 
 =for html <a name="item_cache"></a>
 
@@ -1533,6 +1551,9 @@ To cache the component's list return value:
 We call C<pop> on C<@retval> to remove the mandatory '1' at the end of
 the list.
 
+If a component has a C<< <%filter> >> block, then the I<filtered>
+output is cached.
+
 Note: users upgrading from 1.0x and earlier can continue to use the
 old C<$m-E<gt>cache_self> API by setting L<data_cache_api|HTML::Mason::Params/data_cache_api> to '1.0'.
 This support will be removed at a later date.
@@ -1587,6 +1608,66 @@ passed to the component.  Any arguments specified here serve to
 augment and override (in case of conflict) the original
 arguments. Works like C<$m-E<gt>comp> in terms of return value and
 scalar/list context.  See the L<autohandlers|HTML::Mason::Devel/autohandlers> section of the developer's manual for examples.
+
+=for html <a name="item_call_self"></a>
+
+=item call_self (output, return)
+
+This method allows a component to call itself so that it can filter
+both its output and return values.  It is fairly advanced; for most
+purposes the C<< <%filter> >> tag will be sufficient and simpler.
+
+C<< $m->call_self >> takes two arguments.  The first is a scalar
+reference and will be populated with the component output.  The second
+is either a scalar or list reference and will be populated with the
+component return value; the type of reference determines whether the
+component will be called in scalar or list context.  Both of these
+arguments are optional; you may pass undef for either of them.
+
+C<< $m->call_self >> acts like a C<fork()> in the sense that it will
+return twice with different values.  When it returns 0, you allow
+control to pass through to the rest of your component.  When it
+returns 1, that means the component has finished and you can begin
+filtering the output and/or return value. (Don't worry, it doesn't
+really do a fork! See next section for explanation.)
+
+The following examples would generally appear at the top of a C<<
+<%init> >> section.  Here is a no-op C<< $m->call_self >> that leaves
+the output and return value untouched:
+
+    <%init>
+    my ($output, $retval);
+    if ($m->call_self(\$output, \$retval)) {
+        $m->print($output);
+        return $retval;
+    }
+    ...
+
+Here is a simple output filter that makes the output all uppercase.
+Note that we ignore both the original and the final return value.
+
+    <%init>
+    my $output;
+    if ($m->call_self(\$output, undef)) {
+        $m->print(uc $output);
+        return;
+    }
+    ...
+
+Here is a piece of code that traps all errors occuring anywhere in the
+component or its children, e.g. for the purpose of handling
+application-specific exceptions. This is difficult to do with a manual
+C<eval> because it would have to span multiple code sections and the
+main component body.
+
+    <%init>
+    # Run this component with an eval around it
+    my $in_parent = eval { $m->call_self() };
+    if ($@) {
+        # check $@ and do something with it
+    }
+    return if $in_parent;
+    ...
 
 =for html <a name="item_clear_buffer"></a>
 

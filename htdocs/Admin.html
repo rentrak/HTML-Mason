@@ -204,10 +204,10 @@ versus some other package.</p>
 <pre>
     &lt;LocationMatch &quot;(\.html|\.txt|\.pl)$&quot;&gt;
       SetHandler perl-script
-      PerlHandler HTML::Mason
+      PerlHandler HTML::Mason::ApacheHandler
     &lt;/LocationMatch&gt;</pre>
 <pre>
-    &lt;LocationMatch &quot;(\.m(html|txt|pl)|dhandler|autohandler)$&quot;
+    &lt;LocationMatch &quot;(\.m(html|txt|pl)|dhandler|autohandler)$&quot;&gt;
       SetHandler perl-script
       PerlInitHandler Apache::Constants::NOT_FOUND
     &lt;/LocationMatch&gt;</pre>

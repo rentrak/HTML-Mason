@@ -1731,8 +1731,8 @@ for example:
   &lt;&amp; $m-&gt;fetch_comp('/some/comp'), foo =&gt; 1 &amp;&gt;</pre>
 <p></p>
 <li></li>
-A method is called via the use of <code>SELF:</code> or <code>PARENT:</code>.  These are
-covered in more detail below.
+A method is called via the use of <code>SELF:</code>, <code>PARENT:</code>, or
+<code>REQUEST:</code>.  These are covered in more detail below.
 <p></p></ul>
 <p>In all other cases, the base component is the called component or the
 called component's owner component if that called component is a
@@ -1751,6 +1751,9 @@ in the current component's parent for the named method.</p>
     $m-&gt;comp('PARENT:header')</pre>
 <p>In the context of a component path, PARENT is shorthand for
 <code>$m-&gt;current_comp-&gt;parent</code>.</p>
+<p>If the call path begins with <code>REQUEST:</code>, then Mason looks for the
+method in the requested component.  REQUEST is shorthand for <code>&lt;
+$m-</code>request_comp &gt;&gt;.</p>
 <p>The rules for attributes are similar. To access an attribute for the
 page, use <code>attr</code>:</p>
 <pre>

@@ -114,25 +114,22 @@ sub exec
     }
     else
     {
-        local $^W = 0;
         # ack, this has to be done at runtime to account for the fact
-        # that Apache::Filter change's $r's class and implements its
+        # that Apache::Filter changes $r's class and implements its
         # own print() method.
         my $real_apache_print = $r->can('print');
 
 	# Remap $r->print to Mason's $m->print while executing
 	# request, but just for this $r, in case user does an internal
 	# redirect or apache subrequest.
+	local $^W = 0;
 	no strict 'refs';
 
         my $req_class = ref $r;
 	local *{"$req_class\::print"} = sub {
 	    my $local_r = shift;
-	    if ($local_r eq $r) {
-		$self->print(@_);
-	    } else {
-		$local_r->$real_apache_print(@_);
-	    }
+	    return $self->print(@_) if $local_r eq $r;
+	    return $local_r->$real_apache_print(@_);
 	};
 	eval { $retval = $self->SUPER::exec(@_) };
     }
@@ -786,13 +783,24 @@ sub handle_request
     return $req->exec;
 }
 
+my $do_filter = sub { $_[0]->filter_register };
+my $no_filter = sub { $_[0] };
 sub prepare_request
 {
-    my ($self, $r) = @_;
+    my $self = shift;
 
-    if (lc($r->dir_config('Filter')) eq 'on') {
-	$r = $r->filter_register;
-    }
+    my $r_sub = lc $_[0]->dir_config('Filter') eq 'on' ? $do_filter : $no_filter;
+
+    # This gets the proper request object all in one fell swoop.  We
+    # don't want to copy it because if we do something like assign an
+    # Apache::Request object to a variable currently containing a
+    # plain Apache object, we leak memory.  This means we'd have to
+    # use multiple variables to avoid this, which is annoying.
+    my $r =
+        $r_sub->( $self->args_method eq 'mod_perl' ?
+                  Apache::Request->instance( $_[0] ) :
+                  $_[0]
+                );
 
     my $interp = $self->interp;
 
@@ -827,20 +835,17 @@ sub prepare_request
 	my $pathname = $r->filename;
 	$pathname .= $r->path_info unless $is_file;
 
-	$r->warn("[Mason] Cannot resolve file to component: " .
-                 "$pathname (is file outside component root?)");
+	warn "[Mason] Cannot resolve file to component: " .
+             "$pathname (is file outside component root?)";
 	return $self->return_not_found($r);
     }
 
-    # Assigning $r to a new variable here is _crucial_ to avoid a
-    # memory leak if we create an Apache::Request object in
-    # request_args().
-    my ($args, $new_r, $cgi_object) = $self->request_args($r);
+    my ($args, undef, $cgi_object) = $self->request_args($r);
 
     #
     # Set up interpreter global variables.
     #
-    $interp->set_global( r => $new_r );
+    $interp->set_global( r => $r );
 
     # If someone is using a custom request class that doesn't accept
     # 'ah' and 'apache_req' that's their problem.
@@ -848,11 +853,12 @@ sub prepare_request
     my $request = $interp->make_request( comp => $comp_path,
 					 args => [%$args],
 					 ah => $self,
-					 apache_req => $new_r,
+					 apache_req => $r,
 				       );
 
-    # get this from current object.
-    my $real_apache_print = $r->can('print');
+    my $final_output_method = ($r->method eq 'HEAD' ?
+			       sub {} :
+			       $r->can('print'));
 
     # Craft the request's out method to handle http headers, content
     # length, and HEAD requests.
@@ -863,8 +869,8 @@ sub prepare_request
         # We use instance here because if we store $request we get a
         # circular reference and a big memory leak.
 	if (!$sent_headers and HTML::Mason::Request->instance->auto_send_headers) {
-	    unless (http_header_sent($new_r)) {
-		$new_r->send_http_header();
+	    unless (http_header_sent($r)) {
+		$r->send_http_header();
 	    }
 	    $sent_headers = 1;
 	}
@@ -875,11 +881,9 @@ sub prepare_request
 	# additions to the Request interface, though.
 
 	
-	# Call $new_r->print (using the real Apache method, not our
-	# overriden method). If request was HEAD, suppress output.
-	unless ($new_r->method eq 'HEAD') {
-	    $new_r->$real_apache_print(grep {defined} @_);
-	}
+	# Call $r->print (using the real Apache method, not our
+	# overriden method).
+	$r->$final_output_method(grep {defined} @_);
     };
 
     $request->out_method($out_method);
@@ -896,24 +900,16 @@ sub request_args
     #
     # Get arguments from Apache::Request or CGI.
     #
-
-    # put Apache::Request object here.  Overwriting $r causes a memory
-    # leak!
-    my $apr;
-
     my ($args, $cgi_object);
     if ($self->args_method eq 'mod_perl') {
-        $apr = ( UNIVERSAL::isa($r, 'Apache::Request') ?
-                 $r :
-                 Apache::Request->instance($r) );
-
-	$args = $self->_mod_perl_args($apr);
+	$args = $self->_mod_perl_args($r);
     } else {
-        $apr = $r;
 	$cgi_object = CGI->new;
 	$args = $self->_cgi_args($r, $cgi_object);
     }
-    return ($args, $apr, $cgi_object);
+
+    # we return $r solely for backwards compatibility
+    return ($args, $r, $cgi_object);
 }
 
 #
@@ -1024,20 +1020,20 @@ visible via Apache::Status.
 
 Method to use for unpacking GET and POST arguments. The valid options
 are 'CGI' and 'mod_perl'; these indicate that a C<CGI.pm> or
-C<Apache::Request> object (respectively) will be created for the purposes
-of argument handling.
+C<Apache::Request> object (respectively) will be created for the
+purposes of argument handling.
 
 'mod_perl' is the default and requires that you have installed the
 C<Apache::Request> package.
-
-If the args_method is 'CGI', the Mason request object (C<$m>) will have a
-method called C<cgi_object> available.  This method returns the CGI
-object used for argument processing.
 
 If args_method is 'mod_perl', the C<$r> global is upgraded to an
 Apache::Request object. This object inherits all Apache methods and
 adds a few of its own, dealing with parameters and file uploads.  See
 C<Apache::Request> for more information.
+
+If the args_method is 'CGI', the Mason request object (C<$m>) will have a
+method called C<cgi_object> available.  This method returns the CGI
+object used for argument processing.
 
 While Mason will load C<Apache::Request> or C<CGI> as needed at runtime, it
 is recommended that you preload the relevant module either in your
@@ -1115,8 +1111,9 @@ Given an Apache request object, this method returns a three item list.
 The first item is a hash reference containing the arguments passed by
 the client's request.
 
-The second is an Apache request object, possibly the one originally
-passed to the method.
+The second is an Apache request object.  This is returned for
+backwards compatibility from when this method was responsible for
+turning a plain Apache object into an Apache::Request object.
 
 The third item may be a CGI.pm object or C<undef>, depending on the
 value of the L<args_method|HTML::Mason::Params/args_method> parameter.

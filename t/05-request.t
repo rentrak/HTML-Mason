@@ -211,8 +211,36 @@ EOF
 
 #------------------------------------------------------------
 
+    $group->add_test( name => 'file_in_subcomp',
+		      description => 'tests $m->file method in subcomponent',
+		      component => <<'EOF',
+Here I am:
+
+<& .sub &>
+<%def .sub>
+% my $f = $m->file('file_in_subcomp'); $f =~ s/\r\n?/\n/g;
+<% $f %>
+</%def>
+EOF
+		      expect => <<'EOF',
+Here I am:
+
+
+Here I am:
+
+<& .sub &>
+<%def .sub>
+% my $f = $m->file('file_in_subcomp'); $f =~ s/\r\n?/\n/g;
+<% $f %>
+</%def>
+EOF
+		    );
+
+
+#------------------------------------------------------------
+
     $group->add_test( name => 'list_out',
-		      description => 'tests that $m->out can handle a list of arguments',
+		      description => 'tests that $m->print can handle a list of arguments',
 		      component => <<'EOF',
 Sending list of arguments:
 
@@ -235,7 +263,7 @@ EOF
 #------------------------------------------------------------
 
     $group->add_test( name => 'req_obj',
-		      description => 'tests various operations such as $m->out, comp calls, $m->current_comp',
+		      description => 'tests various operations such as comp calls, $m->current_comp',
 		      component => <<'EOF',
 <%def .subcomp>
 % if ($count < 5) {
@@ -834,6 +862,99 @@ EOF
 EOF
 		    );
 
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'call_self',
+		      description => 'Test $m->call_self',
+		      component => <<'EOF',
+called
+<%init>
+my $out;
+if ( $m->call_self( \$out, undef ) )
+{
+    $m->print($out);
+    return;
+}
+</%init>
+EOF
+		      expect => <<'EOF',
+called
+EOF
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'call_self_retval',
+		      description => 'Test that we can get return value of component via $m->call_self',
+		      component => <<'EOF',
+called
+<%init>
+my @return;
+if ( $m->call_self( undef, \@return ) )
+{
+    $m->print( "0: $return[0]\n1: $return[1]\n" );
+    return;
+}
+return ( 'foo', 'bar' );
+</%init>
+EOF
+		      expect => <<'EOF',
+0: foo
+1: bar
+EOF
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'call_self_output_and_retval',
+		      description => 'Test that we can get return value and output of component via $m->call_self',
+		      component => <<'EOF',
+called
+<%init>
+my $out;
+my @return;
+if ( $m->call_self( \$out, \@return ) )
+{
+    $m->print( "${out}0: $return[0]\n1: $return[1]\n" );
+    return;
+}
+</%init>
+<%cleanup>
+return ( 'foo', 'bar' );
+</%cleanup>
+EOF
+		      expect => <<'EOF',
+called
+0: foo
+1: bar
+EOF
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'call_self_with_filter',
+		      description => 'Test that $m->call_self works in presence of filter',
+		      component => <<'EOF',
+called
+<%filter>
+$_ = uc $_;
+$_ .= ' filtered';
+</%filter>
+<%init>
+my $out;
+if ( $m->call_self( \$out, undef ) )
+{
+    $m->print($out);
+    return;
+}
+</%init>
+EOF
+		      expect => <<'EOF',
+CALLED
+ filtered
+EOF
+		    );
 
 #------------------------------------------------------------
 
