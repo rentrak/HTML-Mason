@@ -3,21 +3,23 @@
 # under the same terms as Perl itself.
 
 package HTML::Mason::Utils;
-require 5.004;
-require Exporter;
-@ISA = qw(Exporter);
-@EXPORT = qw();
-@EXPORT_OK = qw(access_data_cache);
 
 use strict;
-use IO::File qw(!/^SEEK/);
-use POSIX;
-use Fcntl qw(:flock);
+
+use Fcntl qw(:DEFAULT :flock);
 use File::Basename;
 use File::Path;
+use File::Spec;
 use HTML::Mason::Config;
 use HTML::Mason::Tools qw(date_delta_to_secs);
 use MLDBM ($HTML::Mason::Config{mldbm_use_db}, $HTML::Mason::Config{mldbm_serializer});
+
+require Exporter;
+
+use vars qw(@ISA @EXPORT_OK);
+
+@ISA = qw(Exporter);
+@EXPORT_OK = qw(access_data_cache);
 
 sub access_data_cache
 {
@@ -40,19 +42,18 @@ sub access_data_cache
 	my ($base,$lockdir) = fileparse($physFile);
 	$lockdir .= "locks";
 	mkpath($lockdir,0,0755) if (!-d $lockdir);
-	my $lockfile = "$lockdir/$base.lock";
+	my $lockfile = File::Spec->catfile( $lockdir, "$base.lock" );
 
 	# Open file in correct mode for lock type (Tom Hughes)
-	my $lockfh;
+	my $lockfh = do { local *FH; *FH; };
 	if ($lockargs & LOCK_EX) {
-	    $lockfh = new IO::File ">>$lockfile"
+	    open $lockfh, ">>$lockfile"
 		or die "cache: cannot open lockfile '$lockfile' for exclusive lock: $!";
 	} elsif ($lockargs & LOCK_SH) {
-	    $lockfh = new IO::File "<$lockfile";
-	    if (!$lockfh && !-e $lockfile) {
-		$lockfh = new IO::File ">$lockfile";
-		$lockfh->close;
-		$lockfh = new IO::File "<$lockfile";
+	    if ( (!open $lockfh, "<$lockfile") && !-e $lockfile) {
+		open $lockfh, ">$lockfile" or die "Can't write to $lockfile: $!";
+		close $lockfh or die "Can't close $lockfile: $!";
+		open $lockfh, "<$lockfile" or die "Can't open $lockfile: $!";
 	    }
 	    die "cache: cannot open lockfile '$lockfile' for shared lock: $!" if !$lockfh;
 	} else {
@@ -136,13 +137,15 @@ sub access_data_cache
 	    $msg .= "Original error message:\n$err";
 	    die $msg;
 	}
+	my $return;
 	if (defined($memCache)) {
-	    $memCache->{$path}->{$key} = {expires=>$expireTime,lastModified=>$time,lastUpdated=>$time,contents=>$options{value}};
+	    $return = $memCache->{$path}->{$key} = {expires=>$expireTime,lastModified=>$time,lastUpdated=>$time,contents=>$options{value}};
 	}
 	
 	untie(%out);
-	$lockfh->close();
+	close $lockfh or die "Can't close lock file: $!";
 
+	return $options{value};
     #
     # Expire
     #
@@ -183,7 +186,7 @@ sub access_data_cache
 	}
 
 	untie(%out);
-	$lockfh->close();
+	close $lockfh or die "Can't close lock file: $!";
 
     #
     # Keys
@@ -207,7 +210,7 @@ sub access_data_cache
     #
     } elsif ($action eq 'retrieve') {
 	return undef if (!(-e $physFile));
-	my $fileLastModified = [stat($physFile)]->[9];
+	my $fileLastModified = (stat($physFile))[9];
 	my $mem;
 
 	#
@@ -250,7 +253,7 @@ sub access_data_cache
 		$mem->{lastUpdated} = $time;
 	    }
 	    untie(%in);
-	    $lockfh->close;
+	    close $lockfh or die "Can't close lock file: $!";
 	}
 
 	#
@@ -288,7 +291,7 @@ sub access_data_cache
 		    or die "cache: cannot create/open cache file '$cacheFile'\n";
 		$out{"$key.busylock"} = $mem->{lastModified}."/".$time;
 		untie(%out);
-		$lockfh->close();
+		close $lockfh or die "Can't close lock file: $!";
 
 		# busy lock was set successfully.  Return undef so that
 		# this process computes the new cache value.

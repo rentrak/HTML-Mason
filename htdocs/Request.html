@@ -145,6 +145,7 @@ if there was no value or if it has expired.
 <P>
 
 o <EM>store</EM>: stores a new cache value under the given key. Default key is 'main'.
+Returns the value being stored if successful.
 
 
 <P>
@@ -618,6 +619,19 @@ Returns the Apache request object. This is also available in the global $r.
 
 <P>
 
+<a name="item_cgi_object">
+
+<DT><STRONG><A NAME="item_cgi_object">cgi_object
+
+</A></STRONG><DD>
+Returns the CGI object used to parse any CGI parameters submitted to the
+component, assuming that you have not changed the default value of the
+ApacheHandler <A HREF="././ApacheHandler.html#item_args_method">args_method</A> parameter. If you are using the 'mod_perl' args method, then calling this
+method is a fatal error. See the <A HREF="././ApacheHandler.html#">HTML::Mason::ApacheHandler</A> documentation for more details.
+
+
+<P>
+
 </DL>
 <P>
 <HR>
@@ -636,6 +650,8 @@ HREF="MAILTO:swartz@transbay.net">swartz@transbay.net</A>
 
 </A></H1>
 <A HREF="././Component.html#">HTML::Mason::Component</A>
+
+<A HREF="././ApacheHandler.html#">HTML::Mason::ApacheHandler</A>
 
 
 

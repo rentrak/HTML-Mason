@@ -13,10 +13,14 @@ package HTML::Mason::Request::ApacheHandler;
 use vars qw(@ISA);
 @ISA = qw(HTML::Mason::Request);
 
+use HTML::Mason::MethodMaker
+    ( read_write => [ qw( ah apache_req ) ] );
+
 # Fields that can be set in new method, with defaults
 my %reqfields =
     (ah => undef,
      apache_req => undef,
+     cgi_object => undef,
      );
 
 sub new
@@ -24,7 +28,7 @@ sub new
     my ($class,%options) = @_;
     my $interp = $options{interp} or die "HTML::Mason::Request::ApacheHandler::new: must specify interp\n";
     delete $options{interp};
-    my $self = HTML::Mason::Request::new($class,interp=>$interp);
+    my $self = $class->SUPER::new(interp=>$interp);
     while (my ($key,$value) = each(%options)) {
 	if (exists($reqfields{$key})) {
 	    $self->{$key} = $value;
@@ -35,11 +39,6 @@ sub new
     return $self;
 }
 
-# Create generic read-write accessor routines
-
-sub ah { my $s=shift; return @_ ? ($s->{ah}=shift) : $s->{ah} }
-sub apache_req { my $s=shift; return @_ ? ($s->{apache_req}=shift) : $s->{apache_req} }
-
 # Override flush_buffer to also call $r->rflush
 sub flush_buffer
 {
@@ -48,6 +47,21 @@ sub flush_buffer
     $self->apache_req->rflush;
 }
 
+sub cgi_object
+{
+    my ($self) = @_;
+
+    if ($HTML::Mason::ApacheHandler::ARGS_METHOD eq 'CGI')
+    {
+	$self->{cgi_object} ||= CGI->new('');
+    }
+    else
+    {
+	die "Can't call cgi_object method unless CGI.pm was used to handle incoming arguments.\n";
+    }
+
+    return $self->{cgi_object};
+}
 
 #----------------------------------------------------------------------
 #
@@ -62,14 +76,30 @@ sub DECLINED { return -1 }
 sub SERVER_ERROR { return 500 }
 sub NOT_FOUND { return 404 }
 use Data::Dumper;
-use File::Basename;
 use File::Path;
 use HTML::Mason::Interp;
 use HTML::Mason::Commands;
 use HTML::Mason::FakeApache;
-use HTML::Mason::Tools qw(dumper_method html_escape url_unescape pkg_installed);
+use HTML::Mason::Tools qw(dumper_method html_escape pkg_installed);
 use HTML::Mason::Utils;
 use Apache::Status;
+
+use HTML::Mason::MethodMaker
+    ( read_write => [ qw( apache_status_title
+			  auto_send_headers
+
+			  debug_dir_config_keys
+			  debug_mode
+			  debug_handler_proc
+			  debug_handler_script
+			  debug_perl_binary
+
+			  decline_dirs
+			  error_mode
+			  interp
+			  output_mode
+			  top_level_predicate ) ]
+      );
 
 # use() params. Assign defaults, in case ApacheHandler is only require'd.
 use vars qw($LOADED $ARGS_METHOD);
@@ -221,11 +251,11 @@ sub interp_status
     push @strings, '</DL>',
             '<DL><DT><FONT SIZE="+1"><B>Cached components</B></FONT><DD>';
 
-    if(%{$interp->{code_cache}})
+    if(my $cache = $interp->code_cache)
     {
 	my $string;
-	foreach my $key (sort keys %{$interp->{code_cache}}) {
-	    $string .= sprintf("<TT>%s (%s)</TT><BR>\n",$key,scalar(localtime($interp->{code_cache}->{$key}->{lastmod})));
+	foreach my $key (sort keys %$cache) {
+	    $string .= sprintf("<TT>%s (%s)</TT><BR>\n",$key,scalar(localtime($cache->{$key}->{lastmod})));
 	}
 	push (@strings, $string);
     } else {
@@ -274,8 +304,8 @@ sub handle_request {
     #
     # Capture debug state as early as possible, before we start messing with $apreq.
     #
-    my $debugState;
-    $debugState = $self->capture_debug_state($apreq)
+    my $debug_state;
+    $debug_state = $self->capture_debug_state($apreq)
 	if ($debugMode eq 'all' or $debugMode eq 'error');
 
     #
@@ -284,12 +314,13 @@ sub handle_request {
     my $request = new HTML::Mason::Request::ApacheHandler
 	(ah=>$self,
 	 interp=>$interp,
-	 apache_req=>$apreq
+	 apache_req=>$apreq,
+	 cgi_object=>$self->{cgi_object},
 	 );
     
-    eval { $retval = handle_request_1($self, $apreq, $request, $debugState) };
+    eval { $retval = $self->handle_request_1($apreq, $request, $debug_state) };
     my $err = $@;
-    my $err_code = $request->{error_code};
+    my $err_code = $request->error_code;
     undef $request;  # ward off memory leak
     my $err_status = $err ? 1 : 0;
 
@@ -326,14 +357,14 @@ sub handle_request {
 	    }
 	    print("<h3>System error</h3><p><pre><font size=-1>$err</font></pre>\n");
 	    if ($debugMode eq 'error' or $debugMode eq 'all') {
-		my $debugMsg = $self->write_debug_file($apreq,$debugState);
-		print("<pre><font size=-1>\n$debugMsg\n</font></pre>\n");
+		my $debug_msg = $self->write_debug_file($apreq,$debug_state);
+		print("<pre><font size=-1>\n$debug_msg\n</font></pre>\n");
 	    }
 	}
     } else {
 	if ($debugMode eq 'all') {
-	    my $debugMsg = $self->write_debug_file($apreq,$debugState);
-	    print "\n<!--\n$debugMsg\n-->\n" if (http_header_sent($apreq) && !$apreq->header_only && $apreq->header_out("Content-type") =~ /text\/html/);
+	    my $debug_msg = $self->write_debug_file($apreq,$debug_state);
+	    print "\n<!--\n$debug_msg\n-->\n" if (http_header_sent($apreq) && !$apreq->header_only && $apreq->header_out("Content-type") =~ /text\/html/);
 	}
     }
 
@@ -356,10 +387,10 @@ sub write_debug_file
     if (!-d $outDir) {
 	mkpath($outDir,0,0755) or die "cannot create debug directory '$outDir'";
     }
-    my $outPath = "$outDir/$outFile";
-    my $outfh = new IO::File ">$outPath";
-    if (!$outfh) {
-	$r->warn("cannot open debug file '$outPath' for writing");
+    my $out_path = "$outDir/$outFile";
+    my $outfh = do { local *FH; *FH; };  # double *FH avoids warning
+    unless ( open $outfh, ">$out_path" ) {
+	$r->warn("cannot open debug file '$out_path' for writing");
 	return;
     }
 
@@ -373,7 +404,6 @@ sub write_debug_file
 # coderefs are accumulated in %CODEREF_NAME
 # -----------------------------
 BEGIN {
-    use IO::File;
     use File::Copy;
     use Getopt::Std;
     getopt('r');   # r=repeat count, p=user profile req, P=re-entrant profile call
@@ -382,27 +412,32 @@ BEGIN {
     if ($opt_p) {
 	print STDERR "Profiling request ...";
 	# re-enter with different option (no inf. loops, please)
-	system ("perl", "-d:DProf", $0, "-P", "-r$opt_r");
+	system ("perl", "-d:DProf", $0, "-P", "-r$opt_r")
+            or die "Can't execute perl: $!";
     
 # -----------------------------
 # When done, merge named coderefs in tmon.mason with those in tmon.out,
 # then run dprofpp
 # -----------------------------
-	my $fh = new IO::File '< ./tmon.mason' or die "Missing file: tmon.mason";
+        my $fh = do { local *FH; *FH; };  # double *FH avoids warning
+        open $fh, '< ./tmon.mason' or die "Missing file: tmon.mason: $!";
 	foreach (<$fh>) { chomp;  my ($k,$v) = split(/\t/);  $::CODEREF_NAME{$k} = $v; }
-	$fh->close;
+	close $fh or die "can't close file: tmon.mason: $!";
     
-	my $tmonout = new IO::File '< ./tmon.out' or die "Missing file: tmon.out";
-	my $tmontmp = new IO::File '> ./tmon.tmp' or die "Couldn't write file: tmon.tmp";
+	my $tmonout = do { local *FH; *FH; };
+        open $tmonout, '< ./tmon.out' or die "Missing file: tmon.out: $!";
+	my $tmontmp = do { local *FH; *FH; };
+        open $tmontmp, '> ./tmon.tmp' or die "Couldn't write file: tmon.tmp: $!";
 	my $regex = quotemeta(join('|', keys %::CODEREF_NAME));
 	$regex =~ s/\\\|/|/g;   #un-quote the pipe chars
 	while (<$tmonout>) {
 	    s/HTML::Mason::Commands::($regex)/$::CODEREF_NAME{$1}/;
-	    print $tmontmp $_
+	    print $tmontmp $_;
 	}
-	$tmonout->close; $tmontmp->close;
+	close $tmonout or die "can't close file: tmon.out: $!";
+        close $tmontmp or die "can't close file: tmon.tmp: $!";
 	copy('tmon.tmp' => 'tmon.out') or die "$!";
-	unlink('tmon.tmp');
+	unlink('tmon.tmp') or warn "can't remove file: tmon.tmp: $!"
         print STDERR "\nRunning dprofpp ...\n";
 	exec('dprofpp') or die "Couldn't execute dprofpp";
     }
@@ -412,8 +447,8 @@ PERL
     $o .= "BEGIN { \$HTML::Mason::IN_DEBUG_FILE = 1; require '".$self->debug_handler_script."' }\n\n";
     $o .= <<'PERL';
 if ($opt_P) {
-    open SAVEOUT, ">&STDOUT";    # stifle component output while profiling
-    open STDOUT, ">/dev/null";
+    open SAVEOUT, ">&STDOUT" or die "Can't open &STDOUT: $!";    # stifle component output while profiling
+    open STDOUT, ">/dev/null" or die "Can't write to /dev/null: $!";
 }
 for (1 .. $opt_r) {
 print STDERR '.' if ($opt_P and $opt_r > 1);
@@ -426,17 +461,18 @@ PERL
     $o .= 'print "return status: $status\n";'."\n}\n\n";
     $o .= <<'PERL';
 if ($opt_P) {
-    my $fh = new IO::File '>./tmon.mason' or die "Couldn't write tmon.mason";
+    my $fh = do { local *FH; *FH; };
+    open $fh, '>./tmon.mason' or die "Couldn't write to file: tmon.mason: $!";
     print $fh map("$_\t$HTML::Mason::CODEREF_NAME{$_}\n", keys %HTML::Mason::CODEREF_NAME);
-    $fh->close;
+    close $fh or die "Can't close file: tmon.mason: $!";
 }
 PERL
-    $outfh->print($o);
-    $outfh->close();
-    chmod(0775,$outPath);
+    print $outfh $o;
+    close $outfh or die "can't close file: $out_path: $!";
+    chmod(0775,$out_path) or die "can't chmod file to 0775: $out_path: $!";
 
-    my $debugMsg = "Debug file is '$outFile'.\nFull debug path is '$outPath'.\n";
-    return $debugMsg;
+    my $debug_msg = "Debug file is '$outFile'.\nFull debug path is '$out_path'.\n";
+    return $debug_msg;
 }
 
 sub capture_debug_state
@@ -488,7 +524,7 @@ sub capture_debug_state
 
 sub handle_request_1
 {
-    my ($self,$r,$request,$debugState) = @_;
+    my ($self,$r,$request,$debug_state) = @_;
     my $interp = $self->interp;
 
     #
@@ -538,13 +574,13 @@ sub handle_request_1
     } else {
 	%args = $self->$ARGS_METHOD(\$r);
     }
-    $debugState->{args_hash} = \%args if $debugState;
+    $debug_state->{args_hash} = \%args if $debug_state;
 
     #
     # Deprecated output_mode parameter - just pass to request out_mode.
     #
     if (my $mode = $self->output_mode) {
-	$request->{out_mode} = $mode;
+	$request->out_mode($mode);
     }
 
     #
@@ -594,7 +630,7 @@ sub handle_request_1
 	    # remainder of this component and its children.
 	    $request->top_stack->{sink} = $interp->out_method if $request->out_mode eq 'stream' and $request->top_stack->{sink} eq $request->out_method;
 	};
-	$request->{out_method} = $out_method;
+	$request->out_method($out_method);
 
 	$retval = $request->exec($comp_path, %args);
 
@@ -622,17 +658,17 @@ sub _cgi_args
     my $r = $$rref;
     my $q;
     unless ($r->method eq 'GET' && !scalar($r->args)) {
-        $q = CGI->new;
+        $self->{cgi_object} = CGI->new;
     }
 
-    return () unless defined $q;
+    return unless exists $self->{cgi_object};
 
     my %args;
-    foreach my $key ( $q->param ) {
-	foreach my $value ( $q->param($key) ) {
+    foreach my $key ( $self->{cgi_object}->param ) {
+	foreach my $value ( $self->{cgi_object}->param($key) ) {
 	    if (exists($args{$key})) {
 		if (ref($args{$key}) eq 'ARRAY') {
-		    $args{$key} = [@{$args{$key}}, $value];
+		    push @{ $args{$key} }, $value;
 		} else {
 		    $args{$key} = [$args{$key}, $value];
 		}
@@ -656,14 +692,14 @@ sub _mod_perl_args
     my $apr = Apache::Request->new($$rref);
     $$rref = $apr;
 
-    return () unless $apr->param;
+    return unless $apr->param;
 
     my %args;
     foreach my $key ( $apr->param ) {
 	foreach my $value ( $apr->param($key) ) {
 	    if (exists($args{$key})) {
 		if (ref($args{$key}) eq 'ARRAY') {
-		    $args{$key} = [@{$args{$key}}, $value];
+		    push @{ $args{$key} }, $value;
 		} else {
 		    $args{$key} = [$args{$key}, $value];
 		}
@@ -702,20 +738,6 @@ sub simulate_debug_request
 #
 sub http_header_sent { shift->header_out("Content-type") }
 
-# Create generic read-write accessor routines
-
-sub apache_status_title { my $s=shift; return @_ ? ($s->{apache_status_title}=shift) : $s->{apache_status_title} }
-sub auto_send_headers { my $s=shift; return @_ ? ($s->{auto_send_headers}=shift) : $s->{auto_send_headers} }
-sub decline_dirs { my $s=shift; return @_ ? ($s->{decline_dirs}=shift) : $s->{decline_dirs} }
-sub error_mode { my $s=shift; return @_ ? ($s->{error_mode}=shift) : $s->{error_mode} }
-sub interp { my $s=shift; return @_ ? ($s->{interp}=shift) : $s->{interp} }
-sub output_mode { my $s=shift; return @_ ? ($s->{output_mode}=shift) : $s->{output_mode} }
-sub top_level_predicate { my $s=shift; return @_ ? ($s->{top_level_predicate}=shift) : $s->{top_level_predicate} }
-sub debug_mode { my $s=shift; return @_ ? ($s->{debug_mode}=shift) : $s->{debug_mode} }
-sub debug_perl_binary { my $s=shift; return @_ ? ($s->{debug_perl_binary}=shift) : $s->{debug_perl_binary} }
-sub debug_handler_script { my $s=shift; return @_ ? ($s->{debug_handler_script}=shift) : $s->{debug_handler_script} }
-sub debug_handler_proc { my $s=shift; return @_ ? ($s->{debug_handler_proc}=shift) : $s->{debug_handler_proc} }
-sub debug_dir_config_keys { my $s=shift; return @_ ? ($s->{debug_dir_config_keys}=shift) : $s->{debug_dir_config_keys} }
 
 #----------------------------------------------------------------------
 #

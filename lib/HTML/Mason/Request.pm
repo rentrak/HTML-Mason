@@ -3,18 +3,27 @@
 # under the same terms as Perl itself.
 
 package HTML::Mason::Request;
-require 5.004;
-require Exporter;
-@ISA = qw(Exporter);
-@EXPORT = qw();
-@EXPORT_OK = qw();
 
-use HTML::Mason::Tools qw(is_absolute_path read_file);
+use strict;
 
 use Carp;
-use strict;
+
+use HTML::Mason::Tools qw(is_absolute_path read_file);
+use HTML::Mason::Utils;
+
 use vars qw($REQ $REQ_DEPTH %REQ_DEPTHS);
-my @_used = ($HTML::Mason::CODEREF_NAME,$::opt_P,$HTML::Mason::Commands::m);
+
+use HTML::Mason::MethodMaker
+    ( read_only => [ qw( aborted
+			 aborted_value
+			 count
+			 declined
+			 error_code
+			 interp ) ],
+
+      read_write => [ qw( out_method
+			  out_mode ) ],
+    );
 
 my %fields =
     (aborted => undef,
@@ -48,7 +57,7 @@ sub new
     }
     bless $self, $class;
     my $interp = $self->{interp} or die "HTML::Mason::Request::new: must specify interp";
-    $self->{count} = ++($interp->{request_count});
+    ++$self->{count};
     $self->_initialize;
     return $self;
 }
@@ -88,7 +97,7 @@ sub exec {
     my $interp = $self->interp;
     
     # Check if reload file has changed.
-    $interp->check_reload_file if ($interp->{use_reload_file});
+    $interp->check_reload_file if ($interp->use_reload_file);
 
     # Purge code cache if necessary. Generally happens at the end of
     # the component; this is just in case many errors are occurring.
@@ -100,7 +109,7 @@ sub exec {
     if (!ref($comp) && substr($comp,0,1) eq '/') {
 	$orig_path = $path = $comp;
 	if (!($comp = $interp->load($path))) {
-	    if (defined($interp->{dhandler_name}) and $comp = $interp->find_comp_upwards($path,$interp->{dhandler_name})) {
+	    if (defined($interp->dhandler_name) and $comp = $interp->find_comp_upwards($path,$interp->dhandler_name)) {
 		my $parent_path = $comp->dir_path;
 		($self->{dhandler_arg} = $path) =~ s{^$parent_path/?}{};
 	    }
@@ -139,7 +148,7 @@ sub exec {
     # If declined, try to find the next dhandler.
     if ($self->declined and $path) {
 	$path =~ s/\/[^\/]+$// if defined($self->{dhandler_arg});
-	if (defined($interp->{dhandler_name}) and my $next_comp = $interp->find_comp_upwards($path,$interp->{dhandler_name})) {
+	if (defined($interp->dhandler_name) and my $next_comp = $interp->find_comp_upwards($path,$interp->dhandler_name)) {
 	    $comp = $next_comp;
 	    my $parent = $comp->dir_path;
 	    $self->_reinitialize;
@@ -226,14 +235,14 @@ sub cache_self
     my $interp = $self->interp;
     return undef unless $interp->use_data_cache;
     return undef if $self->top_stack->{in_cache_self_flag};
-    my (%retrieveOptions,%storeOptions);
+    my (%retrieve_options,%store_options);
     foreach (qw(key expire_if keep_in_memory busy_lock)) {
-	$retrieveOptions{$_} = $options{$_} if (exists($options{$_}));
+	$retrieve_options{$_} = $options{$_} if (exists($options{$_}));
     }
     foreach (qw(key expire_at expire_next expire_in)) {
-	$storeOptions{$_} = $options{$_} if (exists($options{$_}));
+	$store_options{$_} = $options{$_} if (exists($options{$_}));
     }
-    my $result = $self->cache(action=>'retrieve',%retrieveOptions);
+    my $result = $self->cache(action=>'retrieve',%retrieve_options);
     my ($output,$retval);
     
     #
@@ -247,18 +256,17 @@ sub cache_self
 	# value ($retval).
 	#
 	my $lref = $self->top_stack;
-	my %saveLocals = %$lref;
+	my %save_locals = %$lref;
 	$lref->{sink} = sub { $output .= $_[0] };
 	$lref->{in_cache_self_flag} = 1;
-	my $sub = $lref->{comp}->{code};
-	my @args = @{$lref->{args}};
-	$retval = &$sub(@args);
-	$self->top_stack({%saveLocals});
+
+	my $retval = $lref->{comp}->run( @{ $lref->{args} } );
+	$self->top_stack({%save_locals});
 
 	#
 	# Store output and return value as a two-item listref.
 	#
-	$self->cache(action=>'store',value=>[$output,$retval],%storeOptions);
+	$self->cache(action=>'store',value=>[$output,$retval],%store_options);
     } else {
 	($output,$retval) = @$result;
     }
@@ -279,12 +287,12 @@ sub call { shift->comp(@_) }
 sub call_dynamic {
     my ($m, $key, @args) = @_;
     my $comp = ($m->current_comp->is_subcomp) ? $m->current_comp->owner : $m->current_comp;
-    if (!defined($comp->{dynamic_subs_request}) or $comp->{dynamic_subs_request} ne $m) {
-	$comp->{dynamic_subs_hash} = $comp->{dynamic_subs_init}->();
-	$comp->{dynamic_subs_request} = $m;
+    if (!defined($comp->dynamic_subs_request) or $comp->dynamic_subs_request ne $m) {
+	$comp->dynamic_subs_init;
+	$comp->dynamic_subs_request($m);
     }
-    my $sub = $comp->{dynamic_subs_hash}->{$key} or die "call_dynamic: assert error - could not find code for key $key in component ".$comp->title;
-    return $sub->(@args);
+
+    return $comp->run_dynamic_sub($key, @args);
 }
 
 sub call_next {
@@ -339,19 +347,19 @@ sub call_self
     #
     my $content;
     my $lref = $self->top_stack;
-    my %saveLocals = %$lref;
+    my %save_locals = %$lref;
     $lref->{sink} = sub { $content .= $_[0] };
     $lref->{in_call_self_flag} = 1;
-    my $sub = $lref->{comp}->{code};
-    my @args = @{$lref->{args}};
+
+
     if (ref($rref) eq 'SCALAR') {
-	$$rref = &$sub(@args);
+	$$rref = $lref->{comp}->run( @{ $lref->{args} } );
     } elsif (ref($rref) eq 'ARRAY') {
-	@$rref = &$sub(@args);
+	@$rref = $lref->{comp}->run( @{ $lref->{args} } );
     } else {
-	&$sub(@args);
+	$lref->{comp}->run( @{ $lref->{args} } );
     }
-    $self->top_stack({%saveLocals});
+    $self->top_stack({%save_locals});
     $$cref = $content if ref($cref) eq 'SCALAR';
 
     return 1;
@@ -527,8 +535,7 @@ sub comp1 {
     my $self = shift;
 
     # Get modifiers: optional hash reference passed in as first argument.
-    my %mods;
-    %mods = %{shift()} if (ref($_[0]) eq 'HASH');
+    my %mods = (ref($_[0]) eq 'HASH') ? %{shift()} : ();
 
     my ($comp,@args) = @_;
     my $interp = $self->{interp};
@@ -550,10 +557,11 @@ sub comp1 {
     # package, as well as the component package if that is different.
     #
     local $HTML::Mason::Commands::m = $self;
-    $interp->set_global('m'=>$self) if ($interp->parser->{in_package} ne 'HTML::Mason::Commands');
+    $interp->set_global('m'=>$self) if ($interp->parser->in_package ne 'HTML::Mason::Commands');
 
     #
     # Determine sink (where output is going).
+    #
     # Look for STORE and scalar reference passed as last two arguments. This is deprecated
     # and will go away eventually.
     #
@@ -580,7 +588,7 @@ sub comp1 {
     #
     # Check for maximum recursion.
     #
-    die "$depth levels deep in component stack (infinite recursive call?)\n" if ($depth >= $interp->{max_recurse});
+    die "$depth levels deep in component stack (infinite recursive call?)\n" if ($depth >= $interp->max_recurse);
 
     # Push new frame onto stack and increment (localized) depth.
     my $stack = $self->stack;
@@ -592,20 +600,13 @@ sub comp1 {
     $self->call_hooks('start_comp');
 
     #
-    # CODEREF_NAME maps component coderefs to component names (for profiling)
-    #
-    my $sub = $comp->{code};
-    $HTML::Mason::CODEREF_NAME{$sub} = $comp->source_file if $::opt_P && defined($comp->source_file);
-
-    #
     # Finally, call component subroutine.
     #
-    $comp->{run_count}++; $comp->{mfu_count}++;
     my ($result, @result);
     if (wantarray) {
-	@result = $sub->(@args);
+	@result = $comp->run(@args);
     } else {
-	$result = $sub->(@args);
+	$result = $comp->run(@args);
     }
 
     #
@@ -666,7 +667,7 @@ sub suppress_hook {
     foreach (qw(name type)) {
 	die "suppress_hook: must specify $_\n" if !exists($args{$_});
     }
-    my $code = $self->interp->{hooks}->{$args{type}}->{$args{name}};
+    my $code = $self->interp->hooks->{$args{type}}->{$args{name}};
     $self->{"hooks_$args{type}"} = [grep($_ ne $code,@{$self->{"hooks_$args{type}"}})];
 }
 
@@ -678,7 +679,7 @@ sub unsuppress_hook {
     foreach (qw(name type)) {
 	die "unsuppress_hook: must specify $_\n" if !exists($args{$_});
     }
-    my $code = $self->interp->{hooks}->{$args{type}}->{$args{name}};
+    my $code = $self->interp->hooks->{$args{type}}->{$args{name}};
     $self->{"hooks_$args{type}"} = [grep($_ ne $code,@{$self->{"hooks_$args{type}"}})];
     push(@{$self->{"hooks_$args{type}"}},$code);
 }
@@ -712,15 +713,5 @@ sub current_comp { return $_[0]->top_stack->{'comp'} }
 sub current_args { return $_[0]->top_stack->{args} }
 sub current_sink { return $_[0]->top_stack->{sink} }
 sub base_comp { return $_[0]->top_stack->{base_comp} }
-
-# Create generic read-only accessor routines
-
-sub aborted { return shift->{aborted} }
-sub aborted_value { return shift->{aborted_value} }
-sub count { return shift->{count} }
-sub declined { return shift->{declined} }
-sub interp { return shift->{interp} }
-sub out_method { return shift->{out_method} }
-sub out_mode { return shift->{out_mode} }
 
 1;

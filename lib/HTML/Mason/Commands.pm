@@ -10,14 +10,9 @@
 package HTML::Mason::Commands;
 
 use strict;
-use File::Basename;
-use HTML::Mason::Utils;
-use HTML::Mason::Config;
-use IO;
-use Time::Local;
 
 use vars qw($m @ISA @EXPORT_OK @EXPORT);
- 
+
 require Exporter;
 @ISA=qw(Exporter);
 @EXPORT = qw

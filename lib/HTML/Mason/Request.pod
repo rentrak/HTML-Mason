@@ -79,8 +79,8 @@ The argument to I<action> is one of:
 o I<retrieve>: returns the cache value if successful, or C<undef>
 if there was no value or if it has expired.
 
-o I<store>: stores a new cache value under the given key.
-Default key is 'main'.
+o I<store>: stores a new cache value under the given key.  Default key
+is 'main'.  Returns the value being stored if successful.
 
 o I<expire>: expires a given cache value or values.
 key may be a single key or a list reference. Default key is 'main'.
@@ -378,6 +378,16 @@ Returns the ApacheHandler object associated with this request.
 Returns the Apache request object.  This is also available in the
 global $r.
 
+=for html <a name="item_cgi_object">
+
+=item cgi_object
+
+Returns the CGI object used to parse any CGI parameters submitted to
+the component, assuming that you have not changed the default value of
+the ApacheHandler C<args_method> parameter.  If you are using the
+'mod_perl' args method, then calling this method is a fatal error.
+See the L<HTML::Mason::ApacheHandler> documentation for more details.
+
 =back
 
 =head1 AUTHOR
@@ -387,5 +397,6 @@ Jonathan Swartz, swartz@transbay.net
 =head1 SEE ALSO
 
 L<HTML::Mason::Component>
+L<HTML::Mason::ApacheHandler>
 
 =cut

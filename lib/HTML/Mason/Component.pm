@@ -4,15 +4,27 @@
 
 package HTML::Mason::Component;
 require 5.004;
-require Exporter;
-@ISA = qw(Exporter);
-@EXPORT = qw();
-@EXPORT_OK = qw();
 
 use strict;
 use File::Basename;
-use HTML::Mason::Tools qw(read_file compress_path);
+use HTML::Mason::Tools qw(compress_path);
 use vars qw($AUTOLOAD);
+
+use HTML::Mason::MethodMaker
+    ( read_only => [ qw( code
+			 create_time
+			 declared_args
+			 fq_path
+			 inherit_path
+			 inherit_start_path
+			 interp
+			 mfu_count
+			 object_size
+			 parser_version
+			 run_count ) ],
+
+      read_write => [ qw ( dynamic_subs_request ) ]
+      );
 
 my %fields =
     (
@@ -89,7 +101,7 @@ sub assign_runtime_properties {
 	    $self->{inherit_path} = $interp->process_comp_path($self->{flags}->{inherit},$self->dir_path);
 	}
     } elsif (defined($interp->autohandler_name)) {
-	if ($interp->{allow_recursive_autohandlers}) {
+	if ($interp->allow_recursive_autohandlers) {
 	    if ($self->name eq $interp->autohandler_name) {
 		unless ($self->dir_path eq '/') {
 		    $self->{inherit_start_path} = dirname($self->dir_path);
@@ -103,6 +115,37 @@ sub assign_runtime_properties {
 	    }		
 	}
     }
+}
+
+sub run {
+    my $self = shift;
+
+    #
+    # CODEREF_NAME maps component coderefs to component names (for profiling)
+    #
+    $HTML::Mason::CODEREF_NAME{$self->{code}} = $self->source_file
+	if $::opt_P && defined($self->source_file);
+
+    $self->{run_count}++; $self->{mfu_count}++;
+
+    return wantarray ? $self->{code}->(@_) : scalar $self->{code}->(@_);
+}
+
+sub dynamic_subs_init {
+    my $self = shift;
+
+    $self->{dynamic_subs_hash} = $self->{dynamic_subs_init}->();
+
+    
+}
+
+sub run_dynamic_sub {
+    my ($self, $key, @args) = @_;
+
+    die "call_dynamic: assert error - could not find code for key $key in component " . $self->title
+	unless exists $self->{dynamic_subs_hash}->{$key};
+
+    $self->{dynamic_subs_hash}->{$key}->(@args);
 }
 
 # Legacy, left in for pre-0.8 obj files
@@ -173,10 +216,10 @@ sub attr_exists {
 # Call method by name
 #
 sub call_method {
-    my ($self,$name,%args) = @_;
+    my ($self,$name,@args) = @_;
     my $method;
     if ($self->_locate_inherited('methods',$name,\$method)) {
-	$HTML::Mason::Commands::m->comp({base_comp=>$self},$method,%args);
+	$HTML::Mason::Commands::m->comp({base_comp=>$self},$method,@args);
     } else {
 	die "no method '$name' for component ".$self->title;
     }
@@ -186,10 +229,10 @@ sub call_method {
 # Like call method, but return component output.
 #
 sub scall_method {
-    my ($self,$name,%args) = @_;
+    my ($self,$name,@args) = @_;
     my $method;
     if ($self->_locate_inherited('methods',$name,\$method)) {
-	$HTML::Mason::Commands::m->scomp({base_comp=>$self},$method,%args);
+	$HTML::Mason::Commands::m->scomp({base_comp=>$self},$method,@args);
     } else {
 	die "no method '$name' for component ".$self->title;
     }
@@ -256,21 +299,5 @@ sub parent {
 #
 sub object_file { my $self = shift; return ($self->persistent) ? ($self->interp->object_dir . $self->fq_path) : undef }
 sub cache_file { my $self = shift; return ($self->persistent) ? ($self->interp->data_cache_dir . "/" . compress_path($self->fq_path)) : undef }
-
-#
-# Create generic read-only accessor routines
-#
-sub code { return shift->{code} }
-sub create_time { return shift->{create_time} }
-sub declared_args { return shift->{declared_args} }
-sub fq_path { return shift->{fq_path} }
-sub inherit_path { return shift->{inherit_path} }
-sub inherit_start_path { return shift->{inherit_start_path} }
-sub interp { return shift->{interp} }
-sub mfu_count { return shift->{mfu_count} }
-sub object_size { return shift->{object_size} }
-sub parser_version { return shift->{parser_version} }
-sub run_count { return shift->{run_count} }
-sub source_ref_start { return shift->{source_ref_start} }
 
 1;

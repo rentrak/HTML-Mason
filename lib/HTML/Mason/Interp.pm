@@ -3,26 +3,44 @@
 # under the same terms as Perl itself.
 
 package HTML::Mason::Interp;
-require 5.004;
-require Exporter;
-@ISA = qw(Exporter);
-@EXPORT = qw();
-@EXPORT_OK = qw();
 
 use strict;
+
 use Carp;
-use Data::Dumper;
 use File::Path;
 use File::Basename;
-use File::Find;
-use IO::File;
-use IO::Seekable;
 use HTML::Mason::Parser;
-use HTML::Mason::Tools qw(read_file pkg_loaded is_absolute_path);
+use HTML::Mason::Tools qw(is_absolute_path);
 use HTML::Mason::Commands qw();
 use HTML::Mason::Config;
 use HTML::Mason::Resolver::File;
+
 require Time::HiRes if $HTML::Mason::Config{use_time_hires};
+
+use HTML::Mason::MethodMaker
+    ( read_only => [ qw( code_cache
+			 comp_root
+			 data_dir
+			 hooks
+			 system_log_file
+			 system_log_separator
+			 preloads ) ],
+
+      read_write => [ qw( allow_recursive_autohandlers
+			  autohandler_name
+			  code_cache_max_size
+			  data_cache_dir
+			  dhandler_name
+			  max_recurse
+			  out_mode
+			  parser
+			  resolver
+			  static_file_root
+			  use_data_cache
+			  use_object_files
+			  use_reload_file
+			  verbose_compile_error ) ],
+      );
 
 # Fields that can be set in new method, with defaults
 my %fields =
@@ -53,7 +71,6 @@ sub new
 {
     my $class = shift;
     my $self = {
-	_permitted => \%fields,
 	%fields,
 	data_cache_store => {},
         code_cache => {},
@@ -143,9 +160,13 @@ sub _initialize
     #
     if ($self->{system_log_events_hash}) {
 	$self->{system_log_file} = $self->data_dir . "/etc/system.log" if !$self->system_log_file;
-	my $fh = new IO::File ">>".$self->system_log_file
+	my $fh = do { local *FH; *FH; };  # double *FH avoids warning
+	open $fh, ">>".$self->system_log_file
 	    or die "Couldn't open system log file ".$self->{system_log_file}." for append";
-	$fh->autoflush(1);
+	my $oldfh;
+	select $fh;
+	$| = 1;
+	select $oldfh;
 	$self->{system_log_fh} = $fh;
     }
     
@@ -190,25 +211,26 @@ sub exec {
 #
 sub check_reload_file {
     my ($self) = @_;
-    my $reloadFile = $self->reload_file;
-    return if (!-f $reloadFile);
+    my $reload_file = $self->reload_file;
+    return if (!-f $reload_file);
     my $lastmod = (stat(_))[9];
     if ($lastmod > $self->{last_reload_time}) {
-	my ($block);
 	my $length = (stat(_))[7];
 	$self->{last_reload_file_pos} = 0 if ($length < $self->{last_reload_file_pos});
-	my $fh = new IO::File $reloadFile;
-	return if !$fh;
+	my $fh = do { local *FH; *FH; };  # double *FH avoids warning
+	open $fh, $reload_file or return;
+
+	my $block;
 	my $pos = $self->{last_reload_file_pos};
-	$fh->seek($pos,&SEEK_SET);
+	seek ($fh,$pos,0);
 	read($fh,$block,$length-$pos);
 	$self->{last_reload_time} = $lastmod;
-	$self->{last_reload_file_pos} = $fh->tell;
+	$self->{last_reload_file_pos} = tell $fh;
 	my @lines = split("\n",$block);
-	foreach my $compPath (@lines) {
-	    if (exists($self->{code_cache}->{$compPath})) {
-		$self->{code_cache_current_size} -= $self->{code_cache}->{$compPath}->{size};
-		delete($self->{code_cache}->{$compPath});
+	foreach my $comp_path (@lines) {
+	    if (exists($self->{code_cache}->{$comp_path})) {
+		$self->{code_cache_current_size} -= $self->{code_cache}->{$comp_path}->{size};
+		delete($self->{code_cache}->{$comp_path});
 	    }
 	}
     }
@@ -221,12 +243,14 @@ sub check_reload_file {
 sub process_comp_path
 {
     my ($self,$comp_path,$dir_path) = @_;
+
     if ($comp_path !~ m@^/@) {
 	$comp_path = $dir_path . ($dir_path eq "/" ? "" : "/") . $comp_path;
     }
-    while ($comp_path =~ s@/[^/]+/\.\.@@) {}
-    while ($comp_path =~ s@/\./@/@) {}
-    return $comp_path;    
+
+    $comp_path =~ s@/[^/]+/\.\.@@;
+    $comp_path =~ s@/\./@/@;
+    return $comp_path;
 }
 
 #
@@ -549,12 +573,13 @@ sub write_system_log {
 
     if ($self->{system_log_fh} && $self->{system_log_events_hash}->{$_[0]}) {
 	my $time = ($HTML::Mason::Config{use_time_hires} ? scalar(Time::HiRes::gettimeofday()) : time);
-	$self->{system_log_fh}->print(join ($self->system_log_separator,
-					    $time,                  # current time
-					    $_[0],                  # event name
-					    $$,                     # pid
-					    @_[1..$#_]              # event-specific fields
-					    ),"\n");
+	my $fh = $self->{system_log_fh};
+	print $fh (join ($self->system_log_separator,
+			 $time,                  # current time
+			 $_[0],                  # event name
+			 $$,                     # pid
+			 @_[1..$#_]              # event-specific fields
+			),"\n");
     }
 }
 
@@ -563,30 +588,5 @@ sub write_system_log {
 sub code_cache_min_size { shift->code_cache_max_size * 0.75 }
 sub code_cache_max_elem { shift->code_cache_max_size * 0.20 }
 sub code_cache_decay_factor { 0.75 }
-
-# Create generic read-write accessor routines
-
-sub allow_recursive_autohandlers { my $s=shift; return @_ ? ($s->{allow_recursive_autohandlers}=shift) : $s->{allow_recursive_autohandlers} }
-sub autohandler_name { my $s=shift; return @_ ? ($s->{autohandler_name}=shift) : $s->{autohandler_name} }
-sub code_cache_max_size { my $s=shift; return @_ ? ($s->{code_cache_max_size}=shift) : $s->{code_cache_max_size} }
-sub data_cache_dir { my $s=shift; return @_ ? ($s->{data_cache_dir}=shift) : $s->{data_cache_dir} }
-sub dhandler_name { my $s=shift; return @_ ? ($s->{dhandler_name}=shift) : $s->{dhandler_name} }
-sub max_recurse { my $s=shift; return @_ ? ($s->{max_recurse}=shift) : $s->{max_recurse} }
-sub out_mode { my $s=shift; return @_ ? ($s->{out_mode}=shift) : $s->{out_mode} }
-sub parser { my $s=shift; return @_ ? ($s->{parser}=shift) : $s->{parser} }
-sub resolver { my $s=shift; return @_ ? ($s->{resolver}=shift) : $s->{resolver} }
-sub static_file_root { my $s=shift; return @_ ? ($s->{static_file_root}=shift) : $s->{static_file_root} }
-sub use_data_cache { my $s=shift; return @_ ? ($s->{use_data_cache}=shift) : $s->{use_data_cache} }
-sub use_object_files { my $s=shift; return @_ ? ($s->{use_object_files}=shift) : $s->{use_object_files} }
-sub use_reload_file { my $s=shift; return @_ ? ($s->{use_reload_file}=shift) : $s->{use_reload_file} }
-sub verbose_compile_error { my $s=shift; return @_ ? ($s->{verbose_compile_error}=shift) : $s->{verbose_compile_error} }
-
-# Create generic read-only accessor routines
-
-sub comp_root { return shift->{comp_root} }
-sub data_dir { return shift->{data_dir} }
-sub system_log_file { return shift->{system_log_file} }
-sub system_log_separator { return shift->{system_log_separator} }
-sub preloads { return shift->{preloads} }
 
 1;

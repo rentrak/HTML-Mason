@@ -9,15 +9,17 @@
 #
 
 package HTML::Mason::Tools;
-require 5.004;
-require Exporter;
-@ISA = qw(Exporter);
-@EXPORT = qw();
-@EXPORT_OK = qw(read_file chop_slash html_escape url_escape url_unescape date_delta_to_secs dumper_method paths_eq is_absolute_path make_absolute_path compress_path pkg_loaded pkg_installed);
 
 use strict;
-use IO::File qw(!/^SEEK/);
+
 use Cwd;
+
+require Exporter;
+
+use vars qw(@ISA @EXPORT_OK);
+
+@ISA = qw(Exporter);
+@EXPORT_OK = qw(read_file chop_slash html_escape url_escape url_unescape date_delta_to_secs dumper_method paths_eq is_absolute_path make_absolute_path compress_path pkg_loaded pkg_installed);
 
 #
 # Return contents of file. If $binmode is 1, read in binary mode.
@@ -27,8 +29,9 @@ sub read_file
     my ($file,$binmode) = @_;
     die "read_file: '$file' does not exist" if (!-e $file);
     die "read_file: '$file' is a directory" if (-d _);
-    my $fh = new IO::File $file;
-    die "read_file: could not open file '$file' for reading\n" if !$fh;
+    my $fh = do { local *FH; *FH; };
+    open $fh, $file
+	or die "read_file: could not open file '$file' for reading: $!";
     binmode $fh if $binmode;
     local $/ = undef;
     my $text = <$fh>;
@@ -82,14 +85,14 @@ sub url_escape {
 # Convert a "date delta string" (e.g. 1sec, 3min, 2h) to a number of
 # seconds. Based on Date::Manip date delta concept.
 #
-my %dateDeltaHash = ('y'=>31557600, yr=>31557600, year=>31557600, years=>31557600,
-		     'm'=>2592000, mon=>2592000, month=>2592000, months=>2592000,
-		     'w'=>604800, wk=>604800, ws=>604800, wks=>604800, week=>604800, weeks=>604800,
-		     'd'=>86400, day=>86400, days=>86400,
-		     'h'=>3600, hr=>3600, hour=>3600, hours=>3600,
-		     mn=>60, min=>60, minute=>60, minutes=>60,
-		     's'=>1, sec=>1, second=>1, seconds=>1
-		     );
+my %date_delta = ('y'=>31557600, yr=>31557600, year=>31557600, years=>31557600,
+		  'm'=>2592000, mon=>2592000, month=>2592000, months=>2592000,
+		  'w'=>604800, wk=>604800, ws=>604800, wks=>604800, week=>604800, weeks=>604800,
+		  'd'=>86400, day=>86400, days=>86400,
+		  'h'=>3600, hr=>3600, hour=>3600, hours=>3600,
+		  mn=>60, min=>60, minute=>60, minutes=>60,
+		  's'=>1, sec=>1, second=>1, seconds=>1
+		 );
 sub date_delta_to_secs
 {
     my ($delta) = @_;
@@ -101,7 +104,7 @@ sub date_delta_to_secs
 	die $usage;
     }
     $unit = "s" if !$unit;
-    my $mult = $dateDeltaHash{$unit};
+    my $mult = $date_delta{$unit};
     die $usage if !$mult;
     return $num * $mult * ($sign eq '-' ? -1 : 1);
 }
