@@ -1,4 +1,4 @@
-# Copyright (c) 1998-99 by Jonathan Swartz. All rights reserved.
+# Copyright (c) 1998-2000 by Jonathan Swartz. All rights reserved.
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
@@ -50,7 +50,7 @@ my %valid_escape_flags = map(($_,1),qw(h n u));
 #
 sub version
 {
-    return 0.8;
+    return "0.8";
 }
 
 sub new
@@ -217,7 +217,14 @@ sub parse_component
 	}
 
 	my $comp_names = join '|', @tags;
-	while ( $state->{script} =~
+
+	# Use a scalar instead of a hash key to get at the script, to
+	# work around Perl 5.6 pos() returning undef after matches.
+	# Also fixes taint mode bugs in 5.00503 and 5.6.0 (and
+	# probably others)
+	my $script = $state->{script};
+
+	while ( $script =~
 		/(                     # $1: the full tag match
                   <%
                    (?:perl_)?          # optional perl_ prefix
@@ -235,7 +242,7 @@ sub parse_component
 	    $section_name = 'def' if substr($section_name,0,3) eq 'def';
 	    $section_name = 'method' if substr($section_name,0,6) eq 'method';
 
-	    my $section_start = pos($state->{script});
+	    my $section_start = pos($script);
 	    my $section_tag_pos = $section_start - length($1);
 	    my $subcomp_name = $3;
 	    if (defined($subcomp_name)) {
@@ -252,10 +259,10 @@ sub parse_component
 				   startline => $startline )
 		if $curpos < $section_tag_pos;
 
-	    if ($state->{script} =~ m/(<\/%(?:perl_)?$section_name>\n?)/ig) {
+	    if ($script =~ m/(<\/%(?:perl_)?$section_name>\n?)/ig) {
 		my $ending_tag = $1;
-		my $section_end = pos($state->{script}) - length($ending_tag);
-		my $section = substr($state->{script}, $section_start, $section_end - $section_start);
+		my $section_end = pos($script) - length($ending_tag);
+		my $section = substr($script, $section_start, $section_end - $section_start);
 		my $method = '_parse_' . lc $section_name . '_section';
 		if ($section_name eq 'text') {
 		    # Special case for <%text> sections: add a special
@@ -277,7 +284,7 @@ sub parse_component
 		    #}
 		    $self->$method( section => $section );
 		}
-		$curpos = pos($state->{script});
+		$curpos = pos($script);
 		$startline = substr($ending_tag, -1, 1) eq "\n";
 	    } else {
 		die $self->_make_error( error => "<%$section_name> with no matching </%$section_name>",
@@ -408,7 +415,7 @@ sub _parse_var_decls
 {
     my ($self, $section) = @_;
 
-    my @decls = grep {/\S/} split /\n/, $section;
+    my @decls = grep {/\S/ && !/^\s*#/} split /\n/, $section;
 
     my @vars;
     foreach my $decl (@decls)
@@ -432,6 +439,11 @@ sub _parse_var_decls
 		 defined $name)
 	{
 	    die $self->_make_error( error => "unknown type for argument/attribute '$var': first character must be \$, \@, or \%" );
+	}
+
+	unless ($name =~ /^[^\W\d]\w*/)
+	{
+	    die $self->_make_error( error => "Invalid variable name: $type$name" );
 	}
 
 	push @vars, {name=>$name,type=>$type,default=>$default};
@@ -688,15 +700,16 @@ sub _parse_perl_tag
 
     my $s = $self->{parser_state}{text_parse_state};
 
-    pos($params{text}) = $s->{curpos};
-    unless ($params{text} =~ m{</\%perl>}ig) {
+    my $text = $params{text};
+    pos($text) = $s->{curpos};
+    unless ($text =~ m{</\%perl>}ig) {
 	die $self->_make_error( error => "<%perl> with no matching </%perl>",
 				errpos => $params{segbegin} + $params{index} );
     }
 
     # Move cursor to spot of last match (which is immediately after
     # the </%perl> tag
-    $s->{curpos} = pos($params{text});
+    $s->{curpos} = pos($text);
 
     # Subtract the index position (where the original match occurred)
     # plus the length of the <%perl> tag from the current position
@@ -704,7 +717,7 @@ sub _parse_perl_tag
     # the length.
     my $length = $s->{curpos} - 8 - ($params{index} + 7);
 
-    my $perl = substr($params{text}, $params{index} + 7, $length);
+    my $perl = substr($text, $params{index} + 7, $length);
     $self->{postprocess}->(\$perl, 'perl') if $self->{postprocess};
     $self->_add_output_section($perl);
 }
@@ -750,7 +763,7 @@ sub _parse_substitute_tag
 	    die $self->_make_error( error => "invalid <% %> escape flag: '$invalids[0]'",
 				    errpos => $params{segbegin} + $params{index} );
 	}
-	$perl = '$_out->($_escape->('.$expr.','.join(",",map("'$_'",@flag_list)).'));';
+	$perl = '$_out->($_escape->(('.$expr.'),'.join(",",map("'$_'",@flag_list)).'));';
     } else {
 	$perl = '$_out->('.$expr.');';
     }
@@ -1037,7 +1050,7 @@ sub _make_error
     my $dump = dumper_method($d);
     for ($dump) { s/\$VAR1\s*=//g; s/;\s*$// }
 
-    return "MASON: $dump\n";
+    return "MASON: $dump :NOSAM";
 }
 
 sub _handle_parse_error
@@ -1048,7 +1061,9 @@ sub _handle_parse_error
     # sort of 'real' error generated in another module.  We need real
     # exceptions.  bleah.
     die $errdump unless substr($errdump,0,7) eq "MASON: ";
-    my $err = eval(substr($errdump,7));
+    $errdump =~ /MASON: (.*?) :NOSAM/s;
+    my $error = $1;
+    my $err = eval $error;
     die "assert: could not read _make_error output: $@" if $@;
 
     my $state = $self->{parser_state};
@@ -1078,11 +1093,13 @@ my %html_escape = ('&' => '&amp;', '>'=>'&gt;', '<'=>'&lt;', '"'=>'&quot;');
 sub _escape_perl_expression
 {
     my ($expr,@flags) = @_;
-    foreach my $flag (@flags) {
-	if ($flag eq 'h') {
-	    $expr =~ s/([<>&\"])/$html_escape{$1}/mgoe;
-	} elsif ($flag eq 'u') {
-	    $expr =~ s/([^a-zA-Z0-9_.-])/uc sprintf("%%%02x",ord($1))/eg;
+    if (defined($expr)) {
+	foreach my $flag (@flags) {
+	    if ($flag eq 'h') {
+		$expr =~ s/([<>&\"])/$html_escape{$1}/mgoe;
+	    } elsif ($flag eq 'u') {
+		$expr =~ s/([^a-zA-Z0-9_.-])/uc sprintf("%%%02x",ord($1))/eg;
+	    }
 	}
     }
     return $expr;
@@ -1243,6 +1260,7 @@ sub make_dirs
 	    print "compiling $srcfile\n" if $verbose;
 	    if ($self->make_component(script_file=>$srcfile, object_text=>\$objText, error=>\$errmsg)) {
 		$self->write_object_file(object_file=>$objfile, object_text=>$objText);
+		print $relfh $compPath, "\n" if defined $reload_file;
 	    } else {
 		if ($verbose) {
 		    print "error";

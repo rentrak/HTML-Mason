@@ -107,6 +107,47 @@ components. The optional argument specifies the return value from <CODE>Interp::
 
 <P>
 
+<CODE>abort()</CODE> is implemented via <CODE>die()</CODE> and can thus be
+caught by <CODE>eval().</CODE> 
+
+
+<P>
+
+Under the current implementation, any pending <CODE>&lt;%filter&gt;</CODE> sections will not be applied to the output after an abort. This is a known
+bug but there is no easy workaround.
+
+
+<P>
+
+The methods <CODE>aborted</CODE> and <CODE>aborted_value</CODE> return a boolean indicating whether the current request was aborted and the
+argument with which it was aborted, respectively. These would be used, for
+example, after an <CODE>eval()</CODE> returned with a non-empty <CODE>$@</CODE>.
+
+
+<P>
+
+<a name="item_aborted">
+
+<DT><STRONG><A NAME="item_aborted">aborted
+
+</A></STRONG><DD>
+Returns true or undef indicating whether the current request was aborted
+with <CODE>abort</CODE>.
+
+
+<P>
+
+<a name="item_aborted_value">
+
+<DT><STRONG><A NAME="item_aborted_value">aborted_value
+
+</A></STRONG><DD>
+Returns the argument passed to <CODE>abort</CODE> when the request was aborted. Returns undef if the request was not aborted
+or was aborted without an argument.
+
+
+<P>
+
 <a name="item_base_comp">
 
 <DT><STRONG><A NAME="item_base_comp">base_comp
@@ -296,20 +337,24 @@ content normally. Finally <CODE>$m-&gt;cache_self</CODE> returns the list (retva
 <DT><STRONG><A NAME="item_caller_args">caller_args
 
 </A></STRONG><DD>
-Returns a list reference of the arguments passed by the component at the
-specified stack level. e.g.
+Returns the arguments passed by the component at the specified stack level.
+Use a positive argument to count from the current component and a negative
+argument to count from the component at the bottom of the stack. e.g.
 
 
 <P>
 
 <PRE>    $m-&gt;caller_args(0)   # arguments passed to current component
-    $m-&gt;caller_args(-1)  # arguments passed to top-level component
+    $m-&gt;caller_args(1)   # arguments passed to component that called us
+    $m-&gt;caller_args(-1)  # arguments passed to first component executed
 </PRE>
 
 <P>
 
-<PRE>    my %top_args = @{$m-&gt;caller_args(-1)}    # get top-level arguments as a hash
-</PRE>
+When called in scalar context, a hash reference is returned. When called in
+list context, a list of arguments (which may be assigned to a hash) is
+returned.
+
 
 <P>
 
@@ -321,14 +366,17 @@ specified stack level. e.g.
 With no arguments, returns the current component stack as a list of
 component objects, starting with the current component and ending with the
 top-level component. With one numeric argument, returns the component
-object at that index in the list. e.g.
+object at that index in the list. Use a positive argument to count from the
+current component and a negative argument to count from the component at
+the bottom of the stack. e.g.
 
 
 <P>
 
-<PRE>    $m-&gt;callers(0)      # current component
-    $m-&gt;callers(1)      # component that called us
-    $m-&gt;callers(-1)     # top-level component
+<PRE>    my @comps = $m-&gt;callers   # all components
+    $m-&gt;callers(0)            # current component
+    $m-&gt;callers(1)            # component that called us
+    $m-&gt;callers(-1)           # first component executed
 </PRE>
 
 <P>
@@ -453,6 +501,11 @@ remainder of the URI or <CODE>Interp::exec</CODE> path when the dhandler directo
 
 <P>
 
+<CODE>dhandler_arg</CODE> may be called from any component in the request, not just the dhandler.
+
+
+<P>
+
 <a name="item_fetch_comp">
 
 <DT><STRONG><A NAME="item_fetch_comp_comp_path_">fetch_comp (comp_path)
@@ -469,8 +522,22 @@ exists.
 <DT><STRONG><A NAME="item_fetch_next">fetch_next
 
 </A></STRONG><DD>
-Returns the next component in the content wrapping chain; usually called
-from an autohandler. See the <A HREF="././Devel.html#autohandlers">autohandlers</A> section of the <EM>Component Developer's Guide</EM> for usage and examples.
+Returns the next component in the content wrapping chain, or undef if there
+is no next component. Usually called from an autohandler. See the <A HREF="././Devel.html#autohandlers">autohandlers</A> section of the <EM>Component Developer's
+Guide</EM> for usage and examples.
+
+
+<P>
+
+<a name="item_fetch_next_all">
+
+<DT><STRONG><A NAME="item_fetch_next_all">fetch_next_all
+
+</A></STRONG><DD>
+Returns a list of the remaining components in the content wrapping chain.
+Usually called from an autohandler. See the
+<A HREF="././Devel.html#autohandlers">autohandlers</A> section of the <EM>Component Developer's Guide</EM>
+for usage and examples.
 
 
 <P>
@@ -586,6 +653,29 @@ day into the future.
 
 <P>
 
+<a name="item_top_args">
+
+<DT><STRONG><A NAME="item_top_args">top_args
+
+</A></STRONG><DD>
+Returns the arguments originally passed to the top level component. When
+called in scalar context, a hash reference is returned. When called in list
+context, a list of arguments (which may be assigned to a hash) is returned.
+
+
+<P>
+
+<a name="item_top_comp">
+
+<DT><STRONG><A NAME="item_top_comp">top_comp
+
+</A></STRONG><DD>
+Returns the component originally called in the request. Note: because of
+autohandlers this may or may not be the first component executed.
+
+
+<P>
+
 </DL>
 <P>
 <HR>
@@ -638,8 +728,7 @@ method is a fatal error. See the <A HREF="././ApacheHandler.html#">HTML::Mason::
 <H1><A NAME="author">AUTHOR
 
 </A></H1>
-Jonathan Swartz, <A
-HREF="MAILTO:swartz@transbay.net">swartz@transbay.net</A>
+Jonathan Swartz, <A HREF="MAILTO:swartz@pobox.com">swartz@pobox.com</A>
 
 
 <P>

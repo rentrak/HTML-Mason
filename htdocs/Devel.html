@@ -173,14 +173,6 @@ through these examples. Other component examples can be found in the <CODE>sampl
 <H1><A NAME="how_to_use_this_manual">HOW TO USE THIS MANUAL
 
 </A></H1>
-This manual has grown a bit too large over time. It will eventually split
-into at least two documents (tutorial and reference manual). I've tried to
-keep related sections together, but this creates a non-optimal order for
-beginners.
-
-
-<P>
-
 If you are just learning Mason and want to get started quickly, I recommend
 the following sections:
 
@@ -215,7 +207,7 @@ o <A HREF="#passing_parameters">Passing Parameters</A>
 
 <P>
 
-o <A HREF="#initialization_and_cleanup">Initialization and Cleanup</A> (mainly &lt;%init&gt;)
+o <A HREF="#initialization_and_cleanup">Initialization and Cleanup</A> (mainly <CODE>&lt;%init&gt;</CODE>)
 
 
 <P>
@@ -353,8 +345,7 @@ After 12 pm, the output of this component is:
 
 This short example demonstrates the three primary ``in-line'' Perl
 sections. In-line sections are generally embedded within HTML and execute
-in the order they appear. Other sections (&lt;%init&gt;, &lt;%args&gt;,
-etc.) are tied to component events like initialization, cleanup, and
+in the order they appear. Other sections (<CODE>&lt;%init&gt;</CODE>, <CODE>&lt;%args&gt;</CODE>, etc.) are tied to component events like initialization, cleanup, and
 argument definition.
 
 
@@ -387,16 +378,15 @@ Lines beginning with a '%' character are treated as Perl.
 <LI><STRONG><A NAME="item_">
 
 </A></STRONG>
-Multiline blocks of Perl code can be inserted with the &lt;%perl&gt; ..
-&lt;/%perl&gt; tag. The enclosed text is executed as Perl and the return
-value, if any, is discarded.
+Multiline blocks of Perl code can be inserted with the <CODE>&lt;%perl&gt;</CODE>
+.. <CODE>&lt;/%perl&gt;</CODE> tag. The enclosed text is executed as Perl and the return value, if any, is
+discarded.
 
 
 <P>
 
-The &lt;%perl&gt; tag is case-insensitive. It may appear anywhere in the
-text, and may span any number of lines. &lt;%perl&gt; blocks cannot be
-nested inside one another.
+The <CODE>&lt;%perl&gt;</CODE> tag is case-insensitive. It may appear anywhere in the text, and may span
+any number of lines. <CODE>&lt;%perl&gt;</CODE> blocks cannot be nested inside one another.
 
 
 <P>
@@ -985,7 +975,7 @@ hostname to relative image URLs:
 <PRE>    &lt;% $m-&gt;call_next %&gt;
     
     &lt;%filter&gt;
-    s{(&lt;img\s+src=\&quot;)/} {$1http://images.mysite.com}ig;
+    s{(&lt;img\s+src=\&quot;)/} {$1http://images.mysite.com/}ig;
     &lt;/%filter&gt;
 </PRE>
 
@@ -1003,10 +993,9 @@ suppress some original arguments or if you want to use <CODE>$m-&gt;scomp</CODE>
 What happens if more than one autohandler applies to a page? Prior to
 version 0.85, only the most specific autohandler would execute. In 0.85 and
 beyond each autohandler gets a chance to run. The top-most autohandler runs
-first; each $m-&gt;call_next transfers control to the next autohandler and
-finally to the originally called component. This allows you, for example,
-to combine general site-wide templates and more specific section-based
-templates.
+first; each <CODE>$m-&gt;call_next</CODE> transfers control to the next autohandler and finally to the originally
+called component. This allows you, for example, to combine general
+site-wide templates and more specific section-based templates.
 
 
 <P>
@@ -1121,9 +1110,8 @@ can be accessed in two ways.
 
 <P>
 
-1. Declared named arguments: Components can define a
-<CODE>&lt;%args%&gt;</CODE> section listing argument names, types, and default values, with optional
-comments. For example:
+1. Declared named arguments: Components can define an
+<CODE>&lt;%args&gt;</CODE> section listing argument names, types, and default values. For example:
 
 
 <P>
@@ -1132,7 +1120,12 @@ comments. For example:
     $a       
     @b       # a comment
     %c
-    $d=&gt;5    # another comment
+</PRE>
+
+<P>
+
+<PRE>    # another comment
+    $d=&gt;5
     @e=&gt;('foo','baz')
     %f=&gt;(joe=&gt;1,bob=&gt;2)
     &lt;/%args&gt;
@@ -1149,11 +1142,27 @@ scoped (``my'') variables in the rest of the component.
 
 <P>
 
+Arguments are separated by one or more newlines. Comments may be used at
+the end of a line or on their own line.
+
+
+<P>
+
+Only valid Perl variable names may be used in <CODE>&lt;%args&gt;</CODE>
+sections. Parameters with non-valid variable names cannot be pre-declared
+and must be fetched manually out of the <CODE>%ARGS</CODE> hash (see
+below). One common example of undeclarable parameters are the
+``button.x/button.y'' parameters sent for a form submit.
+
+
+<P>
+
 2. <CODE>%ARGS</CODE> hash: This variable, always available, contains all
-of the parameters passed to the component. It is especially handy when
-there are many parameters or when parameter names are determined at
-run-time. <CODE>%ARGS</CODE> can be used whether or not you have a
-&lt;%args&gt; ... &lt;/%args&gt; section.
+of the parameters passed to the component (whether or not they were
+declared). It is especially handy for dealing with large numbers of
+parameters, dynamically named parameters, or parameters with non-valid
+variable names. <CODE>%ARGS</CODE> can be used with or without an
+<CODE>&lt;%args&gt;</CODE> section, and its contents are unrelated to what you have declared in <CODE>&lt;%args&gt;</CODE>.
 
 
 <P>
@@ -1217,7 +1226,7 @@ parameters.
 <P>
 
 <PRE>  In a URL: /my/URL?grades=Alice&amp;grades=92&amp;grades=Bob&amp;grades=87
-  In an component call: &lt;&amp; /my/comp', grades =&gt; {Alice =&gt; 92, Bob =&gt; 87} &amp;&gt;
+  In an component call: &lt;&amp; /my/comp, grades =&gt; {Alice =&gt; 92, Bob =&gt; 87} &amp;&gt;
   In the called component, if there is a declared argument named...
     $grades, then $grades will equal {Alice =&gt; 92, Bob =&gt; 87}
     @grades, then @grades will equal ('Alice', 92, 'Bob', 87)
@@ -1253,7 +1262,7 @@ and access them as usual through Perl's <CODE>@_</CODE> array:
 
 <P>
 
-In this case no &lt;%args&gt; section is necessary.
+In this case no <CODE>&lt;%args&gt;</CODE> section is necessary.
 
 
 <P>
@@ -1261,7 +1270,7 @@ In this case no &lt;%args&gt; section is necessary.
 We generally recommend named parameters for the benefits of readability,
 syntax checking, and default value automation. However using
 <CODE>@_</CODE> may be convenient for very small components, especially
-subcomponents created with &lt;%def&gt;.
+subcomponents created with <CODE>&lt;%def&gt;</CODE>.
 
 
 <P>
@@ -1419,10 +1428,10 @@ section:
 <H2><A NAME="e_lt_sharede_gt_">&lt;%shared&gt;
 
 </A></H2>
-As with &lt;%once&gt;, variables declared in this section can be seen in
-all of a component's code: the main component, subcomponents, and methods.
-However, the code runs once per request (whenever the component is used)
-and its variables last only til the end of the request.
+As with <CODE>&lt;%once&gt;</CODE>, variables declared in this section can be seen in all of a component's
+code: the main component, subcomponents, and methods. However, the code
+runs once per request (whenever the component is used) and its variables
+last only til the end of the request.
 
 
 <P>
@@ -1433,21 +1442,20 @@ more subcomponents or methods. See <A HREF="././Devel.html#object_oriented_techn
 
 <P>
 
-Avoid using &lt;%shared&gt; for side-effect code that needs to run at a
-predictable time during page generation. You may assume only that
-&lt;%shared&gt; runs just before the first code that needs it and runs at
-most once per request. &lt;%init&gt; offers more a predictable execution
-time.
+Avoid using <CODE>&lt;%shared&gt;</CODE> for side-effect code that needs to run at a predictable time during page
+generation. You may assume only that
+<CODE>&lt;%shared&gt;</CODE> runs just before the first code that needs it and runs at most once per
+request. <CODE>&lt;%init&gt;</CODE> offers more a predictable execution time.
 
 
 <P>
 
-Any component with a &lt;%shared&gt; section incurs an extra performance
-penalty, because (as currently implemented) Mason must recreate its
-anonymous subroutines the first time each new request uses the component.
-The exact penalty varies between systems and for most applications will be
-unnoticeable. However, one should avoid using &lt;%shared&gt; when patently
-unnecessary, e.g. when an &lt;%init&gt; would work as well.
+Any component with a <CODE>&lt;%shared&gt;</CODE> section incurs an extra performance penalty, because (as currently
+implemented) Mason must recreate its anonymous subroutines the first time
+each new request uses the component. The exact penalty varies between
+systems and for most applications will be unnoticeable. However, one should
+avoid using
+<CODE>&lt;%shared&gt;</CODE> when patently unnecessary, e.g. when an <CODE>&lt;%init&gt;</CODE> would work as well.
 
 
 <P>
@@ -1463,8 +1471,8 @@ unnecessary, e.g. when an &lt;%init&gt; would work as well.
 
 </A></H2>
 Each instance of this section creates a <EM>subcomponent</EM> embedded inside the current component. Inside you may place anything that a
-regular component contains, with the exception of &lt;%def&gt;,
-&lt;%method&gt;, &lt;%once&gt;, and &lt;%shared&gt; tags.
+regular component contains, with the exception of <CODE>&lt;%def&gt;</CODE>, <CODE>&lt;%method&gt;</CODE>,
+<CODE>&lt;%once&gt;</CODE>, and <CODE>&lt;%shared&gt;</CODE> tags.
 
 
 <P>
@@ -1492,9 +1500,8 @@ file-based components and also call any of your ``sibling'' subcomponents.
 <P>
 
 The lexical scope of a subcomponent is separate from the main component.
-However a subcomponent can declare its own &lt;%args&gt; section and have
-relevant values passed in. You can also use a &lt;%shared&gt; section to
-declare variables visible from both scopes.
+However a subcomponent can declare its own <CODE>&lt;%args&gt;</CODE> section and have relevant values passed in. You can also use a <CODE>&lt;%shared&gt;</CODE>
+section to declare variables visible from both scopes.
 
 
 <P>
@@ -1666,11 +1673,10 @@ in a cleaner HTML environment.
 <H2><A NAME="_lt_filter_gt_section">&lt;%filter&gt; section
 
 </A></H2>
-The &lt;%filter&gt; section allows you to arbitrarily filter the output of
-the current component. Upon entry to this code, <CODE>$_</CODE> contains
-the component output, and you are expected to modify it in place. The code
-has access to component arguments and can invoke subroutines, call other
-components, etc.
+The <CODE>&lt;%filter&gt;</CODE> section allows you to arbitrarily filter the output of the current
+component. Upon entry to this code, <CODE>$_</CODE> contains the component
+output, and you are expected to modify it in place. The code has access to
+component arguments and can invoke subroutines, call other components, etc.
 
 
 <P>
@@ -1943,7 +1949,7 @@ The current valid flags are
 <P>
 
 <PRE>    h - escape for HTML ('&lt;' =&gt; '&amp;lt;', etc.)
-    u - escape for URL (':' =&gt; '%3A', etc.)
+    u - escape for URL query parameter (':' =&gt; '%3A', etc.) - all chars but [a-zA-Z0-9_.-]
     n - turn off default escape flags
 </PRE>
 
@@ -1967,6 +1973,12 @@ would use the <CODE>n</CODE> flag to turn off HTML-escaping for a specific expre
 
 <PRE>    &lt;% $html_block |n %&gt;
 </PRE>
+
+<P>
+
+Future Mason versions will allow user-defined and multi-letter escape
+flags.
+
 
 <P>
 
@@ -2160,8 +2172,8 @@ time, pass one of these options to the 'store' action.
 
 <EM>expire_in</EM>: takes a relative expiration time of the form ``&lt;num&gt;&lt;unit&gt;'',
 where &lt;num&gt; is a positive number and &lt;unit&gt; is one of seconds,
-minutes, hours, days, or weeks, or any abbreviation thereof. E.g.
-``10min'', ``1hour''.
+minutes, hours, days, weeks, months, years, or any reasonable abbreviation
+thereof (m=month, min=minute). E.g. ``10min'', ``1hour''.
 
 
 <P>
@@ -2449,7 +2461,7 @@ headers just before sending the first non-whitespace output. Any initial
 whitespace output is buffered up until after headers are sent. This means
 that if you want to affect the headers in stream mode, you must do so
 before any component sends non-whitespace output. Generally this takes
-place in an &lt;%init&gt; section.
+place in an <CODE>&lt;%init&gt;</CODE> section.
 
 
 <P>
@@ -3103,25 +3115,22 @@ upwards, until ultimately an ``attribute not found'' error occurs. Use
 
 </A></H2>
 A component's main body and its methods occupy separate lexical scopes.
-Variables declared, say, in the &lt;%init&gt; section of the main component
-cannot be seen from methods.
+Variables declared, say, in the <CODE>&lt;%init&gt;</CODE> section of the main component cannot be seen from methods.
 
 
 <P>
 
-To share variables, declare them either in the &lt;%once&gt; or
-&lt;%shared&gt; section. Both sections have an all-inclusive scope. The
-&lt;%once&gt; section runs once when the component loads; its variables are
-persistent for the lifetime of the component. The &lt;%shared&gt; section
-runs once per request (when needed), just before any code in the component
-runs; its variables last only til the end of the request.
+To share variables, declare them either in the <CODE>&lt;%once&gt;</CODE> or <CODE>&lt;%shared&gt;</CODE>
+section. Both sections have an all-inclusive scope. The <CODE>&lt;%once&gt;</CODE>
+section runs once when the component loads; its variables are persistent
+for the lifetime of the component. The <CODE>&lt;%shared&gt;</CODE> section runs once per request (when needed), just before any code in the
+component runs; its variables last only til the end of the request.
 
 
 <P>
 
 In the following example, various sections of code require information
-about the logged-in user. We use a &lt;%shared&gt; section to fetch these
-in a single request.
+about the logged-in user. We use a <CODE>&lt;%shared&gt;</CODE> section to fetch these in a single request.
 
 
 <P>
@@ -3149,9 +3158,8 @@ in a single request.
 
 <P>
 
-&lt;%shared&gt; presents a good alternative to &lt;%init&gt; when data is
-needed across multiple scopes. Outside these situations, &lt;%init&gt; is
-preferred for its slightly greater speed and predictable execution model.
+<CODE>&lt;%shared&gt;</CODE> presents a good alternative to <CODE>&lt;%init&gt;</CODE> when data is needed across multiple scopes. Outside these situations, <CODE>&lt;%init&gt;</CODE> is preferred for its slightly greater speed and predictable execution
+model.
 
 
 <P>
@@ -3348,8 +3356,7 @@ the object from %ARGS:
 <H1><A NAME="author">AUTHOR
 
 </A></H1>
-Jonathan Swartz, <A
-HREF="MAILTO:swartz@transbay.net">swartz@transbay.net</A>
+Jonathan Swartz, <A HREF="MAILTO:swartz@pobox.com">swartz@pobox.com</A>
 
 
 <P>

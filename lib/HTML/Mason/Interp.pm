@@ -1,4 +1,4 @@
-# Copyright (c) 1998-99 by Jonathan Swartz. All rights reserved.
+# Copyright (c) 1998-2000 by Jonathan Swartz. All rights reserved.
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
@@ -243,13 +243,8 @@ sub process_comp_path
 {
     my ($self,$comp_path,$dir_path) = @_;
 
-    if ($comp_path !~ m@^/@) {
-	$comp_path = $dir_path . ($dir_path eq "/" ? "" : "/") . $comp_path;
-    }
-
-    $comp_path =~ s@/[^/]+/\.\.@@;
-    $comp_path =~ s@/\./@/@;
-    return $comp_path;
+    $comp_path = "$dir_path/$comp_path" if $comp_path !~ m@^/@;
+    return 'HTML::Mason::Tools'->mason_canonpath($comp_path);
 }
 
 #

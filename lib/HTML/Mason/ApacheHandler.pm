@@ -1,4 +1,4 @@
-# Copyright (c) 1998-99 by Jonathan Swartz. All rights reserved.
+# Copyright (c) 1998-2000 by Jonathan Swartz. All rights reserved.
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
@@ -206,7 +206,7 @@ sub _initialize {
 		my @strings = ();
 
 		push (@strings,
-		      qq(<FONT size="+2"><B>$self->apache_status_title</B></FONT><BR><BR>),
+		      qq(<FONT size="+2"><B>) . $self->apache_status_title . qq(</B></FONT><BR><BR>),
 		      $self->interp_status);
 
 		return \@strings;     # return an array ref
@@ -284,6 +284,10 @@ sub handle_request {
     my $interp = $self->interp;
     $self->{request_number}++;
 
+    if (lc($apreq->dir_config('Filter')) eq 'on') {
+	$apreq = $apreq->filter_register;
+    }
+
     #
     # Construct (and truncate if necessary) the request to log at start
     #
@@ -326,27 +330,31 @@ sub handle_request {
 
     if ($err) {
 	#
-	# If first component was not found, return 404. In case of
-	# POST we must trick Apache into not reading POST content
+	# If first component was not found, return NOT_FOUND. In case
+	# of POST we must trick Apache into not reading POST content
 	# again. Wish there were a more standardized way to do this...
+	#
+	# This $err_code stuff is really only used to communicate found
+	# errors; it will be replaced with exceptions
 	#
 	if (defined($err_code) and $err_code eq 'top_not_found') {
 	    if ($apreq->method eq 'POST') {
 		$apreq->method('GET');
 		$apreq->headers_in->unset('Content-length');
 	    }
+	    
+	    # Log the error the same way that Apache does (taken from default_handler in http_core.c)
+	    $apreq->log_error("[Mason] File does not exist: ",$apreq->filename . ($apreq->path_info ? $apreq->path_info : ""));
 	    return NOT_FOUND;
 	}
 
 	#
 	# Take out date stamp and (eval nnn) prefix
-	# Add server name, uri, referer, and agent
+	# Add server name, uri
 	#
 	$err =~ s@^\[[^\]]*\] \(eval [0-9]+\): @@mg;
 	$err = html_escape($err);
-	my $referer = $apreq->header_in('Referer') || '<none>';
-	my $agent = $apreq->header_in('User-Agent') || '';
-	$err = sprintf("while serving %s %s (referer=%s, agent=%s)\n%s",$apreq->server->server_hostname,$apreq->uri,$referer,$agent,$err);
+	$err = sprintf("while serving %s %s\n%s",$apreq->server->server_hostname,$apreq->uri,$err);
 
 	if ($self->error_mode eq 'fatal') {
 	    die ("System error:\n$err\n");
@@ -437,7 +445,7 @@ BEGIN {
 	close $tmonout or die "can't close file: tmon.out: $!";
         close $tmontmp or die "can't close file: tmon.tmp: $!";
 	copy('tmon.tmp' => 'tmon.out') or die "$!";
-	unlink('tmon.tmp') or warn "can't remove file: tmon.tmp: $!"
+	unlink('tmon.tmp') or warn "can't remove file: tmon.tmp: $!";
         print STDERR "\nRunning dprofpp ...\n";
 	exec('dprofpp') or die "Couldn't execute dprofpp";
     }
@@ -531,7 +539,14 @@ sub handle_request_1
     # If filename is a directory, then either decline or simply reset
     # the content type, depending on the value of decline_dirs.
     #
-    if (-d $r->finfo) {
+    # ** We should be able to use $r->finfo here, but finfo is broken
+    # in some versions of mod_perl (e.g. see Shane Adams message on
+    # mod_perl list on 9/10/00)
+    #
+    my $is_dir = -d $r->filename;
+    my $is_file = -f _;
+
+    if ($is_dir) {
 	if ($self->decline_dirs) {
 	    return DECLINED;
 	} else {
@@ -544,19 +559,23 @@ sub handle_request_1
     # (mainly for dhandlers).
     #
     my $pathname = $r->filename;
-    $pathname .= $r->path_info unless -f $r->finfo;
+    $pathname .= $r->path_info unless $is_file;
 
     #
-    # Compute the component path via the resolver.
+    # Compute the component path via the resolver. Return NOT_FOUND on failure.
     #
     my $comp_path = $interp->resolver->file_to_path($pathname,$interp);
-    return NOT_FOUND unless $comp_path;
+    unless ($comp_path) {
+	$r->warn("[Mason] Cannot resolve file to component: $pathname (is file outside component root?)");
+	return NOT_FOUND;
+    }
 
     #
-    # Decline if file does not pass top level predicate.
+    # Return NOT_FOUND if file does not pass top level predicate.
     #
-    if (-f $r->finfo and defined($self->{top_level_predicate})) {
-	return NOT_FOUND unless $self->{top_level_predicate}->($r->filename);
+    if ($is_file and defined($self->top_level_predicate) and !$self->top_level_predicate->($r->filename)) {
+	$r->warn("[Mason] File fails top level predicate: ".$r->filename);
+	return NOT_FOUND;
     }
 
     #
@@ -687,15 +706,18 @@ sub _cgi_args
 
 #
 # Get %args hash via Apache::Request package. As a side effect, assign the
-# new Apache::Request package back to $r.
+# new Apache::Request package back to $r, unless $r is already an Apache::Request.
 #
 sub _mod_perl_args
 {
     my ($self, $rref, $request) = @_;
 
-    my $apr = Apache::Request->new($$rref);
-    $$rref = $apr;
-
+    my $apr = $$rref;
+    unless (UNIVERSAL::isa($apr, 'Apache::Request')) {
+	$apr = Apache::Request->new($apr);
+	$$rref = $apr;
+    }
+    
     return unless $apr->param;
 
     my %args;

@@ -1,4 +1,4 @@
-# Copyright (c) 1998-99 by Jonathan Swartz. All rights reserved.
+# Copyright (c) 1998-2000 by Jonathan Swartz. All rights reserved.
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
@@ -102,7 +102,7 @@ sub access_data_cache
 	} elsif (exists($options{expire_in})) {
 	    my $delta = $options{expire_in};
 	    my $deltaTime = eval(date_delta_to_secs($delta));
-	    die "cache: invalid expire_in value '$options{expire_in}' - must be of the form <num><unit>, where <unit> is one of seconds, minutes, hours, days, weeks, months or an abbreviation thereof\n" if !$deltaTime;
+	    die "cache: invalid expire_in value '$options{expire_in}' - must be of the form <num><unit>, where <unit> is one of seconds, minutes, hours, days, weeks, months, years or an abbreviation thereof\n" if !$deltaTime;
 	    $expireTime = time() + $deltaTime;
 	}
 

@@ -1,4 +1,4 @@
-# Copyright (c) 1998-99 by Jonathan Swartz. All rights reserved.
+# Copyright (c) 1998-2000 by Jonathan Swartz. All rights reserved.
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
@@ -114,7 +114,7 @@ sub date_delta_to_secs
 #
 sub dumper_method {
     my ($d) = @_;
-    return ($HTML::Mason::Config{use_data_dumper_xs} ? $d->Dumpxs : $d->Dumper);
+    return ($HTML::Mason::Config{use_data_dumper_xs} ? $d->Dumpxs : $d->Dump);
 }
 
 #
@@ -152,6 +152,22 @@ sub compress_path
     for ($path) {
 	s@^/@@;
 	s/([^\w\.\-\~])/sprintf('+%02x', ord $1)/eg;
+    }
+    return $path;
+}
+
+sub mason_canonpath {
+    # Just like File::Spec::canonpath, but we're having trouble
+    # getting a patch through to them.
+    shift;
+    my $path = shift;
+    $path =~ s|/+|/|g unless($^O eq 'cygwin');       # xx////yy  -> xx/yy
+    $path =~ s|(/\.)+/|/|g;                          # xx/././yy -> xx/yy
+    {
+	$path =~ s|^(\./)+||s unless $path eq "./";  # ./xx      -> xx
+	$path =~ s|^/(\.\./)+|/|s;                   # /../../xx -> xx
+	$path =~ s|/\Z(?!\n)|| unless $path eq "/";  # xx/       -> xx
+	$path =~ s|[^/]+/\.\./|| && redo;            # /xx/../yy -> /yy
     }
     return $path;
 }
