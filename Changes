@@ -5,24 +5,57 @@ available at http://www.masonhq.com/changes.html.
 
 ** denotes an incompatible change
 
-1.09_02
+1.10
+
+      This is a big release and there are a number of backwards
+      incompatibilities with version 1.05 and earlier.  Please make sure to
+      read the UPGRADE document, which covers these in more detail.
+
+      [ ENHANCEMENTS ]
+
+    - Mason can always detect when an object file was compiled with an
+      incompatible compiler/lexer, even if the object file contains syntax
+      errors.
+    - Method and subcomponent blocks with no name (<%method>) were caught
+      as an error, but the error message was very confusing.  This has been
+      fixed.
+    - Added HTML::Mason::Subclassing, documentation on subclassing Mason
+      objects.
+    - Added documentation on the interaction between <%once> sections and
+      preloading components.
+    - Mason automatically calls $m->clear_buffer when $m->decline is
+      called.
+
+      [ BUG FIXES ]
+
+    - Fixed a bug in the lexer that made it think it had found a Perl-line
+      where none existed.
+    - Fixed a bug related to handling of parameters in httpd.conf files.
+      This was only noticeable if you attempted to provide a subclass of one
+      of Mason's classes (like your own Request class) that took its own
+      parameters.  Mason was not recognizing those additional parameters as
+      valid.
+    - Improved line number reporting from earlier releases.  Line numbers
+      are now reported properly for errors in any type of block.
+
+1.09_02  June 4, 2002
 
       [ INCOMPATIBLE CHANGES ]
 
-    - The Component class's create_time method has been renamed as
+    - ** The Component class's create_time method has been renamed as
       load_time.
-    - Relative component paths in the $interp->exec() method are no longer
-      resolved.  All component paths must be absolute.  Relative path
+    - ** Relative component paths in the $interp->exec() method are no
+      longer resolved.  All component paths must be absolute.  Relative path
       resolution was added in 1.09_01 so this change is unlikely to affect
       most users.
-    - Removed option to expire a component from the Apache::Status page.
-      This option made little sense since components are cached per-process,
-      and there's no guarantee that any particular process has cached a
-      given component.  Again, this is a feature added in 1.09_01 so this
-      change should not cause most people any problems.
-    - Renamed CGIHandler's handle_cgi method to handle_comp.
-    - Removed the dev_dirs feature from CGIHandler.
-    - The default component root when not using ApacheHandler or
+    - ** Removed option to expire a component from the Apache::Status
+      page.  This option made little sense since components are cached
+      per-process, and there's no guarantee that any particular process has
+      cached a given component.  Again, this is a feature added in 1.09_01
+      so this change should not cause most people any problems.
+    - ** Renamed CGIHandler's handle_cgi method to handle_comp.
+    - ** Removed the dev_dirs feature from CGIHandler.
+    - ** The default component root when not using ApacheHandler or
       CGIHandler is now the current working directory at the time the
       HTML::Mason::Resolver::File class is loaded.
 
@@ -67,10 +100,6 @@ available at http://www.masonhq.com/changes.html.
       already.
 
 1.09_01  April 4, 2002
-
-      This is a big release and there are a lot of backwards
-      incompatibilities.  Please make sure to read the UPGRADE document,
-      which covers these in more detail.
 
       [ INCOMPATIBLE CHANGES ]
 
@@ -117,9 +146,6 @@ available at http://www.masonhq.com/changes.html.
     - ** The MasonMultipleConfig httpd.conf parameter has been removed.
       Mason can now figure this out by itself.
     - ** The HTML::Mason::Interp time() method has gone away.
-    - ** The base_comp is now changed for each component call, unless that
-      component call uses a component object for its first argument, or the
-      call starts with SELF: or PARENT:.
 
       [ ENHANCEMENTS AND NEW FEATURES ]
 
@@ -162,6 +188,12 @@ available at http://www.masonhq.com/changes.html.
       objects.  The Interp's new method will accept constructor parameter
       for both the Resolver and Request objects.
     - The ApacheHandler args_method is now a per-object parameter.
+    - Mason is now much smarter about recompiling components.  In general,
+      it can detect if compiler options for a compiled component are
+      different from the current options, and will recompile the component
+      if necessary.  The exception to this is that with compiler parameters
+      which take callbacks (such as preprocess), Mason can only tell if such
+      a parameter is present, not whether the actual callback has changed.
 
       [ BUG FIXES ]
 
@@ -188,6 +220,15 @@ available at http://www.masonhq.com/changes.html.
       way as constructor parameters.
     - The component requested and the arguments it was passed are now
       properties of the Request object.
+
+1.05  April 30, 2001
+
+    - Fixed improper handling of parameters for non-GET/POST
+      request. (submitted by Radu Greab)
+    - Fixed Interp to accept a resolver object param. (reported by Bojan
+      Jovanovic)
+    - Fixed infinite loop when calling $m->decline with // in dhandler
+      arg. (reported by Baldur Kristinsson)
 
 1.04  October 30, 2001
 

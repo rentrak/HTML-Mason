@@ -1,0 +1,173 @@
+<HTML>
+<HEAD>
+<TITLE>HTML::Mason::Compiler - Compile Mason component source</TITLE>
+<LINK REV="made" HREF="mailto:perl@packages.debian.org">
+</HEAD>
+
+<BODY>
+
+<A NAME="__index__"></A>
+<!-- INDEX BEGIN -->
+
+<UL>
+
+	<LI><A HREF="#name">NAME</A></LI>
+	<LI><A HREF="#synopsis">SYNOPSIS</A></LI>
+	<LI><A HREF="#description">DESCRIPTION</A></LI>
+	<LI><A HREF="#methods">METHODS</A></LI>
+	<UL>
+
+		<LI><A HREF="#compilation callbacks">Compilation Callbacks</A></LI>
+	</UL>
+
+	<LI><A HREF="#see also">SEE ALSO</A></LI>
+</UL>
+<!-- INDEX END -->
+
+<HR>
+<P>
+<H1><A NAME="name">NAME</A></H1>
+<P>HTML::Mason::Compiler - Compile Mason component source</P>
+<P>
+<HR>
+<H1><A NAME="synopsis">SYNOPSIS</A></H1>
+<PRE>
+  package My::Funky::Compiler;</PRE>
+<PRE>
+  use base qw(HTML::Mason::Compiler);</PRE>
+<P>
+<HR>
+<H1><A NAME="description">DESCRIPTION</A></H1>
+<P>The compiler starts the compilation process by calling its lexer's
+<CODE>lex</CODE> method and passing itself as the <CODE>compiler</CODE> parameter.  The
+lexer then calls various methods in the compiler as it parses the
+component source.</P>
+<P>
+<HR>
+<H1><A NAME="methods">METHODS</A></H1>
+<P>There are several methods besides the compilation callbacks below that
+a Compiler subclass needs to implement.</P>
+<DL>
+<DT><STRONG><A NAME="item_compile">compile(comp_source =&gt; &lt;string&gt;, name =&gt; &lt;string&gt;, comp_class =&gt; &lt;string&gt;)</A></STRONG><BR>
+<DD>
+The ``comp_class'' parameter may be ignored by the compiler.
+<P></P>
+<DT><STRONG><A NAME="item_object_id">object_id</A></STRONG><BR>
+<DD>
+This method should return a unique id for the given compiler object.
+This is used by the interpreter when loading previously compiled
+objects in order to determine whether or not the object should be
+re-compiled.
+<P></P></DL>
+<P>
+<H2><A NAME="compilation callbacks">Compilation Callbacks</A></H2>
+<P>These are methods called by the Lexer while processing a component
+source.  You may wish to override some of these methods if you're
+implementing your own custom Compiler class.</P>
+<DL>
+<DT><STRONG><A NAME="item_start_component"><CODE>start_component()</CODE></A></STRONG><BR>
+<DD>
+This method is called by the Lexer when it starts processing a
+component.
+<P></P>
+<DT><STRONG><A NAME="item_end_component"><CODE>end_component()</CODE></A></STRONG><BR>
+<DD>
+This method is called by the Lexer when it finishes processing a
+component.
+<P></P>
+<DT><STRONG><A NAME="item_start_block">start_block(block_type =&gt; &lt;string&gt;)</A></STRONG><BR>
+<DD>
+This method is called by the Lexer when it encounters an opening Mason
+block tag like <CODE>&lt;%perl&gt;</CODE> or <CODE>&lt;%args&gt;</CODE>.  Its main purpose is
+to keep track of the nesting of different kinds of blocks within each
+other.  The type of block (``init'', ``once'', etc.) is passed via the
+``block_type'' parameter.
+<P></P>
+<DT><STRONG>start_block(block_type =&gt; &lt;string&gt;)</STRONG><BR>
+<DD>
+This method is called by the Lexer when it encounters a closing Mason
+block tag like <CODE>&lt;/%perl&gt;</CODE> or <CODE>&lt;/%args&gt;</CODE>.  Like
+<A HREF="#item_start_block"><CODE>start_block()</CODE></A>, its main purpose is to help maintain syntactic
+integrity.
+<P></P>
+<LI>
+Several compiler methods like <CODE>doc_block()</CODE>, <CODE>text_block()</CODE>, and
+<CODE>raw_block()</CODE> are called by the Lexer after <A HREF="#item_start_block"><CODE>start_block()</CODE></A> when it
+encounters blocks of certain types.  These methods actually do the
+work of putting the body of a block into the compiled data structure.
+<P>The methods that follow this pattern are <CODE>init_block()</CODE>,
+<CODE>perl_block()</CODE>, <CODE>doc_block()</CODE>, <CODE>text_block()</CODE>, and <CODE>raw_block()</CODE>.
+The last method is called for all <CODE>&lt;%once&gt;</CODE>, <CODE>&lt;%cleanup&gt;</CODE>,
+<CODE>&lt;%filter&gt;</CODE>, <CODE>&lt;%init&gt;</CODE>, <CODE>&lt;%perl&gt;</CODE>, and <CODE>&lt;%shared&gt;</CODE>
+blocks.</P>
+<P></P>
+<DT><STRONG><A NAME="item_text">text(text =&gt; &lt;string&gt;)</A></STRONG><BR>
+<DD>
+Inserts the text contained in a <A HREF="#item_text"><CODE>text</CODE></A> parameter into the component
+for verbatim output.
+<P>This is called when the lexer finds plain text in a component.</P>
+<P></P>
+<DT><STRONG><A NAME="item_variable_declaration">variable_declaration( type =&gt; &lt;string&gt;, name =&gt; &lt;string&gt;, default =&gt; &lt;string&gt; )</A></STRONG><BR>
+<DD>
+Inserts a variable declaration from the <CODE>&lt;%args&gt;</CODE> section into
+the component.
+<P>The type will be either ``$'', ``@'', or ``%'', indicating a scalar, array,
+or hash.  The name is the variable name without the leading sigil.
+The default is everything found after the first ``=&gt;'' on an <CODE>&lt;%args&gt;</CODE>
+block line, and may include a comment.</P>
+<P></P>
+<DT><STRONG><A NAME="item_key_value_pair">key_value_pair(block_type =&gt; &lt;string&gt;, key =&gt; &lt;string&gt;, value =&gt; &lt;string&gt;)</A></STRONG><BR>
+<DD>
+Inserts a key-value pair from a <CODE>&lt;%flags&gt;</CODE> or <CODE>&lt;%attr&gt;</CODE>
+section into the component.
+<P>The ``block_type'' parameter will be either ``flags'' or ``attr''.</P>
+<P></P>
+<DT><STRONG><A NAME="item_start_named_block">start_named_block(block_type =&gt; &lt;string&gt;, name =&gt; &lt;name&gt;)</A></STRONG><BR>
+<DD>
+Analogous to <A HREF="#start_block()">start_block()</A>, but starts a ``named'' block 
+(<CODE>&lt;%method&gt;</CODE> or <CODE>&lt;%def&gt;</CODE>).
+<P></P>
+<DT><STRONG><A NAME="item_end_named_block"><CODE>end_named_block()</CODE></A></STRONG><BR>
+<DD>
+Called by the Lexer to end a ``named'' block.
+<P></P>
+<DT><STRONG><A NAME="item_substitution">substitution(substitution =&gt; &lt;string&gt;, escape =&gt; &lt;string&gt;)</A></STRONG><BR>
+<DD>
+Called by the Lexer when it encounters a substitution tag 
+(<CODE>&lt;% ... %&gt;</CODE>).
+<P>The value of the ``escape'' parameter will be everything found after the
+pipe (|) in the substitution tag, and may be more than one character
+such as ``nh''.</P>
+<P></P>
+<DT><STRONG><A NAME="item_component_call">component_call(call =&gt; &lt;string&gt;)</A></STRONG><BR>
+<DD>
+Called by the Lexer when it encounters a component call tag without
+embedded content (<CODE>&lt;&amp; ... &amp;&gt;</CODE>).
+<P>The ``call'' parameter contains the entire contents of the tag.</P>
+<P></P>
+<DT><STRONG><A NAME="item_component_content_call">component_content_call(call =&gt; &lt;string&gt;)</A></STRONG><BR>
+<DD>
+Called by the Lexer when it encounters a component call tag with
+embedded content (<CODE>&lt;&amp;| ... &amp;&gt;</CODE>).
+<P></P>
+<DT><STRONG><A NAME="item_component_content_call_end"><CODE>component_content_call_end()</CODE></A></STRONG><BR>
+<DD>
+Called by the Lexer when it encounters an ending tag for a component
+call with content (<CODE>&lt;/&amp;&gt;</CODE>).  Note that there is no corresponding
+<CODE>component_call_end()</CODE> method for component calls without content,
+because these calls don't have ending tags.
+<P></P>
+<DT><STRONG><A NAME="item_perl_line">perl_line(line =&gt; &lt;string&gt;)</A></STRONG><BR>
+<DD>
+Called by the Lexer when it encounters a <CODE>%</CODE>-line.
+<P></P></DL>
+<P>
+<HR>
+<H1><A NAME="see also">SEE ALSO</A></H1>
+<P><A HREF="Mason.html">HTML::Mason</A>,
+<A HREF="Admin.html">HTML::Mason::Admin</A>,
+<A HREF="Interp.html">HTML::Mason::Interp</A></P>
+
+</BODY>
+
+</HTML>

@@ -20,8 +20,8 @@ use HTML::Mason::Exceptions( abbr => [qw(param_error system_error wrong_compiler
 use Params::Validate qw(:all);
 Params::Validate::validation_options( on_fail => sub { param_error join '', @_  } );
 
-use HTML::Mason::Container;
-use base qw(HTML::Mason::Container);
+use Class::Container;
+use base qw(Class::Container);
 
 BEGIN
 {
@@ -456,6 +456,14 @@ sub eval_object_code
     my ($self, %p) = @_;
     my $object_code = $p{object_code};
 
+    if ( $object_code =~ /\n# MASON COMPILER ID: (\S+)$/ )
+    {
+	my $comp_version = $1;
+
+	wrong_compiler_error 'This object file was created by an incompatible Compiler or Lexer.  Please remove the component files in your object directory.'
+	    if $comp_version ne $self->compiler->object_id;
+    }
+
     # If in taint mode, untaint the object text
     ($object_code) = ($object_code =~ /^(.*)/s) if taint_is_on;
 
@@ -809,6 +817,12 @@ Default is the empty list.  For maximum performance, this should only
 be used for components that are frequently viewed and rarely updated.
 See the L<preloading section in the I<Admin
 Guide>|HTML::Mason::Admin/preloading> for further details.
+
+As mentioned in the developer's guide, a component's C<< <%once> >>
+section is executed when it is loaded.  For preloaded components, this
+means that this section will be executed before a Mason or Apache
+request exist, so preloading a component that uses C<$m> or C<$r> in a
+C<< <%once> >> section will fail.
 
 =item resolver
 

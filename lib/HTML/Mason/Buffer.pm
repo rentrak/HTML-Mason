@@ -6,8 +6,8 @@ package HTML::Mason::Buffer;
 
 use strict;
 
-use HTML::Mason::Container;
-use base qw(HTML::Mason::Container);
+use Class::Container;
+use base qw(Class::Container);
 
 use HTML::Mason::Exceptions( abbr => ['param_error'] );
 
@@ -217,19 +217,5 @@ output, possibly passing it through a buffer's filter, if it has one.
 This does B<not> clear the buffer.
 
 =back
-
-=head1 SUBCLASSING
-
-The public API described above is the complete Buffer class API,
-except for one method, C<_initialize>, which is called as part of the
-buffer's construction, from the C<new> method.
-
-Those interested in subclassing this class should also know that the
-constructor may take an additional parameter, C<parent>, which should
-be a Buffer object.  This parameter is automatically supplied by the
-C<new_child> method.
-
-Any subclass of this class you create should declare itself to be a
-subclass of the C<HTML::Mason::Buffer> class.
 
 =cut

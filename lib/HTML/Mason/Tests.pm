@@ -203,7 +203,7 @@ sub run
 	$self->_run_tests;
     };
 
-    $self->_cleanup;
+    $self->_cleanup unless $ENV{MASON_NO_CLEANUP};
 
     die $@ if $@;
 }
@@ -749,6 +749,13 @@ To turn this on, set the MASON_DEBUG environment variable to a true
 value.  In this mode, the C<run> method will print detailed
 information of its actions.  This mode includes the output printed in
 VERBOSE mode.
+
+=head2 No cleanup mode
+
+Setting the MASON_NO_CLEANUP environment variable will tell the module
+to not clean up generated data from running the tests.  This includes
+the components written to disk and the data directory used during
+testing.  This can be useful when debugging.
 
 =head2 Create mode
 

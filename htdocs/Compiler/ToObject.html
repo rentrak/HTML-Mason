@@ -1,0 +1,88 @@
+<HTML>
+<HEAD>
+<TITLE>HTML::Mason::Compiler::ToObject - A Compiler subclass that generates Mason object code</TITLE>
+<LINK REV="made" HREF="mailto:perl@packages.debian.org">
+</HEAD>
+
+<BODY>
+
+<A NAME="__index__"></A>
+<!-- INDEX BEGIN -->
+
+<UL>
+
+	<LI><A HREF="#name">NAME</A></LI>
+	<LI><A HREF="#synopsis">SYNOPSIS</A></LI>
+	<LI><A HREF="#description">DESCRIPTION</A></LI>
+	<LI><A HREF="#parameters for new() constructor">PARAMETERS FOR <CODE>new()</CODE> CONSTRUCTOR</A></LI>
+	<LI><A HREF="#methods">METHODS</A></LI>
+</UL>
+<!-- INDEX END -->
+
+<HR>
+<P>
+<H1><A NAME="name">NAME</A></H1>
+<P>HTML::Mason::Compiler::ToObject - A Compiler subclass that generates Mason object code</P>
+<P>
+<HR>
+<H1><A NAME="synopsis">SYNOPSIS</A></H1>
+<PRE>
+  my $compiler = HTML::Mason::Compiler::ToObject-&gt;new;</PRE>
+<PRE>
+  my $object_code = $compiler-&gt;compile( comp_source =&gt; $source, name =&gt; $comp_name );</PRE>
+<P>
+<HR>
+<H1><A NAME="description">DESCRIPTION</A></H1>
+<P>This Compiler subclass generates Mason object code (Perl code).  It is
+the default Compiler class used by Mason.</P>
+<P>
+<HR>
+<H1><A NAME="parameters for new() constructor">PARAMETERS FOR <CODE>new()</CODE> CONSTRUCTOR</A></H1>
+<P>All of these parameters are optional.</P>
+<DL>
+<DT><STRONG><A NAME="item_comp_class">comp_class</A></STRONG><BR>
+<DD>
+The class into which component objects are blessed.  This defaults to
+<A HREF="Component.html"><CODE>HTML::Mason::Component</CODE></A>.
+<P></P>
+<DT><STRONG><A NAME="item_subcomp_class">subcomp_class</A></STRONG><BR>
+<DD>
+The class into which subcomponent objects are blessed.  This defaults
+to <A HREF="Subcomponent.html"><CODE>HTML::Mason::Subcomponent</CODE></A>.
+<P></P>
+<DT><STRONG><A NAME="item_in_package">in_package</A></STRONG><BR>
+<DD>
+This is the package in which a component's code is executed.  For
+historical reasons, this defaults to <CODE>HTML::Mason::Commands</CODE>.
+<P></P>
+<DT><STRONG><A NAME="item_preamble">preamble</A></STRONG><BR>
+<DD>
+If this parameter is supplied, then the text given is placed at the
+beginning of each component.
+<P></P>
+<DT><STRONG><A NAME="item_postamble">postamble</A></STRONG><BR>
+<DD>
+Text given for this parameter is placed at the end of each component.
+<P></P>
+<DT><STRONG><A NAME="item_use_strict">use_strict</A></STRONG><BR>
+<DD>
+This indicates whether or not a given component should <A HREF="#item_use_strict"><CODE>use strict</CODE></A>.
+By default, this is true.
+<P></P></DL>
+<P>
+<HR>
+<H1><A NAME="methods">METHODS</A></H1>
+<P>This class is primarily meant to be used by the Interpreter object,
+and as such has a very limited public API.</P>
+<DL>
+<DT><STRONG><A NAME="item_compile">compile (comp_source =&gt; $source, name =&gt; $name, comp_class = $comp_class)</A></STRONG><BR>
+<DD>
+This method will take component source and return the compiled object
+code for that source.  The <CODE>comp_source</CODE> and <CODE>name</CODE> parameters are
+optional.  The <A HREF="#item_comp_class"><CODE>comp_class</CODE></A> can be used to change the component class
+for this one comonent.
+<P></P></DL>
+
+</BODY>
+
+</HTML>

@@ -305,10 +305,10 @@ Returns the current component object.
 <a name="item_decline"><P></P>
 <DT><STRONG><A NAME="item_decline">decline</A></STRONG><BR>
 <DD>
-Used from a top-level component or dhandler, this method aborts the
-current request and restarts with the next applicable dhandler
-up the tree. If no dhandler is available, an error occurs.
-This method bears no relation to the Apache DECLINED status
+Used from a top-level component or dhandler, this method clears the
+output buffer, aborts the current request and restarts with the next
+applicable dhandler up the tree. If no dhandler is available, an error
+occurs.  This method bears no relation to the Apache DECLINED status
 except in name.
 <a name="item_depth"><P></P>
 <DT><STRONG><A NAME="item_depth">depth</A></STRONG><BR>

@@ -14,8 +14,8 @@ use HTML::Mason::Exceptions( abbr => [qw(param_error compiler_error syntax_error
 use Params::Validate qw(:all);
 Params::Validate::validation_options( on_fail => sub { param_error join '', @_ } );
 
-use HTML::Mason::Container;
-use base qw(HTML::Mason::Container);
+use Class::Container;
+use base qw(Class::Container);
 
 BEGIN
 {
@@ -69,7 +69,10 @@ sub object_id
     # time the program is loaded, whether they are a reference to the
     # same object or not.
     my $spec = $self->validation_spec;
-    my @id_keys = grep { ! exists $spec->{$_}{isa} && ! exists $spec->{$_}{can} } keys %$spec;
+
+    my @id_keys =
+	( grep { ! exists $spec->{$_}{isa} && ! exists $spec->{$_}{can} }
+	  grep { $_ ne 'container' } keys %$spec );
 
     my @vals;
     foreach my $k ( @id_keys )
@@ -81,10 +84,13 @@ sub object_id
 	# by much.  We _could_ use B::Deparse's coderef2text method to
 	# do this properly but I'm not sure if that's a good idea or
 	# if it works for Perl 5.005.
-	push @vals, ( $spec->{$k}{parse} eq 'code'  ? ( $self->{$k} ? 1 : 0 ) :
-		      UNIVERSAL::isa( $self->{$k}, 'HASH' )  ? map { $_ => $self->{$k}{$_} } sort keys %{ $self->{$k} } :
-		      UNIVERSAL::isa( $self->{$k}, 'ARRAY' ) ? sort @{ $self->{$k} } :
-		      $self->{$k} );
+	push @vals,
+            $HTML::Mason::VERSION,
+            ( $spec->{$k}{parse} eq 'code'  ? ( $self->{$k} ? 1 : 0 ) :
+              UNIVERSAL::isa( $self->{$k}, 'HASH' )  ?
+              map { $_ => $self->{$k}{$_} } sort keys %{ $self->{$k} } :
+              UNIVERSAL::isa( $self->{$k}, 'ARRAY' ) ? sort @{ $self->{$k} } :
+              $self->{$k} );
     }
 
     # unpack('%32C*', $x) computes the 32-bit checksum of $x
@@ -153,6 +159,8 @@ sub start_component
     $self->{in_main} = 1;
     $self->{comp_with_content_stack} = [];
 
+    $self->{in_block} = undef;
+
     $self->_init_comp_data($self);
 
     $self->{current_comp} = $self;
@@ -217,7 +225,15 @@ sub raw_block
     my $method = "$p{block_type}_block";
     return $self->$method(%p) if $self->can($method);
 
-    push @{ $self->{current_comp}{blocks}{ $p{block_type} } }, $p{block};
+    my $comment = '';
+    if ( $self->lexer->line_number )
+    {
+	my $line = $self->lexer->line_number;
+	my $file = $self->lexer->name;
+	$comment = "#line $line $file\n";
+    }
+
+    push @{ $self->{current_comp}{blocks}{ $p{block_type} } }, "$comment$p{block}";
 }
 
 sub doc_block
@@ -231,22 +247,6 @@ sub perl_block
     my %p = @_;
 
     $self->_add_body_code( $p{block} );
-}
-
-sub init_block
-{
-    my $self = shift;
-    my %p = @_;
-
-    my $comment = '';
-    if ( $self->lexer->line_number )
-    {
-	my $line = $self->lexer->line_number;
-	my $file = $self->lexer->name;
-	$comment = "#line $line $file\n";
-    }
-
-    push @{ $self->{current_comp}{blocks}{ $p{block_type} } }, "$comment$p{block}";
 }
 
 sub text
@@ -323,8 +323,12 @@ sub start_named_block
     my $self = shift;
     my %p = @_;
 
-    $self->lexer->throw_syntax_error("Cannot define a $p{type} inside a method or subcomponent")
-        unless $self->{in_main};
+    $self->lexer->throw_syntax_error
+	("Cannot define a $p{block_type} block inside a method or subcomponent")
+	    unless $self->{in_main};
+
+    $self->lexer->throw_syntax_error("Invalid $p{block_type} name: $p{name}")
+	if $p{name} =~ /[^.\w]/;
 
     $self->{in_main}--;
 
@@ -540,8 +544,143 @@ HTML::Mason::Compiler - Compile Mason component source
 
 =head1 DESCRIPTION
 
-... Ken will be adding these docs (from Appendix A of the book) as
-soon as the text has been looked at a little bit.
+The compiler starts the compilation process by calling its lexer's
+C<lex> method and passing itself as the C<compiler> parameter.  The
+lexer then calls various methods in the compiler as it parses the
+component source.
+
+=head1 METHODS
+
+There are several methods besides the compilation callbacks below that
+a Compiler subclass needs to implement.
+
+=over 4
+
+=item compile(comp_source => <string>, name => <string>, comp_class => <string>)
+
+The "comp_class" parameter may be ignored by the compiler.
+
+=item object_id
+
+This method should return a unique id for the given compiler object.
+This is used by the interpreter when loading previously compiled
+objects in order to determine whether or not the object should be
+re-compiled.
+
+=back
+
+=head2 Compilation Callbacks
+
+These are methods called by the Lexer while processing a component
+source.  You may wish to override some of these methods if you're
+implementing your own custom Compiler class.
+
+=over 4
+
+=item start_component()
+
+This method is called by the Lexer when it starts processing a
+component.
+
+=item end_component()
+
+This method is called by the Lexer when it finishes processing a
+component.
+
+=item start_block(block_type => <string>)
+
+This method is called by the Lexer when it encounters an opening Mason
+block tag like C<< <%perl> >> or C<< <%args> >>.  Its main purpose is
+to keep track of the nesting of different kinds of blocks within each
+other.  The type of block ("init", "once", etc.) is passed via the
+"block_type" parameter.
+
+=item start_block(block_type => <string>)
+
+This method is called by the Lexer when it encounters a closing Mason
+block tag like C<< </%perl> >> or C<< </%args> >>.  Like
+C<start_block()>, its main purpose is to help maintain syntactic
+integrity.
+
+=item *_block(block => <string>, [ block_type => <string> ])
+
+Several compiler methods like C<doc_block()>, C<text_block()>, and
+C<raw_block()> are called by the Lexer after C<start_block()> when it
+encounters blocks of certain types.  These methods actually do the
+work of putting the body of a block into the compiled data structure.
+
+The methods that follow this pattern are C<init_block()>,
+C<perl_block()>, C<doc_block()>, C<text_block()>, and C<raw_block()>.
+The last method is called for all C<< <%once> >>, C<< <%cleanup> >>,
+C<< <%filter> >>, C<< <%init> >>, C<< <%perl> >>, and C<< <%shared> >>
+blocks.
+
+=item text(text => <string>)
+
+Inserts the text contained in a C<text> parameter into the component
+for verbatim output.
+
+This is called when the lexer finds plain text in a component.
+
+=item variable_declaration( type => <string>, name => <string>, default => <string> )
+
+Inserts a variable declaration from the C<< <%args> >> section into
+the component.
+
+The type will be either "$", "@", or "%", indicating a scalar, array,
+or hash.  The name is the variable name without the leading sigil.
+The default is everything found after the first "=>" on an C<< <%args> >>
+block line, and may include a comment.
+
+=item key_value_pair(block_type => <string>, key => <string>, value => <string>)
+
+Inserts a key-value pair from a C<< <%flags> >> or C<< <%attr> >>
+section into the component.
+
+The "block_type" parameter will be either "flags" or "attr".
+
+=item start_named_block(block_type => <string>, name => <name>)
+
+Analogous to L<"start_block()">, but starts a "named" block 
+(C<< <%method> >> or C<< <%def> >>).
+
+=item end_named_block()
+
+Called by the Lexer to end a "named" block.
+
+=item substitution(substitution => <string>, escape => <string>)
+
+Called by the Lexer when it encounters a substitution tag 
+(C<< <% ... %> >>).
+
+The value of the "escape" parameter will be everything found after the
+pipe (|) in the substitution tag, and may be more than one character
+such as "nh".
+
+=item component_call(call => <string>)
+
+Called by the Lexer when it encounters a component call tag without
+embedded content (C<< <& ... &> >>).
+
+The "call" parameter contains the entire contents of the tag.
+
+=item component_content_call(call => <string>)
+
+Called by the Lexer when it encounters a component call tag with
+embedded content (C<< <&| ... &> >>).
+
+=item component_content_call_end()
+
+Called by the Lexer when it encounters an ending tag for a component
+call with content (C<< </&> >>).  Note that there is no corresponding
+C<component_call_end()> method for component calls without content,
+because these calls don't have ending tags.
+
+=item perl_line(line => <string>)
+
+Called by the Lexer when it encounters a C<%>-line.
+
+=back
 
 =head1 SEE ALSO
 

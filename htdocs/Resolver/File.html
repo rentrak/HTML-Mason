@@ -1,0 +1,79 @@
+<HTML>
+<HEAD>
+<TITLE>HTML::Mason::Resolver::File - translates component paths into filesystem paths</TITLE>
+<LINK REV="made" HREF="mailto:perl@packages.debian.org">
+</HEAD>
+
+<BODY>
+
+<A NAME="__index__"></A>
+<!-- INDEX BEGIN -->
+
+<UL>
+
+	<LI><A HREF="#name">NAME</A></LI>
+	<LI><A HREF="#synopsis">SYNOPSIS</A></LI>
+	<LI><A HREF="#description">DESCRIPTION</A></LI>
+	<LI><A HREF="#constructor">CONSTRUCTOR</A></LI>
+	<LI><A HREF="#additional methods">ADDITIONAL METHODS</A></LI>
+	<LI><A HREF="#see also">SEE ALSO</A></LI>
+</UL>
+<!-- INDEX END -->
+
+<HR>
+<P>
+<H1><A NAME="name">NAME</A></H1>
+<P>HTML::Mason::Resolver::File - translates component paths into filesystem paths</P>
+<P>
+<HR>
+<H1><A NAME="synopsis">SYNOPSIS</A></H1>
+<PRE>
+  my $resolver = HTML::Mason::Resolver::File-&gt;new( comp_root =&gt; '/var/www/mason' );</PRE>
+<PRE>
+  my $info = $resolver-&gt;get_info('/some/comp.html');
+  my $comp_root = $resolver-&gt;comp_root;</PRE>
+<P>
+<HR>
+<H1><A NAME="description">DESCRIPTION</A></H1>
+<P>This HTML::Mason::Resolver subclass is used when components are stored
+on the filesystem, which is the norm for most Mason-based applications.</P>
+<P>
+<HR>
+<H1><A NAME="constructor">CONSTRUCTOR</A></H1>
+<DL>
+<DT><STRONG><A NAME="item_comp_root">comp_root</A></STRONG><BR>
+<DD>
+The <CODE>new</CODE> method takes a single mandatory parameter, <A HREF="#item_comp_root"><CODE>comp_root</CODE></A>.
+This parameter may be either a scalar or an array reference.  If it is
+a scalar, it should be a filesystem path indicating the component
+root.
+<P>If it is an array reference, it should be of the following form:</P>
+<PRE>
+ [ [ key1 =&gt; '/path/to/root' ],
+   [ key2 =&gt; '/path/to/other/root' ] ]</PRE>
+<P>The ``keys'' for each path must be unique names and their ``values'' must
+be filesystem paths.  These paths will be searched in the provided
+order whenever a component path must be resolved to a filesystem path.</P>
+<P>This parameter defaults to the current working directory.  The
+ApacheHandler and CGIHandler modules default this parameter to the web
+server's document root.</P>
+<P></P></DL>
+<P>
+<HR>
+<H1><A NAME="additional methods">ADDITIONAL METHODS</A></H1>
+<P>Besides, the methods documented in the HTML::Mason::Resolver method,
+this class provides one additional method.</P>
+<DL>
+<DT><STRONG>comp_root</STRONG><BR>
+<DD>
+This method returns the component root, which will either be a scalar
+or an array reference, as documented in <A HREF="#constructor">CONSTRUCTOR</A>.
+<P></P></DL>
+<P>
+<HR>
+<H1><A NAME="see also">SEE ALSO</A></H1>
+<P><A HREF="Mason.html">HTML::Mason</A></P>
+
+</BODY>
+
+</HTML>

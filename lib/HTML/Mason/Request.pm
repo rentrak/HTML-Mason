@@ -11,8 +11,8 @@ use HTML::Mason::Tools qw(read_file compress_path load_pkg absolute_comp_path);
 use HTML::Mason::Utils;
 use HTML::Mason::Buffer;
 
-use HTML::Mason::Container;
-use base qw(HTML::Mason::Container);
+use Class::Container;
+use base qw(Class::Container);
 
 use HTML::Mason::Exceptions( abbr => [qw(param_error syntax_error abort_error
 					 top_level_not_found_error error)] );
@@ -45,11 +45,11 @@ BEGIN
 	 error_format => { parse => 'string', type => SCALAR, default => 'text',
 			   callbacks => { "must be one of 'brief', 'text', 'line', or 'html'" =>
 					  sub { HTML::Mason::Exception->can("as_$_[0]"); } },
-			   descr => "How error messages are formatted" },
+			   descr => "How error conditions are returned to the caller (brief, text, line or html)" },
 	 error_mode => { parse => 'string', type => SCALAR, default => 'fatal',
 			 callbacks => { "must be one of 'output' or 'fatal'" =>
 					sub { $_[0] =~ /^(?:output|fatal)$/ } },
-			 descr => "How error conditions are returned to the caller (brief, text, line or html)" },
+			 descr => "How error conditions are manifest (output or fatal)" },
 	 max_recurse => { parse => 'string',  default => 32, type => SCALAR,
 			  descr => "The maximum recursion depth for component, inheritance, and request stack" },
 	 out_method => { parse => 'code',    type => CODEREF|SCALARREF,
@@ -485,6 +485,7 @@ sub decline
 {
     my ($self) = @_;
 
+    $self->clear_buffer;
     my $subreq = $self->make_subrequest
 	(comp => $self->{top_path},
 	 args => [$self->request_args],
@@ -1265,10 +1266,10 @@ Returns the current component object.
 
 =item decline
 
-Used from a top-level component or dhandler, this method aborts the
-current request and restarts with the next applicable dhandler
-up the tree. If no dhandler is available, an error occurs.
-This method bears no relation to the Apache DECLINED status
+Used from a top-level component or dhandler, this method clears the
+output buffer, aborts the current request and restarts with the next
+applicable dhandler up the tree. If no dhandler is available, an error
+occurs.  This method bears no relation to the Apache DECLINED status
 except in name.
 
 =for html <a name="item_depth">

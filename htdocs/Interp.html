@@ -126,6 +126,11 @@ when the interpreter initializes. e.g.
 <P>Default is the empty list.  For maximum performance, this should only
 be used for components that are frequently viewed and rarely updated.
 See the <A HREF="Admin.html#preloading">preloading section in the <EM>Admin Guide</EM></A> for further details.</P>
+<P>As mentioned in the developer's guide, a component's <CODE>&lt;%once&gt;</CODE>
+section is executed when it is loaded.  For preloaded components, this
+means that this section will be executed before a Mason or Apache
+request exist, so preloading a component that uses <CODE>$m</CODE> or <CODE>$r</CODE> in a
+<CODE>&lt;%once&gt;</CODE> section will fail.</P>
 <P></P>
 <DT><STRONG><A NAME="item_resolver">resolver</A></STRONG><BR>
 <DD>

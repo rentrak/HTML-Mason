@@ -11,8 +11,8 @@ use HTML::Mason::Exceptions( abbr => [qw(param_error syntax_error error)] );
 use Params::Validate qw(:all);
 Params::Validate::validation_options( on_fail => sub { param_error join '', @_ } );
 
-use HTML::Mason::Container;
-use base qw(HTML::Mason::Container);
+use Class::Container;
+use base qw(Class::Container);
 
 # This is a block name and what method should be called to lex its
 # contents if it is encountered.  'def' & 'method' blocks are special
@@ -108,6 +108,8 @@ sub object_id
     my @vals;
     foreach my $k ( sort keys %{ $self->validation_spec } )
     {
+	next if $k eq 'container';
+
 	push @vals, $k;
 	push @vals, ( UNIVERSAL::isa( $self->{$k}, 'HASH' )  ? map { $_ => $self->{$k}{$_} } sort keys %{ $self->{$k} } :
 		      UNIVERSAL::isa( $self->{$k}, 'ARRAY' ) ? sort @{ $self->{$k} } :
@@ -257,7 +259,7 @@ sub variable_list_block
                         |
                         [ \t]*          # just space
                        )
-                       (?:\n |          # newline or
+                       (\n |          # newline or
                           (?= <\/%\Q$p{block_type}\E> ) )   # end of block (don't consume it)
                       ,xgc
 	  )
@@ -271,7 +273,7 @@ sub variable_list_block
 							    );
 	}
 
-	$self->{current}{lines}++;
+	$self->{current}{lines}++ if $4;
     }
 
     my $nl = $self->match_block_end( block_type => $p{block_type},
@@ -341,9 +343,13 @@ sub match_named_block
 {
     my ($self, %p) = @_;
 
-    if ( $self->{current}{comp_source} =~ /\G<%(def|method)\s+([^\n]+?)>/igcs )
+    if ( $self->{current}{comp_source} =~ /\G<%(def|method)(?:\s+([^\n]+?))?>/igcs )
     {
 	my ($type, $name) = ($1, $2);
+
+	$self->throw_syntax_error("$type block without a name")
+	    unless defined $name && length $name;
+
 	$self->{current}{compiler}->start_named_block( block_type => $type,
 						       name => $name );
 
@@ -445,7 +451,7 @@ sub match_perl_line
 {
     my $self = shift;
 
-    if ( $self->{current}{comp_source} =~ /\G%([^\n]*)(?:\n|\z)/gcs )
+    if ( $self->{current}{comp_source} =~ /\G(?<=^)%([^\n]*)(?:\n|\z)/gcm )
     {
 	$self->{current}{compiler}->perl_line( line => $1 );
 	$self->{current}{lines}++;
@@ -485,7 +491,7 @@ sub match_text
     # Otherwise we'd match the empty string at the beginning, followed
     # by "<%".
     #
-    # - Dave - 1/6/2002
+    # - Dave - 5/6/2002
     #
     if ( $self->{current}{comp_source} =~ m,
                     \G

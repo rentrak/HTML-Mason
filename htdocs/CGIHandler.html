@@ -73,7 +73,10 @@ need this module.  You can simply follow the directions in
 <A HREF="#using mason from a standalone script">HTLM::Mason::Admin/Using Mason from a standalone script</A>.</P>
 <P>This module also provides an <CODE>$r</CODE> request object for use inside
 components, similar to the Apache request object under
-<CODE>HTML::Mason::ApacheHandler</CODE>, but limited in functionality.</P>
+<CODE>HTML::Mason::ApacheHandler</CODE>, but limited in functionality.  Please
+note that we aim to replicate the <CODE>mod_perl</CODE> functionality as closely
+as possible - if you find differences, do <EM>not</EM> depend on them to
+stay different.  We may fix them in a future release.</P>
 <P>Finally, this module alters the <CODE>HTML::Mason::Request</CODE> object <CODE>$m</CODE> to
 provide direct access to the CGI query, should such access be necessary.</P>
 <P>
@@ -124,8 +127,9 @@ Interpreter lasts for the entire lifetime of the handler.
 This works much like the <CODE>Apache</CODE> method of the same name.  When
 passed the name of a header, returns the value of the given outgoing
 header.  When passed a name and a value, sets the value of the header.
-Setting the header to <CODE>undef</CODE> will actually <EM>unset</EM> the header,
-removing it from the table of headers that will be sent to the client.
+Setting the header to <CODE>undef</CODE> will actually <EM>unset</EM> the header
+(instead of setting its value to <CODE>undef</CODE>), removing it from the table
+of headers that will be sent to the client.
 <P>The headers are eventually passed to the <CODE>CGI</CODE> module's <CODE>header()</CODE>
 method.</P>
 <P>One header currently gets special treatment - if you set a <CODE>Location</CODE>
@@ -134,6 +138,9 @@ used instead of the <CODE>header()</CODE> method.  This means that in order to
 do a redirect, all you need to do is:</P>
 <PRE>
  $r-&gt;header_out(Location =&gt; '<A HREF="http://redirect.to/here">http://redirect.to/here</A>');</PRE>
+<P>You may be happier using the <CODE>$m-&gt;redirect</CODE> method, though,
+because it hides most of the complexities of sending headers and
+getting the status code right.</P>
 <P></P>
 <LI><STRONG><A NAME="item_content_type"><CODE>content_type()</CODE></A></STRONG><BR>
 

@@ -28,8 +28,8 @@ want to set for any Mason object.
 Of course, many people simply configure Mason via their httpd.conf
 file, and don't ever make a Mason object.
 
-This document lists B<all> of the Mason parameters are intended to be
-used by end users.
+This document lists B<all> of the Mason parameters that are intended
+to be used by end users.
 
 =head1 PARAMETERS
 
@@ -41,7 +41,7 @@ An array of names of Perl variables that are allowed globally within components
 
 Type:               list
 
-Name in httpd.conf: AllowGlobals
+Name in httpd.conf: MasonAllowGlobals
 
 Belongs to:         L<HTML::Mason::Compiler|HTML::Mason::Compiler>
 
@@ -53,7 +53,7 @@ Type:               string
 
 Default:            HTML::Mason status
 
-Name in httpd.conf: ApacheStatusTitle
+Name in httpd.conf: MasonApacheStatusTitle
 
 Belongs to:         L<HTML::Mason::ApacheHandler|HTML::Mason::ApacheHandler>
 
@@ -65,7 +65,7 @@ Type:               string
 
 Default:            mod_perl
 
-Name in httpd.conf: ArgsMethod
+Name in httpd.conf: MasonArgsMethod
 
 Belongs to:         L<HTML::Mason::ApacheHandler|HTML::Mason::ApacheHandler>
 
@@ -77,7 +77,7 @@ Type:               boolean
 
 Default:            1
 
-Name in httpd.conf: AutoSendHeaders
+Name in httpd.conf: MasonAutoSendHeaders
 
 Belongs to:         L<HTML::Mason::Request::ApacheHandler|HTML::Mason::Request::ApacheHandler>
 
@@ -89,7 +89,7 @@ Type:               boolean
 
 Default:            0
 
-Name in httpd.conf: Autoflush
+Name in httpd.conf: MasonAutoflush
 
 Belongs to:         L<HTML::Mason::Request|HTML::Mason::Request>
 
@@ -101,7 +101,7 @@ Type:               string
 
 Default:            autohandler
 
-Name in httpd.conf: AutohandlerName
+Name in httpd.conf: MasonAutohandlerName
 
 Belongs to:         L<HTML::Mason::Interp|HTML::Mason::Interp>
 
@@ -111,7 +111,7 @@ This class receives component output and dispatches it appropriately
 
 Type:               string
 
-Name in httpd.conf: BufferClass
+Name in httpd.conf: MasonBufferClass
 
 Belongs to:         L<HTML::Mason::Request|HTML::Mason::Request>
 
@@ -125,7 +125,7 @@ Type:               string
 
 Default:            10485760
 
-Name in httpd.conf: CodeCacheMaxSize
+Name in httpd.conf: MasonCodeCacheMaxSize
 
 Belongs to:         L<HTML::Mason::Interp|HTML::Mason::Interp>
 
@@ -137,7 +137,7 @@ Type:               string
 
 Default:            HTML::Mason::Component
 
-Name in httpd.conf: CompClass
+Name in httpd.conf: MasonCompClass
 
 Belongs to:         L<HTML::Mason::Compiler::ToObject|HTML::Mason::Compiler::ToObject>
 
@@ -149,7 +149,7 @@ Type:               list
 
 Default:            filesystem root
 
-Name in httpd.conf: CompRoot
+Name in httpd.conf: MasonCompRoot
 
 Belongs to:         L<HTML::Mason::Resolver::File|HTML::Mason::Resolver::File>
 
@@ -171,7 +171,7 @@ This class is used to translate component source into code
 
 Type:               string
 
-Name in httpd.conf: CompilerClass
+Name in httpd.conf: MasonCompilerClass
 
 Belongs to:         L<HTML::Mason::Interp|HTML::Mason::Interp>
 
@@ -183,7 +183,7 @@ A hash of default parameters for Cache::Cache
 
 Type:               hash
 
-Name in httpd.conf: DataCacheDefaults
+Name in httpd.conf: MasonDataCacheDefaults
 
 Belongs to:         L<HTML::Mason::Request|HTML::Mason::Request>
 
@@ -193,7 +193,7 @@ A directory for storing cache files and other state information
 
 Type:               string
 
-Name in httpd.conf: DataDir
+Name in httpd.conf: MasonDataDir
 
 Belongs to:         L<HTML::Mason::Interp|HTML::Mason::Interp>
 
@@ -205,7 +205,7 @@ Type:               boolean
 
 Default:            1
 
-Name in httpd.conf: DeclineDirs
+Name in httpd.conf: MasonDeclineDirs
 
 Belongs to:         L<HTML::Mason::ApacheHandler|HTML::Mason::ApacheHandler>
 
@@ -215,7 +215,7 @@ Escape flags that will apply by default to all Mason tag output
 
 Type:               string
 
-Name in httpd.conf: DefaultEscapeFlags
+Name in httpd.conf: MasonDefaultEscapeFlags
 
 Belongs to:         L<HTML::Mason::Compiler|HTML::Mason::Compiler>
 
@@ -227,31 +227,31 @@ Type:               string
 
 Default:            dhandler
 
-Name in httpd.conf: DhandlerName
+Name in httpd.conf: MasonDhandlerName
 
 Belongs to:         L<HTML::Mason::Request|HTML::Mason::Request>
 
 =item * error_format
 
-How error messages are formatted
+How error conditions are returned to the caller (brief, text, line or html)
 
 Type:               string
 
 Default:            text
 
-Name in httpd.conf: ErrorFormat
+Name in httpd.conf: MasonErrorFormat
 
 Belongs to:         L<HTML::Mason::Request|HTML::Mason::Request>
 
 =item * error_mode
 
-How error conditions are returned to the caller (brief, text, line or html)
+How error conditions are manifest (output or fatal)
 
 Type:               string
 
 Default:            fatal
 
-Name in httpd.conf: ErrorMode
+Name in httpd.conf: MasonErrorMode
 
 Belongs to:         L<HTML::Mason::Request|HTML::Mason::Request>
 
@@ -263,7 +263,7 @@ Type:               regex
 
 Default:            /Subroutine .* redefined/i
 
-Name in httpd.conf: IgnoreWarningsExpr
+Name in httpd.conf: MasonIgnoreWarningsExpr
 
 Belongs to:         L<HTML::Mason::Interp|HTML::Mason::Interp>
 
@@ -275,7 +275,7 @@ Type:               string
 
 Default:            HTML::Mason::Commands
 
-Name in httpd.conf: InPackage
+Name in httpd.conf: MasonInPackage
 
 Belongs to:         L<HTML::Mason::Compiler::ToObject|HTML::Mason::Compiler::ToObject>
 
@@ -297,7 +297,7 @@ A Mason interpreter for processing components
 
 Type:               string
 
-Name in httpd.conf: InterpClass
+Name in httpd.conf: MasonInterpClass
 
 Belongs to:         L<HTML::Mason::ApacheHandler|HTML::Mason::ApacheHandler>
 
@@ -321,7 +321,7 @@ A Lexer object that will scan component text during compilation
 
 Type:               string
 
-Name in httpd.conf: LexerClass
+Name in httpd.conf: MasonLexerClass
 
 Belongs to:         L<HTML::Mason::Compiler|HTML::Mason::Compiler>
 
@@ -335,7 +335,7 @@ Type:               string
 
 Default:            32
 
-Name in httpd.conf: MaxRecurse
+Name in httpd.conf: MasonMaxRecurse
 
 Belongs to:         L<HTML::Mason::Request|HTML::Mason::Request>
 
@@ -347,7 +347,7 @@ Type:               code
 
 Default:            sub { print STDOUT grep {defined} @_ }
 
-Name in httpd.conf: OutMethod
+Name in httpd.conf: MasonOutMethod
 
 Belongs to:         L<HTML::Mason::Request|HTML::Mason::Request>
 
@@ -357,7 +357,7 @@ A chunk of Perl code to add to the end of each compiled component
 
 Type:               string
 
-Name in httpd.conf: Postamble
+Name in httpd.conf: MasonPostamble
 
 Belongs to:         L<HTML::Mason::Compiler::ToObject|HTML::Mason::Compiler::ToObject>
 
@@ -367,7 +367,7 @@ A subroutine through which all Perl code will be sent during compilation
 
 Type:               code
 
-Name in httpd.conf: PostprocessPerl
+Name in httpd.conf: MasonPostprocessPerl
 
 Belongs to:         L<HTML::Mason::Compiler|HTML::Mason::Compiler>
 
@@ -377,7 +377,7 @@ A subroutine through which all plain text will be sent during compilation
 
 Type:               code
 
-Name in httpd.conf: PostprocessText
+Name in httpd.conf: MasonPostprocessText
 
 Belongs to:         L<HTML::Mason::Compiler|HTML::Mason::Compiler>
 
@@ -387,7 +387,7 @@ A chunk of Perl code to add to the beginning of each compiled component
 
 Type:               string
 
-Name in httpd.conf: Preamble
+Name in httpd.conf: MasonPreamble
 
 Belongs to:         L<HTML::Mason::Compiler::ToObject|HTML::Mason::Compiler::ToObject>
 
@@ -397,7 +397,7 @@ A list of components to load immediately when creating the Interpreter
 
 Type:               list
 
-Name in httpd.conf: Preloads
+Name in httpd.conf: MasonPreloads
 
 Belongs to:         L<HTML::Mason::Interp|HTML::Mason::Interp>
 
@@ -407,7 +407,7 @@ A subroutine through which all component text will be sent during compilation
 
 Type:               code
 
-Name in httpd.conf: Preprocess
+Name in httpd.conf: MasonPreprocess
 
 Belongs to:         L<HTML::Mason::Compiler|HTML::Mason::Compiler>
 
@@ -417,7 +417,7 @@ Objects returned by make_request are members of this class
 
 Type:               string
 
-Name in httpd.conf: RequestClass
+Name in httpd.conf: MasonRequestClass
 
 Belongs to:         L<HTML::Mason::Interp|HTML::Mason::Interp>
 
@@ -441,7 +441,7 @@ This class is expected to return component information based on a component path
 
 Type:               string
 
-Name in httpd.conf: ResolverClass
+Name in httpd.conf: MasonResolverClass
 
 Belongs to:         L<HTML::Mason::Interp|HTML::Mason::Interp>
 
@@ -455,7 +455,7 @@ Type:               boolean
 
 Default:            0
 
-Name in httpd.conf: StaticSource
+Name in httpd.conf: MasonStaticSource
 
 Belongs to:         L<HTML::Mason::Interp|HTML::Mason::Interp>
 
@@ -467,7 +467,7 @@ Type:               string
 
 Default:            HTML::Mason::Component::Subcomponent
 
-Name in httpd.conf: SubcompClass
+Name in httpd.conf: MasonSubcompClass
 
 Belongs to:         L<HTML::Mason::Compiler::ToObject|HTML::Mason::Compiler::ToObject>
 
@@ -479,7 +479,7 @@ Type:               boolean
 
 Default:            1
 
-Name in httpd.conf: UseObjectFiles
+Name in httpd.conf: MasonUseObjectFiles
 
 Belongs to:         L<HTML::Mason::Interp|HTML::Mason::Interp>
 
@@ -491,7 +491,7 @@ Type:               boolean
 
 Default:            1
 
-Name in httpd.conf: UseStrict
+Name in httpd.conf: MasonUseStrict
 
 Belongs to:         L<HTML::Mason::Compiler::ToObject|HTML::Mason::Compiler::ToObject>
 

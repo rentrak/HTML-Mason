@@ -14,7 +14,7 @@
 	<LI><A HREF="#name">NAME</A></LI>
 	<LI><A HREF="#synopsis">SYNOPSIS</A></LI>
 	<LI><A HREF="#description">DESCRIPTION</A></LI>
-	<LI><A HREF="#html::mason::container">HTML::Mason::Container</A></LI>
+	<LI><A HREF="#class::container">Class::Container</A></LI>
 	<LI><A HREF="#methods">METHODS</A></LI>
 	<UL>
 
@@ -46,12 +46,12 @@ components.</P>
 all resolver implementations should inherit.</P>
 <P>
 <HR>
-<H1><A NAME="html::mason::container">HTML::Mason::Container</A></H1>
+<H1><A NAME="class::container">Class::Container</A></H1>
 <P>This class is used by most of the Mason object's to manage constructor
 parameters and has-a relationships with other objects.</P>
 <P>See the documentation on this class for details on how to declare what
 paremeters are valid for your subclass's constructor.</P>
-<P>HTML::Mason::Resolver is a subclass of HTML::Mason::Container so you
+<P>HTML::Mason::Resolver is a subclass of Class::Container so you
 do not need to subclass it yourself.</P>
 <P>
 <HR>
@@ -62,7 +62,7 @@ implement the following methods.</P>
 <DT><STRONG><A NAME="item_new">new</A></STRONG><BR>
 <DD>
 This method is optional.  The new method included in this class is
-simply inherited from <CODE>HTML::Mason::Container</CODE>.
+simply inherited from <CODE>Class::Container</CODE>.
 If you need something more complicated done in your new method you
 will need to override it in your subclass.
 <P></P>

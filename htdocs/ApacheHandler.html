@@ -131,6 +131,16 @@ object.  For example:</P>
         unless $req-&gt;request_comp-&gt;source_file =~ /\.html$/;</PRE>
 <PRE>
     $req-&gt;exec;</PRE>
+<P></P>
+<DT><STRONG><A NAME="item_request_args">request_args ($r)</A></STRONG><BR>
+<DD>
+Given an Apache request object, this method returns a three item list.
+The first item, is a hash reference containing the arguments passed by
+the client's request.
+<P>The second is an Apache request object, possibly the one originally
+passed to the method.</P>
+<P>The third item may be a CGI.pm object or <CODE>undef</CODE>, depending on the
+value of the ``args_method'' parameter for the ApacheHandler object.</P>
 <P></P></DL>
 <P>
 <HR>

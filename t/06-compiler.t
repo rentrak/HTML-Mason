@@ -336,6 +336,47 @@ EOF
 
 #------------------------------------------------------------
 
+    $group->add_test( name => 'line_nums4',
+		      description => 'make sure that errors are reported with the correct line numbers in <%once> blocks',
+		      component => <<'EOF',
+1
+2
+3
+<%once>
+$x = 1;
+</%once>
+EOF
+		      expect_error => qr/Global symbol .* at .* line 5/,
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'line_nums_off_by_one',
+		      description => 'make sure that line number reporting is not off by one',
+		      component => <<'EOF',
+1
+2
+3
+<%once>#4
+my $x = 1; #5
+</%once>6
+7
+<%args>#8
+$foo#9
+@bar#10
+</%args>11
+<%init>#12
+#13
+#14
+#15
+$y; #16
+</%init>
+EOF
+		      expect_error => qr/Global symbol .* at .* line 16/,
+		    );
+
+#------------------------------------------------------------
+
     $group->add_test( name => 'attr_block_zero',
 		      description => 'test proper handling of zero in <%attr> block values',
 		      component => <<'EOF',
@@ -361,28 +402,6 @@ EOF
 EOF
 		      expect_error => $error,
 		    );
-
-#------------------------------------------------------------
-
-    if ( $Config{d_alarm} || $] >= 5.007003 )
-    {
-	$group->add_test( name => 'infinite_loop',
-			  description => 'this code hangs when Interp.pm attempts to eval it.',
-			  component => <<'EOF',
-<%args>
- $prev
- $next
- $i
-</%args>
-% (my $p = $r->uri) =~ s,/[^/]+$,/,;
-  <% $p %>"><% $dir %>
-  <% $i->{fileroot} %>
-  <% "foo">large</a
- <% $i->{comment} %>
-EOF
-			  expect_error => qr/Global symbol "\$r"/,
-			);
-    }
 
 #------------------------------------------------------------
 
@@ -436,6 +455,69 @@ EOF
 various
 EOF
 		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'percent_at_end',
+		      description => 'Make sure that percent signs are only considered perl lines when at the beginning of the line',
+		      component => <<'EOF',
+<% $x %>% $x = 5;
+<% $x %>
+<%init>
+my $x = 10;
+</%init>
+EOF
+		      expect => <<'EOF',
+10% $x = 5;
+10
+EOF
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'nameless_method',
+		      description => 'Check for appropriate error message when there is a method or def block without a name',
+		      component => <<'EOF',
+<%method>
+foo
+</%method>
+EOF
+		      expect_error => qr/method block without a name at .*/
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'invalid_method_name',
+		      description => 'Check for appropriate error message when there is a method with an invalid name',
+		      component => <<'EOF',
+<%method   >
+foo
+</%method>
+EOF
+		      expect_error => qr/Invalid method name:.*/
+		    );
+
+#------------------------------------------------------------
+
+    if ( $Config{d_alarm} || $] >= 5.007003 )
+    {
+	$group->add_test( name => 'infinite_loop',
+			  description => 'this code hangs when Interp.pm attempts to eval it.',
+			  component => <<'EOF',
+<%args>
+ $prev
+ $next
+ $i
+</%args>
+% (my $p = $r->uri) =~ s,/[^/]+$,/,;
+  <% $p %>"><% $dir %>
+  <% $i->{fileroot} %>
+  <% "foo">large</a
+ <% $i->{comment} %>
+EOF
+			  expect_error => qr/Global symbol "\$r"/,
+			);
+    }
 
 #------------------------------------------------------------
 

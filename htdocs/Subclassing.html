@@ -1,0 +1,271 @@
+<HTML>
+<HEAD>
+<TITLE>HTML::Mason::Subclassing - Documentation on Subclassing Internal Mason classes</TITLE>
+<LINK REV="made" HREF="mailto:perl@packages.debian.org">
+</HEAD>
+
+<BODY>
+
+<A NAME="__index__"></A>
+<!-- INDEX BEGIN -->
+
+<UL>
+
+	<LI><A HREF="#name">NAME</A></LI>
+	<LI><A HREF="#description">DESCRIPTION</A></LI>
+	<LI><A HREF="#class::container">Class::Container</A></LI>
+	<LI><A HREF="#subclassable classes">SUBCLASSABLE CLASSES</A></LI>
+	<LI><A HREF="#constructors">CONSTRUCTORS</A></LI>
+	<LI><A HREF="#request">Request</A></LI>
+	<UL>
+
+		<LI><A HREF="#what to subclass">What to Subclass?</A></LI>
+		<LI><A HREF="#the exec() method">The <CODE>exec()</CODE> method</A></LI>
+		<LI><A HREF="#subrequests">Subrequests</A></LI>
+		<LI><A HREF="#examples">Examples</A></LI>
+	</UL>
+
+	<LI><A HREF="#resolver and componentsource">Resolver and ComponentSource</A></LI>
+	<LI><A HREF="#lexer">Lexer</A></LI>
+	<LI><A HREF="#compiler">Compiler</A></LI>
+	<LI><A HREF="#buffer">Buffer</A></LI>
+	<UL>
+
+		<LI><A HREF="#apachehandler">ApacheHandler</A></LI>
+	</UL>
+
+</UL>
+<!-- INDEX END -->
+
+<HR>
+<P>
+<HR>
+<H1><A NAME="name">NAME</A></H1>
+<P>HTML::Mason::Subclassing - Documentation on Subclassing Internal Mason classes</P>
+<P>
+<HR>
+<H1><A NAME="description">DESCRIPTION</A></H1>
+<P>This is the deep voodoo guide, for folks who want to create their own
+custom subclasses for parts of Mason, such as the Request or Buffer
+objects.</P>
+<P>
+<HR>
+<H1><A NAME="class::container">Class::Container</A></H1>
+<P>A number of modules in Mason are subclasses of <CODE>Class::Container</CODE>.
+This module was originally part of the Mason core as
+<CODE>HTML::Mason::Container</CODE>, but Ken Williams decided to release it separately on CPAN.</P>
+<P>It was created to encapsulate some common behaviors for Mason objects
+such as parameter validation and the creation of ``contained'' objects.</P>
+<P>Basically, any Mason object which takes parameters to its constructor
+<STRONG>must</STRONG> inherit from this module.  Of course, since all of the classes
+that you might consider subclassing already inherit from
+<CODE>Class::Container</CODE>, you won't need to inherit from it directly.
+However, you may need to use some of its methods.</P>
+<P>So before you go further we highly recommend familiarizing yourself
+with <CODE>Class::Container</CODE> and its methods.  Also feel free to look at
+some of the Mason core modules to see how <CODE>Class::Container</CODE> is used
+within Mason itself.</P>
+<P>
+<HR>
+<H1><A NAME="subclassable classes">SUBCLASSABLE CLASSES</A></H1>
+<P>The following classes have been designed with subclassing in mind:</P>
+<UL>
+<LI><STRONG><A NAME="item_HTML%3A%3AMason%3A%3ARequest">HTML::Mason::Request</A></STRONG><BR>
+
+This object is your old friend <CODE>$m</CODE>.  The request contains
+information about the current request context, and provides methods
+for calling other components.
+<P></P>
+<LI><STRONG><A NAME="item_HTML%3A%3AMason%3A%3AResolver">HTML::Mason::Resolver</A></STRONG><BR>
+
+The resolver's job is to translate a component paths into an actual
+component.  Mason comes with a single Resolver subclass,
+<CODE>HTML::Mason::Resolver::File</CODE>, which is used to translate component
+paths into filesystem paths.
+<P></P>
+<LI><STRONG><A NAME="item_HTML%3A%3AMason%3A%3AComponentSource">HTML::Mason::ComponentSource</A></STRONG><BR>
+
+An object of this class represents a component's source.  These
+objects are instantiated by the resolver when it finds a component
+matching a given path.
+<P></P>
+<LI><STRONG><A NAME="item_HTML%3A%3AMason%3A%3ALexer">HTML::Mason::Lexer</A></STRONG><BR>
+
+The lexer is responsible for parsing a component.  Creating a new
+lexer would allow you to change Mason's component syntax.
+<P></P>
+<LI><STRONG><A NAME="item_HTML%3A%3AMason%3A%3ACompiler">HTML::Mason::Compiler</A></STRONG><BR>
+
+The compiler takes the parsed chunks from the lexer and gives them
+meaning.  The default compiler, <CODE>HTML::Mason::Compiler::ToObject</CODE>,
+turns a Mason component into a Mason ``object file'', which contains
+actual Perl code.
+<P></P>
+<LI><STRONG><A NAME="item_HTML%3A%3AMason%3A%3ABuffer">HTML::Mason::Buffer</A></STRONG><BR>
+
+Buffers are created and manipulated (mostly) by the request class and
+are responsible for handling output.  Buffers apply filters to output
+and buffer it (surprise) as well.
+<P></P>
+<LI><STRONG><A NAME="item_HTML%3A%3AMason%3A%3AApacheHandler">HTML::Mason::ApacheHandler</A></STRONG><BR>
+
+The ApacheHandler class is the bridge between the mod_perl world and
+Mason, primarily Mason's Interp class.
+<P>It also provides its own <A HREF="#item_HTML%3A%3AMason%3A%3ARequest"><CODE>HTML::Mason::Request</CODE></A> and
+<CODE>HTML::Resolver::File</CODE> subclasses which implement some mod_perl
+specific behaviors and features.</P>
+<P></P>
+<LI><STRONG><A NAME="item_HTML%3A%3AMason%3A%3AInterp">HTML::Mason::Interp</A></STRONG><BR>
+
+The Interp is the core of Mason, and is primarily responsible for
+making all the other objects do their jobs.
+<P></P></UL>
+<P>
+<HR>
+<H1><A NAME="constructors">CONSTRUCTORS</A></H1>
+<P>If you choose to override the constructor, which is always <CODE>new</CODE> with
+Mason objects, that you make sure to call the superclass's constructor
+and that you use the object returned by it.  A good boilerplate for an
+overridden constructor looks something like this:</P>
+<PRE>
+  sub new
+  {
+      my $class = shift;</PRE>
+<PRE>
+      my $self = $class-&gt;SUPER::new(@_);</PRE>
+<PRE>
+      $self-&gt;_do_some_init;</PRE>
+<PRE>
+      return $self;
+  }</PRE>
+<P>
+<HR>
+<H1><A NAME="request">Request</A></H1>
+<P>
+<H2><A NAME="what to subclass">What to Subclass?</A></H2>
+<P>One important thing to know about this class is that it is actually
+several classes.  The first, <A HREF="#item_HTML%3A%3AMason%3A%3ARequest"><CODE>HTML::Mason::Request</CODE></A>, is used when
+ApacheHandler is not loaded.  The other,
+<CODE>HTML::Mason::Request::ApacheHandler</CODE>, is loaded by ApacheHandler and
+used to provide some mod_perl specific features.  Similar, the
+CGIHandler class provides its own request subclass,
+<CODE>HTML::Mason::Request::CGIHandler</CODE>.</P>
+<P>It is impossible to know which one of these to subclass at compile
+time, since it is possible that your subclass will be loaded before
+either ApacheHandler or CGIHandler.</P>
+<P>To handle this, simply set <CODE>@ISA</CODE> in your constructor, like this:</P>
+<PRE>
+  sub new
+  {
+      @ISA = 
+          ( $HTML::Mason::ApacheHandler::VERSION ?
+            'HTML::Mason::Request::ApacheHandler' :
+            $HTML::Mason::CGIHandler::VERSION ?
+            'HTML::Mason::Request::CGI' :
+            'HTML::Mason::Request' );</PRE>
+<PRE>
+      my $class = shift;</PRE>
+<PRE>
+      my $self = $class-&gt;SUPER::new(@_);</PRE>
+<PRE>
+      ...</PRE>
+<PRE>
+      return $self;
+  }</PRE>
+<P>It is quite important that you do this as these handler-specific
+subclasses provide important functionality.</P>
+<P>
+<H2><A NAME="the exec() method">The <CODE>exec()</CODE> method</A></H2>
+<P>The <CODE>exec</CODE> method is called in order to execute a request, and is the
+method that you are most likely to want to override.</P>
+<P>However, if you do override it we suggest that you make sure to call
+the parent class's <CODE>exec</CODE> method to implement the actual component
+execution and there is no need for you to re-implement them.</P>
+<P>Since the <CODE>exec()</CODE> method is scalar/list context-sensitive, your
+<CODE>exec</CODE> method will need to preserve that.  Here is a boilerplate:</P>
+<PRE>
+  sub exec
+  {
+      my $self = shift;</PRE>
+<PRE>
+      ... # do something cool</PRE>
+<PRE>
+      my @r;
+      if (wantarray)
+      {
+          @r = $self-&gt;SUPER::exec(@_);
+      }
+      else
+      {
+          $r[0] = $self-&gt;SUPER::exec(@_);
+      }</PRE>
+<PRE>
+      ... # maybe do some cleanup</PRE>
+<PRE>
+      return wantarray ? @r : $r[0];
+  }</PRE>
+<P>
+<H2><A NAME="subrequests">Subrequests</A></H2>
+<P>Your custom request class will also be used to implement subrequests,
+which are implemented by calling <CODE>exec</CODE> just like any other method.
+If you only want to do certain things in <CODE>exec</CODE> for the first
+request, you can simply check the value of <CODE>$self-&gt;is_subrequest</CODE>.</P>
+<P>
+<H2><A NAME="examples">Examples</A></H2>
+<P>See the <CODE>HTML::Mason::Request::WithApacheSession</CODE> module on CPAN.</P>
+<P>
+<HR>
+<H1><A NAME="resolver and componentsource">Resolver and ComponentSource</A></H1>
+<P>The resolver takes a component path and figures out what component
+that path corresponds to.</P>
+<P>All resolver classes must implement two methods, <CODE>get_info</CODE> and
+<CODE>glob_path</CODE>.  The first takes a component path and returns a new
+<A HREF="#item_HTML%3A%3AMason%3A%3AComponentSource"><CODE>HTML::Mason::ComponentSource</CODE></A> object.  This object contains
+information about the component, such as its last modified time and
+its source.  See the
+<A HREF="ComponentSource.html"><A HREF="#item_HTML%3A%3AMason%3A%3AComponentSource"><CODE>HTML::Mason::ComponentSource</CODE></A></A>
+documentation for more details.</P>
+<P>You may choose to provide your own ComponentSource subclass as well,
+if your resolver implementation can take advantage of it.</P>
+<P>The <CODE>glob_path</CODE> method is responsible for translating a component
+path like <EM>/foo/*/bar</EM> into a list of component paths that match that
+glob pattern.</P>
+<P>
+<HR>
+<H1><A NAME="lexer">Lexer</A></H1>
+<P>The rationale for providing your own lexer would be to extend or
+replace Mason's syntax.</P>
+<P>The lexer is called by the compiler via its <CODE>lex</CODE> method.  The
+arguments it receives are the component name, source, and the compiler
+object.  See the <CODE>Compiler class|HTML::Mason::Compiler</CODE> documentation
+for details on what methods the lexer can call.</P>
+<P>
+<HR>
+<H1><A NAME="compiler">Compiler</A></H1>
+<P>See the <CODE>Compiler class|HTML::Mason::Compiler</CODE> documentation for
+details on what methods a subclass of this class needs to provide.</P>
+<P>
+<HR>
+<H1><A NAME="buffer">Buffer</A></H1>
+<P>The public API documented in
+<A HREF="Buffer.html"><A HREF="#item_HTML%3A%3AMason%3A%3ABuffer"><CODE>HTML::Mason::Buffer</CODE></A></A> is the complete Buffer
+class API, except for one method, <CODE>_initialize</CODE>, which is called as
+part of the buffer's construction, from the <CODE>new</CODE> method.</P>
+<P>Those interested in subclassing this class should also know that the
+constructor may take an additional parameter, <CODE>parent</CODE>, which should
+be a Buffer object.  This parameter is automatically supplied by the
+<CODE>new_child</CODE> method.</P>
+<P>Any subclass of this class you create should declare itself to be a
+subclass of the <A HREF="#item_HTML%3A%3AMason%3A%3ABuffer"><CODE>HTML::Mason::Buffer</CODE></A> class.</P>
+<P>
+<H2><A NAME="apachehandler">ApacheHandler</A></H2>
+<P>The methods that you are mostly to want to subclass are documented in
+the <A HREF="ApacheHandler.html"><CODE>ApacheHandler class</CODE></A>
+documentation.</P>
+<P>Providing an ApacheHandler subclass gives you a chance to do your own
+client parameter parsing, as well as the capability of providing a
+different way of handling requests.</P>
+
+</BODY>
+
+</HTML>
