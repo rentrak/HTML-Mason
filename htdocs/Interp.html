@@ -76,7 +76,7 @@ stand-alone Perl script), see the <A HREF="#standalone_mode">STANDALONE MODE</A>
 </A></STRONG><DD>
 True or undef, default is undef. If true, autohandlers apply both to their
 own directories and all subdirectories; if undef, only to their own
-directories. See the <A HREF="././Components.html#autohandlers">autohandlers</A> section of the Component Developer's Guide for a discussion of the pros and
+directories. See the <A HREF="././Devel.html#autohandlers">autohandlers</A> section of the Component Developer's Guide for a discussion of the pros and
 cons.
 
 
@@ -91,23 +91,23 @@ Mason will not look for autohandlers.
 
 <P>
 
-<DT><STRONG><A NAME="item_code_cache_mode">code_cache_mode
+<DT><STRONG><A NAME="item_code_cache_max_size">code_cache_max_size
 
 </A></STRONG><DD>
-Specifies whether components are cached in memory when they are loaded.
-This allows you to trade off memory consumption and cache effectiveness.
-Must be one of 'all', 'request', or 'none'. 'all' means that all components
-are cached for the lifetime of the process. 'request' means that components
-are cached for the duration of each HTTP request and then discarded. 'none'
-means that components are never cached. The default is 'all'. Note that you
-may preload components (using <A HREF="././Interp.html#item_preloads">preloads</A>) regardless of the value of this parameter; preloaded components stick
-around for the lifetime of the process.
+Specifies the maximum size, in bytes, of the in-memory code cache where
+components are stored. e.g.
 
 
 <P>
 
-This parameter may be augmented in the future with more sophisticated
-caching and cache expiration options.
+<PRE>    code_cache_max_size =&gt; 20*1024*1024
+    code_cache_max_size =&gt; 20_000_000
+</PRE>
+
+<P>
+
+Default is 10 MB. See the <A HREF="././Admin.html#code_cache">Code Cache</A> section of the <EM>Admin Guide</EM>
+for further details.
 
 
 <P>
@@ -115,7 +115,45 @@ caching and cache expiration options.
 <DT><STRONG><A NAME="item_comp_root">comp_root
 
 </A></STRONG><DD>
-A required argument, this specifies the root of your component source tree.
+The required Mason component root. All components live under the comp_root.
+
+
+<P>
+
+You may also specify multiple component roots to be searched in the spirit
+of Perl's @INC. To do so you must specify a list of lists:
+
+
+<P>
+
+<PRE>    comp_root =&gt; [[key1, root1], [key2, root2], ...]
+</PRE>
+
+<P>
+
+Each pair consists of a key and root. The key is a string that identifies
+the root mnemonically to a component developer. Data cache and object
+directories are split up by these keys to make sure different components
+sharing the same path have different cache and object files. The key is
+also included whenever Mason prints the component title, as in an error
+message.
+
+
+<P>
+
+For example:
+
+
+<P>
+
+<PRE>    comp_root =&gt; [['private', '/usr/home/joe/comps'], ['main', '/usr/local/www/htdocs']]
+</PRE>
+
+<P>
+
+This specifies two component roots, a main component tree and a private
+tree which overrides certain components. The order is respected ala @INC,
+so 'private' is searched first and 'main' second.
 
 
 <P>
@@ -123,16 +161,16 @@ A required argument, this specifies the root of your component source tree.
 <DT><STRONG><A NAME="item_current_time">current_time
 
 </A></STRONG><DD>
-Overrides the time and date returned by mc_time and mc_date with a fixed
-value. This is useful for testing time-based components, e.g. seeing what a
-page will look like tomorrow. The argument is a Perl <CODE>time()</CODE>
-value (seconds since the epoch).
+Overrides the time returned by $m-&gt;time with a fixed Perl
+<CODE>time()</CODE> value (seconds since the epoch). On time-sensitive
+sites, this can be used to set up port-based time/date simulations, e.g. a
+port that looks one day into the future.
 
 
 <P>
 
-With no current_time parameter (the default), mc_time and mc_date report
-the true time.
+With no current_time parameter (the default), $m-&gt;time reports the true
+time.
 
 
 <P>
@@ -140,8 +178,17 @@ the true time.
 <DT><STRONG><A NAME="item_data_dir">data_dir
 
 </A></STRONG><DD>
-The other required argument. Mason's various data directories (obj, cache,
-debug, etc), live within the data_dir.
+The required Mason data directory. Mason's various data directories (obj,
+cache, debug, etc), live within the data_dir.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_data_cache_dir">data_cache_dir
+
+</A></STRONG><DD>
+Specifies an absolute directory for data cache files. By default, it lives
+under <A HREF="././Interp.html#item_data_dir">data_dir</A>/cache.
 
 
 <P>
@@ -188,6 +235,19 @@ environment this is automatically redirected to the HTTP client.)
 
 <P>
 
+<DT><STRONG><A NAME="item_out_mode">out_mode
+
+</A></STRONG><DD>
+Specifies one of two ways to send output, 'batch' or 'stream'. In batch
+mode Mason computes the entire page in a memory buffer and then transmits
+it all at once. In stream mode Mason outputs data as soon as it is
+computed. (This does not take into account buffering done by Apache or the
+O/S.) The default mode is batch. See the 
+<A HREF="././Admin.html#staging_vs_production">staging vs production</A> section of the <EM>Admin Guide</EM> for a discussion of the trade-offs.
+
+
+<P>
+
 <DT><STRONG><A NAME="item_parser">parser
 
 </A></STRONG><DD>
@@ -211,9 +271,9 @@ section of the <EM>Admin Guide</EM> for further details.
 <DT><STRONG><A NAME="item_static_file_root">static_file_root
 
 </A></STRONG><DD>
-Absolute path to prepend to relative filenames passed to <A HREF="././Commands.html#item_mc_file">mc_file()</A>. Does not require a trailing slash. For example, if the file root is
-'/foo/bar', then <A HREF="././Commands.html#item_mc_file">mc_file('baz/bap')</A> will read the file '/foo/bar/baz/bap'. Undefined by default; if left
-undefined, relative path names to <A HREF="././Commands.html#item_mc_file">mc_file()</A> are prepended with the current component directory.
+Absolute path to prepend to relative filenames passed to <CODE>$m-</CODE><CODE>file()>.</CODE> Does not require a trailing slash. For example, if
+the file root is '/foo/bar', then <CODE>$m-</CODE><CODE>file('baz/bap')></CODE> will read the file '/foo/bar/baz/bap'.
+Undefined by default; if left undefined, relative path names to <CODE>$m-</CODE><CODE>file()></CODE> are prepended with the current component directory.
 
 
 <P>
@@ -247,9 +307,9 @@ separated by ``|''. Default is to log nothing.
 <DT><STRONG><A NAME="item_use_data_cache">use_data_cache
 
 </A></STRONG><DD>
-True or undef, default is true. Specifies whether the mc_cache and related
-commands are operational. You may need to disable data caching temporarily
-for debugging purposes, but normally this should be left alone.
+True or undef, default is true. Specifies whether the $m-&gt;cache and
+related commands are operational. You may need to disable data caching
+temporarily for debugging purposes, but normally this should be left alone.
 
 
 <P>
@@ -292,8 +352,8 @@ better interpret the error message. Does not affect runtime errors.
 
 </A></H1>
 All of the above properties have standard accessor methods of the same
-name: no arguments retrieves the value, and one argument sets it. For
-example:
+name. In general, no arguments retrieves the value, and one argument sets
+and returns the value. For example:
 
 
 <P>
@@ -306,25 +366,8 @@ example:
 
 <P>
 
-The following properties can be queried but should not be modified:
-
-
-<P>
-
-o comp_root, data_dir: these are too integral to the interpreter to
-reliably change on-the-fly. Better to create multiple interpreters.
-
-
-<P>
-
-o preloads: changing this is ineffective since preloading happens when the
-interpreter is created
-
-
-<P>
-
-o system_log_file: changing this is ineffective since a persistent log file
-handle is opened when the interpreter is created
+The following properties can be queried but not modified: comp_root,
+data_dir, system_log_file, system_log_separator, preloads.
 
 
 <P>
@@ -417,8 +460,9 @@ where <EM>comp</EM> is a component path or component object.
 <P>
 
 Component parameters are given as a series of name/value pairs, just as
-they are with <A HREF="././Commands.html#item_mc_comp">mc_comp</A>. exec returns the return value of the component. Component output is sent
-to standard output by default, but you can change this by specifying <A HREF="././Interp.html#item_out_method">out_method</A>.
+they are with <CODE>$m-</CODE>comp&gt;. exec returns the return value of the component. Component output
+is sent to standard output by default, but you can change this by
+specifying <A HREF="././Interp.html#item_out_method">out_method</A>.
 
 
 <P>

@@ -1,4 +1,4 @@
-# Copyright (c) 1998 by Jonathan Swartz. All rights reserved.
+# Copyright (c) 1998-99 by Jonathan Swartz. All rights reserved.
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
@@ -14,29 +14,23 @@ use Data::Dumper;
 use File::Path;
 use File::Basename;
 use File::Find;
-use HTML::Mason::Component;
+use HTML::Mason::Component::FileBased;
+use HTML::Mason::Component::Subcomponent;
 use HTML::Mason::Request;
-use HTML::Mason::Tools qw(read_file);
-use vars qw($AUTOLOAD);
+use HTML::Mason::Tools qw(dumper_method read_file);
 
+# Fields that can be set in new method, with defaults
 my %fields =
-    (preamble => '',
-     postamble => '',
-     preprocess => undef,
-     postprocess => undef,
-     use_strict => 1,
-     source_refer_predicate => sub { return ($_[1] >= 5000) },
+    (allow_globals => [],
      ignore_warnings_expr => 'Subroutine .* redefined',
-     taint_check => 0,
      in_package => 'HTML::Mason::Commands',
-     allow_globals => []
+     postamble => '',
+     postprocess => undef,
+     preamble => '',
+     preprocess => undef,
+     taint_check => 0,
+     use_strict => 1,
      );
-# Minor speedup: create anon. subs to reduce AUTOLOAD calls
-foreach my $f (keys %fields) {
-    next if $f =~ /^allow_globals$/;  # don't overwrite real sub.
-    no strict 'refs';
-    *{$f} = sub {my $s=shift; return @_ ? ($s->{$f}=shift) : $s->{$f}};
-}
 
 #
 # This version number, less than or equal to the Mason version, marks the
@@ -44,7 +38,7 @@ foreach my $f (keys %fields) {
 #
 sub version
 {
-    return 0.7;
+    return 0.8;
 }
 
 sub new
@@ -115,11 +109,10 @@ sub parse
 sub parse_component
 {
     my ($self, %options) = @_;
-    my ($script,$scriptFile,$errorRef,$errposRef,$embedded,$fileBased) =
-	@options{qw(script script_file error errpos embedded file_based)};
+    my ($script,$scriptFile,$errorRef,$errposRef,$embedded,$compClass) =
+	@options{qw(script script_file error errpos embedded comp_class)};
     my ($sub, $err, $errpos, $suberr, $suberrpos);
-    $fileBased = 1 if !exists($options{file_based});
-    my $pureTextFlag = 1;
+    $compClass = 'HTML::Mason::Component' if !exists($options{comp_class});
     my $parseError = 1;
     my $parserVersion = version();
 
@@ -188,7 +181,7 @@ sub parse_component
 		    $errpos = $begintail;
 		} else {
 		    my $subtext = substr($script,$begintail,$endmark-$begintail);
-		    if (my $objtext = $self->parse_component(script=>$subtext, embedded=>1, file_based=>0, error=>\$suberr, errpos=>\$suberrpos)) {
+		    if (my $objtext = $self->parse_component(script=>$subtext, embedded=>1, comp_class=>'HTML::Mason::Component::Subcomponent', error=>\$suberr, errpos=>\$suberrpos)) {
 			$subcomps{$name} = $objtext;
 		    } else {
 			$err = "Error while parsing subcomponent '$name':\n$suberr";
@@ -201,7 +194,6 @@ sub parse_component
 		$sectiontext{lc($beginfield)} .= substr($script,$begintail,$endmark-$begintail);
 	    }
 	    $curpos = pos($script);
-	    $pureTextFlag = 0;
 	    $startline = (substr($endtag,-1,1) eq "\n");
 	} else {
 	    $err = "<%$beginfield> with no matching </%$beginfield>";
@@ -215,8 +207,13 @@ sub parse_component
     # Start body of subroutine with user preamble and args declare.
     #
     my $body = $self->preamble();
-    $body .= 'my (%ARGS) = @_;'."\n";
-    $body .= 'my $_out = $REQ->sink;'."\n";
+    $body .= 'my %ARGS;'."\n";
+    if ($sectiontext{args}) {
+	$body .= 'if (@_ % 2 == 0) { %ARGS = @_ } else { die "Odd number of parameters passed to component expecting name/value pairs" }'."\n";
+    } else {
+	$body .= '%ARGS = @_ unless (@_ % 2);'."\n";
+    }
+    $body .= 'my $_out = $m->current_sink;'."\n";
 
     #
     # Process args section.
@@ -277,7 +274,7 @@ sub parse_component
     }
 
     #
-    # Parse in-line insertions, which take one of four forms:
+    # Parse in-line insertions, which take one of five forms:
     #   - Lines beginning with %
     #   - Text delimited by <%perl> </%perl>
     #   - Text delimited by <% %> 
@@ -316,7 +313,6 @@ sub parse_component
 		push(@perltexts,substr($text,$curpos+1,$length));
 		push(@alphasecs,[0,0]);
 		$curpos += $length+1;
-		$pureTextFlag = 0;
 		next;
 	    }
 	    $startline=0;
@@ -335,7 +331,6 @@ sub parse_component
 		$perl = substr($text,$beginline+1,$length-1);
 		$curpos = $endline+1;
 		$startline = 1;
-		$pureTextFlag = 0;
 	    } elsif ($b>-1 && ($c==-1 || $b<$c)) {
 		#
 		# Tag beginning with <%
@@ -375,7 +370,6 @@ sub parse_component
 		    $perl = '$_out->('.substr($text,$b+2,$length).');';
 		    $curpos = $b+2+$length+2;
 		}
-		$pureTextFlag = 0;
 	    } elsif ($c>-1) {
 		#
 		# <& &> section
@@ -397,9 +391,8 @@ sub parse_component
 		    (my $comp = substr($call,0,$comma)) =~ s/\s+$//;
 		    $call = "'$comp'".substr($call,$comma);
 		}
-		$perl = "\$REQ->call($call);";
+		$perl = "\$m->comp($call);";
 		$curpos = $c+2+$length+2;
-		$pureTextFlag = 0;
 	    } else {
 		# No more special characters, take the rest.
 		$alpha = [$curpos,$textlength-$curpos];
@@ -423,34 +416,17 @@ sub parse_component
 	}
     }
 
-    #
-    # Use source_refer_predicate to determine whether to use source
-    # references or directly embedded text.
-    #
-    my $useSourceReference = $fileBased && ($pureTextFlag || $self->source_refer_predicate->($scriptlength,$alphalength));
     my @alphatexts;
-    my $endsec = '';
-    if ($useSourceReference) {
-	$body .= 'my $_srctext = $REQ->comp->source_ref_text;'."\n";
-	my $cur = 0;
-	foreach my $sec (@alphasecs) {
-	    $endsec .= substr($script,$sec->[0],$sec->[1])."\n";
-	    push(@alphatexts,sprintf('$_out->(substr($_srctext,%d,%d));',$cur,$sec->[1]));
-	    $cur += $sec->[1] + 1;
-	}
-	$endsec =~ s/\n$//;
-    } else {
-	foreach (@alphasecs) {
-	    my $alpha = substr($script,$_->[0],$_->[1]);
-	    $alpha =~ s{([\\\'])} {\\$1}g;        # escape backslashes and single quotes
-	    push(@alphatexts,sprintf('$_out->(\'%s\');',$alpha));
-	}
+    foreach (@alphasecs) {
+	my $alpha = substr($script,$_->[0],$_->[1]);
+	$alpha =~ s{([\\\'])} {\\$1}g;        # escape backslashes and single quotes
+	push(@alphatexts,sprintf('$_out->(\'%s\');',$alpha));
     }
 
     #
     # Insert call to debug hook.
     #
-    $body .= '$REQ->debug_hook($REQ->comp->path) if (%DB::);'."\n";
+    $body .= '$m->debug_hook($m->current_comp->path) if (%DB::);'."\n";
     
     #
     # Insert <%filter> section.
@@ -458,7 +434,7 @@ sub parse_component
     if ($sectiontext{filter}) {
 	my $ftext = $sectiontext{filter};
 	for ($ftext) { s/^\s+//g; s/\s+$//g }
-	$body .= sprintf(join("\n",'{ my ($_c,$_r);','if (mc_call_self(\$_c,\$_r)) {'.'for ($_c) {',$ftext,'}','mc_out($_c);','return $_r }};'));
+	$body .= sprintf(join("\n",'{ my ($_c,$_r);','if ($m->call_self(\$_c,\$_r)) {'.'for ($_c) {',$ftext,'}','$m->out($_c);','return $_r }};'));
     }
 
     #
@@ -466,11 +442,6 @@ sub parse_component
     #
     $body .= $sectiontext{init}."\n";
 
-    #
-    # Call start_primary hooks.
-    #
-    $body .= "\$REQ->call_hooks('start_primary');\n";
-    
     #
     # Postprocess the alphabetical and Perl stuff separately
     #
@@ -499,11 +470,6 @@ sub parse_component
     }
 
     #
-    # Call end_primary hooks.
-    #
-    $body .= "\$REQ->call_hooks('end_primary');\n";
-    
-    #
     # Insert <%cleanup> section.
     #
     $body .= $sectiontext{cleanup}."\n";
@@ -522,7 +488,8 @@ sub parse_component
     if (!$embedded) {
 	$header .= "package $pkg;\n";
 	$header .= "use strict;\n" if $self->use_strict;
-	$header .= sprintf("use vars qw(%s);\n",join(" ","\$REQ",@{$self->{'allow_globals'}}))."\n";
+	my @g = @{$self->{'allow_globals'}};
+	$header .= sprintf("use vars qw(%s);\n",join(" ",'$m',@g));
     }
     $header .= $sectiontext{once}."\n" if $sectiontext{once};
 
@@ -539,37 +506,21 @@ sub parse_component
     # Assemble parameters for component.
     #
     my @cparams = ("'parser_version'=>$parserVersion","'create_time'=>".time());
-    push(@cparams,"'source_ref_start'=>0000000") if $useSourceReference;
     push(@cparams,"'subcomps'=>{%_subcomps}") if (%subcomps);
     if (%declaredArgs) {
 	my $d = new Data::Dumper ([\%declaredArgs]);
-	my $argsDump = $d->Dumpxs;
+	my $argsDump = dumper_method($d);
 	for ($argsDump) { s/\$VAR1\s*=//g; s/;\s*$// }
 	push(@cparams,"'declared_args'=>$argsDump");
     }
-    if ($pureTextFlag && $fileBased) {
-	push(@cparams,"'code'=>\\&HTML::Mason::Commands::pure_text_handler");
-    } else {
-	push(@cparams,"'code'=>sub {\n$body\n}");
-    }
+    push(@cparams,"'code'=>sub {\n$body\n}");
+    push(@cparams,sprintf("'object_size'=>%d",length($header)+length(join("",@cparams))));
+
     my $cparamstr = join(",\n",@cparams);
     
-    $body = "new HTML::Mason::Component (\n$cparamstr\n);\n";
+    $body = "new $compClass (\n$cparamstr\n);\n";
     $body = $header . $body;
 
-    #
-    # If using source references, add the source text after the
-    # __END__ tag, then calculate its position for
-    # source_ref_start. This must occur after the component body
-    # is fixed!
-    #
-    if ($useSourceReference) {
-	$body .= "\n__END__\n";
-	my $srcstart = sprintf("%7d",length($body));
-	$body =~ s/'source_ref_start'=>0000000,/'source_ref_start'=>$srcstart,/;
-	$body .= $endsec;
-    }    
-    
     #
     # Process parsing errors.
     #
@@ -691,7 +642,6 @@ sub eval_object_text
 	$$errref = $err if defined($errref);
 	return undef;
     } else {
-	$comp->object_file($objectFile);
 	return $comp;
     }
 }
@@ -774,16 +724,17 @@ sub make_dirs
     }
 }
 
-sub AUTOLOAD {
-    my $self = shift;
-    my $type = ref($self) or die "autoload error: bad function $AUTOLOAD";
+# Create generic read-write accessor routines
 
-    my $name = $AUTOLOAD;
-    $name =~ s/.*://;   # strip fully-qualified portion
-    return if $name eq 'DESTROY';
+sub ignore_warnings_expr { my $s=shift; return @_ ? ($s->{ignore_warnings_expr}=shift) : $s->{ignore_warnings_expr} }
+sub in_package { my $s=shift; return @_ ? ($s->{in_package}=shift) : $s->{in_package} }
+sub postamble { my $s=shift; return @_ ? ($s->{postamble}=shift) : $s->{postamble} }
+sub postprocess { my $s=shift; return @_ ? ($s->{postprocess}=shift) : $s->{postprocess} }
+sub preamble { my $s=shift; return @_ ? ($s->{preamble}=shift) : $s->{preamble} }
+sub preprocess { my $s=shift; return @_ ? ($s->{preprocess}=shift) : $s->{preprocess} }
+sub taint_check { my $s=shift; return @_ ? ($s->{taint_check}=shift) : $s->{taint_check} }
+sub use_strict { my $s=shift; return @_ ? ($s->{use_strict}=shift) : $s->{use_strict} }
 
-    die "No such function `$name' in class $type";
-}
 1;
 
 __END__

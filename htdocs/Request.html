@@ -14,6 +14,7 @@
 	<LI><A HREF="#name">NAME</A>
 	<LI><A HREF="#synopsis">SYNOPSIS</A>
 	<LI><A HREF="#description">DESCRIPTION</A>
+	<LI><A HREF="#component_paths">COMPONENT PATHS</A>
 	<LI><A HREF="#methods">METHODS</A>
 	<LI><A HREF="#apache_only_methods">APACHE-ONLY METHODS</A>
 	<LI><A HREF="#author">AUTHOR</A>
@@ -36,7 +37,9 @@ HTML::Mason::Request - Mason Request Class
 <H1><A NAME="synopsis">SYNOPSIS
 
 </A></H1>
-<PRE>    $REQ-&gt;...
+<PRE>    $m-&gt;abort (...)
+    $m-&gt;comp (...)
+    etc.
 </PRE>
 
 <P>
@@ -46,20 +49,47 @@ HTML::Mason::Request - Mason Request Class
 <H1><A NAME="description">DESCRIPTION
 
 </A></H1>
-Mason creates one Request object for every web request (or, in stand-alone
-mode, every <CODE>Interp::exec</CODE> call). Inside a component you access the current request object via the
-global <CODE>$REQ</CODE>.
+The Request API is your gateway to all Mason features not provided by
+syntactic tags. Mason creates a new Request object for every web request.
+Inside a component you access the current request object via the global <CODE>$m</CODE>.
 
 
 <P>
 
-Prior to version 0.7, the only way to access request information was
-through specific mc_ commands. For this reason many of the methods below
-have mc_ command equivalents; you are free to use either interface.
+<P>
+<HR>
+<H1><A NAME="component_paths">COMPONENT PATHS
+
+</A></H1>
+The methods <A HREF="././Request.html#comp">comp</A>, <A HREF="././Request.html#comp_exists">comp_exists</A>, <A HREF="././Request.html#fetch_comp">fetch_comp</A>, and
+<A HREF="././Request.html#process_comp_path">process_comp_path</A> take a component path as argument.
 
 
 <P>
 
+<UL>
+<LI><STRONG></STRONG>
+If the path is absolute (starting with a '/'), then the component is found
+relative to the component root.
+
+
+<P>
+
+<LI><STRONG></STRONG>
+If the path is relative (no leading '/'), then the component is found
+relative to the current component directory.
+
+
+<P>
+
+<LI><STRONG></STRONG>
+If the path matches both a subcomponent and file-based component, the
+subcomponent takes precedence.
+
+
+<P>
+
+</UL>
 <P>
 <HR>
 <H1><A NAME="methods">METHODS
@@ -70,31 +100,197 @@ have mc_ command equivalents; you are free to use either interface.
 
 </A></STRONG><DD>
 Ends the current request, finishing the page without returning through
-components. The optional argument specifies the return value from <CODE>Interp::exec</CODE>; in a web environment, this ultimately becomes the HTTP status code. This
-method is used to implement
-<A HREF="././Commands.html#item_mc_abort">mc_abort</A>.
+components. The optional argument specifies the return value from <CODE>Interp::exec</CODE>; in a web environment, this ultimately becomes the HTTP status code.
 
 
 <P>
 
-<a name="call">
-
-<DT><STRONG><A NAME="item_call_comp_option_value_">call (comp, option=&gt;value, ...[, STORE=&gt;ref])
+<DT><STRONG><A NAME="item_cache_action_retrieve_store_">cache ([action=&gt;'retrieve|store|expire|keys'], [key=&gt;name],
+[value=&gt;data], [keep_in_memory=&gt;0|1], [expire options...])
 
 </A></STRONG><DD>
-Calls the component designated by <EM>comp</EM> with the specified option/value pairs. <EM>comp</EM> may be an absolute or relative component path, or a component object.
+<CODE>$m-&gt;cache</CODE> lets you store and retrieve the results of computation for improved
+performance. Each component has its own data cache for storing one or more
+key/value pairs. The cache is implemented as a DBM database. See the <A HREF="././Devel.html#data_caching">data caching</A>
+section of the <EM>Component Developer's Guide</EM> for examples and caching strategies.
 
 
 <P>
 
-The optional STORE option causes all output to be placed in the scalar
-reference provided instead of being sent to the default output stream.
+The argument to <EM>action</EM> is one of:
 
 
 <P>
 
-This method is used to implement <A HREF="././Commands.html#item_mc_comp">mc_comp</A> and the &lt;&amp; &amp;&gt; tag.
+o <EM>retrieve</EM>: returns the cache value if successful, or <CODE>undef</CODE>
+if there was no value or if it has expired.
 
+
+<P>
+
+o <EM>store</EM>: stores a new cache value under the given key. Default key is 'main'.
+
+
+<P>
+
+o <EM>expire</EM>: expires a given cache value or values. key may be a single key or a list
+reference. Default key is 'main'.
+
+
+<P>
+
+o <EM>keys</EM>: returns a list of all the keys in the cache.
+
+
+<P>
+
+<EM>value</EM> defines what to store. It can be a scalar or a reference to an arbitrary
+data structure. The allowable size depends on your DBM implementation.
+
+
+<P>
+
+<EM>keep_in_memory</EM> indicates whether to save the value in memory once it is retrieved. Default
+is 0, meaning that the value will be retrieved from the cache file each
+time. If 1, each child server that retrieves this value will save its own
+copy, which can result in substantial memory usage for larger values. Use
+sparingly.
+
+
+<P>
+
+The various expiration options are:
+
+
+<P>
+
+o <EM>expire_at</EM>: takes an absolute expiration time, in Perl <CODE>time()</CODE> format
+(number of seconds since the epoch)
+
+
+<P>
+
+o <EM>expire_in</EM>: takes a relative expiration time of the form ``&lt;num&gt;&lt;unit&gt;'',
+where &lt;num&gt; is a positive number and &lt;unit&gt; is one of seconds,
+minutes, hours, days, or weeks, or any abbreviation thereof. E.g.
+``10min'', ``30m'', ``1hour''.
+
+
+<P>
+
+o <EM>expire_next</EM>: takes a string, either 'hour' or 'day'. It indicates an expiration time
+at the top of the next hour or day.
+
+
+<P>
+
+o <EM>expire_if</EM>: calls a given anonymous subroutine and expires if the subroutine returns
+a non-zero value. The subroutine is called with one parameter, the time
+when the cache value was last written.
+
+
+<P>
+
+<a name="item_cache_self">
+
+<DT><STRONG><A NAME="item_cache_self_same_as_cache_op">cache_self (... same as cache options...)
+
+</A></STRONG><DD>
+Uses <CODE>$m-&gt;cache</CODE> to cache the entire output and/or the return value of the current
+component. It is typically used right at the top of an
+<CODE>&lt;%init%&gt;</CODE> section.
+
+
+<P>
+
+To cache the component's output:
+
+
+<P>
+
+<PRE>    &lt;%init&gt;
+        return if $m-&gt;cache_self(expire_in=&gt;'3 hours'[, key=&gt;'fookey']);
+        ... &lt;rest of init&gt; ...
+    &lt;/%init&gt;
+</PRE>
+
+<P>
+
+To cache the component's return value:
+
+
+<P>
+
+<PRE>    &lt;%init&gt;
+        my ($retval,$cached) = $m-&gt;cache_self(expire_in=&gt;'3 hours'[, key=&gt;'fookey']);
+        return $retval if $cached;
+        ... &lt;rest of init&gt; ...
+    &lt;/%init&gt;
+</PRE>
+
+<P>
+
+This only works with scalar and reference return values.
+
+
+<P>
+
+<CODE>$m-&gt;cache_self</CODE> handles both the retrieve and store, so you can pass both kinds of options
+to it. See <CODE>$m-&gt;cache</CODE> for an explanation of options.
+
+
+<P>
+
+<CODE>$m-&gt;cache_self</CODE> uses a bit of magic to accomplish everything in one line. You can use it
+without understanding it, but if you're curious, here's how it works:
+
+
+<P>
+
+o A component foo calls <CODE>$m-&gt;cache_self</CODE> for the first time.
+
+
+<P>
+
+o <CODE>$m-&gt;cache_self</CODE> sees that the cache is empty and calls foo again recursively, with a STORE
+option to capture its content into a buffer.
+
+
+<P>
+
+o foo again calls <CODE>$m-&gt;cache_self</CODE> which immediately returns 0 this time.
+
+
+<P>
+
+o foo goes about its business and generates content into the <CODE>$m-&gt;cache_self</CODE> buffer.
+
+
+<P>
+
+o When control is returned to <CODE>$m-&gt;cache_self</CODE>, it stores the content and return value in the cache and also outputs the
+content normally. Finally <CODE>$m-&gt;cache_self</CODE> returns the list (retval,1) which in turn causes foo to return immediately.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_caller_args">caller_args
+
+</A></STRONG><DD>
+Returns a list reference of the arguments passed by the component at the
+specified stack level. e.g.
+
+
+<P>
+
+<PRE>    $m-&gt;caller_args(0)   # arguments passed to current component
+    $m-&gt;caller_args(-1)  # arguments passed to top-level component
+</PRE>
+
+<P>
+
+<PRE>    my %top_args = @{$m-&gt;caller_args(-1)}    # get top-level arguments as a hash
+</PRE>
 
 <P>
 
@@ -111,19 +307,49 @@ object at that index in the list. e.g.
 
 <P>
 
-<PRE>    $REQ-&gt;callers(0)      # current component
-    $REQ-&gt;callers(1)      # component that called us
-    $REQ-&gt;callers(-1)     # top-level component
+<PRE>    $m-&gt;callers(0)      # current component
+    $m-&gt;callers(1)      # component that called us
+    $m-&gt;callers(-1)     # top-level component
 </PRE>
 
 <P>
 
-<a name="comp">
-
-<DT><STRONG><A NAME="item_comp">comp
+<DT><STRONG><A NAME="item_call_next_args_">call_next ([args...])
 
 </A></STRONG><DD>
-Returns the current component object.
+Calls the component intercepted by an autohandler. With no arguments, the
+original arguments are passed to the component. Any arguments specified
+here serve to augment and override (in case of conflict) the original
+arguments. Works like <CODE>$m-&gt;comp</CODE> in terms of return value and scalar/list context. See the <A HREF="././Devel.html#autohandlers">autohandlers</A> section of the
+<EM>Component Developer's Guide</EM> for examples.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_comp_comp_option_value_">comp (comp, option=&gt;value, ...)
+
+</A></STRONG><DD>
+Calls the component designated by <EM>comp</EM> with the specified option/value pairs. <EM>comp</EM> may be a component path or a component object. 
+
+
+<P>
+
+Components work exactly like Perl subroutines in terms of return values and
+context. A component can return any type of value, which is then returned
+from the <CODE>$m-&gt;comp</CODE> call.
+
+
+<P>
+
+The &lt;&amp; &amp;&gt; tag provides a convenient shortcut for <CODE>$m-&gt;comp</CODE>.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_comp_exists_comp_path_">comp_exists (comp_path)
+
+</A></STRONG><DD>
+Returns 1 if <EM>comp_path</EM> is the path of an existing component, 0 otherwise. 
 
 
 <P>
@@ -133,6 +359,27 @@ Returns the current component object.
 </A></STRONG><DD>
 Returns the number of this request, which is unique for a given request and
 interpreter.
+
+
+<P>
+
+<a name="current_comp">
+
+<DT><STRONG><A NAME="item_current_comp">current_comp
+
+</A></STRONG><DD>
+Returns the current component object.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_decline">decline
+
+</A></STRONG><DD>
+Used from a top-level component or dhandler, this method aborts the current
+request and restarts with the next applicable dhandler up the tree. If no
+dhandler is available, an error occurs. This method bears no relation to
+the Apache DECLINED status except in name.
 
 
 <P>
@@ -150,21 +397,57 @@ is 1, which indicates we are in the top-level component.
 
 </A></STRONG><DD>
 If the request has been handled by a dhandler, this method returns the
-remainder of the URI or <CODE>Interp::exec</CODE> path when the dhandler directory is removed. Otherwise returns undef. This
-method is used to implement
-<A HREF="././Commands.html#item_mc_dhandler_arg">mc_dhandler_arg</A>.
+remainder of the URI or <CODE>Interp::exec</CODE> path when the dhandler directory is removed. Otherwise returns undef.
 
 
 <P>
 
 <a name="fetch_comp">
 
-<DT><STRONG><A NAME="item_fetch_comp_compPath_">fetch_comp (compPath)
+<DT><STRONG><A NAME="item_fetch_comp_comp_path_">fetch_comp (comp_path)
 
 </A></STRONG><DD>
-Given an absolute or relative component path, returns the corresponding
-component object or undef if no such component exists. Looks for
-subcomponents as well as file-based components.
+Given a <EM>comp_path</EM>, returns the corresponding component object or undef if no such component
+exists.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_fetch_next">fetch_next
+
+</A></STRONG><DD>
+Returns the component object intercepted by an autohandler. See the
+<A HREF="././Devel.html#autohandlers">autohandlers</A> section of the <EM>Component Developer's Guide</EM>
+for usage and examples.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_file_filename_">file (filename)
+
+</A></STRONG><DD>
+Returns the contents of filename as a string. <EM>filename</EM> may be an absolute filesystem path (starting with a '/') or relative (no
+leading '/'). If relative, Mason prepends the static file root, or the
+current component directory if no static file root is defined.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_file_root">file_root
+
+</A></STRONG><DD>
+Returns the static file root, used by <CODE>$m-&gt;file</CODE> to resolve relative filenames.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_flush_buffer">flush_buffer
+
+</A></STRONG><DD>
+Flushes the Mason output buffer. Under mod_perl, also sends HTTP headers if
+they haven't been sent and calls $r-&gt;rflush to flush the Apache buffer.
+Flushing the initial bytes of output can make your servers appear more
+responsive.
 
 
 <P>
@@ -177,6 +460,21 @@ Returns the Interp object associated with this request.
 
 <P>
 
+<DT><STRONG><A NAME="item_out_string_">out (string)
+
+</A></STRONG><DD>
+Print the given <EM>string</EM>. Rarely needed, since normally all HTML is just placed in the component
+body and output implicitly. <CODE>$m-&gt;out</CODE> is useful if you need to output something in the middle of a Perl block.
+
+
+<P>
+
+<CODE>$m-&gt;out</CODE> should be used instead of <CODE>print</CODE> or <CODE>$r-&gt;print</CODE>, since <CODE>$m-&gt;out</CODE> may be redirected or buffered depending on the current state of the
+interpreter.
+
+
+<P>
+
 <DT><STRONG><A NAME="item_parser">parser
 
 </A></STRONG><DD>
@@ -185,11 +483,35 @@ Returns the Parser object associated with this request.
 
 <P>
 
-<DT><STRONG><A NAME="item_process_comp_path_compPath_">process_comp_path (compPath)
+<DT><STRONG><A NAME="item_process_comp_path_comp_path_">process_comp_path (comp_path)
 
 </A></STRONG><DD>
-Given an absolute or relative component path, returns the corresponding
-absolute component path.
+Given a <EM>comp_path</EM>, returns the corresponding absolute component path.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_scomp">scomp
+
+</A></STRONG><DD>
+Like <CODE>$m-&gt;comp</CODE>, but returns the component output as a string instead of printing it.
+(Think sprintf versus printf.) The component's return value is discarded.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_time">time
+
+</A></STRONG><DD>
+Returns the interpreter's notion of the current time in Perl
+<CODE>time()</CODE> format (number of seconds since the epoch).
+
+
+<P>
+
+By using <CODE>$m-&gt;time</CODE> rather than calling <CODE>time()</CODE> directly, you enable the option of
+previewer or port-based time/date simulations. e.g. a port that looks one
+day into the future.
 
 
 <P>

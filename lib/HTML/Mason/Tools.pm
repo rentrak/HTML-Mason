@@ -1,4 +1,4 @@
-# Copyright (c) 1998 by Jonathan Swartz. All rights reserved.
+# Copyright (c) 1998-99 by Jonathan Swartz. All rights reserved.
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
@@ -13,7 +13,7 @@ require 5.004;
 require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw();
-@EXPORT_OK = qw(read_file chop_slash html_escape url_escape url_unescape date_delta_to_secs is_absolute_path make_absolute_path pkg_loaded pkg_installed);
+@EXPORT_OK = qw(read_file chop_slash html_escape url_escape url_unescape date_delta_to_secs dumper_method paths_eq is_absolute_path make_absolute_path compress_path pkg_loaded pkg_installed);
 
 use strict;
 use IO::File qw(!/^SEEK/);
@@ -107,6 +107,22 @@ sub date_delta_to_secs
 }
 
 #
+# Call the XS or normal version of Data::Dumper::Dump depending on what's installed.
+#
+sub dumper_method {
+    my ($d) = @_;
+    return ($HTML::Mason::Config{use_data_dumper_xs} ? $d->Dumpxs : $d->Dumper);
+}
+
+#
+# Determines whether two paths are equal, taking into account
+# case-insensitivity in Windows O/S.
+#
+sub paths_eq {
+    return (lc($^O) =~ /^ms(dos|win32)/) ? (lc($_[0]) eq lc($_[1])) : $_[0] eq $_[1];
+}
+
+#
 # Determines whether a pathname is absolute: beginning with / or ~/ or a
 # drive letter (e.g. C:/).
 #
@@ -127,6 +143,15 @@ sub make_absolute_path
     return $path;
 }
 
+sub compress_path
+{
+    my ($path) = @_;
+    for ($path) {
+	s@^/@@;
+	s/([^\w\.\-\~])/sprintf('+%02x', ord $1)/eg;
+    }
+    return $path;
+}
 
 no strict 'refs';
 

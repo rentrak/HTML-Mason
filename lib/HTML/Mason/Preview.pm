@@ -1,4 +1,4 @@
-# Copyright (c) 1998 by Jonathan Swartz. All rights reserved.
+# Copyright (c) 1998-99 by Jonathan Swartz. All rights reserved.
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
@@ -114,21 +114,26 @@ use MLDBM ($HTML::Mason::Config{mldbm_use_db}, $HTML::Mason::Config{mldbm_serial
 use IO::File qw(!/^SEEK/);
 use POSIX;
 
-sub open_preview_settings
+sub open_preview_settings_file
 {
-    my ($previewDir, $user, $write) = @_;
+    my ($settings_file, $write) = @_;
     my (%h);
-    my $previewFile = "$previewDir/$user";
-    if ($write || !-e $previewFile) {
-	tie (%h, 'MLDBM', $previewFile, O_RDWR|O_CREAT, 0664)
-	    or die "cannot create/open preview file '$previewFile' for writing\n";
+    if ($write || !-e $settings_file) {
+	tie (%h, 'MLDBM', $settings_file, O_RDWR|O_CREAT, 0664)
+	    or die "cannot create/open previewer settings file '$settings_file' for writing\n";
 	untie(%h) if !$write;
     }
     if (!$write) {
-	tie (%h, 'MLDBM', $previewFile, O_RDONLY, 0)
-	    or die "cannot open preview file '$previewFile' for reading\n";
+	tie (%h, 'MLDBM', $settings_file, O_RDONLY, 0)
+	    or die "cannot open previewer settings file '$settings_file' for reading\n";
     }
     return \%h;
+}
+
+sub open_preview_settings
+{
+    my ($preview_dir, $user_name, $write) = @_;
+    return open_preview_settings_file("$preview_dir/$user_name",$write);
 }
 
 sub handle_preview_request
@@ -150,7 +155,8 @@ sub handle_preview_request_1
 {
     my ($r, $ah, %options) = @_;
     my (%simhdr);
-    my $cmHome = $options{cm_home};
+    my $cm_home = $options{cm_home};
+    my $settings_file = $options{settings_file};
     
     #
     # Determine user name and port.
@@ -163,9 +169,16 @@ sub handle_preview_request_1
     #
     # Find configuration for user & port.
     #
-    my $in = open_preview_settings($ah->preview_dir,$userName,0);
-    my $href = $in->{$port};
-    die "Cannot find preview configuration for user '$userName', port $port\n. Go to the main previewer page to set the configuration for this port.\n" if (!$href);
+    my $href;
+    if ($settings_file) {
+	my $in = open_preview_settings_file($settings_file,0);
+	$href = $in->{$port};
+	die "Cannot find preview configuration for port $port in settings file '$settings_file'." if (!$href);
+    } else {
+	my $in = open_preview_settings($ah->preview_dir,$userName,0);
+	$href = $in->{$port};
+	die "Cannot find preview configuration for user '$userName', port $port\n. Go to the main previewer page to set the configuration for this port.\n" if (!$href);
+    }
     my $conf = $href->{request};
 
     my $interp = $ah->interp;
@@ -203,18 +216,6 @@ sub handle_preview_request_1
 	while (my ($key,$value) = each(%{$conf->{interp}})) {
 	    eval("\$interp->$key(\$value)");
 	}
-        # cmp specific, must remove
-	if ($conf->{alternate_source}) {
-	    my $altpath = "/VERSIONS/".$conf->{alternate_source};
-	    my $altsub = sub {
-		if ($_[0] eq 'comp') {
-		    return ($altpath.$_[1]);
-		} else {
-		    return ();
-		}
-	    };
-	    $interp->alternate_sources($altsub);
-	}
 	$interp->_initialize;	
     }
     
@@ -231,14 +232,6 @@ sub handle_preview_request_1
 	while (my ($key,$value) = each(%{$conf->{r}})) {
 	    eval("\$pr->$key(\$value)");
 	}
-    }
-    # doesn't really work because the request doesn't go through
-    # normal apache phases (e.g. path_info not set correctly);
-    # currently planning to take out and replace with named
-    # virtual servers
-    if (defined($conf->{top_prefix})) {
-	$pr->document_root($interp->comp_root.$conf->{top_prefix});
-	$pr->filename($pr->document_root.$pr->uri);
     }
     if (defined($conf->{server})) {
 	while (my ($key,$value) = each(%{$conf->{server}})) {
@@ -272,16 +265,8 @@ sub handle_preview_request_1
     } elsif ($conf->{output_type} eq 'Debug') {
 
 	#
-	# Start document
-	#
-	$pr->content_type('text/html');
-	HTML::Mason::Preview::Apache::send_http_header($pr);
-	$pr->print("<body bgcolor=#ffffff>");
-	$pr->print("<script language=javascript>\n<!--\ndocument.write(\"<title>\" + \"Preview \" + window.name.substring(11,12) + \"</title>\")\n// -->\n</script>\n");
-
-	#
 	# Set up hooks to record events. An event is the starting
-	# or ending of an mc_comp or mc_file. When an event occurs,
+	# or ending of an $m->comp or $m->file. When an event occurs,
 	# place an event code in the content (EVENT# surrounded by
 	# ctrl-A), and push a hash of information onto the event list.
 	#
@@ -290,13 +275,13 @@ sub handle_preview_request_1
 	my $startCompHook = sub {
 	    my ($req) = @_;
 	    $content .= "\cAEVENT$eventnum\cA";
-	    my $path = $req->comp->title;
-	    $compEvents[$eventnum++] = {type=>'startComp',path=>$path,comp=>($req->comp)};
+	    my $path = $req->current_comp->title;
+	    $compEvents[$eventnum++] = {type=>'startComp',path=>$path,comp=>($req->current_comp)};
 	};
 	my $endCompHook = sub {
 	    my ($req) = @_;
 	    $content .= "\cAEVENT$eventnum\cA";
-	    my $path = $req->comp->title;
+	    my $path = $req->current_comp->title;
 	    $compEvents[$eventnum++] = {type=>'endComp',path=>$path};
 	};
 	my $startFileHook = sub {
@@ -329,15 +314,25 @@ sub handle_preview_request_1
 	};
 
 	#
-	# Make HTTP request, trap output in $content
+	# Make HTTP request, trap output in $content. Put in stream mode to turn off Mason buffering.
 	#
 	$interp->add_hook(name=>'preview',type=>'start_comp',code=>$startCompHook);
 	$interp->add_hook(name=>'preview',type=>'end_comp',code=>$endCompHook);
 	$interp->add_hook(name=>'preview',type=>'start_file',code=>$startFileHook);
 	$interp->add_hook(name=>'preview',type=>'end_file',code=>$endFileHook);
+	$interp->out_mode('stream');
 	$interp->out_method(sub { $content .= $_[0] });
 	$ah->output_mode(undef);
         my $statuscode = $ah->handle_request($pr);
+	return $statuscode unless (!$statuscode or $statuscode==200);
+	
+	#
+	# Start document
+	#
+	$pr->content_type('text/html');
+	HTML::Mason::Preview::Apache::send_http_header($pr) if !$r->header_out("Content-type");
+	$pr->print("<body bgcolor=#ffffff>");
+	$pr->print("<script language=javascript>\n<!--\ndocument.write(\"<title>\" + \"Preview \" + window.name.substring(11,12) + \"</title>\")\n// -->\n</script>\n");
 
 	#
 	# Validate file events. For each startFile event,
@@ -391,13 +386,12 @@ sub handle_preview_request_1
 
 	#
 	# Analyze event information. Create a list of objects
-	# (distinct component and mc_file invocations)
+	# (distinct component and $m->file invocations)
 	# and assign to each event the object that follows it.
 	#
 	my (@objects,@stack);
 	my $objcount = 0;
 	my $fileroot = $interp->static_file_root();
-	my $comproot = $interp->comp_root();
 	foreach $event (@compEvents) {
 	    next if !defined($event);
 	    my ($type,$path) = ($event->{type},$event->{path});
@@ -432,10 +426,11 @@ sub handle_preview_request_1
 		    # have a file based component or a static file
 		    # inside the file root, create content management
 		    # view/edit links.
-		    if ($cmHome &&
+		    if ($cm_home &&
 			(($objtype eq 'comp' and $event->{comp}->is_file_based) or
 			 ($objtype eq 'file' and $path =~ m{^$fileroot}))) {
 			my $branch;
+			my $comproot = $interp->first_comp_root();
 			if ($objtype eq 'comp') {
 			    $path = $comproot.$path;
 			    $branch = 'Components';
@@ -445,8 +440,8 @@ sub handle_preview_request_1
 			    $branch = 'Content';
 			}
 			my $spacer = ('  ' x (scalar(@stack)+1));
-			$cmHome =~ s/\/$//;
-			$objdisplay = (qq{<a href="$cmHome/textView?branch=$branch&path=$path">info</a> <a href="$cmHome/editComp?branch=$branch&path=$path">edit</a>}.$spacer.$objtext);
+			$cm_home =~ s/\/$//;
+			$objdisplay = (qq{<a href="$cm_home/textView?branch=$branch&path=$path">info</a> <a href="$cm_home/editComp?branch=$branch&path=$path">edit</a>}.$spacer.$objtext);
 		    } else {
 			$objdisplay = (('  ' x scalar(@stack)) . $objtext);
 		    }
@@ -477,7 +472,7 @@ sub handle_preview_request_1
 	    ($content) = html_escape($content);
 	    $content =~ s/\cAEVENT/\n\cAEVENT/g;
 	    my ($obj);
-	    while ($content =~ /(.*)/g) {
+	    while ($content =~ /(.*)\n?/g) {
 		my $line = $1;
 		my $beginFlag = 0;
 		if ($line =~ /\cAEVENT([0-9]+)\cA/) {

@@ -1,3 +1,0 @@
-ERROR:
-error while executing /support/recurse_test:
-16 levels deep in component stack (infinite recursive call?)

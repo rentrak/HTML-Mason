@@ -1,0 +1,3 @@
+dhandler = /misc/dhandler_test/dhandler
+dhandler arg = subdir/leaf3
+

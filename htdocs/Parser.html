@@ -117,30 +117,6 @@ spaces. Default is <CODE>HTML::Mason::Commands</CODE>.
 
 <P>
 
-You will have to explicitly import the mc_* commands from <CODE>HTML::Mason::Commands</CODE>
-into your package. Ideally you will put this in your <CODE>handler.pl</CODE>:
-
-
-<P>
-
-<PRE>    { package MyPackage;
-    use HTML::Mason::Commands; }
-</PRE>
-
-<P>
-
-This will bring in all of the mc_ commands. If you want to save some space
-on imported symbols, specify just the commands you want:
-
-
-<P>
-
-<PRE>    { package MyPackage;
-    use HTML::Mason::Commands qw(mc_comp mc_file mc_cache); }
-</PRE>
-
-<P>
-
 <DT><STRONG><A NAME="item_postamble">postamble
 
 </A></STRONG><DD>
@@ -199,54 +175,6 @@ does it's magic. The sub is called with a single parameter, a scalar
 reference to the script. The sub is expected to process the script
 in-place. This is one way to extend the HTML::Mason syntax with new tags,
 etc. See <A HREF="./Parser.html#item_postprocess">postprocess</A>.
-
-
-<P>
-
-<DT><STRONG><A NAME="item_source_refer_predicate">source_refer_predicate
-
-</A></STRONG><DD>
-Reference to a subroutine that decides whether a given component should be
-compiled with <A HREF="././Admin.html#source_references">source references</A>. The subroutine takes two arguments: first, the total number of characters
-in the component source; second, the number of characters devoted to plain
-text. For example, this component:
-
-
-<P>
-
-<PRE>        % my $noun = &quot;World&quot;;
-        Hello, &lt;% $noun %&gt;!
-        How are ya?
-</PRE>
-
-<P>
-
-Has 51 total bytes, 19 of which are plain text. This allows you to adjust
-the trade-off between the memory savings of source references and the
-performance advantage of in-line plain text. For example, to choose only
-components with at least 50% plain text:
-
-
-<P>
-
-<PRE>    source_refer_predicate =&gt;
-        sub { return $_[1] / $_[0] &gt;= 0.5 }
-</PRE>
-
-<P>
-
-The current default is
-
-
-<P>
-
-<PRE>    sub { return $_[1] &gt;= 500 }
-</PRE>
-
-<P>
-
-i.e. any component with at least 500 characters. This is an experimental
-setting and may change.
 
 
 <P>
@@ -343,7 +271,7 @@ Example of usage:
 <P>
 
 <PRE>    # Call it from inside another component
-    $REQ-&gt;call($comp);
+    $m-&gt;comp($comp);
 </PRE>
 
 <P>
@@ -405,7 +333,7 @@ Example of usage:
 
 <PRE>    #!/usr/bin/perl
     use HTML::Mason;
-    use HTML::Mason::ApacheHandler;  # load explicitly to bring in special mc_ commands
+    use HTML::Mason::ApacheHandler;  # load explicitly to bring in special $m-&gt; commands
     
     my $p = new HTML::Mason::Parser;
     $p-&gt;allow_globals(qw($r));       # allow Apache $r global

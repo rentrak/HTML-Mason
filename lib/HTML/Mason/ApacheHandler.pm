@@ -1,27 +1,24 @@
-# Copyright (c) 1998 by Jonathan Swartz. All rights reserved.
+# Copyright (c) 1998-99 by Jonathan Swartz. All rights reserved.
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
 require 5.004;
 
+#----------------------------------------------------------------------
 #
-# Apache-specific Request object
+# APACHE-SPECIFIC REQUEST OBJECT
 #
 package HTML::Mason::Request::ApacheHandler;
 require Exporter;
 use vars qw(@ISA);
 @ISA = qw(HTML::Mason::Request);
 
+# Fields that can be set in new method, with defaults
 my %reqfields =
     (ah => undef,
      http_input => undef,
      apache_req => undef,
      );
-# Create accessor routines
-foreach my $f (keys(%reqfields)) {
-    no strict 'refs';
-    *{$f} = sub {my $s=shift; return @_ ? ($s->{$f}=shift) : $s->{$f}};
-}
 
 sub new
 {
@@ -39,8 +36,24 @@ sub new
     return $self;
 }
 
+# Create generic read-write accessor routines
+
+sub ah { my $s=shift; return @_ ? ($s->{ah}=shift) : $s->{ah} }
+sub http_input { my $s=shift; return @_ ? ($s->{http_input}=shift) : $s->{http_input} }
+sub apache_req { my $s=shift; return @_ ? ($s->{apache_req}=shift) : $s->{apache_req} }
+
+# Override flush_buffer to also call $r->rflush
+sub flush_buffer
+{
+    my ($self, $content) = @_;
+    $self->SUPER::flush_buffer($content);
+    $self->apache_req->rflush;
+}
+
+
+#----------------------------------------------------------------------
 #
-# ApacheHandler object
+# APACHEHANDLER OBJECT
 #
 package HTML::Mason::ApacheHandler;
 require Exporter;
@@ -61,20 +74,22 @@ use File::Path;
 use HTML::Mason::Interp;
 use HTML::Mason::Commands;
 use HTML::Mason::FakeApache;
-use HTML::Mason::Tools qw(html_escape url_unescape pkg_installed);
+use HTML::Mason::Tools qw(dumper_method html_escape url_unescape pkg_installed);
 use HTML::Mason::Utils;
 use Apache::Status;
 use CGI qw(-private_tempfiles);
 
 my @used = ($HTML::Mason::IN_DEBUG_FILE);
 	    
+# Fields that can be set in new method, with defaults
 my %fields =
     (
      apache_status_title => 'mason',
+     auto_send_headers => 1, 
      decline_dirs => 1,
      error_mode => 'html',
      interp => undef,
-     output_mode => 'batch',
+     output_mode => undef,    # deprecated - now interp->out_mode
      top_level_predicate => undef,
      debug_mode => 'none',
      debug_perl_binary => '/usr/bin/perl',
@@ -82,11 +97,6 @@ my %fields =
      debug_handler_proc => undef,
      debug_dir_config_keys => [],
      );
-# Minor speedup: create anon. subs to reduce AUTOLOAD calls
-foreach my $f (keys %fields) {
-    no strict 'refs';
-    *{$f} = sub {my $s=shift; return @_ ? ($s->{$f}=shift) : $s->{$f}};
-}
 
 sub new
 {
@@ -115,7 +125,6 @@ sub _initialize {
 
     my $interp = $self->interp;
 
-    # ----------------------------
     # Add an HTML::Mason menu item to the /perl-status page. Things we report:
     # -- Interp properties
     # -- loaded (cached) components
@@ -123,14 +132,14 @@ sub _initialize {
     my $title;
     if ($name eq 'mason') {
         $title='HTML::Mason status';    #item for HTML::Mason module
-    } 
-    else {
+    } else {
         $title=$name;
         $name=~s/\W/_/g;
     }
 
     my $statsub = sub {
 	my($r,$q) = @_; #request and CGI objects
+	return [] if !defined($r);
 	my(@strings);
 
 	push (@strings,
@@ -139,7 +148,7 @@ sub _initialize {
 
 	return \@strings;     #return an array ref
     };
-    Apache::Status->menu_item ($name,$title,$statsub) if $Apache::Status::VERSION;
+    Apache::Status->menu_item ($name,$title,$statsub);
     
     #
     # Create data subdirectories if necessary. mkpath will die on error.
@@ -197,13 +206,13 @@ sub interp_status
 sub handle_request {
 
     #
-    # Why do we use $req instead of $r here? A scoping bug in certain
+    # Why do we use $apreq instead of $r here? A scoping bug in certain
     # versions of Perl 5.005 was getting confused about $r being used
     # in components, and the easiest workaround was to rename "$r" to
     # something else in this routine.  Go figure...
     # -jswartz 5/23
     #
-    my ($self,$req) = @_;
+    my ($self,$apreq) = @_;
     my ($outsub, $retval);
     my $outbuf = '';
     my $interp = $self->interp;
@@ -213,24 +222,11 @@ sub handle_request {
     # Construct (and truncate if necessary) the request to log at start
     #
     if ($interp->system_log_event_check('REQ_START')) {
-	my $rstring = $req->server->server_hostname . $req->uri;
-	$rstring .= "?".scalar($req->args) if defined(scalar($req->args));
+	my $rstring = $apreq->server->server_hostname . $apreq->uri;
+	$rstring .= "?".scalar($apreq->args) if defined(scalar($apreq->args));
 	$rstring = substr($rstring,0,150).'...' if length($rstring) > 150;
 	$interp->write_system_log('REQ_START', $self->{request_number},
 				  $rstring);
-    }
-
-    #
-    # If output mode is 'batch', collect output in a buffer and
-    # print at the end. If output mode is 'stream', send output
-    # to client as it is produced.
-    #
-    if ($self->output_mode eq 'batch') {
-        $outsub = sub { $outbuf .= $_[0] if defined($_[0]) };
-	$interp->out_method($outsub);
-    } elsif ($self->output_mode eq 'stream') {
-	$outsub = sub { print($_[0]) };
-	$interp->out_method($outsub);
     }
 
     #
@@ -241,10 +237,10 @@ sub handle_request {
     $debugMode = 'none' if $HTML::Mason::IN_DEBUG_FILE;
 
     #
-    # Capture debug state as early as possible, before we start messing with $req.
+    # Capture debug state as early as possible, before we start messing with $apreq.
     #
     my $debugState;
-    $debugState = $self->capture_debug_state($req)
+    $debugState = $self->capture_debug_state($apreq)
 	if ($debugMode eq 'all' or $debugMode eq 'error');
 
     #
@@ -253,10 +249,10 @@ sub handle_request {
     # because we don't yet have the stdin content.
     #
     my $debugMsg;
-    $debugMsg = $self->write_debug_file($req,$debugState)
-	if ($debugMode eq 'all' && $req->method ne 'POST');
+    $debugMsg = $self->write_debug_file($apreq,$debugState)
+	if ($debugMode eq 'all' && $apreq->method ne 'POST');
 
-    eval { $retval = handle_request_1($self, $req, $debugState) };
+    eval { $retval = handle_request_1($self, $apreq, $debugState) };
     my $err = $@;
     my $err_status = $err ? 1 : 0;
 
@@ -267,25 +263,24 @@ sub handle_request {
 	#
 	$err =~ s@^\[[^\]]*\] \(eval [0-9]+\): @@mg;
 	$err = html_escape($err);
-	my $referer = $req->header_in('Referer') || '<none>';
-	my $agent = $req->header_in('User-Agent') || '';
-	$err = sprintf("while serving %s %s (referer=%s, agent=%s)\n%s",$req->server->server_hostname,$req->uri,$referer,$agent,$err);
+	my $referer = $apreq->header_in('Referer') || '<none>';
+	my $agent = $apreq->header_in('User-Agent') || '';
+	$err = sprintf("while serving %s %s (referer=%s, agent=%s)\n%s",$apreq->server->server_hostname,$apreq->uri,$referer,$agent,$err);
 
 	if ($self->error_mode eq 'fatal') {
 	    die ("System error:\n$err\n");
 	} elsif ($self->error_mode eq 'html') {
-	    if (!http_header_sent($req)) {
-		$req->content_type('text/html');
-		$req->send_http_header();
+	    if (!http_header_sent($apreq)) {
+		$apreq->content_type('text/html');
+		$apreq->send_http_header();
 	    }
 	    print("<h3>System error</h3><p><pre><font size=-1>$err</font></pre>\n");
-	    $debugMsg = $self->write_debug_file($req,$debugState) if ($debugMode eq 'error' || ($debugMode eq 'all' && $req->method eq 'POST'));
+	    $debugMsg = $self->write_debug_file($apreq,$debugState) if ($debugMode eq 'error' || ($debugMode eq 'all' && $apreq->method eq 'POST'));
 	    print("<pre><font size=-1>\n$debugMsg\n</font></pre>\n") if defined($debugMsg);
 	}
     } else {
-	$debugMsg = $self->write_debug_file($req,$debugState) if ($debugMode eq 'all' && $req->method eq 'POST');
-	print("\n<!--\n$debugMsg\n-->\n") if defined($debugMsg) && http_header_sent($req) && !$req->header_only && $req->header_out("Content-type") =~ /text\/html/;
-	print($outbuf) if $self->output_mode eq 'batch';
+	$debugMsg = $self->write_debug_file($apreq,$debugState) if ($debugMode eq 'all' && $apreq->method eq 'POST');
+	print "\n<!--\n$debugMsg\n-->\n" if (defined($debugMsg) && http_header_sent($apreq) && !$apreq->header_only && $apreq->header_out("Content-type") =~ /text\/html/);
     }
 
     $interp->write_system_log('REQ_END', $self->{request_number}, $err_status);
@@ -370,7 +365,7 @@ for (1 .. $opt_r) {
 print STDERR '.' if ($opt_P and $opt_r > 1);
 PERL
     $o .= "my ";
-    $o .= $d->Dumpxs;
+    $o .= dumper_method($d);
     $o .= 'my $r = HTML::Mason::ApacheHandler::simulate_debug_request($dref);'."\n";
     $o .= 'local %ENV = (%ENV,%{$dref->{ENV}});'."\n";
     $o .= 'my $status = '.$self->debug_handler_proc."(\$r);\n";
@@ -438,23 +433,10 @@ sub capture_debug_state
     return {%d};
 }
 
-#
-# Send HTTP headers when the primary section is reached.
-#
-sub send_headers_hook
-{
-    my ($req) = @_;
-    my $r = $req->apache_req;
-    $r->send_http_header() if !http_header_sent($r);
-    $req->abort() if $r->header_only;
-    $req->suppress_hook(name=>'http_header',type=>'start_primary');
-}
-
 sub handle_request_1
 {
     my ($self,$r,$debugState) = @_;
     my $interp = $self->interp;
-    my $compRoot = $interp->comp_root;
 
     #
     # If filename is a directory, then either decline or simply reset
@@ -469,16 +451,11 @@ sub handle_request_1
     }
     
     #
-    # Compute the component path by deleting the component root
-    # directory from the front of Apache's filename.  If the
-    # substitute fails, we must have an URL outside Mason's component
-    # space; return not found.
+    # Compute the component path via the resolver.
     #
-    my $compPath = $r->filename;
-    if (!($compPath =~ s/^$compRoot//)) {
-	$r->warn("Mason: filename (\"$compPath\") is outside component root (\"$compRoot\"); returning 404.");
-	return NOT_FOUND;
-    }
+    my $compPath = $interp->resolver->file_to_path($r->filename,$interp);
+    return NOT_FOUND unless $compPath;
+
     $compPath =~ s@/$@@ if $compPath ne '/';
     while ($compPath =~ s@//@/@) {}
 
@@ -494,7 +471,6 @@ sub handle_request_1
 	    $r->path_info($pathInfo);
 	    $dhandlerArg = substr($pathInfo,1);
 	} else {
-	    $r->warn("Mason: no component corresponding to filename \"".$r->filename."\", comp path \"$compPath\"; returning 404.");
 	    return NOT_FOUND;
 	}
     }
@@ -505,7 +481,6 @@ sub handle_request_1
     if (defined($self->{top_level_predicate})) {
 	my $srcfile = $comp->source_file;
 	if (!$self->{top_level_predicate}->($srcfile)) {
-	    $r->warn("Mason: component file \"$srcfile\" does not pass top-level predicate; returning 404.");
 	    return NOT_FOUND;
 	}
     }
@@ -548,8 +523,6 @@ sub handle_request_1
 	}
     }
 
-    $interp->add_hook(name=>'http_header',type=>'start_primary',code=>\&send_headers_hook);
-
     #
     # Create an Apache-specific request with additional slots.
     #
@@ -560,14 +533,59 @@ sub handle_request_1
 	 apache_req=>$r
 	 );
 
-    $request->dhandler_arg($dhandlerArg) if (defined($dhandlerArg));
+    $request->{dhandler_arg} = $dhandlerArg if (defined($dhandlerArg));
 
+    #
+    # Deprecated output_mode parameter - just pass to request out_mode.
+    #
+    if (my $mode = $self->output_mode) {
+	$request->{out_mode} = $mode;
+    }
+
+    #
+    # Craft the out method for this request to handle automatic http
+    # headers.
+    #
+    if ($self->auto_send_headers) {
+	my $headers_sent = 0;
+	my $delay_buf = '';
+	my $out_method = sub {
+	    # Check to see if the header has been sent, first via a fast
+	    # flag, then via a slightly slower $r test.
+	    unless ($headers_sent) {
+		unless (http_header_sent($r)) {
+		    # If the header has not been sent, buffer initial
+		    # whitespace so as to delay headers.
+		    if ($_[0] !~ /\S/) {
+			$delay_buf .= $_[0];
+			return;
+		    } else {
+			$r->send_http_header();
+			$request->abort() if $r->header_only;
+		    }
+		}
+		$interp->out_method->($delay_buf) if $delay_buf ne '';
+		$headers_sent = 1;
+	    }
+	    $interp->out_method->($_[0]);
+
+	    # A hack, but good for efficiency in stream mode: change the
+	    # current sink of the request so all this is bypassed for the
+	    # remainder of this component and its children.
+	    $request->top_stack->{sink} = $interp->out_method if $request->out_mode eq 'stream' and $request->top_stack->{sink} eq $request->out_method;
+	};
+	$request->{out_method} = $out_method;
+    }
+    
     #
     # Set up interpreter global variables.
     #
     $interp->set_global(r=>$r);
-    
-    return $interp->exec($comp, REQ=>$request, %args);
+
+    #
+    # Finally, execute request.
+    #
+    return $request->exec($comp, %args);
 }
 
 sub simulate_debug_request
@@ -594,25 +612,30 @@ sub simulate_debug_request
 #
 # Determines whether the http header has been sent.
 #
-sub http_header_sent
-{
-    my ($r) = @_;
-    my $sent = $r->header_out("Content-type");
-    return $sent;
-}
+sub http_header_sent { shift->header_out("Content-type") }
 
+# Create generic read-write accessor routines
+
+sub apache_status_title { my $s=shift; return @_ ? ($s->{apache_status_title}=shift) : $s->{apache_status_title} }
+sub auto_send_headers { my $s=shift; return @_ ? ($s->{auto_send_headers}=shift) : $s->{auto_send_headers} }
+sub decline_dirs { my $s=shift; return @_ ? ($s->{decline_dirs}=shift) : $s->{decline_dirs} }
+sub error_mode { my $s=shift; return @_ ? ($s->{error_mode}=shift) : $s->{error_mode} }
+sub interp { my $s=shift; return @_ ? ($s->{interp}=shift) : $s->{interp} }
+sub output_mode { my $s=shift; return @_ ? ($s->{output_mode}=shift) : $s->{output_mode} }
+sub top_level_predicate { my $s=shift; return @_ ? ($s->{top_level_predicate}=shift) : $s->{top_level_predicate} }
+sub debug_mode { my $s=shift; return @_ ? ($s->{debug_mode}=shift) : $s->{debug_mode} }
+sub debug_perl_binary { my $s=shift; return @_ ? ($s->{debug_perl_binary}=shift) : $s->{debug_perl_binary} }
+sub debug_handler_script { my $s=shift; return @_ ? ($s->{debug_handler_script}=shift) : $s->{debug_handler_script} }
+sub debug_handler_proc { my $s=shift; return @_ ? ($s->{debug_handler_proc}=shift) : $s->{debug_handler_proc} }
+sub debug_dir_config_keys { my $s=shift; return @_ ? ($s->{debug_dir_config_keys}=shift) : $s->{debug_dir_config_keys} }
+
+#----------------------------------------------------------------------
 #
-# Apache-specific Mason commands
+# APACHEHANDLER MASON COMMANDS
 #
 package HTML::Mason::Commands;
-use vars qw($REQ);
-sub mc_suppress_http_header
-{
-    if ($_[0]) {
-	$REQ->suppress_hook(name=>'http_header',type=>'start_primary');
-    } else {
-	$REQ->unsuppress_hook(name=>'http_header',type=>'start_primary');
-    }
-}
+use vars qw($m);
+# no longer needed
+sub mc_suppress_http_header {}
 
 1;

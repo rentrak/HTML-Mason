@@ -151,6 +151,16 @@ opposed to the non-interactive mod_perl interpreter).
 
 <P>
 
+<DT><STRONG><A NAME="item_Templating">Templating
+
+</A></STRONG><DD>
+The autohandler and dhandler features make it easy to apply a common
+header, footer, or filtering function to an entire directory or hierarchy
+of pages.
+
+
+<P>
+
 <DT><STRONG><A NAME="item_Previewer">Previewer
 
 </A></STRONG><DD>
@@ -220,7 +230,7 @@ Beyond this trivial example, components can also embed serious chunks of
 Perl code (say, to pull records from a database). They can also call other
 components, cache results for later reuse, and perform all the tricks you
 expect from a regular Perl program. See
-<STRONG>HTML::Mason::Components</STRONG> for a full tutorial on building, using and debugging Mason components.
+<STRONG><A HREF="././Devel.html#">HTML::Mason::Devel</A></STRONG> for a full tutorial on building, using and debugging Mason components.
 
 
 <P>
@@ -230,10 +240,9 @@ expect from a regular Perl program. See
 <H1><A NAME="installation">INSTALLATION 
 
 </A></H1>
-Mason has been tested under Linux, FreeBSD, and Solaris, but not yet (by
-us) under Win32. As an all-Perl solution, though, it should work on any
-machine that has working versions of Perl 5.004+, mod_perl, and the
-required CPAN modules.
+Mason has been tested under Linux, FreeBSD, Solaris, HPUX, and Win32. As an
+all-Perl solution, it should work on any machine that has working versions
+of Perl 5.004+, mod_perl, and the required CPAN modules.
 
 
 <P>
@@ -421,14 +430,12 @@ recheck your Apache config files and <CODE>handler.pl</CODE>, and also tail your
 
 <P>
 
-(If you are getting erroneous ``404 Not Found'' errors, Mason may be having
-trouble with your document and component root. Make sure ``LogLevel warn''
-is in your Apache configuration file, then regenerate the error and check
-the error log for Mason warnings. One situation that will unfortunately
-confuse Mason is if your document or component root goes through a soft
-link. Try specifying your document and component root settings in terms of
-the true path. On Win32 systems, make sure the document and component roots
-are spelled with the same case.)
+If you are getting erroneous ``404 Not Found'' errors, Mason may be having
+trouble with your document and component root. Remember that all files
+handled by Mason must fall underneath the component root. One situation
+that will unfortunately confuse Mason is if your document or component root
+goes through a soft link. Try specifying your document and component root
+settings in terms of the true path.
 
 
 <P>
@@ -469,9 +476,9 @@ the same box.
 
 </A></H1>
 Once Mason is on its feet, the next step is to write a component or two.
-The <EM>Mason Developer's Manual</EM> (<STRONG><A HREF="././Components.html#">HTML::Mason::Components</A></STRONG>) is a complete tutorial for writing, using, and debugging components. A
-companion to the Developer's Manual is the Mason commands reference,
-<STRONG><A HREF="././Commands.html#">HTML::Mason::Commands</A></STRONG>.
+The <EM>Mason Developer's Manual</EM> (<STRONG><A HREF="././Devel.html#">HTML::Mason::Devel</A></STRONG>) is a complete tutorial for writing, using, and debugging components. A
+reference companion to the Developer's Manual is the Request API
+documentation, <STRONG><A HREF="././Request.html#">HTML::Mason::Request</A></STRONG>.
 
 
 <P>
@@ -511,7 +518,7 @@ HREF="MAILTO:swartz@transbay.net">swartz@transbay.net</A>
 
 </A></H1>
 <A HREF="././Components.html#">HTML::Mason::Components</A>,
-<A HREF="././Commands.html#">HTML::Mason::Commands</A>,
+<A HREF="././Request.html#">HTML::Mason::Request</A>,
 <A HREF="././Parser.html#">HTML::Mason::Parser</A>,
 <A HREF="././Interp.html#">HTML::Mason::Interp</A>,
 <A HREF="././ApacheHandler.html#">HTML::Mason::ApacheHandler</A>

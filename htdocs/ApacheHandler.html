@@ -80,6 +80,22 @@ one ApacheHandler object and want them all visible via Apache::Status.
 
 <P>
 
+<DT><STRONG><A NAME="item_auto_send_headers">auto_send_headers
+
+</A></STRONG><DD>
+True or undef; default true. Indicates whether Mason should automatically
+send HTTP headers before sending content back to the client. If you set to
+false, you should call $r-&gt;send_http_header manually.
+
+
+<P>
+
+See the <A HREF="././Devel.html#sending_http_headers">sending_http_headers</A> of the Component Developer's Guide for details about the automatic header
+feature.
+
+
+<P>
+
 <DT><STRONG><A NAME="item_debug_handler_proc_debug_handle">debug_handler_proc, debug_handler_script, debug_mode, debug_perl_binary
 
 </A></STRONG><DD>
@@ -105,13 +121,9 @@ for debugging.
 <DT><STRONG><A NAME="item_output_mode">output_mode
 
 </A></STRONG><DD>
-Specifies one of two ways to send output to the client, 'batch' or
-'stream'. Batch mode means that Mason computes the entire page in memory
-and then transmits it all at once. Stream mode means that Mason outputs
-data as soon as it is computed. (This is only Mason's point of view; it
-does not take buffering done by Perl or the O/S into account.) Both of
-these modes use <CODE>$r-&gt;print</CODE> and override the value of <CODE>$interp-&gt;out_method</CODE>. The default is 'batch'. If output_mode is specified as <CODE>undef</CODE>, then <CODE>$interp-&gt;out_method</CODE>
-is left untouched.
+This parameter has been replaced by the equivalent Interp parameter
+<A HREF="./Interp.html#item_out_mode">out_mode</A>. For backward compatibility, setting
+<CODE>$ah-&gt;output_mode</CODE> will cause <CODE>$interp-&gt;out_mode</CODE> to be set appropriately.
 
 
 <P>
@@ -134,16 +146,8 @@ whose name starts with an ``_'' character:
 
 <P>
 
-<PRE>    top_level_predicate =&gt; sub { basename($_[0]) !~ /^_/ }
+<PRE>    top_level_predicate =&gt; sub { $_[0] !~ m{/_[^/]+$}
 </PRE>
-
-<P>
-
-<STRONG>NOTE</STRONG>: In this example I've used <CODE>basename()</CODE> from the <STRONG>File::Basename</STRONG>
-package. Since the top_level_predicate is defined in handler.pl, within <STRONG>HTML::Mason</STRONG>, any such symbols need to be imported into that package. In other words, I
-would need a <CODE>use&nbsp;File::Basename</CODE>
-somewhere below the <CODE>package&nbsp;HTML::Mason</CODE> line in <CODE>handler.pl</CODE>.
-
 
 <P>
 
