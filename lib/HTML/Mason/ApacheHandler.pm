@@ -16,7 +16,6 @@ use vars qw(@ISA);
 # Fields that can be set in new method, with defaults
 my %reqfields =
     (ah => undef,
-     http_input => undef,
      apache_req => undef,
      );
 
@@ -39,7 +38,6 @@ sub new
 # Create generic read-write accessor routines
 
 sub ah { my $s=shift; return @_ ? ($s->{ah}=shift) : $s->{ah} }
-sub http_input { my $s=shift; return @_ ? ($s->{http_input}=shift) : $s->{http_input} }
 sub apache_req { my $s=shift; return @_ ? ($s->{apache_req}=shift) : $s->{apache_req} }
 
 # Override flush_buffer to also call $r->rflush
@@ -72,7 +70,6 @@ use HTML::Mason::FakeApache;
 use HTML::Mason::Tools qw(dumper_method html_escape url_unescape pkg_installed);
 use HTML::Mason::Utils;
 use Apache::Status;
-use Apache::URI;
 
 # use() params. Assign defaults, in case ApacheHandler is only require'd.
 use vars qw($LOADED $ARGS_METHOD);
@@ -298,10 +295,18 @@ sub handle_request {
 
     if ($err) {
 	#
-	# If first component was not found, return 404.
+	# If first component was not found, return 404. In case of
+	# POST we must trick Apache into not reading POST content
+	# again. Wish there were a more standardized way to do this...
 	#
-	return 404 if defined($err_code) and $err_code eq 'top_not_found';
-	
+	if (defined($err_code) and $err_code eq 'top_not_found') {
+	    if ($apreq->method eq 'POST') {
+		$apreq->method('GET');
+		$apreq->headers_in->unset('Content-length');
+	    }
+	    return NOT_FOUND;
+	}
+
 	#
 	# Take out date stamp and (eval nnn) prefix
 	# Add server name, uri, referer, and agent
@@ -519,17 +524,19 @@ sub handle_request_1
     }
 
     #
-    # Parse arguments. $ARGS_METHOD may be set by the import
-    # subroutine (_cgi_args or _mod_perl_args).  When inside debug
-    # file, get arguments from special saved hash.  This circumvents
-    # POST content issues.
+    # Parse arguments. $ARGS_METHOD is set by the import subroutine
+    # (_cgi_args or _mod_perl_args).  We pass a reference to $r because
+    # _mod_perl_args upgrades $r to the Apache::Request object.
+    # 
+    # When inside debug file, get arguments from special saved hash.
+    # This circumvents POST content issues.
     #
     my %args;
     die "ARGS_METHOD not defined! Did you 'use HTML::Mason::ApacheHandler'?" unless defined($ARGS_METHOD);
     if ($HTML::Mason::IN_DEBUG_FILE) {
 	%args = %{$r->{args_hash}};
     } else {
-	%args = $self->$ARGS_METHOD($r);
+	%args = $self->$ARGS_METHOD(\$r);
     }
     $debugState->{args_hash} = \%args if $debugState;
 
@@ -610,8 +617,9 @@ sub handle_request_1
 #
 sub _cgi_args
 {
-    my ($self, $r) = @_;
+    my ($self, $rref) = @_;
 
+    my $r = $$rref;
     my $q;
     unless ($r->method eq 'GET' && !scalar($r->args)) {
         $q = CGI->new;
@@ -623,7 +631,7 @@ sub _cgi_args
     foreach my $key ( $q->param ) {
 	foreach my $value ( $q->param($key) ) {
 	    if (exists($args{$key})) {
-		if (ref($args{$key})) {
+		if (ref($args{$key} eq 'ARRAY')) {
 		    $args{$key} = [@{$args{$key}}, $value];
 		} else {
 		    $args{$key} = [$args{$key}, $value];
@@ -638,13 +646,15 @@ sub _cgi_args
 }
 
 #
-# Get %args hash via Apache::Request package
+# Get %args hash via Apache::Request package. As a side effect, assign the
+# new Apache::Request package back to $r.
 #
 sub _mod_perl_args
 {
-    my ($self, $r) = @_;
+    my ($self, $rref) = @_;
 
-    my $apr = Apache::Request->new($r);
+    my $apr = Apache::Request->new($$rref);
+    $$rref = $apr;
 
     return () unless $apr->param;
 
@@ -652,7 +662,7 @@ sub _mod_perl_args
     foreach my $key ( $apr->param ) {
 	foreach my $value ( $apr->param($key) ) {
 	    if (exists($args{$key})) {
-		if (ref($args{$key})) {
+		if (ref($args{$key}) eq 'ARRAY') {
 		    $args{$key} = [@{$args{$key}}, $value];
 		} else {
 		    $args{$key} = [$args{$key}, $value];

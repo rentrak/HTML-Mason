@@ -198,6 +198,9 @@ sub parse_component
 		       doc filter flags
 		       init once shared text );
 
+	# These cannot occur inside a subcomponent.
+	my @non_embedded_tags = qw( once shared def method );
+	
 	foreach my $t (@tags)
 	{
 	    $state->{$t} = '';
@@ -209,8 +212,8 @@ sub parse_component
                   <%
                    (?:perl_)?          # optional perl_ prefix
                    ($comp_names|       # $2: allowed tag names plus ...
-                    (?:def|method)      # def followed by spaces or tabs and then
-                    [\ \t]+ ( [^>\n]+ ) # by anything that's not '>' or a newline
+                    (?:def|method)      # def or method followed by anything
+                    ( [^>\n]* )         # that's not '>' or a newline
                                         # (which is the name)
                                         # $3: subcomp or method name
                    )
@@ -225,6 +228,14 @@ sub parse_component
 	    my $section_start = pos($state->{script});
 	    my $section_tag_pos = $section_start - length($1);
 	    my $subcomp_name = $3;
+	    if (defined($subcomp_name)) {
+		for ($subcomp_name) { s/^\s+//; s/\s+$//; }
+	    }
+
+	    if ($state->{embedded} && grep { $section_name eq $_ } @non_embedded_tags ) {
+		die $self->_make_error( error => "<%$section_name> not allowed inside <%def> or <%method>",
+					errpos => $section_tag_pos );
+	    }
 
 	    $self->_parse_textseg( segbegin => $curpos,
 				   length => $section_tag_pos - $curpos,
@@ -235,6 +246,7 @@ sub parse_component
 		my $ending_tag = $1;
 		my $section_end = pos($state->{script}) - length($ending_tag);
 		my $section = substr($state->{script}, $section_start, $section_end - $section_start);
+		my $method = '_parse_' . lc $section_name . '_section';
 		if ($section_name eq 'text') {
 		    # Special case for <%text> sections: add a special
 		    # segment that won't get parsed
@@ -243,11 +255,6 @@ sub parse_component
 					   startline => 0,
 					   noparse => 1 );
 		} elsif ( $section_name eq 'def' || $section_name eq 'method' ) {
-		    if ($state->{embedded}) {
-			die $self->_make_error( error => "<%$section_name> not allowed inside <%def> or <%method>",
-						errpos => $section_tag_pos );
-		    }
-		    my $method = '_parse_' . lc $section_name . '_section';
 		    $self->$method( name => $subcomp_name,
 				    section => $section,
 				    section_start => $section_start,
@@ -258,11 +265,6 @@ sub parse_component
 		    #    die $self->_make_error( error => "repeated <%$section_name> section",
 		    #  		errpos => $section_tag_pos );
 		    #}
-		    if ( $state->{embedded} and ($section_name eq 'shared' or $section_name eq 'once') ) {
-			die $self->_make_error( error => "<%$section_name> not allowed inside <%def> or <%method>",
-						errpos => $section_tag_pos );
-		    }
-		    my $method = '_parse_' . lc $section_name . '_section';
 		    $self->$method( section => $section );
 		}
 		$curpos = pos($state->{script});
@@ -328,9 +330,12 @@ sub _parse_subcomponent_or_method
     # Special case for <%def> sections: compile section as component
     # and put object text in subcomps or methods hash (as
     # appropriate), keyed on def name
-    if ($params{name} !~ /^[\w\-\.]+$/) {
+    if ($params{name} !~ /\S/) {
+	die $self->_make_error( error => "must supply name for $params{type}",
+				errpos => $params{section_start} );
+    } elsif ($params{name} !~ /^[\w\-\.]+$/) {
 	die $self->_make_error( error => "invalid $params{type} name '$params{name}': valid characters are [A-Za-z0-9._-]",
-			     errpos => $params{section_start} );
+				errpos => $params{section_start} );
     } elsif (exists $state->{$key}{ $params{name} }) {
 	die $self->_make_error( error => "multiple definitions for $params{type} '$params{name}'",
 				errpos => $params{section_start} );
@@ -588,13 +593,8 @@ sub _parse_textseg
 
 	my %h;
 	$h{perl_line} = index($text,"\n%",$s->{curpos});
-	$h{perl_tag}  = index(lc $text,'<%perl>',$s->{curpos});
 	$h{substitute_tag} = index($text,'<%', $s->{curpos});
 	$h{call_tag}  = index($text,'<&',$s->{curpos});
-
-	# Prefer perl_tag to substitute if both matched at the same
-	# place.
-	delete $h{substitute_tag} if $h{substitute_tag} == $h{perl_tag};
 
 	# Sort keys by values (thanks, Randall!)
 	my @keys = ( map {$_->[0]}
@@ -617,7 +617,13 @@ sub _parse_textseg
 								  end => $h{$k} ) )
 		if $s->{curpos} < $h{$k};
 
-	    my $method = "_parse_$k";
+	    # See if <% is actually the first part of <%perl>.
+	    my $method;
+	    if ($k eq 'substitute_tag' and lc(substr($text,$h{$k},7)) eq '<%perl>') {
+		$method = '_parse_perl_tag';
+	    } else {
+		$method = "_parse_$k";
+	    }
 
 	    $self->$method( index => $h{$k},
 			    segbegin => $params{segbegin},
@@ -672,6 +678,7 @@ sub _parse_perl_tag
 
     my $s = $self->{parser_state}{text_parse_state};
 
+    pos($params{text}) = $s->{curpos};
     unless ($params{text} =~ m{</\%perl>}ig) {
 	die $self->_make_error( error => "<%perl> with no matching </%perl>",
 				errpos => $params{segbegin} + $params{index} );

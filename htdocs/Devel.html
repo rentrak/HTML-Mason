@@ -3304,13 +3304,8 @@ Mason buffering.
 </A></STRONG><DD>
 Mason calls <CODE>$r-&gt;content</CODE> itself to read request input, emptying the input buffer and leaving a trap
 for the unwary: subsequent calls to <CODE>$r-&gt;content</CODE> hang the server. This is a mod_perl ``feature'' that may be fixed in an
-upcoming release. Instead you can access the request input via
+upcoming release.
 
-
-<P>
-
-<PRE>  $m-&gt;http_input
-</PRE>
 
 <P>
 

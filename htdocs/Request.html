@@ -366,7 +366,7 @@ clear_buffer only works in batch output mode, and is thwarted by
 
 <a name="item_comp">
 
-<DT><STRONG><A NAME="item_comp_comp_option_value_">comp (comp, option=&gt;value, ...)
+<DT><STRONG><A NAME="item_comp_comp_args_">comp (comp, args...)
 
 </A></STRONG><DD>
 Calls the component designated by <EM>comp</EM> with the specified option/value pairs. <EM>comp</EM> may be a component path or a component object. 
@@ -558,7 +558,7 @@ Given a <EM>comp_path</EM>, returns the corresponding absolute component path.
 
 <a name="item_scomp">
 
-<DT><STRONG><A NAME="item_scomp">scomp
+<DT><STRONG><A NAME="item_scomp_comp_args_">scomp (comp, args...)
 
 </A></STRONG><DD>
 Like <CODE>$m-&gt;comp</CODE>, but returns the component output as a string instead of printing it.
@@ -604,20 +604,6 @@ the ApacheHandler.
 
 </A></STRONG><DD>
 Returns the ApacheHandler object associated with this request.
-
-
-<P>
-
-<a name="item_http_input">
-
-<DT><STRONG><A NAME="item_http_input">http_input
-
-</A></STRONG><DD>
-Returns the input string for this HTTP request: for GET, the query string,
-and for POST, the content block read from the client. Because
-$r-&gt;content can only be called once and is automatically called by
-Mason, it cannot be called directly inside components; this method is a
-good way to get at the value of $r-&gt;content.
 
 
 <P>

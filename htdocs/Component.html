@@ -135,6 +135,25 @@ which normally take a component path, will also take a component object.
 
 </A></H1>
 <DL>
+<DT><STRONG><A NAME="item_attr_name_">attr (name)
+
+</A></STRONG><DD>
+Looks for the specified attribute in this component and its parents,
+returning the first value found. Dies with an error if not found.
+Attributes are declared in the <CODE>&lt;%attr&gt;</CODE> section.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_attr_exists_name_">attr_exists (name)
+
+</A></STRONG><DD>
+Returns true if the specified attribute exists in this component or one of
+its parents, undef otherwise.
+
+
+<P>
+
 <DT><STRONG><A NAME="item_cache_file">cache_file
 
 </A></STRONG><DD>
@@ -222,6 +241,14 @@ for each child and every time the component is reloaded.
 
 <P>
 
+<DT><STRONG><A NAME="item_flag_name_">flag (name)
+
+</A></STRONG><DD>
+Returns the value for the specified system flag. Flags are declared in the <CODE>&lt;%flags&gt;</CODE> section and affect the behavior of the component.
+
+
+<P>
+
 <DT><STRONG><A NAME="item_is_subcomp">is_subcomp
 
 </A></STRONG><DD>
@@ -234,6 +261,25 @@ Returns true if this is a subcomponent of another component.
 
 </A></STRONG><DD>
 Returns true if this component was loaded from a source or object file.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_call_method_name_args_">call_method (name, args...)
+
+</A></STRONG><DD>
+Looks for the specified user-defined method in this component and its
+parents, calling the first one found. Dies with an error if not found.
+Methods are declared in the <CODE>&lt;%method&gt;</CODE> section.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_method_exists_name_">method_exists (name)
+
+</A></STRONG><DD>
+Returns true if the specified user-defined method exists in this component
+or one of its parents, undef otherwise.
 
 
 <P>
@@ -292,6 +338,15 @@ the component is reloaded.
 
 <P>
 
+<DT><STRONG><A NAME="item_scall_method_name_args_">scall_method (name, args...)
+
+</A></STRONG><DD>
+Like <A HREF="././Component/call_method.html">call_method</A>, but returns the method output as a string instead of printing it. (Think
+sprintf versus printf.) The method's return value is discarded.
+
+
+<P>
+
 <DT><STRONG><A NAME="item_subcomps">subcomps
 
 </A></STRONG><DD>
@@ -307,6 +362,11 @@ subcomponent exists. e.g.
         ...
     }
 </PRE>
+
+<P>
+
+Subcomponents are declared in the <CODE>&lt;%def&gt;</CODE> section.
+
 
 <P>
 
