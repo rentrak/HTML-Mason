@@ -54,7 +54,7 @@ The following commands may be used within Mason components. See
 <DT><STRONG><A NAME="item_mc_abort_return_value_">mc_abort ([return value])
 
 </A></STRONG><DD>
-Ends the current execution, finishing the page without returning through
+Ends the current request, finishing the page without returning through
 components. In a web environment, the optional return value is used as the
 HTTP status code.
 
@@ -269,11 +269,11 @@ for usage and examples.
 
 <P>
 
-<DT><STRONG><A NAME="item_mc_comp_compPath_option_value">mc_comp (compPath, option=&gt;value, ...[, STORE=&gt;ref])
+<DT><STRONG><A NAME="item_mc_comp_for_html_a_name_comp_">mc_comp =for html &lt;a name=''comp``&gt;
 
 </A></STRONG><DD>
-Calls the component designated by <EM>compPath</EM> with the specified option/value pairs. If the component path is absolute
-(starting with a '/'), then the component is found relative to the
+Calls the component designated by <EM>comp</EM> with the specified option/value pairs. <EM>comp</EM> may be a component path or a component object. If the component path is
+absolute (starting with a '/'), then the component is found relative to the
 component root. Relative component paths (no leading '/') are relative to
 the current component directory.
 
@@ -363,6 +363,18 @@ caching results.
 
 <P>
 
+<DT><STRONG><A NAME="item_mc_dhandler_arg_">mc_dhandler_arg ()
+
+</A></STRONG><DD>
+If the request has been handled by a dhandler, this method returns the
+remainder of the URI beyond the dhandler directory. Similar to the
+PATH_INFO except without the leading slash. See the
+<A HREF="././Components.html#dhandlers">dhandlers</A> section of the <EM>Component Developer's Guide</EM>
+for examples.
+
+
+<P>
+
 <DT><STRONG><A NAME="item_mc_file_filename_">mc_file (filename)
 
 </A></STRONG><DD>
@@ -433,15 +445,6 @@ environment.
 <P>
 
 <DL>
-<DT><STRONG><A NAME="item_mc_dhandler_arg_">mc_dhandler_arg ()
-
-</A></STRONG><DD>
-For use in dhandlers. Returns the path_info CGI argument, stripped of its
-leading slash.
-
-
-<P>
-
 <DT><STRONG><A NAME="item_mc_suppress_http_header_0_1_">mc_suppress_http_header (0|1)
 
 </A></STRONG><DD>

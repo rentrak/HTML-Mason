@@ -14,7 +14,6 @@ use IO::File qw(!/^SEEK/);
 use POSIX;
 use Fcntl qw(:flock);
 use File::Basename;
-use File::Path;
 use HTML::Mason::Config;
 use HTML::Mason::Tools qw(date_delta_to_secs);
 use MLDBM ($HTML::Mason::Config{mldbm_use_db}, $HTML::Mason::Config{mldbm_serializer});
@@ -65,7 +64,9 @@ sub access_data_cache
     # Store
     #
     if ($action eq 'store') {
-	my ($expireTime,%out);
+	my $expireTime=0;
+	my %out;
+	
 	die "no store value provided" if ($action eq 'store' && !exists($options{value}));
 
 	#
@@ -319,3 +320,4 @@ sub get_lock {
     my $LOCK_UN = 8;
     return flock $fh, $LOCK_EX|$LOCK_NB;
 }
+

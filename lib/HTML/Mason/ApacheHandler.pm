@@ -2,15 +2,53 @@
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
-package HTML::Mason::ApacheHandler;
 require 5.004;
+
+#
+# Apache-specific Request object
+#
+package HTML::Mason::Request::ApacheHandler;
+require Exporter;
+use vars qw(@ISA);
+@ISA = qw(HTML::Mason::Request);
+
+my %reqfields =
+    (ah => undef,
+     http_input => undef,
+     apache_req => undef,
+     );
+# Create accessor routines
+foreach my $f (keys(%reqfields)) {
+    no strict 'refs';
+    *{$f} = sub {my $s=shift; return @_ ? ($s->{$f}=shift) : $s->{$f}};
+}
+
+sub new
+{
+    my ($class,%options) = @_;
+    my $interp = $options{interp} or die "HTML::Mason::Request::ApacheHandler::new: must specify interp\n";
+    delete $options{interp};
+    my $self = HTML::Mason::Request::new($class,interp=>$interp);
+    while (my ($key,$value) = each(%options)) {
+	if (exists($reqfields{$key})) {
+	    $self->{$key} = $value;
+	} else {
+	    die "HTML::Mason::Request::ApacheHandler::new: invalid option '$key'\n";
+	}
+    }
+    return $self;
+}
+
+#
+# ApacheHandler object
+#
+package HTML::Mason::ApacheHandler;
 require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw();
 @EXPORT_OK = qw();
 
 use strict;
-use vars qw($AUTOLOAD $INTERP);
 #JS - 6/30 - seems to infinite loop when using debug...help?!
 #use Apache::Constants qw(OK DECLINED SERVER_ERROR NOT_FOUND);
 sub OK { return 0 }
@@ -28,19 +66,21 @@ use HTML::Mason::Utils;
 use Apache::Status;
 use CGI qw(-private_tempfiles);
 
+my @used = ($HTML::Mason::IN_DEBUG_FILE);
+	    
 my %fields =
     (
+     apache_status_title => 'mason',
+     decline_dirs => 1,
+     error_mode => 'html',
      interp => undef,
      output_mode => 'batch',
-     error_mode => 'html',
-     top_level_predicate => sub { return 1 },
-     decline_dirs => 1,
+     top_level_predicate => undef,
      debug_mode => 'none',
      debug_perl_binary => '/usr/bin/perl',
      debug_handler_script => undef,
      debug_handler_proc => undef,
      debug_dir_config_keys => [],
-     apache_status_title => 'mason',
      );
 # Minor speedup: create anon. subs to reduce AUTOLOAD calls
 foreach my $f (keys %fields) {
@@ -138,11 +178,12 @@ sub interp_status
             '<DL><DT><FONT SIZE="+1"><B>Cached components</B></FONT><DD>';
 
     if(%{$interp->{code_cache}})
-    {     
-        push (@strings, map("<TT>$_</TT><BR>\n", 
-                            sort keys %{$interp->{code_cache}} 
-                           )
-             );
+    {
+	my $string;
+	foreach my $key (sort keys %{$interp->{code_cache}}) {
+	    $string .= sprintf("<TT>%s (%s)</TT><BR>\n",$key,scalar(localtime($interp->{code_cache}->{$key}->{lastmod})));
+	}
+	push (@strings, $string);
     } else {
         push @strings, '<I>None</I>';
     }     
@@ -163,9 +204,11 @@ sub handle_request {
     # -jswartz 5/23
     #
     my ($self,$req) = @_;
-    my ($outsub, $retval, $argString, $debugMsg, $q);
+    my ($outsub, $retval, $debugMsg, $q);
+    my $argString = '';
     my $outbuf = '';
     my $interp = $self->interp;
+    $self->{request_number}++;
 
     #
     # construct (and truncate if necessary) the request to log at start
@@ -174,7 +217,7 @@ sub handle_request {
 	my $rstring = $req->server->server_hostname . $req->uri;
 	$rstring .= "?".scalar($req->args) if defined(scalar($req->args));
 	$rstring = substr($rstring,0,150).'...' if length($rstring) > 150;
-	$interp->write_system_log('REQ_START', ++$self->{request_number},
+	$interp->write_system_log('REQ_START', $self->{request_number},
 				  $rstring);
     }
 
@@ -192,16 +235,18 @@ sub handle_request {
     }
 
     #
-    # Create query object and get argument string.
-    # Special case for debug files w/POST -- standard input not available
-    # for CGI to read in this case.
+    # Create query object and get argument string. Skip if GET with no
+    # query string.  Special case for debug files w/POST -- standard
+    # input not available for CGI to read in this case.
     #
-    if ($HTML::Mason::IN_DEBUG_FILE && $req->method eq 'POST') {
-	$q = new CGI ($req->content);
-    } else {
-	$q = new CGI;
+    unless ($req->method eq 'GET' && !scalar($req->args)) {
+	if ($HTML::Mason::IN_DEBUG_FILE && $req->method eq 'POST') {
+	    $q = new CGI ($req->content);
+	} else {
+	    $q = new CGI;
+	}
+	$argString = $q->query_string;
     }
-    $argString = $q->query_string;
 
     my $debugMode = $self->debug_mode;
     $debugMode = 'none' if (ref($req) eq 'HTML::Mason::FakeApache');
@@ -210,7 +255,7 @@ sub handle_request {
 	if ($debugMode eq 'all' or $debugMode eq 'error');
     $debugMsg = $self->write_debug_file($req,$debugState) if ($debugMode eq 'all');
 
-    eval('$retval = handle_request_1($self, $req, $argString, $q)');
+    eval { $retval = handle_request_1($self, $req, $argString, $q) };
     my $err = $@;
     my $err_status = $err ? 1 : 0;
 
@@ -395,6 +440,18 @@ sub capture_debug_state
     return {%d};
 }
 
+#
+# Send HTTP headers when the primary section is reached.
+#
+sub send_headers_hook
+{
+    my ($req) = @_;
+    my $r = $req->apache_req;
+    $r->send_http_header() if !http_header_sent($r);
+    $req->abort() if $r->header_only;
+    $req->suppress_hook(name=>'http_header',type=>'start_primary');
+}
+
 sub handle_request_1
 {
     my ($self,$r,$argString,$q) = @_;
@@ -421,7 +478,7 @@ sub handle_request_1
     #
     my $compPath = $r->filename;
     if (!($compPath =~ s/^$compRoot//)) {
-	$r->warn("Mason: filename (\"".$r->filename."\") is outside component root (\"$compRoot\"); returning 404.");
+	$r->warn("Mason: filename (\"$compPath\") is outside component root (\"$compRoot\"); returning 404.");
 	return NOT_FOUND;
     }
     $compPath =~ s@/$@@ if $compPath ne '/';
@@ -431,32 +488,28 @@ sub handle_request_1
     # Try to load the component; if not found, try dhandlers
     # ("default handlers"); otherwise return not found.
     #
-    my @info;
-    if (!(@info = $interp->load($compPath))) {
-	my $p = $compPath;
-	my $pathInfo = $r->path_info;
-	while (!(@info = $interp->load("$p/dhandler")) && $p) {
-	    my ($basename,$dirname) = fileparse($p);
-	    $dirname =~ s/^\.//;    # certain versions leave ./ in $dirname
-	    $pathInfo = "/$basename$pathInfo";
-	    $p = substr($dirname,0,-1);
-	}
-	if (@info) {
-	    $compPath = "$p/dhandler";
+    my ($comp,$dhandlerArg);
+    if (!($comp = $interp->load($compPath))) {
+	if ($interp->dhandler_name and $comp = $interp->find_comp_upwards($compPath,$interp->dhandler_name)) {
+	    my $remainder = ($comp->dir_path eq '/') ? $compPath : substr($compPath,length($comp->dir_path));
+	    my $pathInfo = $remainder.$r->path_info;
 	    $r->path_info($pathInfo);
+	    $dhandlerArg = substr($pathInfo,1);
 	} else {
 	    $r->warn("Mason: no component corresponding to filename \"".$r->filename."\", comp path \"$compPath\"; returning 404.");
 	    return NOT_FOUND;
 	}
     }
-    my $srcfile = $info[1];
 
     #
     # Decline if file does not pass top level predicate.
     #
-    if (!$self->top_level_predicate->($srcfile)) {
-	$r->warn("Mason: component file \"$srcfile\" does not pass top-level predicate; returning 404.");
-	return NOT_FOUND;
+    if (defined($self->{top_level_predicate})) {
+	my $srcfile = $comp->source_file;
+	if ($self->{top_level_predicate}->($srcfile)) {
+	    $r->warn("Mason: component file \"$srcfile\" does not pass top-level predicate; returning 404.");
+	    return NOT_FOUND;
+	}
     }
     
     #
@@ -465,41 +518,42 @@ sub handle_request_1
     #
     my (%args);
 
-    foreach my $key ( $q->param ) {
-      foreach my $value ( $q->param($key) ) {
-        if (exists($args{$key})) {
-          if (ref($args{$key})) {
-            $args{$key} = [@{$args{$key}}, $value];
-          } else {
-            $args{$key} = [$args{$key}, $value];
-          }
-        } else {
-          $args{$key} = $value;
-        }
-      }
+    if ($q) {
+	foreach my $key ( $q->param ) {
+	    foreach my $value ( $q->param($key) ) {
+		if (exists($args{$key})) {
+		    if (ref($args{$key})) {
+			$args{$key} = [@{$args{$key}}, $value];
+		    } else {
+			$args{$key} = [$args{$key}, $value];
+		    }
+		} else {
+		    $args{$key} = $value;
+		}
+	    }
+	}
     }
 
-    $argString = '' if !defined($argString);
+    $interp->add_hook(name=>'http_header',type=>'start_primary',code=>\&send_headers_hook);
 
     #
-    # Send HTTP headers when the primary section is reached.
+    # Create an Apache-specific request with additional slots.
     #
-    my $hdrsub = sub {
-	my ($interp) = @_;
-	$r->send_http_header() if !http_header_sent($r);
-	$interp->abort() if $r->header_only;
-	$interp->suppress_hook(name=>'http_header',type=>'start_primary');
-    };
-    $interp->add_hook(name=>'http_header',type=>'start_primary',code=>$hdrsub);
+    my $request = new HTML::Mason::Request::ApacheHandler
+	(ah=>$self,
+	 interp=>$interp,
+	 http_input=>($argString || ''),
+	 apache_req=>$r
+	 );
+
+    $request->dhandler_arg($dhandlerArg) if (defined($dhandlerArg));
 
     #
     # Set up interpreter global variables.
     #
-    $interp->vars(http_input=>$argString);
-    $interp->vars(server=>$r);
     $interp->set_global(r=>$r);
     
-    return $interp->exec($compPath,%args);
+    return $interp->exec($comp, REQ=>$request, %args);
 }
 
 sub simulate_debug_request
@@ -533,37 +587,18 @@ sub http_header_sent
     return $sent;
 }
 
-sub AUTOLOAD {
-    my $self = shift;
-    my $type = ref($self) or die "autoload error: bad function $AUTOLOAD";
-
-    my $name = $AUTOLOAD;
-    $name =~ s/.*://;   # strip fully-qualified portion
-    return if $name eq 'DESTROY';
-
-    die "No such function `$name' in class $type";
-}
-1;
-
 #
 # Apache-specific Mason commands
 #
-
 package HTML::Mason::Commands;
-sub mc_dhandler_arg ()
-{
-    my $r = $INTERP->vars('server');
-    die "mc_dhandler_arg: must be called in Apache environment" if !$r;
-    return substr($r->path_info,1);
-}
-
+use vars qw($REQ);
 sub mc_suppress_http_header
 {
     if ($_[0]) {
-	$INTERP->suppress_hook(name=>'http_header',type=>'start_primary');
+	$REQ->suppress_hook(name=>'http_header',type=>'start_primary');
     } else {
-	$INTERP->unsuppress_hook(name=>'http_header',type=>'start_primary');
+	$REQ->unsuppress_hook(name=>'http_header',type=>'start_primary');
     }
 }
 
-__END__
+1;

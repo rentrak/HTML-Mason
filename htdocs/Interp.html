@@ -82,6 +82,15 @@ cons.
 
 <P>
 
+<DT><STRONG><A NAME="item_autohandler_name">autohandler_name
+
+</A></STRONG><DD>
+File name used for autohandlers. Default is ``autohandler''. If undef,
+Mason will not look for autohandlers.
+
+
+<P>
+
 <DT><STRONG><A NAME="item_code_cache_mode">code_cache_mode
 
 </A></STRONG><DD>
@@ -133,6 +142,15 @@ the true time.
 </A></STRONG><DD>
 The other required argument. Mason's various data directories (obj, cache,
 debug, etc), live within the data_dir.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_dhandler_name">dhandler_name
+
+</A></STRONG><DD>
+File name used for dhandlers. Default is ``dhandler''. If undef, Mason will
+not look for dhandlers.
 
 
 <P>
@@ -388,15 +406,25 @@ and do something with the output. To call a component, use Interp's
 
 <P>
 
-<PRE>    $interp-&gt;exec(&lt;compPath&gt; [,&lt;..list of component params..&gt;]);
+<PRE>    $interp-&gt;exec(&lt;comp&gt; [,&lt;..list of component params..&gt;]);
 </PRE>
+
+<P>
+
+where <EM>comp</EM> is a component path or component object.
+
 
 <P>
 
 Component parameters are given as a series of name/value pairs, just as
 they are with <A HREF="././Commands.html#item_mc_comp">mc_comp</A>. exec returns the return value of the component. Component output is sent
-to standard output by default, but you can change this by specifying <A HREF="././Interp.html#item_out_method">out_method</A>. Here is a skeleton script that calls a component and places the output in
-a file:
+to standard output by default, but you can change this by specifying <A HREF="././Interp.html#item_out_method">out_method</A>.
+
+
+<P>
+
+Here is a skeleton script that calls a component and places the output in a
+file:
 
 
 <P>

@@ -1,10 +1,9 @@
-<HTML>
-<HEAD>
-<TITLE>
-perl_args Test
-</TITLE>
-</HEAD>
-<BODY>
-Hello World!
-</BODY>
-</HTML>
+a: fargo
+b: 17,82,16
+c: britain=3,spain=1
+d: 5
+e: foo,baz
+f: bob=2,joe=1
+
+
+

@@ -1,0 +1,265 @@
+    <HTML> 
+	<HEAD> 
+	    <TITLE>HTML::Mason::Request - Mason Request Class
+
+</TITLE> 
+	</HEAD>
+
+	<BODY>
+
+<!-- INDEX BEGIN -->
+
+<UL>
+
+	<LI><A HREF="#name">NAME</A>
+	<LI><A HREF="#synopsis">SYNOPSIS</A>
+	<LI><A HREF="#description">DESCRIPTION</A>
+	<LI><A HREF="#methods">METHODS</A>
+	<LI><A HREF="#apache_only_methods">APACHE-ONLY METHODS</A>
+	<LI><A HREF="#author">AUTHOR</A>
+	<LI><A HREF="#see_also">SEE ALSO</A>
+</UL>
+<!-- INDEX END -->
+
+<HR>
+<P>
+<H1><A NAME="name">NAME
+
+</A></H1>
+HTML::Mason::Request - Mason Request Class
+
+
+<P>
+
+<P>
+<HR>
+<H1><A NAME="synopsis">SYNOPSIS
+
+</A></H1>
+<PRE>    $REQ-&gt;...
+</PRE>
+
+<P>
+
+<P>
+<HR>
+<H1><A NAME="description">DESCRIPTION
+
+</A></H1>
+Mason creates one Request object for every web request (or, in stand-alone
+mode, every <CODE>Interp::exec</CODE> call). Inside a component you access the current request object via the
+global <CODE>$REQ</CODE>.
+
+
+<P>
+
+Prior to version 0.7, the only way to access request information was
+through specific mc_ commands. For this reason many of the methods below
+have mc_ command equivalents; you are free to use either interface.
+
+
+<P>
+
+<P>
+<HR>
+<H1><A NAME="methods">METHODS
+
+</A></H1>
+<DL>
+<DT><STRONG><A NAME="item_abort_return_value_">abort ([return value])
+
+</A></STRONG><DD>
+Ends the current request, finishing the page without returning through
+components. The optional argument specifies the return value from <CODE>Interp::exec</CODE>; in a web environment, this ultimately becomes the HTTP status code. This
+method is used to implement
+<A HREF="././Commands.html#item_mc_abort">mc_abort</A>.
+
+
+<P>
+
+<a name="call">
+
+<DT><STRONG><A NAME="item_call_comp_option_value_">call (comp, option=&gt;value, ...[, STORE=&gt;ref])
+
+</A></STRONG><DD>
+Calls the component designated by <EM>comp</EM> with the specified option/value pairs. <EM>comp</EM> may be an absolute or relative component path, or a component object.
+
+
+<P>
+
+The optional STORE option causes all output to be placed in the scalar
+reference provided instead of being sent to the default output stream.
+
+
+<P>
+
+This method is used to implement <A HREF="././Commands.html#item_mc_comp">mc_comp</A> and the &lt;&amp; &amp;&gt; tag.
+
+
+<P>
+
+<a name="callers">
+
+<DT><STRONG><A NAME="item_callers">callers
+
+</A></STRONG><DD>
+With no arguments, returns the current component stack as a list of
+component objects, starting with the current component and ending with the
+top-level component. With one numeric argument, returns the component
+object at that index in the list. e.g.
+
+
+<P>
+
+<PRE>    $REQ-&gt;callers(0)      # current component
+    $REQ-&gt;callers(1)      # component that called us
+    $REQ-&gt;callers(-1)     # top-level component
+</PRE>
+
+<P>
+
+<a name="comp">
+
+<DT><STRONG><A NAME="item_comp">comp
+
+</A></STRONG><DD>
+Returns the current component object.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_count">count
+
+</A></STRONG><DD>
+Returns the number of this request, which is unique for a given request and
+interpreter.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_depth">depth
+
+</A></STRONG><DD>
+Returns the current size of the component stack. The lowest possible value
+is 1, which indicates we are in the top-level component.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_dhandler_arg">dhandler_arg
+
+</A></STRONG><DD>
+If the request has been handled by a dhandler, this method returns the
+remainder of the URI or <CODE>Interp::exec</CODE> path when the dhandler directory is removed. Otherwise returns undef. This
+method is used to implement
+<A HREF="././Commands.html#item_mc_dhandler_arg">mc_dhandler_arg</A>.
+
+
+<P>
+
+<a name="fetch_comp">
+
+<DT><STRONG><A NAME="item_fetch_comp_compPath_">fetch_comp (compPath)
+
+</A></STRONG><DD>
+Given an absolute or relative component path, returns the corresponding
+component object or undef if no such component exists. Looks for
+subcomponents as well as file-based components.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_interp">interp
+
+</A></STRONG><DD>
+Returns the Interp object associated with this request.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_parser">parser
+
+</A></STRONG><DD>
+Returns the Parser object associated with this request.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_process_comp_path_compPath_">process_comp_path (compPath)
+
+</A></STRONG><DD>
+Given an absolute or relative component path, returns the corresponding
+absolute component path.
+
+
+<P>
+
+</DL>
+<P>
+<HR>
+<H1><A NAME="apache_only_methods">APACHE-ONLY METHODS
+
+</A></H1>
+These additional methods are available when running Mason with mod_perl and
+the ApacheHandler.
+
+
+<P>
+
+<DL>
+<DT><STRONG><A NAME="item_ah">ah
+
+</A></STRONG><DD>
+Returns the ApacheHandler object associated with this request.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_http_input">http_input
+
+</A></STRONG><DD>
+Returns the input string for this HTTP request: for GET, the query string,
+and for POST, the content block read from the client. Because
+$r-&gt;content can only be called once and is automatically called by
+Mason, it cannot be called directly inside components; this method is a
+good way to get at the value of $r-&gt;content.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_apache_req">apache_req
+
+</A></STRONG><DD>
+Returns the Apache request object. This is also available in the global $r.
+
+
+<P>
+
+</DL>
+<P>
+<HR>
+<H1><A NAME="author">AUTHOR
+
+</A></H1>
+Jonathan Swartz, <A
+HREF="MAILTO:swartz@transbay.net">swartz@transbay.net</A>
+
+
+<P>
+
+<P>
+<HR>
+<H1><A NAME="see_also">SEE ALSO
+
+</A></H1>
+<A HREF="././Component.html#">HTML::Mason::Component</A>
+
+
+
+
+<P>
+
+</DL>
+    </BODY>
+
+    </HTML>

@@ -7,12 +7,15 @@ require 5.004;
 require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw();
-@EXPORT_OK = qw(new parse);
+@EXPORT_OK = qw();
 
 use strict;
+use Data::Dumper;
 use File::Path;
 use File::Basename;
 use File::Find;
+use HTML::Mason::Component;
+use HTML::Mason::Request;
 use HTML::Mason::Tools qw(read_file);
 use vars qw($AUTOLOAD);
 
@@ -33,6 +36,15 @@ foreach my $f (keys %fields) {
     next if $f =~ /^allow_globals$/;  # don't overwrite real sub.
     no strict 'refs';
     *{$f} = sub {my $s=shift; return @_ ? ($s->{$f}=shift) : $s->{$f}};
+}
+
+#
+# This version number, less than or equal to the Mason version, marks the
+# points at which the Parser produces incompatible object files.
+#
+sub version
+{
+    return 0.7;
 }
 
 sub new
@@ -65,20 +77,51 @@ sub allow_globals
     return @{$self->{'allow_globals'}};
 }
 
+sub make_component
+{
+    my ($self, %options) = @_;
+    my ($objectTextRef) = @options{qw(object_text)};
+
+    my $objectText = $self->parse_component(%options) or return undef;
+    $$objectTextRef = $objectText if defined($objectTextRef);
+    return $self->eval_object_text(object_text=>$objectText,error=>$options{error});
+}
+
+#
+# Old parse function, left in for sake of content management
+#
 sub parse
 {
     my ($self, %options) = @_;
-    my $script = $options{script};
-    my $scriptFile = $options{script_file};
-    my $resultCodeRef = $options{result_code};
-    my $resultTextRef = $options{result_text};
-    my $pureTextFlagRef = $options{pure_text_flag};
-    my $errorRef = $options{error};
-    my $wrapErrors = $options{wrap_errors};
-    my $saveTo = $options{save_to};
-    my ($sub, $err, $errpos);
-    my $pureTextFlag = ($self->{preprocess} || $self->{postprocess}) ? 0 : 1;
+    my $error;
+    my %subopts = ();
+    foreach my $key (qw(script script_file)) {
+	$subopts{$key} = $options{$key} if exists($options{$key});
+    }
+    my $objectText = $self->parse_component(%subopts,error=>\$error);
+    $self->eval_object_text(object_text=>$objectText,error=>\$error) if $objectText;
+    if ($objectText && !$error && exists($options{save_to})) {
+	$self->write_object_file(object_text=>$objectText,object_file=>$options{save_to});
+    }
+    if ($objectText and my $ref = $options{result_text}) {
+	$$ref = $objectText;
+    }
+    if ($error and my $ref = $options{error}) {
+	$$ref = $error;
+    }
+    return $error ? 0 : 1;
+}
+
+sub parse_component
+{
+    my ($self, %options) = @_;
+    my ($script,$scriptFile,$errorRef,$errposRef,$embedded,$fileBased) =
+	@options{qw(script script_file error errpos embedded file_based)};
+    my ($sub, $err, $errpos, $suberr, $suberrpos);
+    $fileBased = 1 if !exists($options{file_based});
+    my $pureTextFlag = 1;
     my $parseError = 1;
+    my $parserVersion = version();
 
     #
     # If script_file option used, read script from file.
@@ -88,6 +131,11 @@ sub parse
 	$script = read_file($scriptFile);
     }
 
+    #
+    # Eliminate DOS ctrl-M chars
+    #
+    $script =~ s/\cM//g;
+    
     #
     # Preprocess the script.  The preprocessor routine is handed a
     # reference to the entire script.
@@ -107,10 +155,11 @@ sub parse
     #
     my %sectiontext = (map(($_,''),qw(args cleanup doc filter init once)));
     my $curpos = 0;
-    my @textsegs;
+    my (@textsegs,%subcomps);
     my $scriptlength = length($script);
-    while ($script =~ /(<%(?:perl_)?(args|cleanup|doc|filter|init|once|text)>)/ig) {
-	my ($begintag,$beginfield) = ($1,lc($2));
+    while ($script =~ /(<%(?:perl_)?(args|cleanup|def[ \t]+([^>\n]+)|doc|filter|init|once|text)>)/ig) {
+	my ($begintag,$beginfield,$beginarg) = ($1,lc($2),$3);
+	$beginfield = 'def' if (substr($beginfield,0,3) eq 'def');
 	my $beginmark = pos($script)-length($begintag);
 	my $begintail = pos($script);
 	push(@textsegs,[$curpos,$beginmark-$curpos]);
@@ -121,6 +170,28 @@ sub parse
 		# Special case for <%text> sections: add a special
 		# segment that won't get parsed
 		push(@textsegs,[$begintail,$endmark-$begintail,'<%text>']);
+	    } elsif ($beginfield eq 'def') {
+		# Special case for <%def> sections: compile section as
+		# component and put object text in subcomps hash,
+		# keyed on def name
+		my $name = $beginarg;
+		if ($name !~ /^[\w\-\.]+$/) {
+		    $err = "invalid subcomponent name '$name': valid characters are [A-Za-z0-9._-]";
+		    $errpos = $begintail;
+		} elsif (exists($subcomps{$name})) {
+		    $err = "multiple definitions for subcomponent '$name'";
+		    $errpos = $begintail;
+		} else {
+		    my $subtext = substr($script,$begintail,$endmark-$begintail);
+		    if (my $objtext = $self->parse_component(script=>$subtext, embedded=>1, file_based=>0, error=>\$suberr, errpos=>\$suberrpos)) {
+			$subcomps{$name} = $objtext;
+		    } else {
+			$err = "Error while parsing subcomponent '$name':\n$suberr";
+			$errpos = $begintail+$suberrpos;
+			$suberr =~ s/(line .*)\n$/($name line .*)\n/;
+		    }
+		}
+		goto parse_error if ($err);
 	    } else {
 		$sectiontext{lc($beginfield)} .= substr($script,$begintail,$endmark-$begintail);
 	    }
@@ -138,72 +209,64 @@ sub parse
     # Start body of subroutine with user preamble and args declare.
     #
     my $body = $self->preamble();
-    $body .= 'my (%_args) = @_;'."\n".'my %ARGS = %_args;'."\n";
-    $body .= 'my $_out = $INTERP->locals->{sink};'."\n";
+    $body .= 'my (%ARGS) = @_;'."\n";
+    $body .= 'my $_out = $REQ->sink;'."\n";
 
     #
     # Process args section.
     #
+    my %declaredArgs = ();
     if ($sectiontext{args}) {
 	my (@vars);
 	my @decls = split("\n",$sectiontext{args});
 	@decls = grep(/\S/,@decls);
-	my $argsec = "\nmy (\$val);\n";
 	foreach my $decl (@decls) {
-	    my ($var,$default,$defaultClause);
+	    my ($var,$default);
 	    my $split = index($decl,'=>');
-	    if ($split !=-1) {
+            if ($split !=-1) {
 		$var = substr($decl,0,$split);
 		$default = substr($decl,$split+2);
 	    } else {
-		$var = $decl;
+		($var) = ($decl =~ /^\s*(\S+)/);
 	    }
 	    $var =~ s/\s//g;
 	    # %ARGS is automatic, so ignore explicit declaration.
 	    next if ($var eq '%ARGS');
 	    push (@vars,$var);
 	    my $type = substr($var,0,1);
-	    if ($type !~ /[\$\%\@]/) {
-		$err = "unknown type for argument '$var': first character must be \$, \@, or \%";
-		goto parse_error;
-	    }
 	    my $name = substr($var,1);
+	    $declaredArgs{$var} = {default=>$default};
 
-	    if (defined($default)) {
-		$defaultClause = "$var = $default";
-	    } else {
-		$defaultClause = "die \"no value sent for required parameter '$name'\"";
-	    }
+	    my $defaultVal = defined($default) ? $default : 
+		"die \"no value sent for required parameter '$name'\"";
+	    $defaultVal .= "\n" if (defined($default) && $default =~ /\#/);   # allow comments
 	    
 	    # Scalar
 	    if ($type eq "\$") {
-		my $tmpl = '$val = $_args{\'%s\'}; if (!exists($_args{\'%s\'})) { %s; } else { %s; }';
-		$argsec .= sprintf($tmpl,$name,$name,$defaultClause,
-				   "$var = \$val");
+		$body .= "my $var = (!exists \$ARGS{'$name'} ? $defaultVal : \$ARGS{'$name'});";
 	    }
+		
 	    # Array
-	    if ($type eq "\@") {
-		my $tmpl = '$val = $_args{\'%s\'}; if (!exists($_args{\'%s\'})) { %s; } elsif (ref($val) eq \'ARRAY\') { %s; } else { %s; }';
-		$argsec .= sprintf($tmpl,$name,$name,$defaultClause,
-				   "$var = \@\$val",
-				   "$var = (\$val)");
+	    elsif ($type eq "\@") {
+		$body .= "my $var = (!exists \$ARGS{'$name'} ? $defaultVal : ";
+		$body .= "ref(\$ARGS{'$name'}) eq 'ARRAY' ? \@{\$ARGS{'$name'}} : (\$ARGS{'$name'}));";
 	    }
+	    
 	    # Hash
-	    if ($type eq "\%") {
-		my $tmpl = '$val = $_args{\'%s\'}; if (!exists($_args{\'%s\'})) { %s; } elsif (ref($val) eq \'ARRAY\') { %s; } elsif (ref($val) eq \'HASH\') { %s } else { %s; }';
-		$argsec .= sprintf($tmpl,$name,$name,$defaultClause,
-				   "$var = \@\$val",
-				   "$var = \%\$val",
-				   "die \"single value sent for hash parameter '\%$name'\"");
+	    elsif ($type eq "\%") {
+		$body .= "my $var = (!exists \$ARGS{'$name'} ? $defaultVal : ";
+		$body .= "ref \$ARGS{'$name'} eq 'ARRAY' ? \@{\$ARGS{'$name'}} : ";
+		$body .= "ref \$ARGS{'$name'} eq 'HASH' ? \%{\$ARGS{'$name'}} : ";
+		$body .= "die \"single value sent for hash parameter '$var'\");";
 	    }
-	    $argsec .= "\n";
-	}
 
-	#
-	# Declare the args as lexically scoped locals.
-	#
-	if (@vars) {
-	    $body .= "my (".join(",",@vars).");\n{".$argsec."}\n";
+	    # None of the above
+	    else {
+		$err = "unknown type for argument '$var': first character must be \$, \@, or \%";
+		goto parse_error;
+	    }
+
+	    $body .= "\n";
 	}
     }
 
@@ -222,6 +285,7 @@ sub parse
     # and perl sections.
     #
     my $startline = 1;
+    my $alphalength=0;
     my (@alphasecs, @perltexts);
 
     foreach my $textseg (@textsegs) {
@@ -326,7 +390,7 @@ sub parse
 		    (my $comp = substr($call,0,$comma)) =~ s/\s+$//;
 		    $call = "'$comp'".substr($call,$comma);
 		}
-		$perl = "mc_comp($call);";
+		$perl = "\$REQ->call($call);";
 		$curpos = $c+2+$length+2;
 		$pureTextFlag = 0;
 	    } else {
@@ -346,27 +410,28 @@ sub parse
 		}
 	    }
 
-	    $alpha->[0] += $segbegin;
-	    push(@alphasecs,$alpha);
+	    push(@alphasecs,[$segbegin+$alpha->[0],$alpha->[1]]);
+	    $alphalength += $alpha->[1];
 	    push(@perltexts,$perl);
 	}
     }
 
     #
-    # Determine length of plain text.
-    #
-    my $alphalength=0;
-    foreach (@alphasecs) {$alphalength += $_->[1]}
-
-    #
     # Use source_refer_predicate to determine whether to use source
     # references or directly embedded text.
     #
-    my $useSourceReference = $self->source_refer_predicate->($scriptlength,$alphalength) && !$self->{preprocess} && !$self->{postprocess};
+    my $useSourceReference = $fileBased && ($pureTextFlag || $self->source_refer_predicate->($scriptlength,$alphalength));
     my @alphatexts;
+    my $endsec = '';
     if ($useSourceReference) {
-	$body .= 'my $_srctext = mc_file($INTERP->locals->{sourceFile});'."\n";
-	@alphatexts = map(sprintf('$_out->(substr($_srctext,%d,%d));',$_->[0],$_->[1]),@alphasecs);
+	$body .= 'my $_srctext = $REQ->comp->source_ref_text;'."\n";
+	my $cur = 0;
+	foreach my $sec (@alphasecs) {
+	    $endsec .= substr($script,$sec->[0],$sec->[1])."\n";
+	    push(@alphatexts,sprintf('$_out->(substr($_srctext,%d,%d));',$cur,$sec->[1]));
+	    $cur += $sec->[1] + 1;
+	}
+	$endsec =~ s/\n$//;
     } else {
 	foreach (@alphasecs) {
 	    my $alpha = substr($script,$_->[0],$_->[1]);
@@ -378,7 +443,7 @@ sub parse
     #
     # Insert call to debug hook.
     #
-    $body .= '$INTERP->debug_hook($INTERP->locals->{truePath}) if (%DB::);'."\n";
+    $body .= '$REQ->debug_hook($REQ->comp->path) if (%DB::);'."\n";
     
     #
     # Insert <%filter> section.
@@ -386,7 +451,7 @@ sub parse
     if ($sectiontext{filter}) {
 	my $ftext = $sectiontext{filter};
 	for ($ftext) { s/^\s+//g; s/\s+$//g }
-	$body .= sprintf('{ my ($_c,$_r); if (mc_call_self(\$_c,\$_r)) { for ($_c) { %s } mc_out($_c); return $_r }};',$ftext);
+	$body .= sprintf(join("\n",'{ my ($_c,$_r);','if (mc_call_self(\$_c,\$_r)) {'.'for ($_c) {',$ftext,'}','mc_out($_c);','return $_r }};'));
     }
 
     #
@@ -397,7 +462,7 @@ sub parse
     #
     # Call start_primary hooks.
     #
-    $body .= "\$INTERP->call_hooks('start_primary');\n";
+    $body .= "\$REQ->call_hooks('start_primary');\n";
     
     #
     # Postprocess the alphabetical and Perl stuff separately
@@ -429,7 +494,7 @@ sub parse
     #
     # Call end_primary hooks.
     #
-    $body .= "\$INTERP->call_hooks('end_primary');\n";
+    $body .= "\$REQ->call_hooks('end_primary');\n";
     
     #
     # Insert <%cleanup> section.
@@ -447,98 +512,190 @@ sub parse
     #
     my $header = "";
     my $pkg = $self->{in_package};
-    $header .= "package $pkg;\n";
-    $header .= "use strict;\n" if $self->use_strict;
-    $header .= sprintf("use vars qw(%s);\n",join(" ","\$INTERP",@{$self->{'allow_globals'}}));
-    $header .= "\n".$sectiontext{once}."\n" if $sectiontext{once};
-    $body = "$header\nsub {\n$body\n};\n";
+    if (!$embedded) {
+	$header .= "package $pkg;\n";
+	$header .= "use strict;\n" if $self->use_strict;
+	$header .= sprintf("use vars qw(%s);\n",join(" ","\$REQ",@{$self->{'allow_globals'}}))."\n";
+    }
+    $header .= $sectiontext{once}."\n" if $sectiontext{once};
 
     #
-    # Eliminate DOS ctrl-M chars
+    # Add subcomponent (<%def>) sections.
     #
-    $body =~ s/\cM//g;
+    if (%subcomps) {
+	$header .= "my \%_subcomps = (\n";
+	$header .= join(",\n",map("'$_' => do {\n$subcomps{$_}\n}",sort(keys(%subcomps))));
+	$header .= "\n);\n";
+    }
+
+    #
+    # Assemble parameters for component.
+    #
+    my @cparams = ("parser_version=>$parserVersion","create_time=>".time());
+    push(@cparams,"source_ref_start=>0000000") if $useSourceReference;
+    push(@cparams,"subcomps=>{%_subcomps}") if (%subcomps);
+    if (%declaredArgs) {
+	my $d = new Data::Dumper ([\%declaredArgs]);
+	my $argsDump = $d->Dumpxs;
+	for ($argsDump) { s/\$VAR1\s*=//g; s/;\s*$// }
+	push(@cparams,"declared_args=>$argsDump");
+    }
+    if ($pureTextFlag) {
+	push(@cparams,"code=>\\&HTML::Mason::Commands::pure_text_handler");
+    } else {
+	push(@cparams,"code=>sub {\n$body\n}");
+    }
+    my $cparamstr = join(",\n",@cparams);
+    
+    $body = "new HTML::Mason::Component (\n$cparamstr\n);\n";
+    $body = $header . $body;
+
+    #
+    # If using source references, add the source text after the
+    # __END__ tag, then calculate its position for
+    # source_ref_start. This must occur after the component body
+    # is fixed!
+    #
+    if ($useSourceReference) {
+	$body .= "\n__END__\n";
+	my $srcstart = sprintf("%7d",length($body));
+	$body =~ s/source_ref_start=>0000000,/source_ref_start=>$srcstart,/;
+	$body .= $endsec;
+    }    
     
     #
-    # Check for errors and warnings.
+    # Process parsing errors.
     #
-    $self->evaluate(script=>$body, code=>\$sub, error=>\$err);
     $parseError = 0;
-
     parse_error:
     my $success = 1;
     if ($err) {
 	if (defined($errpos)) {
 	    my $linenum = (substr($script,0,$errpos) =~ tr/\n//) + 1;
-	    $err .= " (line $linenum)";
+	    if ($suberr) {
+		$err .= " (main script line $linenum)";
+	    } else {
+		$err .= " (line $linenum)";
+	    }
+	    $$errposRef = $errpos if defined($errposRef);
 	}
-	if ($wrapErrors) {
-	    $err =~ s/\'/\\\'/g;
-	    $err =~ s/\(eval [0-9]\) //g;
-	    my $msg = sprintf("Error during compilation%s:",$scriptFile ? " of '$scriptFile'" : "");
-	    my $errscript = "$header\nsub {\ndie \"$msg\\n\".'$err'.\"\\n\"\n}\n";
-	    $sub = eval($errscript);
-	} else {
-	    $err .= "\n";
-	    $success = 0;
-	    $$errorRef = $err if defined($errorRef);
-	}
+	$err .= "\n";
+	$success = 0;
+	$$errorRef = $err if defined($errorRef);
     }
     
-    if (!$err && defined($saveTo)) {
-	File::Path::mkpath(File::Basename::dirname($saveTo));
-	my $fh = new IO::File ">$saveTo" or die "Couldn't write object file $saveTo";
-	print $fh $body if (!$pureTextFlag);
-	$fh->close;
-    }
-    $$resultTextRef = $body if !$parseError && defined($resultTextRef);
-    $$resultCodeRef = $sub if $success && defined($resultCodeRef);
-    $$pureTextFlagRef = $pureTextFlag if defined($pureTextFlagRef);
-    return $success;
+    return ($success) ? $body : undef;
 }
 
-sub evaluate
+#
+# write_object_file
+#   (object_text=>..., object_file=>..., files_written=>...)
+# Save object text in an object file.
+#
+# We attempt to handle several cases in which a file already exists
+# and we wish to create a directory, or vice versa.  However, not
+# every case is handled; to be complete, mkpath would have to unlink
+# any existing file in its way.
+#
+sub write_object_file
 {
     my ($self, %options) = @_;
-    my ($err, $sub);
+    my ($objectText,$objectFile,$filesWrittenRef) =
+	@options{qw(object_text object_file files_written)};
+    my @newfiles = ($objectFile);
+
+    if (!-f $objectFile) {
+	my ($dirname) = dirname($objectFile);
+	if (!-d $dirname) {
+	    unlink($dirname) if (-e $dirname);
+	    push(@newfiles,mkpath($dirname,0,0775));
+	    die "Couldn't create directory $dirname: $!" if (!-d $dirname);
+	}
+	rmtree($objectFile) if (-d $objectFile);
+    }
+    
+    my $fh = new IO::File ">$objectFile" or die "Couldn't write object file $objectFile: $!";
+    print $fh $objectText;
+    $fh->close;
+    @$filesWrittenRef = @newfiles if (defined($filesWrittenRef))
+}
+
+#
+# eval_object_text
+#   (object_text, object_file, error)
+# Evaluate an object file or object text.  Return a component object
+# or undef if error.
+#
+sub eval_object_text
+{    
+    my ($self, %options) = @_;
+    my ($objectText,$objectFile,$errref) =
+	@options{qw(object_text object_file error)};
+
+    #
+    # Evaluate object file or text with warnings on
+    #
     my $ignoreExpr = $self->ignore_warnings_expr;
+    my ($comp,$err);
     {
 	my $warnstr;
 	local $^W = 1;
 	local $SIG{__WARN__} = $ignoreExpr ? sub { $warnstr .= $_[0] if $_[0] !~ /$ignoreExpr/ } : sub { $warnstr .= $_[0] };
-	if ($options{script}) {
-	    my $script = $options{script};
-	    ($script) = ($script =~ /^(.*)$/s) if $self->taint_check;
-	    $sub = eval($script);
-	} elsif ($options{script_file}) {
-	    my $file = $options{script_file};
-	    ($file) = ($file =~ /^(.*)$/s) if $self->taint_check;
-	    $sub = do($file);
+	if ($objectFile) {
+	    ($objectFile) = ($objectFile =~ /^(.*)$/s) if $self->taint_check;
+	    $comp = do($objectFile);
 	} else {
-	    die "evaluate: must specify script or script_file";
+	    ($objectText) = ($objectText =~ /^(.*)$/s) if $self->taint_check;
+	    $comp = eval($objectText);
 	}
 	$err = $warnstr . $@;
+    }
+
+    #
+    # Detect various forms of older, incompatible object files:
+    #  -- zero-sized files (previously signifying pure text components)
+    #  -- pre-0.7 files that return code refs
+    #  -- valid components but with an earlier parser_version
+    #
+    if ($objectFile) {
+	my $parserVersion = version();
+	my $incompat = "Incompatible object file ($objectFile);\nobject file was created by %s and you are running parser version $parserVersion.\nAsk your administrator to clear the object directory.\n";
+	if (-z $objectFile) {
+	    $err = sprintf($incompat,"a pre-0.7 parser");
+	} elsif ($comp) {
+	    if (ref($comp) eq 'CODE') {
+		$err = sprintf($incompat,"a pre-0.7 parser");
+	    } elsif (ref($comp) !~ /HTML::Mason::Component/) {
+		$err = "object file ($objectFile) did not return a component object!";
+	    } elsif ($comp->parser_version != $parserVersion) {
+		$err = sprintf($incompat,"parser version ".$comp->parser_version);
+	    }
+	}
+    }
+
+    #
+    # Return component or error
+    #
+    if ($err) {
 	# attempt to stem very long eval errors
 	if ($err =~ /has too many errors\./) {
 	    $err =~ s/has too many errors\..*/has too many errors./s;
 	}
-    }
-    if ($err) {
-	my $ref = $options{error};
-	$$ref = $err if $ref;
-	return 0;
+	$$errref = $err if defined($errref);
+	return undef;
     } else {
-	my $ref = $options{code};
-	$$ref = $sub if $ref;
-	return 1;
+	$comp->object_file($objectFile);
+	return $comp;
     }
 }
 
-sub make {
+sub make_dirs
+{
     my ($self, %options) = @_;
-    my $compRoot = $options{comp_root} or die "make: must specify comp_root\n";
-    my $dataDir = $options{data_dir} or die "make: must specify data_dir\n";
-    die "make: source_dir '$compRoot' does not exist\n" if (!-d $compRoot);
-    die "make: object_dir '$dataDir' does not exist\n" if (!-d $dataDir);
+    my $compRoot = $options{comp_root} or die "make_dirs: must specify comp_root\n";
+    my $dataDir = $options{data_dir} or die "make_dirs: must specify data_dir\n";
+    die "make_dirs: source_dir '$compRoot' does not exist\n" if (!-d $compRoot);
+    die "make_dirs: object_dir '$dataDir' does not exist\n" if (!-d $dataDir);
     my $sourceDir = $compRoot;
     my $objectDir = "$dataDir/obj";
     my $errorDir = "$dataDir/errors";
@@ -549,7 +706,7 @@ sub make {
     my $reloadFile = $options{update_reload_file} ? "$dataDir/etc/reload.lst" : undef;
     my ($relfh);
     if (defined($reloadFile)) {
-	$relfh = new IO::File ">>$reloadFile" or die "make: cannot open '$reloadFile' for writing\n";
+	$relfh = new IO::File ">>$reloadFile" or die "make_dirs: cannot open '$reloadFile' for writing: $!";
 	$relfh->autoflush(1);
     }
     
@@ -558,15 +715,15 @@ sub make {
 	return if (!-f $srcfile);
 	return if defined($predicate) && !($predicate->($srcfile));
 	my $compPath = substr($srcfile,length($sourceDir));
- 	my $objfile = $srcfile;
-	$objfile =~ s@^$sourceDir@$objectDir@;
+ 	(my $objfile = $srcfile) =~ s@^$sourceDir@$objectDir@;
 	my ($objfiledir) = dirname($objfile);
 	if (!-d $objfiledir) {
 	    if (defined($dirCreateMode)) {
 		print "creating directory $objfiledir\n" if $verbose;
 		mkpath($objfiledir,0,$dirCreateMode);
+		die "make_dirs: cannot create directory '$objfiledir': $!" if (!-d $objfiledir);
 	    } else {
-		die "make: no such directory '$objfiledir'\n";
+		die "make_dirs: no such directory '$objfiledir'";
 	    }
 	}
 	my $makeflag;
@@ -578,26 +735,20 @@ sub make {
 	    $makeflag = ($srcfilemod > $objfilemod);
 	}
 	if ($makeflag) {
-	    my ($objtext,$errmsg,$pureTextFlag);
+	    my ($errmsg,$objText);
 	    print "compiling $srcfile\n" if $verbose;
-	    if (!$self->parse(script_file=>$srcfile, result_text=>\$objtext, error=>\$errmsg, pure_text_flag=>\$pureTextFlag)) {
+	    if ($self->make_component(script_file=>$srcfile, object_text=>\$objText, error=>\$errmsg)) {
+		$self->write_object_file(object_file=>$objfile, object_text=>$objText);
+	    } else {
 		if ($verbose) {
 		    print "error";
 		    if ($errorDir) {
-			my $errfile = $srcfile;
-			$errfile =~ s@^$sourceDir@$errorDir@;
-			my ($errfiledir) = dirname($errfile);
-			mkpath($errfiledir,0,$dirCreateMode);
-			my $outfh = new IO::File ">$errfile" or die "make: cannot open '$errfile' for writing\n";
-			$outfh->print($objtext);
+			(my $errfile = $srcfile) =~ s@^$sourceDir@$errorDir@;
+			$self->write_object_file(object_file=>$errfile, object_text=>$objText);
 			print " in $errfile";
 		    }
 		    print ":\n$errmsg\n";
 		}
-	    } else {
-		my $outfh = new IO::File ">$objfile" or die "make: cannot open '$objfile' for writing\n";
-		$outfh->print($objtext) if (!$pureTextFlag);
-		$relfh->print("$compPath\n") if (defined($relfh));
 	    }
 	}
     };
@@ -611,7 +762,7 @@ sub make {
 	    my $sub = sub {$compilesub->($_) if -f};
 	    find($sub,$fullpath);
 	} else {
-	    die "make: no such file or directory '$fullpath'\n";
+	    die "make_dirs: no such file or directory '$fullpath'";
 	}
     }
 }

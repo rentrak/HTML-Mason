@@ -8,6 +8,7 @@
 
 use HTML::Mason;
 use Cwd;
+use DirHandle;
 use strict;
 
 ######################### End of black magic.
@@ -20,8 +21,19 @@ my $tmp_dir = "test/tmp/";
 
 my $buf;
 
-my @comps = qw(replace init perl_init args perl_args doc perl_doc filter once
-               text perl percent amper mc_cache mc_cache_self);
+# Read list of test components
+my $listfh = new IO::File "test/comps.lst" or die "cannot read component list";
+my @comps = <$listfh>;
+chomp(@comps);
+$listfh->close;
+
+# Clear cache directory
+if (-d 'test/data/cache') {
+    my $d = new DirHandle ('test/data/cache') or die "cannot read directory test/data/cache";
+    while (defined (my $file = $d->read)) {
+	unlink("test/data/cache/$file");
+    }
+}
 
 my $parser = new HTML::Mason::Parser;
 my $interp = new HTML::Mason::Interp( parser=>$parser,
@@ -29,15 +41,19 @@ my $interp = new HTML::Mason::Interp( parser=>$parser,
                                       data_dir => $data_dir,
                                       out_method => \$buf, );
 
-print "1..15\n";
+print "1..".scalar(@comps)."\n";
 
 foreach my $component ( @comps ) {
     undef $buf;
     my $result;
     eval { $interp->exec("/$component"); };
-    my $err = $@;
-    print STDERR "\n-----\nERROR during '$component' test\n$err-----\n" if $err;
-
+    if (my $err = $@) {
+	my ($top) = ($err =~ /(.*\n.*\n)/);
+	$top =~ s{at /.*}{}g;
+	$buf = "ERROR:\n$top";
+#	$buf .= "\n$err";
+    }
+    $component =~ s/\//::/g;
     open(F, ">$tmp_dir$component");
     print F $buf if defined($buf);
     close F;
@@ -124,3 +140,5 @@ sub compareFiles {
 
     return $err; 
 }
+
+1;

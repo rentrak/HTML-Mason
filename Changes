@@ -5,13 +5,37 @@ available at http://www.masonhq.com/changes.html.
 
 ** denotes an incompatible change
 
-0.6.2  Fri Aug 20 09:02:59 PDT 1999
+0.7  Thu Aug 12 14:22:50 PDT 1999
 
-    - Fixed problem with shared data cache locks over NFS (submitted by
-      Tom Hughes)
-    - Fixed mc_auto_comp, which never really worked as documented
-    - Fixed preloading for directories (submitted by Dennis Watson)
-    - Added back Utils::get_lock, which is used by content management
+    - Improved core implementation with two new classes,
+      HTML::Mason::Request and HTML::Mason::Component.  Code is now cleaner
+      and more scalable, and the new APIs give developers control and
+      introspection over Mason's inner workings.
+    - Added documentation to accommodate new classes: created
+      Request.pod and Component.pod, and moved component developer's guide
+      (previously at Components.pod) to Devel.pod to avoid
+      confusion.
+    - Object files have changed significantly (they now return a
+      component object).  Pre-0.7 object files will be detected and
+      automatically updated, unless you are running in reload file mode
+      in which case you are responsible for generating new object files.
+    - New <%def> section defines a subcomponent embedded inside a larger
+      component.  This allows repeated code and HTML to be modularized
+      without affecting the global component namespace.
+    - <%args> section now accommodates optional comments for declarations
+    - Improved Perl translation of <%args> section (submitted by Ken
+      Williams)
+    - Autohandler and dhandler file names are now configurable
+    - Dhandlers, which formerly worked only in mod_perl mode, now work in
+      stand-alone mode as well
+    - Interp::exec is now re-entrant with all request specific information
+      having been moved to Request class.
+    - ** Reworked Parser API. parse is now called make_component, has a
+      simplified set of options, and returns a component object
+      directly. make is now called make_dirs.
+    - Removed obsolete and undocumented Interp::vars and mc_var functions
+    - Simplified chown/getpwuid usage in handler.pl (submitted by Randal
+      Schwartz)
 
 0.6.1  Tue Jul 27 09:34:31 PDT 1999
 

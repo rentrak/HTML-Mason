@@ -355,8 +355,8 @@ code in <CODE>handler.pl</CODE>:
 
 <P>
 
-<PRE>    chown ( [getpwnam('nobody')]-&gt;[2], [getgrnam('nobody')]-&gt;[2],
-            $interp-&gt;files_written );
+<PRE>    chown (scalar(getpwnam &quot;nobody&quot;), scalar(getgrnam &quot;nobody&quot;),
+            $interp-&gt;files_written);
 </PRE>
 
 <P>
@@ -1198,7 +1198,7 @@ two ways:
 1. Does not check component source files at all, relying solely on object
 files. This means the developer or an automated system is responsible for
 recompiling any components that change and recreating object files, using
-the Parser <A HREF="./Parser.html#item_parse">parse</A> method.
+the Parser <A HREF="././Parser.html#parse">parse</A> method.
 
 
 <P>
