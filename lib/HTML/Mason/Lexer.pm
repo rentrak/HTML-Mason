@@ -82,7 +82,6 @@ sub lex
     # Initialize lexer state
     $current->{lines} = 1;
     $current->{in_def} = $current->{in_method} = 0;
-    $current->{pos} = undef;
 
     # This will be overridden if entering a def or method section.
     $current->{ending} = qr/\G\z/;
@@ -130,8 +129,7 @@ sub start
     my $self = shift;
 
     my $end;
-    while ( ! defined $self->{current}{pos} ||
-	    $self->{current}{pos} < length $self->{current}{comp_source} )
+    while (1)
     {
 	last if $end = $self->match_end;
 
@@ -384,8 +382,8 @@ if ( $] >= 5.006 )
 }
 else
 {
-    # Like [\a-z\A-Z_] but respects locales
-    $flag = qr/[^\W\d]\w*/;
+    # Like [a-zA-Z_] but respects locales
+    $flag = qr/[^\W\d]\w*/x;
 }
 
 sub escape_flag_regex { $flag }
@@ -506,14 +504,14 @@ sub match_text
     # lexeme in the source, so we use a lookahead if we don't want to
     # consume them.  We use a lookbehind when we want to consume
     # something in the matched text, like the newline before a '%'.
-    
     if ( $c->{comp_source} =~ m{
 				\G
 				(.*?)         # anything, followed by:
 				(
 				 (?<=\n)(?=%) # an eval line - consume the \n
 				 |
-				 (?=</?[%&])  # a substitution or block or call start or end  - don't consume
+				 (?=</?[%&])  # a substitution or block or call start or end
+                                              # - don't consume
 				 |
 				 \\\n         # an escaped newline  - throw away
 				 |
@@ -525,9 +523,11 @@ sub match_text
 	# large $1 strings into several pieces and pass the pieces to
 	# compiler->text().  In my testing, this was quite a bit
 	# slower, though.  -Ken 2002-09-19
-
 	$c->{compiler}->text( text => $1 ) if length $1;
-	$c->{lines} += tr/\n// foreach ($1, $2);
+        # Not checking definedness seems to cause extra lines to be
+        # counted with Perl 5.00503.  I'm not sure why - dave
+	$c->{lines} += tr/\n// foreach grep defined, ($1, $2);
+
 	return 1;
     }
     
@@ -543,7 +543,7 @@ sub match_end
     if ( $self->{current}{comp_source} =~ /($self->{current}{ending})/gcs )
     {
 	$self->{current}{lines} += $1 =~ tr/\n//;
-	return $1 || 1;
+	return defined $1 && length $1 ? $1 : 1;
     }
     return 0;
 }

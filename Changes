@@ -5,6 +5,15 @@ available at http://www.masonhq.com/code/history.html.
 
 ** denotes an incompatible change
 
+1.18  January 24, 2003
+
+    [ BUG FIXES ]
+
+    - Require Exception::Class 1.09.  Version 1.08 has a bug that causes
+      problems with Mason when used with any Perl earlier than 5.8.0.
+    - Fix a bug in the lexer code that caused Mason to not work with Perl
+      5.00503 at all.
+
 1.17  January 17, 2003
 
     [ ENHANCEMENTS ]
@@ -15,7 +24,7 @@ available at http://www.masonhq.com/code/history.html.
     - Added $m->call_self.  This was present in Mason pre-1.10, and has
       been added back per Jon Swartz's request.
     - Added $comp->attributes, similar to $comp->methods.  This just
-      returns attributes for a given component objects.  It doesn't return
+      returns attributes for a given component object.  It doesn't return
       attributes inherited from a parent.  Suggested by Matti Makitalo.
 
     [ BUG FIXES ]
