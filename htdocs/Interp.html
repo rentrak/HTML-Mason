@@ -69,6 +69,27 @@ stand-alone Perl script), see the <A HREF="#standalone_mode">STANDALONE MODE</A>
 
 </A></H1>
 <DL>
+<DT><STRONG><A NAME="item_code_cache_mode">code_cache_mode
+
+</A></STRONG><DD>
+Specifies whether components are cached in memory when they are loaded.
+This allows you to trade off memory consumption and cache effectiveness.
+Must be one of 'all', 'request', or 'none'. 'all' means that all components
+are cached for the lifetime of the process. 'request' means that components
+are cached for the duration of each HTTP request and then discarded. 'none'
+means that components are never cached. The default is 'all'. Note that you
+may preload components (using <A HREF="././Interp.html#item_preloads">preloads</A>) regardless of the value of this parameter; preloaded components stick
+around for the lifetime of the process.
+
+
+<P>
+
+This parameter may be augmented in the future with more sophisticated
+caching and cache expiration options.
+
+
+<P>
+
 <DT><STRONG><A NAME="item_comp_root">comp_root
 
 </A></STRONG><DD>

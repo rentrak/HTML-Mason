@@ -748,7 +748,10 @@ Mason will:
 <UL>
 <LI><STRONG></STRONG>
 store a reference to the subroutine in an in-memory hash table. The current
-server process can use this for future references to the same component.
+server process can use this for future references to the same component. If
+for some reason you don't want to cache every component (e.g. to save
+memory) you can modify this behavior via the
+<A HREF="././Interp.html#item_code_cache_mode">code_cache_mode</A> parameter.
 
 
 <P>
@@ -756,21 +759,16 @@ server process can use this for future references to the same component.
 <LI><STRONG></STRONG>
 store the subroutine body in an object file under
 <CODE>data_dir/obj/<EM>component-path</EM></CODE>. Future server processes can eval the object file and save time on
-parsing.
+parsing. Besides improving performance, object files are essential for
+debugging and interpretation of compilation errors. However, if you don't
+want Mason to create object files (e.g. if disk space is scarce), you can
+turn them off by passing <A HREF="././Interp.html#item_use_object_files">use_object_files</A>=&gt;0 to the Interp object.
 
 
 <P>
 
 </UL>
 Both entities are recomputed if the component source file changes.
-
-
-<P>
-
-Besides improving performance, object files are essential for debugging and
-interpretation of compilation errors. However, if you don't want Mason to
-create object files (e.g. if disk space is scarce), you can turn them off
-by passing <A HREF="././Interp.html#item_use_object_files">use_object_files</A>=&gt;0 to the Interp object.
 
 
 <P>

@@ -47,6 +47,7 @@
 	<LI><A HREF="#accessing_server_internals">ACCESSING SERVER INTERNALS</A>
 	<LI><A HREF="#sending_http_headers">SENDING  HTTP HEADERS</A>
 	<LI><A HREF="#using_the_perl_debugger">USING THE PERL DEBUGGER</A>
+	<LI><A HREF="#using_the_perl_profiler_new_in_">USING THE PERL PROFILER (new in 0.4)</A>
 	<LI><A HREF="#the_previewer">THE PREVIEWER</A>
 	<LI><A HREF="#tips_and_traps">TIPS AND TRAPS</A>
 	<LI><A HREF="#author">AUTHOR</A>
@@ -1027,11 +1028,9 @@ time, pass one of these options to the 'store' action.
 <P>
 
 <EM>expire_in</EM>: takes a relative expiration time of the form ``&lt;num&gt;&lt;unit&gt;'',
-where &lt;num&gt; is a positive number and &lt;unit&gt; is one of sec,
-seconds, min, minutes, hours, days, weeks, or months. You can also use the
-first letter or singular form of any of these. (This notation was adapted
-from Sullivan Beck's Date::Manip package.) E.g. ``30sec'', ``10min'',
-``1hour'', ``4h''.
+where &lt;num&gt; is a positive number and &lt;unit&gt; is one of seconds,
+minutes, hours, days, or weeks, or any abbreviation thereof. E.g.
+``10min'', ``1hour''.
 
 
 <P>
@@ -1047,8 +1046,7 @@ Examples:
 
 <P>
 
-<PRE>    mc_cache(action=&gt;'store', expire_in=&gt;'15min');
-    mc_cache(action=&gt;'store', expire_in=&gt;'2 hours');
+<PRE>    mc_cache(action=&gt;'store', expire_in=&gt;'2 hours');
     mc_cache(action=&gt;'store', expire_next=&gt;'hour');
 </PRE>
 
@@ -1076,7 +1074,7 @@ Example:
 
 <P>
 
-<PRE>    # expire the cache if 'myfile' has changed since the cache was written
+<PRE>    # expire the cache if 'myfile' is newer
     mc_cache(action =&gt; 'retrieve',
           expire_if =&gt; sub { [stat 'myfile']-&gt;[9] &gt; $_[0] });
 </PRE>
@@ -1394,6 +1392,74 @@ modes to activate:
 <P>
 
 <STRONG>error</STRONG> (only generate a debug file when an error occurs)
+
+
+<P>
+
+<P>
+<HR>
+<H1><A NAME="using_the_perl_profiler_new_in_">USING THE PERL PROFILER (new in 0.4)
+
+</A></H1>
+Debug files, mentioned in the previous section, can be used in conjunction
+with Devel::DProf to profile a web request.
+
+
+<P>
+
+To use profiling, pass the <CODE>-p</CODE> flag to the debug file:
+
+
+<P>
+
+<PRE>    % ./3 -p
+</PRE>
+
+<P>
+
+This executes the debug file under Devel::DProf and, for convenience, runs
+dprofpp. If you wish you can rerun dprofpp with your choice of options.
+
+
+<P>
+
+Because components are implemented as anonymous subroutines, any time spent
+in components would normally be reported under an unreadable label like
+<CODE>CODE(0xb6cbc).</CODE> To remedy this, the <CODE>-p</CODE> flag automatically adjusts the tmon.out file so that components are
+reported by their component paths.
+
+
+<P>
+
+Much of the time spent in a typical debug file is initialization, such as
+loading Mason and other Perl modules. The effects of initialization can
+swamp profile results and obscure the time actually spent in components.
+One remedy is to run multiple iterations of the request inside the debug
+file, thus reducing the influence of initialization time. Pass the number
+of desired iterations via the <CODE>-r</CODE>
+flag:
+
+
+<P>
+
+<PRE>    % ./3 -p -r20
+</PRE>
+
+<P>
+
+Currently there are no special provisions for other profiling modules such
+as Devel::SmallProf. You can try simply:
+
+
+<P>
+
+<PRE>    % perl -d:SmallProf ./3 -r20
+</PRE>
+
+<P>
+
+However, this crashes on our Unix system -- apparently some bad interaction
+between Mason and SmallProf -- so it is unsupported for now.
 
 
 <P>

@@ -114,7 +114,7 @@ sub send_http_header {
 
 package HTML::Mason::Preview;
 use HTML::Mason::ApacheHandler;
-use HTML::Mason::Tools qw(date_delta_to_secs);
+use HTML::Mason::Tools qw(date_delta_to_secs html_escape);
 use IO::File qw(!/^SEEK/);
 use POSIX;
 

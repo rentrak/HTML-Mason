@@ -12,6 +12,8 @@ htdocs/Components.html
 htdocs/Interp.html
 htdocs/Mason.html
 htdocs/Parser.html
+lib/Apache/Mason.pm
+lib/Bundle/HTML/Mason.pm
 lib/HTML/Mason.pm
 lib/HTML/Mason.pod
 lib/HTML/Mason/Admin.pod
@@ -29,6 +31,8 @@ lib/HTML/Mason/Parser.pod
 lib/HTML/Mason/Preview.pm
 lib/HTML/Mason/Tools.pm
 lib/HTML/Mason/Utils.pm
+lib/HTML/Mason/pod2html-dircache
+lib/HTML/Mason/pod2html-itemcache
 samples/README
 samples/cd-me/README
 samples/cd-me/Template

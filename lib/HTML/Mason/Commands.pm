@@ -51,7 +51,7 @@ sub mc_cache
 	$INTERP->write_system_log('CACHE_READ',$INTERP->locals->{truePath},$options{key},
 				  defined $results ? 1 : 0);
     } elsif ($options{action} eq 'store') {
-	$INTERP->write_system_log('CACHE_STORE',$INTERP->locals->{truePath},$options{key});
+	$INTERP->write_system_log('CACHE_WRITE',$INTERP->locals->{truePath},$options{key});
     }
     return $results;
 }

@@ -71,7 +71,7 @@ sub rflush {
 sub send_http_header {
     my $self = shift;
     $self->content_type('text/plain') if !$self->content_type;
-    print "Server: Apache/1.2.5 mod_perl/1.08\n";
+    print "Server: ".$self->cgi_var('SERVER_SOFTWARE')."\n" if $self->cgi_var('SERVER_SOFTWARE');
     print "Content-type: ".$self->content_type."\n";
     my %headers = %{$self->headers_out};
     while (my ($key,$value) = each(%headers)) {

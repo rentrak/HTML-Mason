@@ -1,5 +1,32 @@
 Revision history for Perl extension HTML::Mason.
 
+0.4
+	- added support for using Perl profiler in conjunction with
+	  debug files
+	- fixed bug in previewer HTML trace introduced in 0.3
+	- created Perl status section for Mason
+	- removed most warnings when PerlWarn is on (suggested by
+	  Philip Gwyn)
+	- added code_cache_mode parameter to control caching of
+	  components in memory
+	- fixed mismatch between documentation and code with regards
+	  to cache store events in system log.  The real event name is
+	  CACHE_WRITE.
+	- changed system logging to use canonical server name when
+	  recording URI
+	- field access methods inside Mason objects are now handled
+	  with custom subroutines instead of generic AUTOLOAD,
+	  improving performance
+	- information for debug file is no longer collected if debug
+	  mode is "none"
+	- code to decline images and other non-text requests was
+	  placed in default handler.pl and described in documentation
+	  (suggested by Patrick Michael Kane)
+	- fixed server header output from debug files (suggested by Ewan
+	  Edwards)
+	- created a Mason bundle
+	- created a CPAN "alias" from Apache::Mason to HTML::Mason
+
 0.3   Wed Nov 25 17:00:34 PST 1998
         - added optional system logging of page requests, cache
           activity, component loading

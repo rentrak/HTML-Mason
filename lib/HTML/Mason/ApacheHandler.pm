@@ -26,6 +26,7 @@ use HTML::Mason::Commands;
 use HTML::Mason::FakeApache;
 use HTML::Mason::Tools qw(html_escape url_unescape);
 use HTML::Mason::Utils;
+use Apache::Status;
 
 my @used = ($HTML::Mason::Commands::r);
 
@@ -36,12 +37,17 @@ my %fields =
      error_mode => 'html',
      top_level_predicate => sub { return 1 },
      decline_dirs => 1,
-     debug_mode => undef,
+     debug_mode => 'none',
      debug_perl_binary => '/usr/bin/perl',
      debug_handler_script => undef,
      debug_handler_proc => undef,
      debug_dir_config_keys => [],
      );
+# Minor speedup: create anon. subs to reduce AUTOLOAD calls
+foreach my $f (keys %fields) {
+    no strict 'refs';
+    *{$f} = sub {my $s=shift; return @_ ? ($s->{$f}=shift) : $s->{$f}};
+}
 
 sub new
 {
@@ -69,6 +75,31 @@ sub _initialize {
     my ($self) = @_;
 
     my $interp = $self->interp;
+
+    # ----------------------------
+    # Add an HTML ::Mason menu item to the /perl-status page. Things we report:
+    # -- Interp properties
+    # -- loaded (cached) components
+    Apache::Status->menu_item(
+	'mason' => "HTML::Mason status", #item for HTML::Mason module
+	 sub {
+	     my($r,$q) = @_; #request and CGI objects
+	     my(@strings);
+	     
+	     push (@strings,
+		'<DL><DT><FONT SIZE="+1"><B>Interp object properties (startup options)</B></FONT><DD>',
+		map("$_ = ".$interp->{$_}."<BR>\n", grep (ref $interp->{$_} eq '', sort keys %{$interp->{_permitted}})),
+		'</DL>');
+	     
+	     push (@strings,
+		'<DL><DT><FONT SIZE="+1"><B>Cached components</B></FONT><DD>',
+		map("$_<BR>\n", sort keys %{$interp->{code_cache}}),
+		'</DL>');
+	     
+	     return \@strings;     #return an array ref
+	 }
+    ) if $Apache::Status::VERSION; #only if Apache::Status is loaded
+
     
     #
     # Create data subdirectories if necessary. mkpath will die on error.
@@ -106,15 +137,15 @@ sub send_http_header_hook
 #
 sub handle_request {
     my ($self,$r) = @_;
-    my ($outbuf, $outsub, $retval, $argString, $debugMsg);
+    my ($outsub, $retval, $argString, $debugMsg);
+    my $outbuf = '';
     my $interp = $self->interp;
 
     #
     # construct (and truncate if necessary) the request to log at start
     #
-    my $rstring;
-    (undef, $rstring) = split (/\s/, $r->the_request);
-    $rstring = $r->cgi_var('HTTP_HOST') . $rstring;
+    my $rstring = $r->server->server_hostname . $r->uri;
+    $rstring .= "?".scalar($r->args) if defined(scalar($r->args));
     $rstring = substr($rstring,0,150).'...' if length($rstring) > 150;
     $interp->write_system_log('REQ_START', ++$self->{request_number},
 			      $rstring);
@@ -125,7 +156,7 @@ sub handle_request {
     # to client as it is produced.
     #
     if ($self->output_mode eq 'batch') {
-	$outsub = sub { $outbuf .= $_[0] };
+        $outsub = sub { $outbuf .= $_[0] if defined($_[0]) };
 	$interp->out_method($outsub);
     } elsif ($self->output_mode eq 'stream') {
 	$outsub = sub { $r->print($_[0]) };
@@ -141,9 +172,10 @@ sub handle_request {
 	$argString = $r->content();
     }
     
-    my $debugState = $self->capture_debug_state($r,$argString);
     my $debugMode = $self->debug_mode;
-    $debugMode = undef if (ref($r) eq 'HTML::Mason::FakeApache');
+    $debugMode = 'none' if (ref($r) eq 'HTML::Mason::FakeApache');
+    my $debugState = $self->capture_debug_state($r,$argString)
+	if ($debugMode eq 'all' or $debugMode eq 'error');
     $debugMsg = $self->write_debug_file($r,$debugState) if ($debugMode eq 'all');
     
     eval('$retval = handle_request_1($self, $r, $argString)');
@@ -206,12 +238,70 @@ sub write_debug_file
     my $d = new Data::Dumper ([$dref],['dref']);
     my $o = '';
     $o .= "#!".$self->debug_perl_binary."\n";
-    $o .= "BEGIN { \$HTML::Mason::IN_DEBUG_FILE = 1; require '".$self->debug_handler_script."' }\n";
+    $o .= <<'PERL';
+# -----------------------------
+# Read command-line options for repeat counts (-rX) and profiling via
+# Devel::DProf (-p). As component runs in profile mode, component
+# coderefs are accumulated in %CODEREF_NAME
+# -----------------------------
+BEGIN {
+    use IO::File;
+    use File::Copy;
+    use Getopt::Std;
+    getopt('r');   # r=repeat count, p=user profile req, P=re-entrant profile call
+    $opt_r ||= 1;
+    
+    if ($opt_p) {
+	print STDERR "Profiling request ...";
+	# re-enter with different option (no inf. loops, please)
+	system ("perl", "-d:DProf", $0, "-P", "-r$opt_r");
+    
+# -----------------------------
+# When done, merge named coderefs in tmon.mason with those in tmon.out,
+# then run dprofpp
+# -----------------------------
+	my $fh = new IO::File '< ./tmon.mason' or die "Missing file: tmon.mason";
+	foreach (<$fh>) { chomp;  my ($k,$v) = split(/\t/);  $::CODEREF_NAME{$k} = $v; }
+	$fh->close;
+    
+	my $tmonout = new IO::File '< ./tmon.out' or die "Missing file: tmon.out";
+	my $tmontmp = new IO::File '> ./tmon.tmp' or die "Couldn't write file: tmon.tmp";
+	my $regex = quotemeta(join('|', keys %::CODEREF_NAME));
+	$regex =~ s/\\\|/|/g;   #un-quote the pipe chars
+	while (<$tmonout>) {
+	    s/HTML::Mason::Commands::($regex)/$::CODEREF_NAME{$1}/;
+	    print $tmontmp $_
+	}
+	$tmonout->close; $tmontmp->close;
+	copy('tmon.tmp' => 'tmon.out') or die "$!";
+	unlink('tmon.tmp');
+        print STDERR "\nRunning dprofpp ...\n";
+	exec('dprofpp') or die "Couldn't execute dprofpp";
+    }
+}
+
+PERL
+    $o .= "BEGIN { \$HTML::Mason::IN_DEBUG_FILE = 1; require '".$self->debug_handler_script."' }\n\n";
+    $o .= <<'PERL';
+if ($opt_P) {
+    open SAVEOUT, ">&STDOUT";    # stifle component output while profiling
+    open STDOUT, ">/dev/null";
+}
+for (1 .. $opt_r) {
+print STDERR '.' if ($opt_P and $opt_r > 1);
+PERL
     $o .= "my ";
     $o .= $d->Dumpxs;
     $o .= 'my $r = HTML::Mason::ApacheHandler::simulate_debug_request($dref);'."\n";
     $o .= 'my $status = '.$self->debug_handler_proc."(\$r);\n";
-    $o .= 'print "return status: $status\n";'."\n";
+    $o .= 'print "return status: $status\n";'."\n}\n\n";
+    $o .= <<'PERL';
+if ($opt_P) {
+    my $fh = new IO::File '>./tmon.mason' or die "Couldn't write tmon.mason";
+    print $fh map("$_\t$HTML::Mason::CODEREF_NAME{$_}\n", keys %HTML::Mason::CODEREF_NAME);
+    $fh->close;
+}
+PERL
     $outfh->print($o);
     $outfh->close();
     chmod(0775,$outPath);
@@ -396,15 +486,7 @@ sub AUTOLOAD {
     $name =~ s/.*://;   # strip fully-qualified portion
     return if $name eq 'DESTROY';
 
-    unless (exists $self->{'_permitted'}->{$name} ) {
-        die "No such function `$name' in class $type";
-    }
-
-    if (@_) {
-        return $self->{$name} = shift;
-    } else {
-        return $self->{$name};
-    }
+    die "No such function `$name' in class $type";
 }
 1;
 

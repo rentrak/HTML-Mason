@@ -26,6 +26,12 @@ my %fields =
      taint_check => 0,
      safe_compartment => undef
      );
+# Minor speedup: create anon. subs to reduce AUTOLOAD calls
+foreach my $f (keys %fields) {
+    next if $f eq 'safe_compartment';  # don't overwrite real sub.
+    no strict 'refs';
+    *{$f} = sub {my $s=shift; return @_ ? ($s->{$f}=shift) : $s->{$f}};
+}
 
 sub new
 {
@@ -565,15 +571,7 @@ sub AUTOLOAD {
     $name =~ s/.*://;   # strip fully-qualified portion
     return if $name eq 'DESTROY';
 
-    unless (exists $self->{'_permitted'}->{$name} ) {
-        die "No such function `$name' in class $type";
-    }
-
-    if (@_) {
-        return $self->{$name} = shift;
-    } else {
-        return $self->{$name};
-    }
+    die "No such function `$name' in class $type";
 }
 1;
 

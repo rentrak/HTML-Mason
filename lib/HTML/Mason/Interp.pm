@@ -25,6 +25,7 @@ my @used = ($HTML::Mason::Commands::INTERP);
 my %fields =
     (alternate_sources => undef,
      comp_root => undef,
+     code_cache_mode => 'all',
      current_time => 'real',
      data_dir => undef,
      system_log_file => undef,
@@ -40,6 +41,12 @@ my %fields =
      verbose_compile_error => 0,
      data_cache_dir => '',
      );
+# Minor speedup: create anon. subs to reduce AUTOLOAD calls
+foreach my $f (keys %fields) {
+    next if $f eq 'current_time';  # don't overwrite real sub.
+    no strict 'refs';
+    *{$f} = sub {my $s=shift; return @_ ? ($s->{$f}=shift) : $s->{$f}};
+}
 
 sub new
 {
@@ -47,8 +54,8 @@ sub new
     my $self = {
 	_permitted => \%fields,
 	%fields,
-	code_cache => {},
 	data_cache_store => {},
+        code_cache => {},
 	files_written => [],
 	hooks => [],
 	hook_index => {},
@@ -120,6 +127,7 @@ sub _initialize
     # Preloads
     #
     if ($self->preloads) {
+	(my $savemode,$self->{code_cache_mode}) = ($self->{code_cache_mode},'all');
 	my $slen = length($self->comp_root);
 	foreach my $p (@{$self->preloads}) {
 	    next if ($p !~ m@^/@);
@@ -138,6 +146,7 @@ sub _initialize
 		$self->load($compPath);
 	    }
 	}
+	$self->{code_cache_mode} = $savemode;	
     }
 
     #
@@ -186,6 +195,7 @@ sub exec {
 	abort_flag => 0,
 	abort_retval => undef,
 	error_flag => 0,
+	request_code_cache => {}
     };
     $self->check_reload_file if ($self->use_reload_file);
     return $self->exec_next($callPath,%args);
@@ -228,9 +238,21 @@ sub exec_next {
     delete($args{STORE});
 
     #
-    # Load the component into a subroutine.
+    # Load the component into a subroutine. If code caching is
+    # per-request, then check and modify the per-request cache as
+    # necessary.
     #
-    my (@info) = $self->load($callPath);
+    my (@info);
+    if ($self->{code_cache_mode} eq 'request') {
+	if (my $inforef = $self->{exec_state}->{request_code_cache}->{$callPath}) {
+	    @info = @$inforef;
+	} else {
+	    (@info) = $self->load($callPath);
+	    $self->{exec_state}->{request_code_cache}->{$callPath} = [@info];
+	}
+    } else {
+	(@info) = $self->load($callPath);
+    }
     if (!@info) {
 	if (!$allowHandlers) {
 	    die "could not find component for path '$callPath'\n";
@@ -307,6 +329,11 @@ sub exec_next {
     # Call start_comp hooks.
     #
     $self->call_hooks(type=>'start_comp');
+
+    #
+    # CODEREF_NAME maps component coderefs to component names (for profiling)
+    #
+    $HTML::Mason::CODEREF_NAME{$sub} = $sourceFile if $::opt_P;
 
     #
     # Call component subroutine in an eval context.
@@ -518,8 +545,10 @@ sub load {
 	# Cache code in memory
 	#
 	my @info = ($sub,$srcfile);
-	$codeCache->{$path}->{lastmod} = $srcfilemod if !$self->use_reload_file;
-	$codeCache->{$path}->{info} = \@info;
+	if ($self->{code_cache_mode} eq 'all') {
+	    $codeCache->{$path}->{lastmod} = $srcfilemod if !$self->use_reload_file;
+	    $codeCache->{$path}->{info} = \@info;
+	}
 	return @info;
     }
 }
@@ -719,15 +748,7 @@ sub AUTOLOAD {
     $name =~ s/.*://;   # strip fully-qualified portion
     return if $name eq 'DESTROY';
 
-    unless (exists $self->{'_permitted'}->{$name} ) {
-        die "No such function `$name' in class $type";
-    }
-
-    if (@_) {
-        return $self->{$name} = shift;
-    } else {
-        return $self->{$name};
-    }
+    die "No such function `$name' in class $type";
 }
 1;
 

@@ -5,10 +5,10 @@ require 5.004;
 
 sub chk_version
 {
- my($pkg,$wanted,$title) = @_;
- $title ||= $pkg;
+ my($pkg,$wanted,$msg) = @_;
+
  local($|) = 1;
- print "Checking for $title...";
+ print "Checking for $pkg...";
 
  eval { my $p; ($p = $pkg . ".pm") =~ s#::#/#g; require $p; };
 
@@ -23,7 +23,7 @@ sub chk_version
 
 # These are required modules.
 
-chk_version(File::Recurse=>'1.0','File::Tools') or
+chk_version(File::Tools => '1.0') or
     warn  "\n"
 	. "*** Mason requires version 1.0, or later, of File::Tools\n"
 	. "    from CPAN/modules/by-module/File/Tools-x.x.tar.gz\n\n";
@@ -43,8 +43,8 @@ chk_version(Data::Dumper => '2.08') or
 chk_version(Time::HiRes => '1.19') or do {
     warn  "\n"
 	. "*** Mason needs version 1.19, or later, of Time::HiRes\n"
-        . "    in order to record microsecond time values in the Mason\n"
-	. "    system log. Since you do not seem to have this module,\n"
+        . "    in order to record microsecond time values in the system\n"
+	. "    log. Since you do not seem to have this module,\n"
 	. "    system log times will be recorded in seconds\n"
 	. "    only.  If you do decide to obtain Time::HiRes, run\n"
 	. "    Makefile.PL again or edit Config.pm.\n\n";

@@ -203,6 +203,25 @@ conflicts, set the chown() parameters to match the UID and GID from
 your C<httpd.conf>. See the C<handler> section in the
 I<Administrator's Guide> guide for details.
 
+=item Do you plan to intermix images and components in the same directory?
+
+If you use a <Location> or <Directory> directive like the one suggested above,
+then requests to any file under that directory will go to the Mason
+handler. If there are images in the directory, Mason will try to treat
+them like regular components. This is bad: not only is there extra
+overhead, but if an image inadvertently contains a Mason character
+sequence such as "<%", Mason will try to interpret that piece and fail
+with a syntax error.
+
+The simplest remedy is to have Mason decline image and other non-HTML requests, thus
+letting Apache serve them in the normal way.  The following line
+
+    return -1 if $r->content_type !~ m|^text/|io;
+
+declines all requests with a content type not starting with "text/".
+This allows text/html and text/plain to pass through but not much else.
+It is included in the default handler.pl.
+
 =item Are you running with taint checks (e.g. PerlTaintCheck)?
 
 If so, pass the flag C<taint_check>=>1 when creating the parser; this

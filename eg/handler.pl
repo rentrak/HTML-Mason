@@ -7,12 +7,13 @@ package HTML::Mason;
 use HTML::Mason;
 use strict;
 
-# List of symbol-importing modules (see Admin manual for details)
+# List of modules that you want to use from components (see Admin
+# manual for details)
 #{  package HTML::Mason::Commands;
 #   use CGI;
 #}
 
-# Create Mason objs and handler within HTML::Mason package
+# Create Mason objects
 #
 my $parser = new HTML::Mason::Parser;
 my $interp = new HTML::Mason::Interp (parser=>$parser,
@@ -30,6 +31,13 @@ my $ah = new HTML::Mason::ApacheHandler (interp=>$interp);
 sub handler
 {
     my ($r) = @_;
+
+    # If you plan to intermix images in the same directory as
+    # components, activate the following to prevent Mason from
+    # evaluating image files as components.
+    #
+    #return -1 if $r->content_type !~ m|^text/|io;
+    
     $ah->handle_request($r);
 }
 

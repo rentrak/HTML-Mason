@@ -451,23 +451,25 @@ Mason will:
 
 store a reference to the subroutine in an in-memory hash table.  The
 current server process can use this for future references to the same
-component.
+component. If for some reason you don't want to cache every component
+(e.g. to save memory) you can modify this behavior via the
+C<code_cache_mode> parameter.
 
 =item *
 
 store the subroutine body in an object file under
 C<data_dir/obj/I<component-path>>.  Future server processes
 can eval the object file and save time on parsing.
-
-=back
-
-Both entities are recomputed if the component source file changes.
-
 Besides improving performance, object files are essential for
 debugging and interpretation of compilation errors. However, if you
 don't want Mason to create object files (e.g. if disk space is
 scarce), you can turn them off by passing C<use_object_files>=>0 to the
 Interp object.
+
+=back
+
+Both entities are recomputed if the component source file changes.
+
 
 
 =head2 Source References

@@ -73,7 +73,7 @@ experimental setting and may change.
 =item taint_check
 
 This flag allows Mason to work when taint checking is on
-(e.g. PerlTaintCheck or B<-T> flag).  If true, Mason will pass all
+(e.g. PerlTaintCheck or C<-T> flag).  If true, Mason will pass all
 component source and filenames through a dummy regular expression
 match to untaint them. In the future this option may become more
 sophisticated to allow stricter checks. Default is false.

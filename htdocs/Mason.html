@@ -351,6 +351,39 @@ listed in your <A HREF="././Admin.html#item_httpd_conf">httpd.conf</A>. To preve
 
 <P>
 
+<DT><STRONG><A NAME="item_Do_you_plan_to_intermix_images_a">Do you plan to intermix images and components in the same directory?
+
+</A></STRONG><DD>
+If you use a &lt;Location&gt; or &lt;Directory&gt; directive like the one
+suggested above, then requests to any file under that directory will go to
+the Mason handler. If there are images in the directory, Mason will try to
+treat them like regular components. This is bad: not only is there extra
+overhead, but if an image inadvertently contains a Mason character sequence
+such as ``&lt;%'', Mason will try to interpret that piece and fail with a
+syntax error.
+
+
+<P>
+
+The simplest remedy is to have Mason decline image and other non-HTML
+requests, thus letting Apache serve them in the normal way. The following
+line
+
+
+<P>
+
+<PRE>    return -1 if $r-&gt;content_type !~ m|^text/|io;
+</PRE>
+
+<P>
+
+declines all requests with a content type not starting with ``text/''. This
+allows text/html and text/plain to pass through but not much else. It is
+included in the default handler.pl.
+
+
+<P>
+
 <DT><STRONG><A NAME="item_Are_you_running_with_taint_check">Are you running with taint checks (e.g. PerlTaintCheck)?
 
 </A></STRONG><DD>

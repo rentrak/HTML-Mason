@@ -1,10 +1,3 @@
-Todos List
-==========
--- document the keep_in_memory flag for mc_cache
--- add See also section that at least refers to Commands, Mason
-==============
-
-
 =head1 NAME
 
 Components.pod - Mason Developer's Manual
@@ -600,17 +593,14 @@ I<expire_at>: takes an absolute expiration time, in Perl time() format
 
 I<expire_in>: takes a relative expiration time of the form
 "<num><unit>", where <num> is a positive number and <unit> is one of
-sec, seconds, min, minutes, hours, days, weeks, or months. You can
-also use the first letter or singular form of any of these. (This
-notation was adapted from Sullivan Beck's Date::Manip package.)
-E.g. "30sec", "10min", "1hour", "4h".
+seconds, minutes, hours, days, or weeks, or any abbreviation thereof.
+E.g. "10min", "1hour".
 
 I<expire_next>: takes a string, either 'hour' or 'day'. It indicates
 an expiration time at the top of the next hour or day.
 
 Examples:
 
-    mc_cache(action=>'store', expire_in=>'15min');
     mc_cache(action=>'store', expire_in=>'2 hours');
     mc_cache(action=>'store', expire_next=>'hour');
 
@@ -626,7 +616,7 @@ parameter, the time when the cache value was last written.
 
 Example:
 
-    # expire the cache if 'myfile' has changed since the cache was written
+    # expire the cache if 'myfile' is newer
     mc_cache(action => 'retrieve',
           expire_if => sub { [stat 'myfile']->[9] > $_[0] });
 
@@ -820,6 +810,44 @@ B<never> (no debug files)
 B<always> (create debug files for each request)
 
 B<error> (only generate a debug file when an error occurs)
+
+=head1 USING THE PERL PROFILER (new in 0.4)
+
+Debug files, mentioned in the previous section, can be used in
+conjunction with Devel::DProf to profile a web request.
+
+To use profiling, pass the C<-p> flag to the debug file:
+
+    % ./3 -p
+
+This executes the debug file under Devel::DProf and, for convenience,
+runs dprofpp.  If you wish you can rerun dprofpp with your choice of
+options.
+
+Because components are implemented as anonymous subroutines, any time
+spent in components would normally be reported under an unreadable
+label like CODE(0xb6cbc).  To remedy this, the C<-p> flag automatically
+adjusts the tmon.out file so that components are reported by their
+component paths.
+
+Much of the time spent in a typical debug file is initialization, such
+as loading Mason and other Perl modules.  The effects of
+initialization can swamp profile results and obscure the time actually
+spent in components. One remedy is to run multiple iterations of the
+request inside the debug file, thus reducing the influence of
+initialization time.  Pass the number of desired iterations via the C<-r>
+flag:
+
+    % ./3 -p -r20
+
+Currently there are no special provisions for other profiling modules such as
+Devel::SmallProf.  You can try simply:
+
+    % perl -d:SmallProf ./3 -r20
+
+However, this crashes on our Unix system -- apparently some bad
+interaction between Mason and SmallProf -- so it is unsupported for
+now.
 
 =head1 THE PREVIEWER
 
