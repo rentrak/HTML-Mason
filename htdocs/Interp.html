@@ -54,7 +54,10 @@ the only user method is the <code>new()</code> constructor.</p>
 <dt><strong><A NAME="item_autohandler_name">autohandler_name</a></strong><br />
 </dt>
 <dd>
-File name used for <A HREF="Devel.html#autohandlers">autohandlers</a>. Default is ``autohandler''.
+File name used for
+<A HREF="Devel.html#autohandlers">autohandlers</a>. Default is
+``autohandler''.  If this is set to an empty string (``'') then
+autohandlers are turned off entirely.
 </dd>
 <p></p>
 <dt><strong><A NAME="item_code_cache_max_size">code_cache_max_size</a></strong><br />
@@ -265,6 +268,7 @@ configuration file, you can set them like this:</p>
 </dd>
 <dd>
 <pre>
+  PerlSetVar  MasonEscapeFlags  &quot;h =&gt; \&amp;HTML::Mason::Escapes::basic_html_escape&quot;
   PerlSetVar  MasonEscapeFlags  &quot;flag  =&gt; \&amp;subroutine&quot;
   PerlSetVar  MasonEscapeFlags  &quot;uc    =&gt; sub { ${$_[0]} = uc ${$_[0]}; }&quot;
   PerlAddVar  MasonEscapeFlags  &quot;thing =&gt; other_thing&quot;</pre>
@@ -353,6 +357,25 @@ relative to Mason's component root (see
 <dd>
 <pre>
     $m-&gt;comp($anon_comp);</pre>
+</dd>
+<A NAME="item_make_request"></a><p></p>
+<dt><strong><A NAME="item_make_request">make_request (@request_params)</a></strong><br />
+</dt>
+<dd>
+This method creates a Mason request object. The arguments to be passed
+are the same as those for the <code>HTML::Mason::Request-&gt;new</code>
+constructor or its relevant subclass. This method will likely only be
+of interest to those attempting to write new handlers or to subclass
+<code>HTML::Mason::Interp</code>.  If you want to create a <em>subrequest</em>, see
+<A HREF="Devel.html#subrequests">subrequests</a> instead.
+</dd>
+<A NAME="purge_code_cache"></a><p></p>
+<dt><strong><A NAME="item_purge_code_cache">purge_code_cache ()</a></strong><br />
+</dt>
+<dd>
+Called during request execution in order to clear out the code
+cache. Mainly useful to subclasses that may want to take some custom
+action upon clearing the cache.
 </dd>
 <A NAME="item_set_global"></a><p></p>
 <dt><strong><A NAME="item_set_global">set_global ($varname, [values...])</a></strong><br />

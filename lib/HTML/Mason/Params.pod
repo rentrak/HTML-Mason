@@ -242,7 +242,10 @@ output to the client, for example in a progress meter.
 
 =back
 
-File name used for L<autohandlers|HTML::Mason::Devel/autohandlers>. Default is "autohandler".
+File name used for
+L<autohandlers|HTML::Mason::Devel/autohandlers>. Default is
+"autohandler".  If this is set to an empty string ("") then
+autohandlers are turned off entirely.
 
 
 =head2 buffer_class
@@ -600,7 +603,9 @@ arguments, which can save memory and slightly improve execution speed.
 
 =back
 
-File name used for L<dhandlers|HTML::Mason::Devel/dhandlers>. Default is "dhandler".
+File name used for L<dhandlers|HTML::Mason::Devel/dhandlers>. Default
+is "dhandler".  If this is set to an empty string ("") then dhandlers
+are turned off entirely.
 
 
 =head2 error_format

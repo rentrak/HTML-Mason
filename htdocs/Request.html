@@ -120,7 +120,9 @@ by default,
 <dt><strong><A NAME="item_dhandler_name">dhandler_name</a></strong><br />
 </dt>
 <dd>
-File name used for <A HREF="Devel.html#dhandlers">dhandlers</a>. Default is ``dhandler''.
+File name used for <A HREF="Devel.html#dhandlers">dhandlers</a>. Default
+is ``dhandler''.  If this is set to an empty string (``'') then dhandlers
+are turned off entirely.
 </dd>
 <p></p>
 <dt><strong><A NAME="item_error_format">error_format</a></strong><br />
@@ -361,7 +363,8 @@ stack. e.g.
 <dd>
 <p>When called in scalar context, a hash reference is returned.  When
 called in list context, a list of arguments (which may be assigned to
-a hash) is returned.</p>
+a hash) is returned.  Returns undef or an empty list, depending on
+context, if the specified stack level does not exist.</p>
 </dd>
 <A NAME="item_callers"></a><p></p>
 <dt><strong><A NAME="item_callers">callers</a></strong><br />
@@ -380,6 +383,10 @@ the component at the bottom of the stack. e.g.
     $m-&gt;callers(0)            # current component
     $m-&gt;callers(1)            # component that called us
     $m-&gt;callers(-1)           # first component executed</pre>
+</dd>
+<dd>
+<p>Returns undef or an empty list, depending on context, if the specified
+stack level does not exist.</p>
 </dd>
 <A NAME="item_caller"></a><p></p>
 <dt><strong><A NAME="item_caller">caller</a></strong><br />
@@ -662,7 +669,7 @@ the buffer cannot be flushed.</p>
 <dt><strong><A NAME="item_instance">instance</a></strong><br />
 </dt>
 <dd>
-This class method returns the <code>HTML::Mason:::Request</code> currently in
+This class method returns the <code>HTML::Mason::Request</code> currently in
 use.  If called when no Mason request is active it will return
 <code>undef</code>.
 </dd>
