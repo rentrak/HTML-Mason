@@ -65,7 +65,8 @@ component title, as in an error message.
 
 For example:
 
-    comp_root => [['private', '/usr/home/joe/comps'], ['main', '/usr/local/www/htdocs']]
+    comp_root => [['private', '/usr/home/joe/comps'],
+                  ['main', '/usr/local/www/htdocs']]
 
 This specifies two component roots, a main component tree and a
 private tree which overrides certain components.  The order is
@@ -90,6 +91,19 @@ The required Mason data directory. Mason's various data directories
 
 Specifies an absolute directory for data cache files. By default, it lives
 under C<data_dir>/cache.
+
+=item die_handler
+
+Specifies a subroutine reference to be used to override $SIG{__DIE__}
+when components are being executed.  If this parameter is specified
+then it will override the normal error handling done by Mason.  The
+default error handler produces a stack trace that excludes the part of
+the stack inside the Mason core code.
+
+If this parameter is false, then $SIG{__DIE__} will not be overridden
+at all.  Defaults to:
+
+ sub { Carp::confess($_[0]) }
 
 =item dhandler_name
 
@@ -163,12 +177,22 @@ Absolute path of system log.  Default is data_dir/etc/system.log.
 
 Separator to use between fields on a line in the system log. Default is ctrl-A ("\cA").
 
+=item use_autohandlers
+
+True or undef, default is true.  If not true, Mason will not attempt
+to use autohandlers.
+
 =item use_data_cache
 
 True or undef, default is true. Specifies whether the $m->cache and
 related commands are operational.  You may need to disable data
 caching temporarily for debugging purposes, but normally this should
 be left alone.
+
+=item use_dhandlers
+
+True or undef, default is true.  If not true, Mason will not attempt
+to use dhandlers.
 
 =item use_object_files
 
@@ -182,12 +206,6 @@ should be left alone.
 True or undef, default is undef. If true, disables Mason's automatic
 timestamp checking on component source files, relying instead on an
 explicitly updated Admin/reload file.
-
-=item verbose_compile_error
-
-True or undef, default is undef. If true, component compile errors are
-followed with the full component source, annotated with line numbers,
-to better interpret the error message. Does not affect runtime errors.
 
 =back
 

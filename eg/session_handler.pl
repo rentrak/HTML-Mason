@@ -19,7 +19,7 @@ use HTML::Mason;
 # Uncomment the second line (and comment the first) to use
 # Apache::Request instead of CGI.pm to parse arguments.
 use HTML::Mason::ApacheHandler;
-# use HTML::Mason::ApacheHandler qw(args_method=>'mod_perl');
+# use HTML::Mason::ApacheHandler (args_method=>'mod_perl');
 
 use strict;
 
@@ -45,11 +45,9 @@ my $interp = new HTML::Mason::Interp (parser=>$parser,
 my $ah = new HTML::Mason::ApacheHandler (interp=>$interp);
 
 # Activate the following if running httpd as root (the normal case).
-# Resets ownership of all files created by Mason at startup. Change
-# these to match your server's 'User' and 'Group'.
+# Resets ownership of all files created by Mason at startup.
 #
-#chown ( (getpwnam('nobody'))[2], (getgrnam('nobody'))[2],
-#        $interp->files_written );
+#chown (Apache->server->uid, Apache->server->gid, $interp->files_written);
 
 sub handler
 {

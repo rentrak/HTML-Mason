@@ -280,7 +280,8 @@ To cache the component's return value:
 <P>
 
 <PRE>    &lt;%init&gt;
-        my ($retval,$cached) = $m-&gt;cache_self(expire_in=&gt;'3 hours'[, key=&gt;'fookey']);
+        my ($retval,$cached) = $m-&gt;cache_self
+            (expire_in=&gt;'3 hours'[, key=&gt;'fookey']);
         return $retval if $cached;
         ... &lt;rest of init&gt; ...
     &lt;/%init&gt;

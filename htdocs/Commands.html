@@ -52,8 +52,8 @@ methods. There is also a utility provided with the distribution,
 
 <P>
 
-<DL>
-<DT><STRONG></STRONG><DD>
+<UL>
+<LI><STRONG></STRONG>
 <CODE>mc_abort</CODE> becomes <CODE>$m-&gt;abort</CODE>
 
 
@@ -61,7 +61,7 @@ methods. There is also a utility provided with the distribution,
 
 <P>
 
-<DT><STRONG></STRONG><DD>
+<LI><STRONG></STRONG>
 <CODE>mc_auto_comp</CODE> becomes <CODE>$m-&gt;fetch_next-&gt;path</CODE>
 
 
@@ -69,7 +69,7 @@ methods. There is also a utility provided with the distribution,
 
 <P>
 
-<DT><STRONG></STRONG><DD>
+<LI><STRONG></STRONG>
 <CODE>mc_auto_next</CODE> becomes <CODE>$m-&gt;call_next</CODE>
 
 
@@ -77,7 +77,7 @@ methods. There is also a utility provided with the distribution,
 
 <P>
 
-<DT><STRONG></STRONG><DD>
+<LI><STRONG></STRONG>
 <CODE>mc_cache</CODE> becomes <CODE>$m-&gt;cache</CODE>
 
 
@@ -85,7 +85,7 @@ methods. There is also a utility provided with the distribution,
 
 <P>
 
-<DT><STRONG></STRONG><DD>
+<LI><STRONG></STRONG>
 <CODE>mc_cache_self</CODE> becomes <CODE>$m-&gt;cache_self</CODE>
 
 
@@ -93,7 +93,7 @@ methods. There is also a utility provided with the distribution,
 
 <P>
 
-<DT><STRONG></STRONG><DD>
+<LI><STRONG></STRONG>
 <CODE>mc_caller</CODE> becomes <CODE>$m-&gt;callers(1)-&gt;path</CODE>
 
 
@@ -101,7 +101,7 @@ methods. There is also a utility provided with the distribution,
 
 <P>
 
-<DT><STRONG></STRONG><DD>
+<LI><STRONG></STRONG>
 <CODE>mc_call_self</CODE> becomes <CODE>$m-&gt;call_self</CODE>
 
 
@@ -109,7 +109,7 @@ methods. There is also a utility provided with the distribution,
 
 <P>
 
-<DT><STRONG></STRONG><DD>
+<LI><STRONG></STRONG>
 <CODE>mc_comp</CODE> becomes <CODE>$m-&gt;comp</CODE>
 
 
@@ -117,7 +117,7 @@ methods. There is also a utility provided with the distribution,
 
 <P>
 
-<DT><STRONG></STRONG><DD>
+<LI><STRONG></STRONG>
 <CODE>mc_comp_exists</CODE> becomes <CODE>$m-&gt;comp_exists</CODE>
 
 
@@ -125,7 +125,7 @@ methods. There is also a utility provided with the distribution,
 
 <P>
 
-<DT><STRONG></STRONG><DD>
+<LI><STRONG></STRONG>
 <CODE>mc_comp_source()</CODE> becomes <CODE>$m-&gt;current_comp-&gt;source_file</CODE>
 
 
@@ -133,14 +133,14 @@ methods. There is also a utility provided with the distribution,
 
 <P>
 
-<DT><STRONG></STRONG><DD>
+<LI><STRONG></STRONG>
 <CODE>mc_comp_source(path)</CODE> becomes
 <CODE>$m-&gt;fetch_comp(path)-&gt;source_file</CODE>. This no longer works with nonexistent components as it used to.
 
 
 <P>
 
-<DT><STRONG></STRONG><DD>
+<LI><STRONG></STRONG>
 <CODE>mc_comp_stack</CODE> becomes <CODE>map($_-&gt;title,$m-&gt;callers)</CODE>
 
 
@@ -148,14 +148,14 @@ methods. There is also a utility provided with the distribution,
 
 <P>
 
-<DT><STRONG></STRONG><DD>
+<LI><STRONG></STRONG>
 <CODE>mc_date</CODE> goes away, this was a legacy function. Replace by calling the date
 formatting function of your choice on <CODE>$m-&gt;time</CODE>.
 
 
 <P>
 
-<DT><STRONG></STRONG><DD>
+<LI><STRONG></STRONG>
 <CODE>mc_dhandler_arg</CODE> becomes <CODE>$m-&gt;dhandler_arg</CODE>
 
 
@@ -163,7 +163,7 @@ formatting function of your choice on <CODE>$m-&gt;time</CODE>.
 
 <P>
 
-<DT><STRONG></STRONG><DD>
+<LI><STRONG></STRONG>
 <CODE>mc_file</CODE> becomes <CODE>$m-&gt;file</CODE>
 
 
@@ -171,7 +171,7 @@ formatting function of your choice on <CODE>$m-&gt;time</CODE>.
 
 <P>
 
-<DT><STRONG></STRONG><DD>
+<LI><STRONG></STRONG>
 <CODE>mc_file_root</CODE> becomes <CODE>$m-&gt;file_root</CODE>
 
 
@@ -179,7 +179,7 @@ formatting function of your choice on <CODE>$m-&gt;time</CODE>.
 
 <P>
 
-<DT><STRONG></STRONG><DD>
+<LI><STRONG></STRONG>
 <CODE>mc_out</CODE> becomes <CODE>$m-&gt;out</CODE>
 
 
@@ -187,7 +187,7 @@ formatting function of your choice on <CODE>$m-&gt;time</CODE>.
 
 <P>
 
-<DT><STRONG></STRONG><DD>
+<LI><STRONG></STRONG>
 <CODE>mc_time</CODE> becomes <CODE>$m-&gt;time</CODE>
 
 
@@ -195,14 +195,14 @@ formatting function of your choice on <CODE>$m-&gt;time</CODE>.
 
 <P>
 
-<DT><STRONG></STRONG><DD>
+<LI><STRONG></STRONG>
 <CODE>mc_suppress_http_header</CODE> (with or without argument) no longer has any effect and can simply be
 removed. See <A HREF="././Devel.html#sending_http_headers">Sending HTTP Headers</A> for more information.
 
 
 <P>
 
-</DL>
+</UL>
 <P>
 <HR>
 <H1><A NAME="author">AUTHOR

@@ -5,7 +5,6 @@ use strict;
 use Cwd;
 
 use File::Path;
-use File::Spec;
 
 use HTML::Mason;
 
@@ -29,11 +28,11 @@ if ($error) {
   $error = join("\n",@lines[0..$lines-1]);
   $error =~ s{ at ([A-Z]:)?/.*}{ }g;
 }
-</%init>
+</%init>\
 <%args>
 $error
 $lines=>1
-</%args>
+</%args>\
 EOF
 	    },
 	    { path => '/shared/display_comp_obj',
@@ -93,7 +92,7 @@ My source dir is /.../<% $subfile %>
 
 <%args>
 $comp
-</%args>
+</%args>\
 EOF
 	    },
 	  );
@@ -238,12 +237,12 @@ sub base_path
 
     if (ref $proto)
     {
-	$proto->{base_path} ||= File::Spec->catdir( cwd(), 'mason_tests' );
+	$proto->{base_path} ||= join '/',  cwd(), 'mason_tests';
 	return $proto->{base_path};
     }
     else
     {
-	return File::Spec->catdir( cwd(), 'mason_tests' );
+	return join '/', cwd(), 'mason_tests';
     }
 }
 
@@ -251,14 +250,14 @@ sub comp_root
 {
     my $proto = shift;
 
-    return File::Spec->catdir( $proto->base_path, 'comps' );
+    return join '/', $proto->base_path, 'comps';
 }
 
 sub data_dir
 {
     my $proto = shift;
 
-    return File::Spec->catdir( $proto->base_path, 'data' );
+    return join '/', $proto->base_path, 'data';
 }
 
 sub _write_shared_comps
@@ -272,7 +271,7 @@ sub _write_shared_comps
 	my @path = split m(/), $comp->{path};
 	my $file = pop @path;
 
-	my $dir = File::Spec->catdir( $self->comp_root, @path );
+	my $dir = join '/', $self->comp_root, @path;
 
 	$self->write_comp( $comp->{path}, $dir, $file, $comp->{component} );
     }
@@ -293,7 +292,7 @@ sub _write_support_comps
 	my @path = split m(/), $supp->{path};
 	my $file = pop @path;
 
-	my $dir = File::Spec->catdir( $self->comp_root, $self->{name}, @path );
+	my $dir = join '/', $self->comp_root, $self->{name}, @path;
 
 	$self->write_comp( $supp->{path}, $dir, $file, $supp->{component} );
     }
@@ -307,7 +306,7 @@ sub _write_test_comp
     my @path = split m(/), $test->{path};
     my $file = pop @path;
 
-    my $dir = File::Spec->catdir( $self->comp_root, $self->{name}, @path );
+    my $dir = join '/', $self->comp_root, $self->{name}, @path;
     unless ( -d $dir )
     {
 	print "Making dir: $dir\n" if $DEBUG;
@@ -330,7 +329,7 @@ sub write_comp
 	    or die "Unable to create directory '$dir': $!";
     }
 
-    my $real_file = File::Spec->catfile( $dir, $file );
+    my $real_file = join '/', $dir, $file;
 
     print "Making component $path at $real_file\n"
 	if $DEBUG;
@@ -478,15 +477,13 @@ sub check_output
     }
     elsif (@expect < @actual)
     {
-	$diff = @expect - @actual;
+	$diff = @actual - @expect;
 	if ($VERBOSE)
 	{
-	    print "Actual result contained $diff too few lines.\n";
+	    print "Actual result contained $diff too many lines.\n";
 	}
     }
 
-    my @actual_prev = ();
-    my @expect_prev = ();
     my $limit = @actual < @expect ? @actual : @expect;
     my $line = 0;
     for ( my $x = 0; $x < $limit; $x++ )
@@ -499,19 +496,35 @@ sub check_output
 		local $^W; #suppress uninit value warnings.
 		print "Result differed from expected output at line $line\n";
 
-		my $actual = join "\n", ( @actual_prev,
-					  $actual[$x],
-					  $actual[$x + 1] ? $actual[$x + 1] : () );
-		my $expect = join "\n", ( @expect_prev,
-					  $expect[$x],
-					  $expect[$x + 1] ? $expect[$x + 1] : () );
-		print "Got ...\n<<<<<\n$actual\n>>>>>\n... but expected ...\n<<<<<\n$expect\n>>>>>\n";
+		my @actual_prev = ( $x == 0 ?
+				    () :
+				    ( $x == 1 ?
+				      ( $actual[0] ) :
+				      ( $actual[ $x - 2 ], $actual[ $x - 1 ] ) ) );
+		my @expect_prev = ( $x == 0 ?
+				  () :
+				    ( $x == 1 ?
+				      ( $expect[0] ) :
+				      ( $expect[ $x - 2 ], $expect[ $x - 1 ] ) ) );
+		my @actual_next = ( $x == $#actual ?
+				    () :
+				    ( $x == $#actual - 1 ?
+				      ( $actual[-1] ) :
+				      ( $actual[ $x + 1 ], $actual[ $x + 2 ] ) ) );
+		my @expect_next = ( $x == $#expect ?
+				    () :
+				    ( $x == $#expect - 1 ?
+				      ( $expect[-1] ) :
+				      ( $expect[ $x + 1 ], $expect[ $x + 2 ] ) ) );
+
+		my $actual = join "\n", ( @actual_prev, $actual[$x], @actual_next );
+		my $expect = join "\n", ( @expect_prev, $expect[$x], @expect_next );
+
+		print "Got ...\n-----\n$actual\n-----\n   ... but expected ...\n-----\n$expect\n-----\n";
 	    }
 	    $diff = 1;
 	    last;
 	}
-	@actual_prev = ( $actual[$x] );
-	@expect_prev = ( $expect[$x] );
     }
 
     return ! $diff;

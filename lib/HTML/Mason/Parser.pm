@@ -14,6 +14,7 @@ use HTML::Mason::Component::FileBased;
 use HTML::Mason::Component::Subcomponent;
 use HTML::Mason::Request;
 use HTML::Mason::Tools qw(dumper_method read_file);
+use Params::Validate qw(:all);
 
 use HTML::Mason::MethodMaker
     ( read_write => [ qw( default_escape_flags
@@ -58,13 +59,23 @@ sub new
     my $class = shift;
     my $self = {%fields};
 
+    validate( @_,
+	      { allow_globals => { type => ARRAYREF, optional => 1 },
+		default_escape_flags => { type => SCALAR | UNDEF, optional => 1 },
+		ignore_warnings_expr => { type => SCALAR | UNDEF, optional => 1 },
+		in_package => { type => SCALAR, optional => 1 },
+		postamble => { type => SCALAR | UNDEF, optional => 1 },
+		postprocess => { type => CODEREF | UNDEF, optional => 1 },
+		preamble => { type => SCALAR | UNDEF, optional => 1 },
+		preprocess => { type => CODEREF | UNDEF, optional => 1 },
+		taint_check => { type => SCALAR | UNDEF, optional => 1 },
+		use_strict => { type => SCALAR | UNDEF, optional => 1 },
+	      }
+	    );
+
     my (%options) = @_;
     while (my ($key,$value) = each(%options)) {
-	if (exists($fields{$key})) {
-	    $self->{$key} = $value;
-	} else {
-	    die "HTML::Mason::Parser::new: invalid option '$key'\n";
-	}
+	$self->{$key} = $value;
     }
     bless $self, $class;
     return $self;
@@ -1168,6 +1179,15 @@ sub eval_object_text
 	    $comp = eval($object_text);
 	}
 	$err = $warnstr . $@;
+
+	#
+	# If no error generated and no component object returned, we
+	# have a prematurely-exited <%once> section or other syntax
+	# accident.
+	#
+	unless (1 or $err or (defined($comp) and (UNIVERSAL::isa($comp, 'HTML::Mason::Component') or ref($comp) eq 'CODE'))) {
+	    $err = "could not generate component object (return() in a <%once> section or extra close brace?)";
+	}
     }
 
     #
@@ -1184,8 +1204,6 @@ sub eval_object_text
 	} elsif ($comp) {
 	    if (ref($comp) eq 'CODE') {
 		$err = sprintf($incompat,"a pre-0.7 parser");
-	    } elsif (ref($comp) !~ /HTML::Mason::Component/) {
-		$err = "object file ($object_file) did not return a component object!";
 	    } elsif ($comp->parser_version != $parser_version) {
 		$err = sprintf($incompat,"parser version ".$comp->parser_version);
 	    }
@@ -1232,7 +1250,7 @@ sub make_dirs
     }
     
     my $compilesub = sub {
-	my ($srcfile) = $File::Find::name;
+	my ($srcfile) = @_;
 	return if (!-f $srcfile);
 	return if defined($predicate) && !($predicate->($srcfile));
 	my $compPath = substr($srcfile,length($source_dir));
@@ -1258,7 +1276,7 @@ sub make_dirs
 	if ($makeflag) {
 	    my ($errmsg,$objText);
 	    print "compiling $srcfile\n" if $verbose;
-	    if ($self->make_component(script_file=>$srcfile, object_text=>\$objText, error=>\$errmsg)) {
+	    if ($self->make_component(script_file=>$srcfile, comp_class=>'HTML::Mason::Component::FileBased', object_text=>\$objText, error=>\$errmsg)) {
 		$self->write_object_file(object_file=>$objfile, object_text=>$objText);
 		print $relfh $compPath, "\n" if defined $reload_file;
 	    } else {

@@ -91,7 +91,7 @@
 		<LI><A HREF="#e_lt_doce_gt_">&lt;%doc&gt;</A>
 		<LI><A HREF="#e_lt_texte_gt_">&lt;%text&gt;</A>
 		<LI><A HREF="#escaping_expressions">Escaping expressions</A>
-		<LI><A HREF="#_at_end_of_line">\ at end of line</A>
+		<LI><A HREF="#backslash_at_end_of_line">Backslash at end of line</A>
 	</UL>
 
 	<LI><A HREF="#data_caching">DATA CACHING</A>
@@ -875,7 +875,8 @@ Here's how a simple /newsfeeds/dhandler might look:
     my $arg = $m-&gt;dhandler_arg;                # get rest of path
     my ($section,$story) = split(&quot;/&quot;,$arg);    # split out pieces
     my $sth = $DBH-&gt;prepare
-        (&quot;SELECT headline,body FROM news WHERE section='$section' AND story='$story'&quot;);
+        (qq{SELECT headline,body FROM news
+            WHERE section='$section' AND story='$story'});
     my ($headline,$body) = $sth-&gt;fetchrow_array;
     return 404 if !$headline;                  # return &quot;not found&quot; if no such story
     &lt;/%init&gt;
@@ -886,7 +887,7 @@ Here's how a simple /newsfeeds/dhandler might look:
 By default dhandlers do not get a chance to handle requests to a directory
 itself (e.g. /newsfeeds). These are automatically deferred to Apache, which
 generates an index page or a FORBIDDEN error. Often this is desirable, but
-if necessary the administrator can let in directory requests as well; see <A HREF="././Admin.html#allowing_requests_for_directorie">Allowing requests for directories</A>.
+if necessary the administrator can let in directory requests as well; see <A HREF="././Admin.html#allowing_directory_requests">Allowing directory requests</A>.
 
 
 <P>
@@ -1399,7 +1400,8 @@ Useful for declaring persistent component-scoped lexical variables
 <P>
 
 This code does not run inside a request context. You cannot call components
-or access <CODE>$m</CODE> from this section.
+or access <CODE>$m</CODE> from this section. Also, do not attempt to
+<CODE>return()</CODE> from a <CODE>&lt;%once&gt;</CODE> section; the current parser cannot properly handle it.
 
 
 <P>
@@ -1466,6 +1468,11 @@ each new request uses the component. The exact penalty varies between
 systems and for most applications will be unnoticeable. However, one should
 avoid using
 <CODE>&lt;%shared&gt;</CODE> when patently unnecessary, e.g. when an <CODE>&lt;%init&gt;</CODE> would work as well.
+
+
+<P>
+
+Do not attempt to <CODE>return()</CODE> from a <CODE>&lt;%shared&gt;</CODE> section; the current parser cannot properly handle it.
 
 
 <P>
@@ -1959,7 +1966,7 @@ The current valid flags are
 <P>
 
 <PRE>    h - escape for HTML ('&lt;' =&gt; '&amp;lt;', etc.)
-    u - escape for URL query parameter (':' =&gt; '%3A', etc.) - all chars but [a-zA-Z0-9_.-]
+    u - escape for URL query string (':' =&gt; '%3A', etc.) - all but [a-zA-Z0-9_.-]
     n - turn off default escape flags
 </PRE>
 
@@ -1994,10 +2001,10 @@ flags.
 
 <P>
 <HR>
-<H2><A NAME="_at_end_of_line">\ at end of line
+<H2><A NAME="backslash_at_end_of_line">Backslash at end of line
 
 </A></H2>
-A \ suppresses the newline before %-lines and section tags. In HTML
+A backslash (\) at the end of a line suppresses the newline. In HTML
 components, this is mostly useful for fixed width areas like &lt;PRE&gt;
 tags, since browsers ignore white space for the most part. An example:
 
@@ -2006,9 +2013,9 @@ tags, since browsers ignore white space for the most part. An example:
 
 <PRE>    &lt;PRE&gt;
     foo
-    %if ($b == 2) {
+    % if (1) {
     bar
-    %}
+    % }
     baz
     &lt;/PRE&gt;
 </PRE>
@@ -2036,9 +2043,9 @@ newlines:
 
 <PRE>    &lt;PRE&gt;
     foo\
-    %if ($b == 2) {
+    % if (1) {
     bar\
-    %}
+    % }
     baz
     &lt;/PRE&gt;
 </PRE>
@@ -2052,12 +2059,6 @@ which prints
 
 <PRE>    foobarbaz
 </PRE>
-
-<P>
-
-The backslash has no special meaning outside this context. In particular,
-you cannot use it to escape a newline before a plain text line.
-
 
 <P>
 
