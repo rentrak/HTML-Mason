@@ -96,6 +96,7 @@
 		<ul>
 
 			<li><A HREF="#userdefined_escapes">User-defined Escapes</a></li>
+			<li><A HREF="#manually_applying_escapes">Manually applying escapes</a></li>
 		</ul>
 
 		<li><A HREF="#backslash_at_end_of_line">Backslash at end of line</a></li>
@@ -585,7 +586,9 @@ determine whether it is a Netscape browser:</p>
     return ($ua =~ /Mozilla/i &amp;&amp; $ua !~ /MSIE/i) ? 1 : 0;
     &lt;/%perl&gt;</pre>
 <p>Because components are implemented underneath with Perl subroutines,
-they can return values and even understand scalar/list context.</p>
+they can return values and even understand scalar/list
+context. e.g. The result of <code>wantarray()</code> inside a component will reflect
+whether the component was called in scalar or list context.</p>
 <p>The &lt;&amp; &amp;&gt; notation only calls a component for its side-effect, and
 discards its return value, if any.  To get at the return value of a
 component, use the <code>$m-&gt;comp</code> command:</p>
@@ -1303,6 +1306,12 @@ $m-</code><code>interp()</code> &gt;&gt; so you would do this instead:</p>
 naughty words filter for the easily offended:</p>
 <pre>
   $interp-&gt;set_escape( 'no-naughty' =&gt; \&amp;remove_naughty_words );</pre>
+<p>
+</p>
+<h3><A NAME="manually_applying_escapes">Manually applying escapes</a></h3>
+<p>You can manually apply one or more escapes to text using the <A HREF="Interp.html#item_apply_escapes">Interp object's <code>apply_escapes()</code> method</a>. e.g.</p>
+<pre>
+  $m-&gt;interp-&gt;apply_escapes( 'some html content', 'h' );</pre>
 <p>
 </p>
 <h2><A NAME="backslash_at_end_of_line">Backslash at end of line</a></h2>

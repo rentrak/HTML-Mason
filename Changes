@@ -5,6 +5,21 @@ available at http://www.masonhq.com/code/history.html.
 
 ** denotes an incompatible change
 
+1.19  March 3, 2003
+
+    [ BUG FIXES ]
+
+    - Fixed a very nasty bug that could cause subcomponents or methods
+      from one component to show up in another components.  Task id #443 in
+      todo list.
+    - If the closing tag of a <%flags>, <%attr>, or <%args> block
+      contained upper case characters, the component would not be parsed
+      properly.  Reported by Chris Snyder.  Task id #440 in
+      todo list.
+    - Providing a Resolver object directly to the ApacheHandler
+      constructor caused a fatal error.  Reported by Kwindla Kramer.  Task
+      id #441 in todo list.
+
 1.18  January 24, 2003
 
     [ BUG FIXES ]
