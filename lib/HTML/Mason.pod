@@ -71,12 +71,6 @@ Other Mason features include:
 Mason caches components after compilation, and offers an internal,
 shared, expireable data cache for use by components themselves.
 
-=item Standalone Option
-
-Mason is optimized for use with mod_perl, but can also be used as a
-standalone tool to generate other types of dynamic text files (similar
-to ePerl).
-
 =item Debugging
 
 Mason includes a debugging mode whereby HTTP requests can be captured
@@ -90,6 +84,14 @@ between Mason and incoming requests. Using a web interface, users
 create "port profiles" that massage requests in all kinds of
 interesting ways: different browsers may be simulated, different
 request ports, different times of day, etc.
+
+=item Standalone Use
+
+Mason is optimized for use with mod_perl, but can also be used from
+CGI or as a standalone tool to generate other types of dynamic text
+files (similar to Text::Template, ePerl, etc.). To learn more about
+this option see the STANDALONE MODE section in
+B<L<HTML::Mason::Interp>>.
 
 =back
 
@@ -124,7 +126,7 @@ debugging Mason components.
 
 =head1 INSTALLATION 
 
-Mason has been tested under Linux and Solaris, but not yet (by us)
+Mason has been tested under Linux, FreeBSD, and Solaris, but not yet (by us)
 under Win32. As an all-Perl solution, though, it should work on any
 machine that has working versions of Perl 5.004+, mod_perl, and the
 required CPAN modules.
@@ -176,8 +178,7 @@ you might optionally change your DefaultType:
 
 That's it for the Apache configuration. Next you will need to
 configure Mason's C<handler.pl> file, a sample of which is in
-C<eg/handler.pl>. Here you must make some decisions about where
-certain files should live:
+C<eg/handler.pl>. Here you must make some decisions:
 
 =over
 
@@ -202,6 +203,11 @@ conflicts, set the chown() parameters to match the UID and GID from
 your C<httpd.conf>. See the C<handler> section in the
 I<Administrator's Guide> guide for details.
 
+=item Are you running with taint checks (e.g. PerlTaintCheck)?
+
+If so, pass the flag C<taint_check>=>1 when creating the parser; this
+tells Mason to untaint component code and filenames.
+
 =back
 
 Both comp_root and the data_dir are set when Mason creates a new
@@ -216,6 +222,14 @@ some standard URL on your site, prefixing the URL with "/mason". If
 all goes well you should see the same page as without the "/mason"
 prefix. If not, recheck your Apache config files and C<handler.pl>,
 and also tail your server's error log.
+
+(If you are getting erroneous "404 Not Found" errors, Mason may be
+having trouble with your document and component root. Make sure
+"LogLevel warn" is in your Apache configuration file, then regenerate
+the error and check the error log for Mason warnings.  One situation
+that will unfortunately confuse Mason is if your document or component
+root goes through a soft link. Try specifying your document and
+component root settings in terms of the true path.)
 
 Assuming it worked, you now have a Mason "lens" through which to view
 your HTML tree. Try adding a Mason tag to some HTML file, say <% 2+2
@@ -243,6 +257,13 @@ System Admins, or others interested in configuring Mason or tuning for
 performance, should read B<L<HTML::Mason::Admin>>. Details of Mason's
 core modules can be found in B<L<HTML::Mason::Parser>>,
 B<L<HTML::Mason::Interp>>, and B<L<HTML::Mason::ApacheHandler>>.
+
+Most of this documentation assumes that you're running Mason on top of
+mod_perl, since that is the most common configuration.  If you are
+using Mason outside of mod_perl, the documentation is still valid;
+you'll just have to ignore mod_perl specific references like $r and
+the ApacheHandler object, and you'll want to read the STANDALONE MODE section in
+B<L<HTML::Mason::Interp>>.
 
 =head1 AUTHOR 
 

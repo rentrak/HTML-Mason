@@ -57,8 +57,25 @@ the cache file each time. If 1, each child server that retrieves this
 value will save its own copy, which can result in substantial memory
 usage for larger values. Use sparingly.
 
-The various expiration options are described and demonstrated in
-B<HTML::Mason::Components>.
+The various expiration options are:
+
+o I<expire_at>: takes an absolute expiration time, in Perl time() format
+(number of seconds since the epoch)
+
+o I<expire_in>: takes a relative expiration time of the form
+"<num><unit>", where <num> is a positive number and <unit> is one of
+sec, seconds, min, minutes, hours, days, weeks, or months. You can
+also use the first letter or singular form of any of these. (This
+notation was adapted from Sullivan Beck's Date::Manip package.)
+E.g. "30sec", "10min", "1hour", "4h".
+
+o I<expire_next>: takes a string, either 'hour' or 'day'. It indicates
+an expiration time at the top of the next hour or day.
+
+o I<expire_if>: calls a given anonymous subroutine and expires if the
+subroutine returns a non-zero value. The subroutine is called with one
+parameter, the time when the cache value was last written.
+
 
 =item mc_caller ()
 
@@ -93,13 +110,19 @@ current component and ending with the top-level component.
 
 =item mc_date (format)
 
+This command is provided for backward compatibility with early
+versions of Mason that automatically used the Date::Manip package.
 Returns the interpreter's notion of the current time or date in the
-specified format. This works like UnixDate in the B<Date::Manip>
-package (see B<Date::Manip> for valid formats).
+specified format. This works like Date::Manip::UnixDate (see
+B<Date::Manip> for valid formats). To use this command you must now
+explicitly "use Date::Manip" inside the HTML::Mason::Commands package.
+E.g. in your handler.pl,
 
-To allow time-of-day adjustments in the Previewer, components should
-use mc_date() and mc_time() rather than Perl's built-in B<time>
-function.
+    { package HTML::Mason::Commands;
+      use Date::Manip; }
+
+To allow time and date simulations in the previewer, components should
+use mc_date() rather than UnixDate directly.
 
 mc_date() works faster than UnixDate for some formats by caching results. 
 
@@ -130,8 +153,11 @@ current state of the interpreter.
 
 =item mc_time ()
 
-Returns the interpreter's notion of the current time in Perl style
-format (number of seconds since 1/1/70).
+Returns the interpreter's notion of the current time in Perl time()
+format (number of seconds since the epoch).
+
+To allow time and date simulations in the previewer, components should
+use mc_time() rather than calling time() directly.
 
 =back
 
@@ -151,8 +177,8 @@ its leading slash.
 
 Mason normally emits any pending HTTP headers just before entering
 the primary section of a component. To prevent this, call
-mc_suppress_http_headers(1) somewhere in the C<E<lt>%perl_init%E<gt>>
-block. You can call mc_suppress_http_headers(0) to cancel.
+mc_suppress_http_header(1) somewhere in the C<E<lt>%perl_init%E<gt>>
+block. You can call mc_suppress_http_header(0) to cancel.
 
 =back
 

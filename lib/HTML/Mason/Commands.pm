@@ -5,13 +5,12 @@
 package HTML::Mason::Commands;
 
 use strict;
-use Date::Manip;
 use File::Basename;
 use HTML::Mason::Utils;
 use HTML::Mason::Tools qw(read_file chop_slash);
 use HTML::Mason::Config;
 use IO;
-use URI::Escape;
+use Time::Local;
 
 use vars qw($INTERP);
 
@@ -26,33 +25,6 @@ my $process_comp_path = sub {
     while ($compPath =~ s@/[^/]+/\.\.@@) {}
     while ($compPath =~ s@/\./@/@) {}
     return $compPath;
-};
-
-#
-# Construct a CGI-style option string from a hash.
-#
-my $construct_option_string = sub {
-    my (%options) = @_;
-    my ($key,$value,$ostr);
-    return '' if (!%options);
-    while (($key,$value) = each(%options)) {
-	if (!ref($value)) {
-	    $ostr .= "$key=".uri_escape($value)."&";
-	} elsif (ref($value) eq 'ARRAY') {
-	    foreach (@$value) {
-		$ostr .= "$key=".uri_escape($_)."&";
-	    }
-	} elsif (ref($value) eq 'HASH') {
-	    my %h = %$value;
-	    foreach (keys(%h)) {
-		$ostr .= "$key=".uri_escape($_)."&$key=".uri_escape($h{$_})."&";
-	    }
-	} else {
-	    die "cannot pass ".ref($value)." reference in option string\n";
-	}
-    }
-    chop($ostr);
-    return $ostr;
 };
 
 sub mc_abort
@@ -71,14 +43,16 @@ sub mc_cache
 	$options{memory_cache} = $INTERP->{data_cache_store};
 	delete($options{keep_in_memory});
     }
-   
+    
     $options{action} = $options{action} || 'retrieve';
     $options{key} = $options{key} || 'main';
-	my $results = HTML::Mason::Utils::access_data_cache(%options);
-	if ($options{action} eq 'retrieve') {
-		$INTERP->write_system_log('CACHE_READ',$options{key},
-		defined $results ? 1 : 0);
-	}
+    my $results = HTML::Mason::Utils::access_data_cache(%options);
+    if ($options{action} eq 'retrieve') {
+	$INTERP->write_system_log('CACHE_READ',$INTERP->locals->{truePath},$options{key},
+				  defined $results ? 1 : 0);
+    } elsif ($options{action} eq 'store') {
+	$INTERP->write_system_log('CACHE_STORE',$INTERP->locals->{truePath},$options{key});
+    }
     return $results;
 }
 
@@ -119,7 +93,7 @@ sub mc_cache_self
 	# Hack! http header is technically a side-effect, so we must
 	# call it explicitly.
 	#
-	$INTERP->call_hooks(name=>'http_header') if ($INTERP->depth==1);
+	$INTERP->call_hooks(name=>'http_header');
     }
     mc_out($result);
     return 1;
@@ -183,6 +157,11 @@ sub mc_comp_source
     return $INTERP->comp_root.$compPath;
 }
 
+sub mc_comp_stack ()
+{
+    return map($_->{truePath},@{$INTERP->{stack}});
+}
+
 #
 # Version of DateManip::UnixDate that uses interpreter's notion
 # of current time and caches daily results.
@@ -193,15 +172,18 @@ sub mc_date ($)
 
     my $time = $INTERP->current_time();
     if ($format =~ /%[^yYmfbhBUWjdevaAwEDxQF]/ || $time ne 'real' || !defined($INTERP->data_cache_dir)) {
-	$time = 'now' if $time eq 'real';
-	return UnixDate($time,$format);
+	if ($time eq 'real') {
+	    return Date::Manip::UnixDate('now',$format);
+	} else {
+	    return Date::Manip::UnixDate("epoch $time",$format);
+	}
     } else {
 	my %cacheOptions = (cache_file=>($INTERP->data_cache_filename('_global')),key=>'mc_date_formats',memory_cache=>($INTERP->{data_cache_store}));
 	my $href = HTML::Mason::Utils::access_data_cache(%cacheOptions);
 	if (!$href) {
 	    my %dateFormats;
 	    my @formatChars = qw(y Y m f b h B U W j d e v a A w E D x Q F);
-	    my @formatVals = split("\cA",UnixDate('now',join("\cA",map("%$_",@formatChars))));
+	    my @formatVals = split("\cA",Date::Manip::UnixDate('now',join("\cA",map("%$_",@formatChars))));
 	    my $i;
 	    for ($i=0; $i<@formatChars; $i++) {
 		$dateFormats{$formatChars[$i]} = $formatVals[$i];
@@ -231,49 +213,9 @@ sub mc_file_root ()
     return $INTERP->static_file_root;
 }
 
-sub mc_form_hidden (%)
-{
-    my (%args) = @_;
-    my $hidden = '<input type="hidden" name="%s" value="%s">'."\n";
-    my $fstr;
-    while (my ($key,$value) = each(%args)) {
-	if (!ref($value)) {
-	    $fstr .= sprintf($hidden,$key,$value);
-	} elsif (ref($value) eq 'ARRAY') {
-	    foreach (@$value) {
-		$fstr .= sprintf($hidden,$key,$_);
-	    }
-	} elsif (ref($value) eq 'HASH') {
-	    my %h = %$value;
-	    foreach (keys(%h)) {
-		$fstr .= sprintf($hidden,$key,$_);
-		$fstr .= sprintf($hidden,$key,$h{$_});
-	    }
-	} else {
-	    die "mc_hidden_inputs: cannot pass ".ref($value)." reference in option string\n";
-	}
-    }
-    return $fstr;
-}
-
-sub mc_hlink ($%)
-{
-    my ($url, %options) = @_;
-    my $ostr = &$construct_option_string(%options);
-    return $ostr ? "$url?$ostr" : $url;
-}
-
 sub mc_out ($)
 {
     $INTERP->locals->{sink}->($_[0]);
-}
-
-sub mc_pack
-{
-    my ($type,@args) = @_;
-    die "mc_pack: unknown thunk type '$type'\n" if ($type !~ /(text|file|comp|code)$/);
-    die "mc_pack: not enough arguments\n" if !@args;
-    return [$type,@args];
 }
 
 sub mc_suppress_hooks ($)
@@ -288,27 +230,6 @@ sub mc_time
     my $time = $INTERP->current_time;
     $time = time() if $time eq 'real';
     return $time;
-}
-
-sub mc_unpack
-{
-    my ($thunk) = @_;
-    die "mc_unpack: not a proper thunk\n" if (ref($thunk) ne 'ARRAY');
-    my ($type,@args) = @$thunk;
-    die "mc_unpack: not enough data in thunk\n" if !defined(@args);
-    if ($type eq 'text') {
-	return $args[0];
-    } elsif ($type eq 'file') {
-	return mc_file($args[0]);
-    } elsif ($type eq 'comp') {
-	return mc_comp(@args);
-    } elsif ($type eq 'code') {
-	my $sub = $args[0];
-	die "mc_unpack: argument for code type is not a code reference\n" if ref($sub) ne 'CODE';
-	return &$sub();
-    } else {
-	die "mc_unpack: unknown thunk type '$type'\n";
-    }
 }
 
 sub mc_var ($)

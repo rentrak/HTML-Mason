@@ -2,13 +2,6 @@
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
-# Revisions:
-# MS 6/11/98: Changed handle_request_1() to extract component path
-#       from Apache's filename, rather than building from scratch
-#	using the URI. More flexible at the httpd.conf level.
-#	Also added "use Apache::Constants" just below, so
-#	we can DECLINE the request if necessary.
-
 package HTML::Mason::ApacheHandler;
 require 5.004;
 require Exporter;
@@ -24,15 +17,14 @@ sub OK { return 0 }
 sub DECLINED { return -1 }
 sub SERVER_ERROR { return 500 }
 sub NOT_FOUND { return 404 }
-use CGI;
 use Data::Dumper;
 use File::Basename;
 use File::Path;
 use File::Recurse;
-use HTML::Entities;
 use HTML::Mason::Interp;
 use HTML::Mason::Commands;
 use HTML::Mason::FakeApache;
+use HTML::Mason::Tools qw(html_escape url_unescape);
 use HTML::Mason::Utils;
 
 my @used = ($HTML::Mason::Commands::r);
@@ -43,12 +35,12 @@ my %fields =
      output_mode => 'batch',
      error_mode => 'html',
      top_level_predicate => sub { return 1 },
+     decline_dirs => 1,
      debug_mode => undef,
      debug_perl_binary => '/usr/bin/perl',
      debug_handler_script => undef,
      debug_handler_proc => undef,
      debug_dir_config_keys => [],
-	 request_number => 0,
      );
 
 sub new
@@ -56,6 +48,7 @@ sub new
     my $class = shift;
     my $self = {
 	_permitted => \%fields,
+	request_number => 0,
 	%fields,
     };
     my (%options) = @_;
@@ -116,15 +109,15 @@ sub handle_request {
     my ($outbuf, $outsub, $retval, $argString, $debugMsg);
     my $interp = $self->interp;
 
-	#
-	# construct (and truncate if necessary) the request to log at start
-	#
-	my $rstring;
-	(undef, $rstring) = split (/\s/, $r->the_request);
-	$rstring = $r->cgi_var('HTTP_HOST') . $rstring;
-	$rstring = substr($rstring,0,97).'...' if length($rstring) > 100;
-	$interp->write_system_log('REQ_START', ++$self->{request_number},
-		$rstring);
+    #
+    # construct (and truncate if necessary) the request to log at start
+    #
+    my $rstring;
+    (undef, $rstring) = split (/\s/, $r->the_request);
+    $rstring = $r->cgi_var('HTTP_HOST') . $rstring;
+    $rstring = substr($rstring,0,150).'...' if length($rstring) > 150;
+    $interp->write_system_log('REQ_START', ++$self->{request_number},
+			      $rstring);
 
     #
     # If output mode is 'batch', collect output in a buffer and
@@ -155,7 +148,7 @@ sub handle_request {
     
     eval('$retval = handle_request_1($self, $r, $argString)');
     my $err = $@;
-	my $err_status = $err ? 1 : 0;
+    my $err_status = $err ? 1 : 0;
 
     if ($err) {
 	#
@@ -163,7 +156,7 @@ sub handle_request {
 	# Add server name, uri, referer, and agent
 	#
 	$err =~ s@^\[[^\]]*\] \(eval [0-9]+\): @@mg;
-	$err = encode_entities($err);
+	$err = html_escape($err);
 	my $referer = $r->header_in('Referer') || '<none>';
 	my $agent = $r->header_in('User-Agent') || '';
 	$err = sprintf("while serving %s %s (referer=%s, agent=%s)\n%s",$r->server->server_hostname,$r->uri,$referer,$agent,$err);
@@ -184,7 +177,7 @@ sub handle_request {
 	$r->print($outbuf) if $self->output_mode eq 'batch';
     }
 
-	$interp->write_system_log('REQ_END', $self->{request_number}, $err_status);
+    $interp->write_system_log('REQ_END', $self->{request_number}, $err_status);
     return ($err) ? &OK : $retval;
 }
 
@@ -204,12 +197,16 @@ sub write_debug_file
 	mkpath($outDir,0,0755) or die "cannot create debug directory '$outDir'";
     }
     my $outPath = "$outDir/$outFile";
-    my $outfh = new IO::File ">$outPath" or die "cannot open debug file '$outPath' for writing";
+    my $outfh = new IO::File ">$outPath";
+    if (!$outfh) {
+	$r->warn("cannot open debug file '$outPath' for writing");
+	return;
+    }
 
     my $d = new Data::Dumper ([$dref],['dref']);
     my $o = '';
     $o .= "#!".$self->debug_perl_binary."\n";
-    $o .= "BEGIN { require '".$self->debug_handler_script."' }\n";
+    $o .= "BEGIN { \$HTML::Mason::IN_DEBUG_FILE = 1; require '".$self->debug_handler_script."' }\n";
     $o .= "my ";
     $o .= $d->Dumpxs;
     $o .= 'my $r = HTML::Mason::ApacheHandler::simulate_debug_request($dref);'."\n";
@@ -252,7 +249,7 @@ sub capture_debug_state
 	$expr .= "\$d{server}->{$field} = \$r->server->$field;\n";
     }
     eval($expr);
-	 
+    
     $expr = '';
     $d{connection} = {};
     foreach my $field (qw(remote_host remote_ip local_addr remote_addr remote_logname user auth_type aborted)) {
@@ -262,7 +259,6 @@ sub capture_debug_state
 
     return {%d};
 }
-    
 
 sub handle_request_1
 {
@@ -271,19 +267,34 @@ sub handle_request_1
     my $compRoot = $interp->comp_root;
 
     #
+    # If filename is a directory, then either decline or simply reset
+    # the content type, depending on the value of decline_dirs.
+    #
+    if (-d $r->filename) {
+	if ($self->decline_dirs) {
+	    return DECLINED;
+	} else {
+	    $r->content_type(undef);
+	}
+    }
+    
+    #
     # Compute the component path by deleting the component root
     # directory from the front of Apache's filename.  If the
     # substitute fails, we must have an URL outside Mason's component
-    # space; decline.
+    # space; return not found.
     #
     my $compPath = $r->filename;
-    $compPath =~ s/^$compRoot// or return NOT_FOUND;
+    if (!($compPath =~ s/^$compRoot//)) {
+	$r->warn("Mason: filename (\"".$r->filename."\") is outside component root (\"$compRoot\"); returning 404.");
+	return NOT_FOUND;
+    }
     $compPath =~ s@/$@@ if $compPath ne '/';
     while ($compPath =~ s@//@/@) {}
 
     #
     # Try to load the component; if not found, try dhandlers
-    # ("default handlers").
+    # ("default handlers"); otherwise returned not found.
     #
     my @info;
     if (!(@info = $interp->load($compPath))) {
@@ -298,6 +309,7 @@ sub handle_request_1
 	    $compPath = "$p/dhandler";
 	    $r->path_info($pathInfo);
 	} else {
+	    $r->warn("Mason: no component corresponding to filename \"".$r->filename."\", comp path \"$compPath\"; returning 404.");
 	    return NOT_FOUND;
 	}
     }
@@ -306,7 +318,10 @@ sub handle_request_1
     #
     # Decline if file does not pass top level predicate.
     #
-    return NOT_FOUND if (!$self->top_level_predicate->($srcfile));
+    if (!$self->top_level_predicate->($srcfile)) {
+	$r->warn("Mason: component file \"$srcfile\" does not pass top-level predicate; returning 404.");
+	return NOT_FOUND;
+    }
     
     #
     # Parse arguments into key/value pairs. Represent multiple valued
@@ -317,8 +332,8 @@ sub handle_request_1
 	my (@pairs) = split('&',$argString);
 	foreach my $pair (@pairs) {
 	    my ($key,$value) = split('=',$pair);
-	    $key = CGI::unescape($key);
-	    $value = CGI::unescape($value);
+	    $key = url_unescape($key);
+	    $value = url_unescape($value);
 	    if (exists($args{$key})) {
 		if (ref($args{$key})) {
 		    $args{$key} = [@{$args{$key}},$value];

@@ -155,10 +155,21 @@ setting and may change.
 
 <P>
 
+<DT><STRONG><A NAME="item_taint_check">taint_check
+
+</A></STRONG><DD>
+This flag allows Mason to work when taint checking is on (e.g.
+PerlTaintCheck or <STRONG>-T</STRONG> flag). If true, Mason will pass all component source and filenames through
+a dummy regular expression match to untaint them. In the future this option
+may become more sophisticated to allow stricter checks. Default is false.
+
+
+<P>
+
 <DT><STRONG><A NAME="item_use_strict">use_strict
 
 </A></STRONG><DD>
-Indicates whether to use strict in compiled subroutines. 1 by default.
+Indicates whether to use strict in compiled subroutines. Default is true.
 
 
 <P>

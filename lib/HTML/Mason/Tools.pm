@@ -7,7 +7,7 @@ require 5.004;
 require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw();
-@EXPORT_OK = qw(read_file chop_slash html_escape);
+@EXPORT_OK = qw(read_file chop_slash html_escape url_escape url_unescape date_delta_to_secs pkg_loaded);
 
 use strict;
 use IO::File qw(!/^SEEK/);
@@ -39,8 +39,6 @@ sub chop_slash
 
 #
 # Escape HTML &, >, <, and " characters. Borrowed from CGI::Base.
-# Wanted to use HTML::Entities but it interacts badly with Date::Manip
-# and mod_perl (mysterious seg faults).
 #
 sub html_escape
 {
@@ -49,4 +47,62 @@ sub html_escape
     my $html_escape = join('', keys %html_escape);
     $text =~ s/([$html_escape])/$html_escape{$1}/mgoe;
     return $text;
+}
+
+#
+# Unescape URL-encoded data. Borrowed from CGI.
+#
+sub url_unescape {
+    my $todecode = shift;
+    return undef unless defined($todecode);
+    $todecode =~ tr/+/ /;       # pluses become spaces
+    $todecode =~ s/%([0-9a-fA-F]{2})/pack("c",hex($1))/ge;
+    return $todecode;
+}
+
+#
+# URL-encode data. Borrowed from CGI.
+#
+sub url_escape {
+    my $toencode = shift;
+    return undef unless defined($toencode);
+    $toencode=~s/([^a-zA-Z0-9_.-])/uc sprintf("%%%02x",ord($1))/eg;
+    return $toencode;
+}
+
+#
+# Convert a "date delta string" (e.g. 1sec, 3min, 2h) to a number of
+# seconds. Based on Date::Manip date delta concept.
+#
+my %dateDeltaHash = ('y'=>31557600, yr=>31557600, year=>31557600, years=>31557600,
+		     'm'=>2592000, mon=>2592000, month=>2592000, months=>2592000,
+		     'w'=>604800, wk=>604800, ws=>604800, wks=>604800, week=>604800, weeks=>604800,
+		     'd'=>86400, day=>86400, days=>86400,
+		     'h'=>3600, hr=>3600, hour=>3600, hours=>3600,
+		     mn=>60, min=>60, minute=>60, minutes=>60,
+		     's'=>1, sec=>1, second=>1, seconds=>1
+		     );
+sub date_delta_to_secs
+{
+    my ($delta) = @_;
+    my $usage = "date_delta_to_secs: invalid argument '$delta'";
+    my ($num,$unit,$sign);
+    if ($delta =~ /^([-+]?)\s*([0-9]+)\s*([a-zA-Z]*)\s*$/) {
+	($sign,$num,$unit) = ($1,$2,lc($3));
+    } else {
+	die $usage;
+    }
+    $unit = "s" if !$unit;
+    my $mult = $dateDeltaHash{$unit};
+    die $usage if !$mult;
+    return $num * $mult * ($sign eq '-' ? -1 : 1);
+}
+
+no strict 'refs';
+sub pkg_loaded
+{
+    my ($pkg) = @_;
+
+    my $varname = "${pkg}::VERSION";
+    return $$varname ? 1 : 0;
 }

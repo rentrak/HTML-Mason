@@ -51,7 +51,7 @@ The following commands may be used within Mason components. See
 
 </A></H1>
 <DL>
-<DT><STRONG><A NAME="item_mc_abort">mc_abort ([return value])
+<DT><STRONG><A NAME="item_mc_abort_return_value_">mc_abort ([return value])
 
 </A></STRONG><DD>
 Ends the current execution, finishing the page without returning through
@@ -61,7 +61,7 @@ HTTP status code.
 
 <P>
 
-<DT><STRONG><A NAME="item_mc_cache">mc_cache ([action=&gt;'retrieve'], [key=&gt;name],
+<DT><STRONG><A NAME="item_mc_cache_action_retrieve_">mc_cache ([action=&gt;'retrieve'], [key=&gt;name],
 
 </A></STRONG><DD>
 <STRONG>[keep_in_memory=&gt;0|1], [expire_if=&gt;sub])</STRONG>
@@ -71,7 +71,7 @@ HTTP status code.
 
 <P>
 
-<DT><STRONG>mc_cache (action=&gt;'store', [key=&gt;name], value=&gt;data,
+<DT><STRONG><A NAME="item_mc_cache_action_store_key_">mc_cache (action=&gt;'store', [key=&gt;name], value=&gt;data,
 [keep_in_memory=&gt;0|1],
 
 </A></STRONG><DD>
@@ -83,7 +83,7 @@ expire_in=&gt;delta])</STRONG>
 
 <P>
 
-<DT><STRONG><A NAME="item_mc_cache_self">mc_cache_self ([key=&gt;name], [keep_in_memory=&gt;0|1],
+<DT><STRONG><A NAME="item_mc_cache_self_key_name_kee">mc_cache_self ([key=&gt;name], [keep_in_memory=&gt;0|1],
 
 </A></STRONG><DD>
 <STRONG>[expire_if=&gt;sub | expire_at=&gt;time |
@@ -134,13 +134,41 @@ sparingly.
 
 <P>
 
-The various expiration options are described and demonstrated in
-<STRONG>HTML::Mason::Components</STRONG>.
+The various expiration options are:
 
 
 <P>
 
-<DT><STRONG><A NAME="item_mc_caller">mc_caller ()
+o <EM>expire_at</EM>: takes an absolute expiration time, in Perl <CODE>time()</CODE> format
+(number of seconds since the epoch)
+
+
+<P>
+
+o <EM>expire_in</EM>: takes a relative expiration time of the form ``&lt;num&gt;&lt;unit&gt;'',
+where &lt;num&gt; is a positive number and &lt;unit&gt; is one of sec,
+seconds, min, minutes, hours, days, weeks, or months. You can also use the
+first letter or singular form of any of these. (This notation was adapted
+from Sullivan Beck's Date::Manip package.) E.g. ``30sec'', ``10min'',
+``1hour'', ``4h''.
+
+
+<P>
+
+o <EM>expire_next</EM>: takes a string, either 'hour' or 'day'. It indicates an expiration time
+at the top of the next hour or day.
+
+
+<P>
+
+o <EM>expire_if</EM>: calls a given anonymous subroutine and expires if the subroutine returns
+a non-zero value. The subroutine is called with one parameter, the time
+when the cache value was last written.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_mc_caller_">mc_caller ()
 
 </A></STRONG><DD>
 Returns the full path of the component that called this component, or undef
@@ -150,7 +178,7 @@ mc_comp_stack.
 
 <P>
 
-<DT><STRONG><A NAME="item_mc_comp">mc_comp (compPath, option=&gt;value, ...[, STORE=&gt;ref])
+<DT><STRONG><A NAME="item_mc_comp_compPath_option_value">mc_comp (compPath, option=&gt;value, ...[, STORE=&gt;ref])
 
 </A></STRONG><DD>
 Calls the component designated by <EM>compPath</EM> with the specified option/value pairs. If the component path is absolute
@@ -175,7 +203,7 @@ instead of being sent to the default output stream.
 
 <P>
 
-<DT><STRONG><A NAME="item_mc_comp_exists">mc_comp_exists (compPath)
+<DT><STRONG><A NAME="item_mc_comp_exists_compPath_">mc_comp_exists (compPath)
 
 </A></STRONG><DD>
 Returns 1 if compPath is a valid component path, 0 otherwise. 
@@ -183,7 +211,7 @@ Returns 1 if compPath is a valid component path, 0 otherwise.
 
 <P>
 
-<DT><STRONG><A NAME="item_mc_comp_stack">mc_comp_stack ()
+<DT><STRONG><A NAME="item_mc_comp_stack_">mc_comp_stack ()
 
 </A></STRONG><DD>
 Returns the list of components in the call stack, starting with the current
@@ -192,20 +220,28 @@ component and ending with the top-level component.
 
 <P>
 
-<DT><STRONG><A NAME="item_mc_date">mc_date (format)
+<DT><STRONG><A NAME="item_mc_date_format_">mc_date (format)
 
 </A></STRONG><DD>
-Returns the interpreter's notion of the current time or date in the
-specified format. This works like UnixDate in the <STRONG>Date::Manip</STRONG>
-package (see <STRONG>Date::Manip</STRONG> for valid formats).
+This command is provided for backward compatibility with early versions of
+Mason that automatically used the Date::Manip package. Returns the
+interpreter's notion of the current time or date in the specified format.
+This works like Date::Manip::UnixDate (see
+<STRONG>Date::Manip</STRONG> for valid formats). To use this command you must now explicitly ``use
+Date::Manip'' inside the HTML::Mason::Commands package. E.g. in your
+handler.pl,
 
 
 <P>
 
-To allow time-of-day adjustments in the Previewer, components should use
-<CODE>mc_date()</CODE> and <CODE>mc_time()</CODE> rather than Perl's
-built-in <STRONG>time</STRONG>
-function.
+<PRE>    { package HTML::Mason::Commands;
+      use Date::Manip; }
+</PRE>
+
+<P>
+
+To allow time and date simulations in the previewer, components should use
+<CODE>mc_date()</CODE> rather than UnixDate directly.
 
 
 <P>
@@ -216,7 +252,7 @@ caching results.
 
 <P>
 
-<DT><STRONG><A NAME="item_mc_file">mc_file (filename)
+<DT><STRONG><A NAME="item_mc_file_filename_">mc_file (filename)
 
 </A></STRONG><DD>
 Returns the contents of filename as a string. <EM>filename</EM> may be an absolute filesystem path (starting with a '/') or relative (no
@@ -232,7 +268,7 @@ administrator just updates the static file root).
 
 <P>
 
-<DT><STRONG><A NAME="item_mc_file_root">mc_file_root ()
+<DT><STRONG><A NAME="item_mc_file_root_">mc_file_root ()
 
 </A></STRONG><DD>
 Returns the static file root, used by <CODE>mc_file()</CODE> to resolve
@@ -241,7 +277,7 @@ relative filenames.
 
 <P>
 
-<DT><STRONG><A NAME="item_mc_out">mc_out (string)
+<DT><STRONG><A NAME="item_mc_out_string_">mc_out (string)
 
 </A></STRONG><DD>
 Print the given string. Rarely needed, since normally all HTML is just
@@ -257,11 +293,17 @@ the current state of the interpreter.
 
 <P>
 
-<DT><STRONG><A NAME="item_mc_time">mc_time ()
+<DT><STRONG><A NAME="item_mc_time_">mc_time ()
 
 </A></STRONG><DD>
-Returns the interpreter's notion of the current time in Perl style format
-(number of seconds since 1/1/70).
+Returns the interpreter's notion of the current time in Perl
+<CODE>time()</CODE> format (number of seconds since the epoch).
+
+
+<P>
+
+To allow time and date simulations in the previewer, components should use
+<CODE>mc_time()</CODE> rather than calling <CODE>time()</CODE> directly.
 
 
 <P>
@@ -279,7 +321,7 @@ environment.
 <P>
 
 <DL>
-<DT><STRONG><A NAME="item_mc_dhandler_arg">mc_dhandler_arg ()
+<DT><STRONG><A NAME="item_mc_dhandler_arg_">mc_dhandler_arg ()
 
 </A></STRONG><DD>
 For use in dhandlers. Returns the path_info CGI argument, stripped of its
@@ -288,13 +330,13 @@ leading slash.
 
 <P>
 
-<DT><STRONG><A NAME="item_mc_suppress_http_header">mc_suppress_http_header (0|1)
+<DT><STRONG><A NAME="item_mc_suppress_http_header_0_1_">mc_suppress_http_header (0|1)
 
 </A></STRONG><DD>
 Mason normally emits any pending HTTP headers just before entering the
 primary section of a component. To prevent this, call
-<CODE>mc_suppress_http_headers(1)</CODE> somewhere in the <CODE>&lt;%perl_init%&gt;</CODE>
-block. You can call <CODE>mc_suppress_http_headers(0)</CODE> to cancel.
+<CODE>mc_suppress_http_header(1)</CODE> somewhere in the <CODE>&lt;%perl_init%&gt;</CODE>
+block. You can call <CODE>mc_suppress_http_header(0)</CODE> to cancel.
 
 
 <P>

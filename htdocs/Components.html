@@ -40,12 +40,13 @@
 		<LI><A HREF="#basic_usage">Basic Usage</A>
 		<LI><A HREF="#multiple_keys_values">Multiple Keys/Values</A>
 		<LI><A HREF="#expiration">Expiration</A>
+		<LI><A HREF="#keeping_in_memory">Keeping In Memory</A>
 		<LI><A HREF="#caching_all_output">Caching All Output </A>
 	</UL>
 
 	<LI><A HREF="#accessing_server_internals">ACCESSING SERVER INTERNALS</A>
 	<LI><A HREF="#sending_http_headers">SENDING  HTTP HEADERS</A>
-	<LI><A HREF="#debugging_components">DEBUGGING COMPONENTS</A>
+	<LI><A HREF="#using_the_perl_debugger">USING THE PERL DEBUGGER</A>
 	<LI><A HREF="#the_previewer">THE PREVIEWER</A>
 	<LI><A HREF="#tips_and_traps">TIPS AND TRAPS</A>
 	<LI><A HREF="#author">AUTHOR</A>
@@ -220,8 +221,7 @@ The parsing rules for these Perl sections are as follows:
 </A></STRONG>
 Blocks of the form &lt;% xxx %&gt; are replaced with the result of
 evaluating xxx as a single Perl expression. These are often used for
-variable replacement. such as 'Hello, &lt;% <A
-HREF="././Components.html#item__name">$name</A> %&gt;!'.
+variable replacement. such as 'Hello, &lt;% <CODE>$name</CODE> %&gt;!'.
 
 
 <P>
@@ -408,7 +408,7 @@ To call one component from another, use Mason's <STRONG>mc_comp</STRONG> command
 <P>
 
 <DL>
-<DT><STRONG><A NAME="item_compPath">compPath:
+<DT><STRONG><A NAME="item_compPath_">compPath:
 
 </A></STRONG><DD>
 The component path. With a leading '/', the path is relative to the
@@ -417,7 +417,7 @@ component root (<A HREF="././Interp.html#item_comp_root">comp_root</A>). Otherwi
 
 <P>
 
-<DT><STRONG><A NAME="item_name">name=&gt;value pairs:
+<DT><STRONG><A NAME="item_name_value_pairs_">name=&gt;value pairs:
 
 </A></STRONG><DD>
 Parameters are passed as one or more name=&gt;value pairs, e.g. <CODE>player=&gt;'M.&nbsp;Jordan'</CODE>. 
@@ -557,7 +557,7 @@ component execution sequence, which goes something like this:
 <P>
 
 <DL>
-<DT><STRONG><A NAME="item__perl_init_">&lt;%perl_init&gt; xxx &lt;/%perl_init&gt;
+<DT><STRONG><A NAME="item__perl_init_xxx_perl_init_">&lt;%perl_init&gt; xxx &lt;/%perl_init&gt;
 
 </A></STRONG><DD>
 Used for initialization code. For example: connecting to a database and
@@ -633,7 +633,7 @@ quickly to prevent dead time on the browser side.
 
 <P>
 
-<DT><STRONG><A NAME="item__perl_cleanup_">&lt;%perl_cleanup&gt; xxx &lt;/%perl_cleanup&gt;
+<DT><STRONG><A NAME="item__perl_cleanup_xxx_perl_clea">&lt;%perl_cleanup&gt; xxx &lt;/%perl_cleanup&gt;
 
 </A></STRONG><DD>
 Useful for cleanup code. For example: closing a database connection or
@@ -656,7 +656,7 @@ blocks, &lt;%perl_cleanup&gt; sections are rarely needed.
 
 <P>
 
-<DT><STRONG><A NAME="item__perl_args_">&lt;%perl_args&gt; xxx &lt;/%perl_args&gt;
+<DT><STRONG><A NAME="item__perl_args_xxx_perl_args_">&lt;%perl_args&gt; xxx &lt;/%perl_args&gt;
 
 </A></STRONG><DD>
 xxx contains a list of argument declarations, one per line. Each
@@ -667,7 +667,7 @@ expression of matching type (scalar, list, hash).
 
 <P>
 
-<DT><STRONG><A NAME="item__">\ at end of line
+<DT><STRONG><A NAME="item__at_end_of_line">\ at end of line
 
 </A></STRONG><DD>
 Useful for suppressing unwanted newlines before Perl lines and block tags.
@@ -735,7 +735,7 @@ you cannot use it to escape a newline before a plain text line.
 
 <P>
 
-<DT><STRONG><A NAME="item__perl_doc_">&lt;%perl_doc&gt; xxx &lt;/%perl_doc&gt;
+<DT><STRONG><A NAME="item__perl_doc_xxx_perl_doc_">&lt;%perl_doc&gt; xxx &lt;/%perl_doc&gt;
 
 </A></STRONG><DD>
 Most useful for a component's main documentation. One can easily write a
@@ -807,7 +807,7 @@ etc. - as well as side-effect commands like assignments. Examples:
 <P>
 
 <DL>
-<DT><STRONG><A NAME="item_Conditional">Conditional code
+<DT><STRONG><A NAME="item_Conditional_code">Conditional code
 
 </A></STRONG><DD>
 <PRE>    % my $ua = $r-&gt;header_in('User-Agent');
@@ -822,7 +822,7 @@ etc. - as well as side-effect commands like assignments. Examples:
 
 <P>
 
-<DT><STRONG><A NAME="item_HTML">HTML list formed from array
+<DT><STRONG><A NAME="item_HTML_list_formed_from_array">HTML list formed from array
 
 </A></STRONG><DD>
 <PRE>    &lt;ul&gt;
@@ -834,7 +834,7 @@ etc. - as well as side-effect commands like assignments. Examples:
 
 <P>
 
-<DT><STRONG>HTML list formed from hash
+<DT><STRONG><A NAME="item_HTML_list_formed_from_hash">HTML list formed from hash
 
 </A></STRONG><DD>
 <PRE>    &lt;ul&gt;
@@ -847,7 +847,7 @@ etc. - as well as side-effect commands like assignments. Examples:
 
 <P>
 
-<DT><STRONG>HTML table formed from list of hashes
+<DT><STRONG><A NAME="item_HTML_table_formed_from_list_of_h">HTML table formed from list of hashes
 
 </A></STRONG><DD>
 <PRE>    &lt;table&gt;
@@ -1011,7 +1011,7 @@ Mason supports three types of expiration:
 <P>
 
 <DL>
-<DT><STRONG><A NAME="item_By">By Time
+<DT><STRONG><A NAME="item_By_Time">By Time
 
 </A></STRONG><DD>
 (e.g. the item expires in an hour, or at midnight). To expire an item by
@@ -1020,12 +1020,18 @@ time, pass one of these options to the 'store' action.
 
 <P>
 
-<EM>expire_at</EM>: takes an absolute expiration time, in any form acceptable to <STRONG>Date::Manip::ParseDate</STRONG>.
+<EM>expire_at</EM>: takes an absolute expiration time, in Perl <CODE>time()</CODE> format
+(number of seconds since the epoch)
 
 
 <P>
 
-<EM>expire_in</EM>: takes a relative expiration time in the form of a delta acceptable to <STRONG>Date::Manip::ParseDateDelta</STRONG>, e.g. '1 hour', '10 min'.
+<EM>expire_in</EM>: takes a relative expiration time of the form ``&lt;num&gt;&lt;unit&gt;'',
+where &lt;num&gt; is a positive number and &lt;unit&gt; is one of sec,
+seconds, min, minutes, hours, days, weeks, or months. You can also use the
+first letter or singular form of any of these. (This notation was adapted
+from Sullivan Beck's Date::Manip package.) E.g. ``30sec'', ``10min'',
+``1hour'', ``4h''.
 
 
 <P>
@@ -1041,13 +1047,14 @@ Examples:
 
 <P>
 
-<PRE>    mc_cache(action=&gt;'store', expire_in=&gt;'2 hours');
+<PRE>    mc_cache(action=&gt;'store', expire_in=&gt;'15min');
+    mc_cache(action=&gt;'store', expire_in=&gt;'2 hours');
     mc_cache(action=&gt;'store', expire_next=&gt;'hour');
 </PRE>
 
 <P>
 
-<DT><STRONG>By Condition
+<DT><STRONG><A NAME="item_By_Condition">By Condition
 
 </A></STRONG><DD>
 (e.g. the item expires if a certain file or database table changes). To
@@ -1069,14 +1076,14 @@ Example:
 
 <P>
 
-<PRE>    # expire the cache if 'myfile' is newer
+<PRE>    # expire the cache if 'myfile' has changed since the cache was written
     mc_cache(action =&gt; 'retrieve',
           expire_if =&gt; sub { [stat 'myfile']-&gt;[9] &gt; $_[0] });
 </PRE>
 
 <P>
 
-<DT><STRONG>By Explicit Action
+<DT><STRONG><A NAME="item_By_Explicit_Action">By Explicit Action
 
 </A></STRONG><DD>
 (e.g. a shell command or web interface is responsible for explicitly
@@ -1096,6 +1103,20 @@ are stored and how they are named.
 <P>
 
 </DL>
+<P>
+<HR>
+<H2><A NAME="keeping_in_memory">Keeping In Memory
+
+</A></H2>
+The keep_in_memory flag indicates that the cache value should be kept in
+memory after it is stored or retrieved. Since every child process will
+store its own copy, this flag should be used only for small, frequently
+retrieved cache values. If used, this flag should be passed to both the
+store and retrieve commands.
+
+
+<P>
+
 <P>
 <HR>
 <H2><A NAME="caching_all_output">Caching All Output 
@@ -1123,7 +1144,7 @@ put this component in its place:
 
 <P>
 
-This works, but Mason offers a better shortcut: the
+This works, but is cumbersome. Mason offers a better shortcut: the
 <STRONG>mc_cache_self()</STRONG> command that lets a component cache it's own output and eliminates the need
 for a dummy component. It is typically used right at the top of a <CODE>&lt;%perl_init%&gt;</CODE> section:
 
@@ -1230,21 +1251,20 @@ To cancel header suppression, call <CODE>mc_suppress_http_header(0).</CODE>
 
 <P>
 <HR>
-<H1><A NAME="debugging_components">DEBUGGING COMPONENTS
+<H1><A NAME="using_the_perl_debugger">USING THE PERL DEBUGGER
 
 </A></H1>
-Since most components contain Perl code, getting a sick component to work
-is basically equivalent to debugging a Perl script, with a few restrictions
-imposed by the fact that components run inside mod_perl's embedded Perl
-interpreter. The main hurdle there, obviously, the lack of an interactive
-debugging environment.
+The Perl debugger is an indispensable tool for identifying and fixing bugs
+in Perl programs. Unfortunately, in a mod_perl environment one is normally
+unable to use the debugger since programs are run from a browser. Mason
+removes this limitation by optionally creating a <EM>debug
+file</EM> for each page request, allowing the request to be replayed from the command
+line or Perl debugger.
 
 
 <P>
 
-Mason threfore includes some workaround features that capture requests to
-``debug files'', which can later be fed into Perl's command-line debugger.
-Here is a typical sequence for debugging a Mason component:
+Here is a typical sequence for debugging a Mason page:
 
 
 <P>
@@ -1395,7 +1415,9 @@ time forward 1,5 or 8 hours to test the component at various times of day.
 
 The Previewer also provides a debug trace of a page, showing all components
 being called and indicating the portion of HTML each component is
-responsible for.
+responsible for. For pages constructed from more than a few components,
+these traces are quite useful for finding the component that is outputting
+a particular piece of HTML.
 
 
 <P>
@@ -1471,7 +1493,7 @@ reflects your actual browser.
 
 </A></H1>
 <DL>
-<DT><STRONG><A NAME="item_No">No Subroutines
+<DT><STRONG><A NAME="item_No_Subroutines">No Subroutines
 
 </A></STRONG><DD>
 Do not declare named subroutines within your components. Mason wraps your
@@ -1482,17 +1504,50 @@ component and call with <STRONG>mc_comp</STRONG>.
 
 <P>
 
-<DT><STRONG><A NAME="item_Do">Do Not Call $r-&gt;content
+<DT><STRONG><A NAME="item_Do_Not_Call_r_content_or_new_">Do Not Call $r-&gt;content or ''new CGI``
 
 </A></STRONG><DD>
 Mason calls <CODE>$r-&gt;content</CODE> itself to read request input, emptying the input buffer and leaving a trap
-for the unwary: subsequent calls to <CODE>$r-&gt;content</CODE> hang the server. This is a mod_perl problem, to be fixed in an upcoming
-release.
+for the unwary: subsequent calls to <CODE>$r-&gt;content</CODE> hang the server. This is a mod_perl ``feature'' that may be fixed in an
+upcoming release.
 
 
 <P>
 
-<DT><STRONG><A NAME="item_Separating">Separating Perl From HTML
+For the same reason you should not create a CGI object like
+
+
+<P>
+
+<PRE>  my $query = new CGI;
+</PRE>
+
+<P>
+
+when handling a POST; the CGI module will try to reread request input and
+hang. Instead, create an empty object:
+
+
+<P>
+
+<PRE>  my $query = new CGI (&quot;&quot;);
+</PRE>
+
+<P>
+
+such an object can still be used for all of CGI's useful HTML output
+functions. Or, if you really want to use CGI's input functions, initialize
+the object from %ARGS:
+
+
+<P>
+
+<PRE>  my $query = new CGI (%ARGS);
+</PRE>
+
+<P>
+
+<DT><STRONG><A NAME="item_Separating_Perl_From_HTML">Separating Perl From HTML
 
 </A></STRONG><DD>
 In our experience, the most readable components, especially for
@@ -1500,10 +1555,9 @@ non-programmer designers and editors, contain full HTML in one continuous
 block at the top with simple substitutions for dynamic elements
 (&lt;%$name%&gt;, &lt;%$salary%&gt;) but no distracting blocks of Perl
 code. At the bottom a &lt;%perl_init&gt; block sets up the substitution
-variables -- getting <A HREF="././Components.html#item__name">$name</A>
-from the database, calculating $salary, etc. This organization allows
-non-programmers to work with the HTML without getting distracted or
-discouraged by Perl code.
+variables -- getting <CODE>$name</CODE> from the database, calculating
+$salary, etc. This organization allows non-programmers to work with the
+HTML without getting distracted or discouraged by Perl code.
 
 
 <P>

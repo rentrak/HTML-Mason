@@ -23,6 +23,7 @@ my %fields =
      use_strict => 1,
      source_refer_predicate => sub { return ($_[1] >= 5000) },
      ignore_warnings_expr => undef,
+     taint_check => 0,
      safe_compartment => undef
      );
 
@@ -84,7 +85,7 @@ sub parse
     #
     # Clean up ctrl chars
     #
-    $script =~ s/[\cM\cA\cB]/ /g;
+    $script =~ s/[\cA\cB]/ /g;
 
     #
     # Pre-substitute \cA and \cB for %PERL and /%PERL to ease parsing.
@@ -393,6 +394,11 @@ sub parse
     $body = "$header\nreturn sub {\n$body\n};\n";
 
     #
+    # Eliminate DOS ctrl-M chars
+    #
+    $body =~ s/\cM//g;
+    
+    #
     # Check for errors and warnings.
     #
     $self->evaluate(script=>$body, code=>\$sub, error=>\$err);
@@ -434,17 +440,21 @@ sub evaluate
 	local $SIG{__WARN__} = $ignoreExpr ? sub { $warnstr .= $_[0] if $_[0] =~ /$ignoreExpr/ } : sub { $warnstr .= $_[0] };
 	my $cpt = $self->safe_compartment;
 	if ($options{script}) {
+	    my $script = $options{script};
+	    ($script) = ($script =~ /^(.*)$/s) if $self->taint_check;
 	    if (!$cpt) {
-		$sub = eval($options{script});
+		$sub = eval($script);
 	    } else {
-		$sub = $cpt->reval($options{script});
+		$sub = $cpt->reval($script);
 	    }
 	} elsif ($options{script_file}) {
-	    die "evaluate: script_file '$options{script_file}' not a regular file" if (!-f $options{script_file});
+	    my $file = $options{script_file};
+	    ($file) = ($file =~ /^(.*)$/s) if $self->taint_check;
+	    die "evaluate: script_file '$file' not a regular file" if (!-f $file);
 	    if (!$cpt) {
-		$sub = do($options{script_file});
+		$sub = do($file);
 	    } else {
-		$sub = $cpt->rdo($options{script});
+		$sub = $cpt->rdo($file);
 	    }
 	} else {
 	    die "evaluate: must specify script or script_file";

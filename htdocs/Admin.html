@@ -20,6 +20,7 @@
 		<LI><A HREF="#data_caching">Data caching</A>
 		<LI><A HREF="#debugging">Debugging</A>
 		<LI><A HREF="#previewer">Previewer</A>
+		<LI><A HREF="#system_logs_new_in_0_3_">System Logs (new in 0.3)</A>
 	</UL>
 
 	<LI><A HREF="#performance_tuning">PERFORMANCE TUNING</A>
@@ -80,18 +81,30 @@ in Mason's configuration.
 <P>
 
 <DL>
-<DT><STRONG><A NAME="item_Config">Config.pm
+<DT><STRONG><A NAME="item_Config_pm">Config.pm
 
 </A></STRONG><DD>
-After installing Mason, edit this file to configure global options,
-following the comments inside. Currently the only options to configure are
-the type of DBM and the serialization method to use for Mason's caching
-mechanisms.
+Config.pm contains global configuration options for Mason. Makefile.PL will
+make initial modifications to the file based on your environment; after
+that, you can edit it by hand, following the comments inside. Currently
+this file controls:
 
 
 <P>
 
-<DT><STRONG><A NAME="item_httpd">httpd.conf (srm.conf, access.conf)
+o whether or not certain optional modules, such as Time::HiRes, should be
+loaded for enhanced features
+
+
+<P>
+
+o the type of DBM and the serialization method to use for Mason's data
+caching
+
+
+<P>
+
+<DT><STRONG><A NAME="item_httpd_conf_srm_conf_access_con">httpd.conf (srm.conf, access.conf)
 
 </A></STRONG><DD>
 Directives must be added to Apache's configuration files to specify which
@@ -111,7 +124,7 @@ requests. As described in <STRONG><A HREF="././Mason.html#">HTML::Mason</A></STR
 
 <P>
 
-<DT><STRONG><A NAME="item_handler">handler.pl
+<DT><STRONG><A NAME="item_handler_pl">handler.pl
 
 </A></STRONG><DD>
 This file contains startup code that initializes the parent Apache process.
@@ -121,7 +134,7 @@ requests. See the synopsis in <STRONG><A HREF="././Mason.html#">HTML::Mason</A><
 
 <P>
 
-<CODE>handler.pl</CODE> creates three Mason objects: the Parser, Interpreter, and Apache handler.
+<A HREF="././Admin.html#item_handler_pl">handler.pl</A> creates three Mason objects: the Parser, Interpreter, and Apache handler.
 The Parser compiles components into Perl subroutines; the Interpreter
 executes those compiled components; and the Apache handler routes mod_perl
 requests to Mason. These objects are created once in the parent httpd and
@@ -176,7 +189,7 @@ files or directories created by the parent process.
 To work around this conflict, Mason remembers all directories and files
 created at startup, returning them in response to
 <CODE>$interp-&gt;files_written</CODE>. This list can be fed to a <CODE>chown()</CODE> at the end of the startup
-code in <CODE>handler.pl</CODE>:
+code in <A HREF="././Admin.html#item_handler_pl">handler.pl</A>:
 
 
 <P>
@@ -187,7 +200,7 @@ code in <CODE>handler.pl</CODE>:
 
 <P>
 
-<DT><STRONG><A NAME="item_Component">Component space (comp_root)
+<DT><STRONG><A NAME="item_Component_space_comp_root_">Component space (comp_root)
 
 </A></STRONG><DD>
 The component space is a tree of component source files. The top of the
@@ -198,7 +211,18 @@ different document roots under a single component root.
 
 <P>
 
-<DT><STRONG><A NAME="item_Data">Data directory (data_dir)
+When Mason handles a request, the request filename ($r-&gt;filename) must
+be underneath your component root -- that way Mason has a legitimate
+component to start with. If the filename is not under the component root,
+Mason will place a warning in the error logs and return a 404.
+Unfortunately if your component root or document root goes through a soft
+link, Mason will have trouble comparing the paths and will return 404. To
+fix this, set your document root to the true path.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_Data_directory_data_dir_">Data directory (data_dir)
 
 </A></STRONG><DD>
 The data directory is where Mason keeps various files to help implement
@@ -284,14 +308,23 @@ must still function.
 
 <P>
 
+If some reason you want to disable data caching, specify
+<A HREF="././Interp.html#item_use_data_cache">use_data_cache</A>=&gt;0 to the Interp object. This will cause all mc_cache calls to return
+undef without doing anything.
+
+
+<P>
+
 </DL>
 <P>
 <HR>
 <H2><A NAME="debugging">Debugging
 
 </A></H2>
-A debug file is a Perl script that creates a fake Apache request object (<CODE>$r</CODE>) and calls the same PerlHandler that Apache called. Several ApacheHandler
-parameters are required to activate and configure debug files:
+A debug file is a Perl script that creates a fake Apache request object (<CODE>$r</CODE>) and calls the same PerlHandler that Apache called. Debug files are
+created under <CODE>data_dir/debug/&lt;username&gt;</CODE> for authenticated users, otherwise they are placed in
+<CODE>data_dir/debug/anon</CODE>. Several ApacheHandler parameters are required to activate and configure
+debug files:
 
 
 <P>
@@ -301,9 +334,7 @@ parameters are required to activate and configure debug files:
 
 </A></STRONG><DD>
 The debug_mode parameter indicates which requests should produce a debug
-file: ``all'', ``none'', or ``error'' (only if a error occurs). Debug files
-are created under <CODE>data_dir/debug/&lt;username&gt;</CODE> for authenticated users, otherwise they are placed in
-<CODE>data_dir/debug/anon</CODE>.
+file: ``all'', ``none'', or ``error'' (only if a error occurs).
 
 
 <P>
@@ -319,8 +350,8 @@ The full path to your Perl binary -- e.g. <CODE>/usr/bin/perl</CODE>. This is us
 <DT><STRONG><A NAME="item_debug_handler_script">debug_handler_script
 
 </A></STRONG><DD>
-The full path to your <CODE>handler.pl</CODE> script. Debug files invoke
-<CODE>handler.pl</CODE> just as Apache does as startup, to load needed modules and create Mason
+The full path to your <A HREF="././Admin.html#item_handler_pl">handler.pl</A> script. Debug files invoke
+<A HREF="././Admin.html#item_handler_pl">handler.pl</A> just as Apache does as startup, to load needed modules and create Mason
 objects.
 
 
@@ -329,7 +360,7 @@ objects.
 <DT><STRONG><A NAME="item_debug_handler_proc">debug_handler_proc
 
 </A></STRONG><DD>
-The name of the request handler defined in <CODE>handler.pl</CODE>. This routine is called with the saved Apache request object.
+The name of the request handler defined in <A HREF="././Admin.html#item_handler_pl">handler.pl</A>. This routine is called with the saved Apache request object.
 
 
 <P>
@@ -345,6 +376,20 @@ Here's a sample ApacheHandler constructor with all debug options:
                debug_perl_binary=&gt;'/usr/local/bin/perl',
                debug_handler_script=&gt;'/usr/local/mason/eg/handler.pl',
                debug_handler_proc=&gt;'HTML::Mason::handler');
+</PRE>
+
+<P>
+
+When replaying a request through a debug file, the global variable
+$HTML::Mason::IN_DEBUG_FILE will be set to 1. This is useful if you want to
+omit certain flags (like preloading) in handler.pl when running under
+debug. For example:
+
+
+<P>
+
+<PRE>    my %extra_flags = ($HTML::Mason::IN_DEBUG_FILE) ? () : (preloads=&gt;[...]);
+    my $interp = new HTML::Mason::Interp (..., %extra_flags);
 </PRE>
 
 <P>
@@ -428,7 +473,7 @@ to keep configurations separate.
 <LI><STRONG><A NAME="item_">
 
 </A></STRONG>
-Add code to your handler routine (in <CODE>handler.pl</CODE>) to intercept Previewer requests on the ports defined above. Your handler
+Add code to your handler routine (in <A HREF="././Admin.html#item_handler_pl">handler.pl</A>) to intercept Previewer requests on the ports defined above. Your handler
 should end up looking like this:
 
 
@@ -463,7 +508,7 @@ should end up looking like this:
 <P>
 
 The three ``new'' lines inside the if block should look exactly the same as
-the lines at the top of <CODE>handler.pl</CODE>. Note that these separate Mason objects are created for a single request
+the lines at the top of <A HREF="././Admin.html#item_handler_pl">handler.pl</A>. Note that these separate Mason objects are created for a single request
 and discarded. The reason is that the previewer may alter the objects'
 settings, so it is safer to create new ones every time.
 
@@ -486,6 +531,193 @@ top to conform to your own Mason setup.
 To test whether the previewer is working: restart your server, go to the
 previewer interface, and click ``View''. You should see your site's home
 page.
+
+
+<P>
+
+<P>
+<HR>
+<H2><A NAME="system_logs_new_in_0_3_">System Logs (new in 0.3)
+
+</A></H2>
+Mason will log various events to a system log file if you so desire. This
+can be useful for performance monitoring and debugging.
+
+
+<P>
+
+The format of the system log was designed to be easy to parse by programs,
+although it is not unduly hard to read for humans. Every event is logged on
+one line. Each line consists of multiple fields delimited by a common
+separator, by default ctrl-A. The first three fields are always the same:
+time, the name of the event, and the current pid ($$). These are followed
+by one or more fields specific to the event.
+
+
+<P>
+
+The events are:
+
+
+<P>
+
+<PRE> EVENT NAME     DESCRIPTION                     EXTRA FIELDS
+</PRE>
+
+<P>
+
+<PRE> REQ_START      start of HTTP request           request number, URL + query string
+ REQ_END        end of HTTP request             request number, error flag (1 if error occurred,
+                                                0 otherwise)
+ CACHE_READ     attempt to read from            component path, cache key, success flag
+                data cache (mc_cache)           (1 if item was found, 0 otherwise)
+ CACHE_STORE    store to data cache             component path, cache key
+ COMP_LOAD      component loaded into memory    component path
+                for first time  
+</PRE>
+
+<P>
+
+The request number is an incremental value that uniquely identifies each
+request for a given child process. Use it to match up REQ_START/REQ_END
+pairs.
+
+
+<P>
+
+To turn on logging, specify a string value to <A HREF="././Interp.html#item_system_log_events">system_log_events</A>
+containing one or more event names separated by '|'. In additional to
+individual event names, the following names can be used to specify multiple
+events:
+
+
+<P>
+
+<PRE> REQUEST = REQ_START | REQ_END
+ CACHE = CACHE_READ | CACHE_STORE
+ ALL = All events
+</PRE>
+
+<P>
+
+For example, to log REQ_START, REQ_END, and COMP_LOAD events, you could use
+system_log_events =&gt; ``REQUEST|COMP_LOAD'' Note that this is a string,
+not a set of constants or'd together.
+
+
+<P>
+
+<STRONG>Configuration Options</STRONG>
+
+
+
+
+<P>
+
+By default, the system log will be placed in data_dir/etc/system.log. You
+can change this with <A HREF="././Interp.html#item_system_log_file">system_log_file</A>.
+
+
+<P>
+
+The default line separator is ctrl-A. The advantage of this separator is
+that it is very unlikely to appear in any of the fields, making it easy to
+<CODE>split()</CODE> the line. The disadvantage is that it will not always
+display, e.g. from a Unix shell, making the log harder to read casually.
+You can change the separator to any sequence of characters with <A HREF="././Interp.html#item_system_log_separator">system_log_separator</A>.
+
+
+<P>
+
+The time on each log line will be of the form ``seconds.microseconds'' if
+you are using Time::HiRes, and simply ``seconds'' otherwise. See
+<A HREF="././Admin.html#item_Config_pm">Config.pm</A> section.
+
+
+<P>
+
+<STRONG>Sample Log Parser</STRONG>
+
+
+
+
+<P>
+
+Here is a code skeleton for parsing the various events in a log. You can
+also find this in eg/parselog.pl in the Mason distribution.
+
+
+<P>
+
+<PRE>   open(LOG,&quot;mason.log&quot;);
+   while (&lt;LOG&gt;) {
+       chomp;
+       my (@fields) = split(&quot;\cA&quot;);
+       my ($time,$event,$pid) = splice(@fields,0,3);
+       if ($event eq 'REQ_START') {
+           my ($reqnum,$url) = @fields;
+           ...
+       } elsif ($event eq 'REQ_END') {
+           my ($reqnum,$errflag) = @fields;
+           ...
+       } elsif ($event eq 'CACHE_READ') {  
+           my ($comp,$key,$hitflag) = @fields;
+           ...
+       } elsif ($event eq 'CACHE_STORE') { 
+           my ($comp,$key) = @fields;
+           ...
+       } elsif ($event eq 'COMP_LOAD') {
+           my ($comp) = @fields;
+           ...
+       } else {
+           warn &quot;unrecognized event type: $event\n&quot;;
+       }
+   }
+   
+</PRE>
+
+<P>
+
+<STRONG>Suggested Uses</STRONG>
+
+
+
+
+<P>
+
+Performance: REQUEST events are useful for analyzing the performance of all
+Mason requests occurring on your site, and identifying the slowest
+requests. (You cannot measure this with standard Apache logs since they
+only record the end time of the request.) eg/perflog.pl in the Mason
+distribution is a log parser that outputs the average compute time of each
+unique URL, in order from slowest to quickest.
+
+
+<P>
+
+Server activity: REQUEST events are useful for determining what your web
+server children are working on, especially when you have a runaway. For a
+given process, simply tail the log and find the last REQ_START event with
+that process id. (You can also use the Apache status page for this, of
+course.)
+
+
+<P>
+
+Cache efficiency: CACHE events are useful for monitoring cache ``hit
+rates'' (number of successful reads over total number of reads) over all
+components that use a data cache. Because stores to a cache are more
+expensive than reads, a high hit rate is essential for the cache to have a
+beneficial effect. If a particular cache hit rate is too low, you may want
+to consider changing how frequently it is expired or whether to use it at
+all.
+
+
+<P>
+
+Load frequency: COMP_LOAD events are useful for determining which
+components are loaded most often and therefore good candidates for
+preloading.
 
 
 <P>
@@ -524,14 +756,21 @@ server process can use this for future references to the same component.
 <LI><STRONG></STRONG>
 store the subroutine body in an object file under
 <CODE>data_dir/obj/<EM>component-path</EM></CODE>. Future server processes can eval the object file and save time on
-parsing. Both entities are recomputed if the component source file changes.
+parsing.
 
 
 <P>
 
 </UL>
+Both entities are recomputed if the component source file changes.
+
+
+<P>
+
 Besides improving performance, object files are essential for debugging and
-interpretation of compilation errors.
+interpretation of compilation errors. However, if you don't want Mason to
+create object files (e.g. if disk space is scarce), you can turn them off
+by passing <A HREF="././Interp.html#item_use_object_files">use_object_files</A>=&gt;0 to the Interp object.
 
 
 <P>
@@ -798,17 +1037,21 @@ showing a detailed error message in the browser
 <P>
 
 <LI><STRONG></STRONG>
-die'ing, which sends a 501 to the browser and lets the error go to the
-error logs. The first option is ideal for development, where you want
-immediate feedback on the error. The second option is usually desired for
-production so that users are not exposed to messy error messages. You
-control this option by setting ah-&gt;error_mode to ``html'' or ``fatal''
-respectively.
+die'ing, which sends a 501 to the browser and lets the error message go to
+the error logs.
 
 
 <P>
 
 </UL>
+The first option is ideal for development, where you want immediate
+feedback on the error. The second option is usually desired for production
+so that users are not exposed to messy error messages. You control this
+option by setting ah-&gt;error_mode to ``html'' or ``fatal'' respectively.
+
+
+<P>
+
 <P>
 <HR>
 <H2><A NAME="debug_mode">Debug mode

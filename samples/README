@@ -9,3 +9,13 @@ dump-request	Dumps request parameters, great for debugging.
 show-env	Dumps current environment.
 
 preview		The Mason Previewer
+
+
+Note: If you are seeing the source of the above pages as plain text,
+it is because the server is assigning the content type "text/plain"
+instead of "text/html".  The easiest way to remedy this is to put
+
+    DefaultType  text/html
+
+in your configuration file.  This will allow filenames with no
+extensions to be output as HTML.

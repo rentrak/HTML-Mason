@@ -70,10 +70,18 @@ The current default is
 i.e. any component with at least 500 characters. This is an
 experimental setting and may change.
 
+=item taint_check
+
+This flag allows Mason to work when taint checking is on
+(e.g. PerlTaintCheck or B<-T> flag).  If true, Mason will pass all
+component source and filenames through a dummy regular expression
+match to untaint them. In the future this option may become more
+sophisticated to allow stricter checks. Default is false.
+
 =item use_strict
 
 Indicates whether to use strict in compiled subroutines.
-1 by default.
+Default is true.
 
 =back
 

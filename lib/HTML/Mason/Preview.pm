@@ -113,11 +113,10 @@ sub send_http_header {
 }
 
 package HTML::Mason::Preview;
-use CGI::Base;
 use HTML::Mason::ApacheHandler;
+use HTML::Mason::Tools qw(date_delta_to_secs);
 use IO::File qw(!/^SEEK/);
 use POSIX;
-use Date::Manip;
 
 sub open_preview_settings
 {
@@ -170,7 +169,7 @@ sub handle_preview_request_1
     #
     my $in = open_preview_settings($ah->preview_dir,$userName,0);
     my $href = $in->{$port};
-    die "cannot find preview configuration for user '$userName', port $port\n" if (!$href);
+    die "Cannot find preview configuration for user '$userName', port $port\n. Go to the main previewer page to set the configuration for this port.\n" if (!$href);
     my $conf = $href->{request};
 
     my $interp = $ah->interp;
@@ -196,7 +195,7 @@ sub handle_preview_request_1
 	my $time;
 	if ($timetype ne 'real') {
 	    if ($timetype eq 'relative') {
-		$time = DateCalc('now',$conf->{'time'}->{delta});
+		$time = time() + date_delta_to_secs($conf->{'time'}->{delta});
 	    } elsif ($timetype eq 'absolute') {
 		$time = $conf->{'time'}->{value};
 	    }
@@ -319,13 +318,6 @@ sub handle_preview_request_1
 	    $content .= "\cAEVENT$eventnum\cA";
 	    $compEvents[$eventnum++] = {type=>'endFile',path=>$file,end=>$end};
 	};
-	my $readFileHook = sub {
-	    my ($self,$filePath) = @_;
-	    my ($startevent,$endevent) = ($eventnum,$eventnum+1);
-	    $compEvents[$startevent] = {type=>'startFile',path=>$filePath};
-	    $compEvents[$endevent] = {type=>'endFile',path=>$filePath};
-	    $eventnum+=2;
-	};
 
 	#
 	# Create a trace of objects (components/files), with one
@@ -393,7 +385,9 @@ sub handle_preview_request_1
 			}
 		    }
 		}
-		if (!$valid) {
+		# leave "invalid" file events in?
+		#if (!$valid) {
+		if (0) {
 		    undef($compEvents[$e]);
 		    undef($compEvents[$e+1]);
 		    $e++;
@@ -496,9 +490,7 @@ sub handle_preview_request_1
 	#
     	$pr->print("<h2>Headers out</h2>\n<ul>");
 	my %outHeaders = $r->headers_out();
-	my $gmtdate;
-	{ local $Date::Manip::ConvTZ = 'GMT'; $gmtdate = UnixDate('now','%g') }
-	$gmtdate =~ s@,(\S)@, $1@;
+	my $gmtdate = gmtime;
 	$pr->print("<li type=circle><b>Date:</b>  $gmtdate\n");
 	my $serverType = $r->cgi_var('SERVER_SOFTWARE') || 'Apache/1.2 mod_perl/1.0'; 
 	$pr->print("<li type=circle><b>Server:</b>  $serverType\n");

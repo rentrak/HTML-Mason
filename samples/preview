@@ -180,9 +180,9 @@ Relative: <input type=text name=a_reltimenum size=3 value="<%$conf{a_reltimenum}
 </select><br>
 <%$spacer%><input type=radio name=a_timetype value=absolute <%$conf{a_timetype} eq 'absolute' ? 'checked' : ''%>>
 Absolute:
-<%$query->popup_menu(name=>'a_abstimemonth','values'=>[1..12],labels=>{1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'May',6=>'Jun',7=>'Jul',8=>'Aug',9=>'Sep',10=>'Oct',11=>'Nov',12=>'Dec'},default=>$conf{a_abstimemonth})%>
+<%$query->popup_menu(name=>'a_abstimemonth','values'=>[0..11],labels=>{0=>'Jan',1=>'Feb',2=>'Mar',3=>'Apr',4=>'May',5=>'Jun',6=>'Jul',7=>'Aug',8=>'Sep',9=>'Oct',10=>'Nov',11=>'Dec'},default=>$conf{a_abstimemonth})%>
 <%$query->popup_menu(name=>'a_abstimeday','values'=>[1..31],default=>$conf{a_abstimeday})%>
-<%$query->popup_menu(name=>'a_abstimeyear','values'=>[1997..2010],default=>$conf{a_abstimeyear})%>
+<%$query->popup_menu(name=>'a_abstimeyear','values'=>[97..110],labels=>{map(($_,$_+1900),(97..110))},default=>$conf{a_abstimeyear})%>
 at <SELECT NAME="a_abstimehour">
 %for ($i=1; $i<=12; $i++) {
 <option value="<%$i%>"
@@ -247,7 +247,7 @@ if ($mode eq 'home') {
 		$c{timestr} =
 		    (/real/) ? 'real' :
 			(/relative/) ? $timeconf->{delta} :
-			    (/absolute/) ? sprintf("%s %d, %d %d:00 %s",$c{a_abstimemonth},$c{a_abstimeday},$c{a_abstimeyear},$c{a_abstimehour},$c{a_abstimeampm}) :
+			    (/absolute/) ? sprintf("%d/%d/%d %d:00 %s",$c{a_abstimemonth}+1,$c{a_abstimeday},$c{a_abstimeyear}+1900,$c{a_abstimehour},$c{a_abstimeampm}) :
 				'';
 	    }
 	    push(@settings,{%c});
@@ -269,9 +269,9 @@ if ($mode eq 'home') {
 	     a_reltimeunit => 'h',
 	     a_reltimedirection => 'future'
 	     );
-	($conf{a_abstimemonth},$conf{a_abstimeday},$conf{a_abstimeyear},$conf{a_abstimehour},$conf{a_abstimeampm}) = split("/",UnixDate('now',"%b/%d/%Y/%i/%p"));
-	$conf{a_abstimeampm} = lc($conf{a_abstimeampm});
-	#($conf{a_os},$conf{a_browser},$conf{a_browserVersion}) = ;
+        
+        my ($sec,$min,$hour,$mday,$mon,$year) = localtime(time);
+	($conf{a_abstimemonth},$conf{a_abstimeday},$conf{a_abstimeyear},$conf{a_abstimehour},$conf{a_abstimeampm}) = ($mon,$mday,$year,$hour%12+1,($hour <= 11 ? 'am' : 'pm'));
     }
 }
 if ($mode eq 'save') {
@@ -312,7 +312,8 @@ if ($mode eq 'save') {
 	$request{'time'}->{delta} = $options{b_time};
     } elsif ($options{a_timetype} eq 'absolute') {
 	$request{'time'}->{type} = 'absolute';
-	$request{'time'}->{value} = ParseDate(sprintf("%s %d, %d %d:00 %s",$options{a_abstimemonth},$options{a_abstimeday},$options{a_abstimeyear},$options{a_abstimehour},$options{a_abstimeampm}));
+        my $hour = $options{a_abstimehour}+(12*($options{a_abstimeampm} eq 'pm'))-(12*($options{a_abstimehour}==12));
+	$request{'time'}->{value} = timelocal(0,0,$hour,$options{a_abstimeday},$options{a_abstimemonth},$options{a_abstimeyear});
     } elsif ($options{a_timetype} eq 'relative') {
 	$request{'time'}->{type} = 'relative';
 	$request{'time'}->{delta} = sprintf("%s%d%s",($options{a_reltimedirection} eq 'future' ? '+' : '-'),$options{a_reltimenum},$options{a_reltimeunit});

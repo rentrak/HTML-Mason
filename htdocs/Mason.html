@@ -140,16 +140,6 @@ expireable data cache for use by components themselves.
 
 <P>
 
-<DT><STRONG><A NAME="item_Standalone">Standalone Option
-
-</A></STRONG><DD>
-Mason is optimized for use with mod_perl, but can also be used as a
-standalone tool to generate other types of dynamic text files (similar to
-ePerl).
-
-
-<P>
-
 <DT><STRONG><A NAME="item_Debugging">Debugging
 
 </A></STRONG><DD>
@@ -168,6 +158,18 @@ Mason and incoming requests. Using a web interface, users create ``port
 profiles'' that massage requests in all kinds of interesting ways:
 different browsers may be simulated, different request ports, different
 times of day, etc.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_Standalone_Use">Standalone Use
+
+</A></STRONG><DD>
+Mason is optimized for use with mod_perl, but can also be used from CGI or
+as a standalone tool to generate other types of dynamic text files (similar
+to Text::Template, ePerl, etc.). To learn more about this option see the
+STANDALONE MODE section in
+<STRONG><A HREF="././Interp.html#">HTML::Mason::Interp</A></STRONG>.
 
 
 <P>
@@ -227,10 +229,10 @@ expect from a regular Perl program. See
 <H1><A NAME="installation">INSTALLATION 
 
 </A></H1>
-Mason has been tested under Linux and Solaris, but not yet (by us) under
-Win32. As an all-Perl solution, though, it should work on any machine that
-has working versions of Perl 5.004+, mod_perl, and the required CPAN
-modules.
+Mason has been tested under Linux, FreeBSD, and Solaris, but not yet (by
+us) under Win32. As an all-Perl solution, though, it should work on any
+machine that has working versions of Perl 5.004+, mod_perl, and the
+required CPAN modules.
 
 
 <P>
@@ -246,8 +248,8 @@ details.
 <H1><A NAME="configuring_mason">CONFIGURING MASON 
 
 </A></H1>
-Mason's configuration depends on two files: your Apache <CODE>conf</CODE> files (<CODE>httpd.conf</CODE> or <CODE>srm.conf</CODE>), into which you insert directives to activate Mason's request handler,
-and Mason's <CODE>handler.pl</CODE> file which runs at Apache startup. <CODE>handler.pl</CODE> does two things: it starts up Mason (which then runs persistently within
+Mason's configuration depends on two files: your Apache <CODE>conf</CODE> files (<A HREF="././Admin.html#item_httpd_conf">httpd.conf</A> or <CODE>srm.conf</CODE>), into which you insert directives to activate Mason's request handler,
+and Mason's <A HREF="././Admin.html#item_handler_pl">handler.pl</A> file which runs at Apache startup. <A HREF="././Admin.html#item_handler_pl">handler.pl</A> does two things: it starts up Mason (which then runs persistently within
 the httpd), and it defines a handler routine to receive HTTP requests.
 
 
@@ -291,7 +293,7 @@ DocumentRoot, like so:
 
 <P>
 
-These directives tell Apache to first run <CODE>handler.pl</CODE>, the Mason startup file. The ``Alias'' then maps any ``/mason'' URLs into
+These directives tell Apache to first run <A HREF="././Admin.html#item_handler_pl">handler.pl</A>, the Mason startup file. The ``Alias'' then maps any ``/mason'' URLs into
 the DocumentRoot (assuming the DocumentRoot is /usr/local/www/htdocs).
 Finally, the &lt;Location&gt; directive routes those requests to the handler routine <CODE>HTML::Mason::handler</CODE>.
 
@@ -310,14 +312,14 @@ you might optionally change your DefaultType:
 <P>
 
 That's it for the Apache configuration. Next you will need to configure
-Mason's <CODE>handler.pl</CODE> file, a sample of which is in
-<CODE>eg/handler.pl</CODE>. Here you must make some decisions about where certain files should live:
+Mason's <A HREF="././Admin.html#item_handler_pl">handler.pl</A> file, a sample of which is in
+<CODE>eg/handler.pl</CODE>. Here you must make some decisions:
 
 
 <P>
 
 <DL>
-<DT><STRONG><A NAME="item_Where">Where is the component root (comp_root)?
+<DT><STRONG><A NAME="item_Where_is_the_component_root_com">Where is the component root (comp_root)?
 
 </A></STRONG><DD>
 Mason introduces the idea of a ``component root'' which, like the
@@ -328,7 +330,7 @@ separate.
 
 <P>
 
-<DT><STRONG>Where is the data directory (data_dir)?
+<DT><STRONG><A NAME="item_Where_is_the_data_directory_dat">Where is the data directory (data_dir)?
 
 </A></STRONG><DD>
 Mason generates various data files, which live in topical directories under
@@ -337,14 +339,23 @@ Mason's ``data directory''.
 
 <P>
 
-<DT><STRONG><A NAME="item_What">What is the UID and GID that the server runs under?
+<DT><STRONG><A NAME="item_What_is_the_UID_and_GID_that_the">What is the UID and GID that the server runs under?
 
 </A></STRONG><DD>
 If your web server is running on a privileged port like 80, the parent
 process runs as root and spawns children under the 'User' and 'Group' IDs
-listed in your <CODE>httpd.conf</CODE>. To prevent ownership and permission conflicts, set the
-<CODE>chown()</CODE> parameters to match the UID and GID from your <CODE>httpd.conf</CODE>. See the <CODE>handler</CODE> section in the
+listed in your <A HREF="././Admin.html#item_httpd_conf">httpd.conf</A>. To prevent ownership and permission conflicts, set the
+<CODE>chown()</CODE> parameters to match the UID and GID from your <A HREF="././Admin.html#item_httpd_conf">httpd.conf</A>. See the <CODE>handler</CODE> section in the
 <EM>Administrator's Guide</EM> guide for details.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_Are_you_running_with_taint_check">Are you running with taint checks (e.g. PerlTaintCheck)?
+
+</A></STRONG><DD>
+If so, pass the flag <A HREF="././Parser.html#item_taint_check">taint_check</A>=&gt;1 when creating the parser; this tells Mason to untaint component code
+and filenames.
 
 
 <P>
@@ -366,7 +377,18 @@ object:
 Set these to your own locations, then restart the server and go to some
 standard URL on your site, prefixing the URL with ``/mason''. If all goes
 well you should see the same page as without the ``/mason'' prefix. If not,
-recheck your Apache config files and <CODE>handler.pl</CODE>, and also tail your server's error log.
+recheck your Apache config files and <A HREF="././Admin.html#item_handler_pl">handler.pl</A>, and also tail your server's error log.
+
+
+<P>
+
+(If you are getting erroneous ``404 Not Found'' errors, Mason may be having
+trouble with your document and component root. Make sure ``LogLevel warn''
+is in your Apache configuration file, then regenerate the error and check
+the error log for Mason warnings. One situation that will unfortunately
+confuse Mason is if your document or component root goes through a soft
+link. Try specifying your document and component root settings in terms of
+the true path.)
 
 
 <P>
@@ -409,6 +431,17 @@ companion to the Developer's Manual is the Mason commands reference,
 System Admins, or others interested in configuring Mason or tuning for
 performance, should read <STRONG><A HREF="././Admin.html#">HTML::Mason::Admin</A></STRONG>. Details of Mason's core modules can be found in <STRONG><A HREF="././Parser.html#">HTML::Mason::Parser</A></STRONG>,
 <STRONG><A HREF="././Interp.html#">HTML::Mason::Interp</A></STRONG>, and <STRONG><A HREF="././ApacheHandler.html#">HTML::Mason::ApacheHandler</A></STRONG>.
+
+
+<P>
+
+Most of this documentation assumes that you're running Mason on top of
+mod_perl, since that is the most common configuration. If you are using
+Mason outside of mod_perl, the documentation is still valid; you'll just
+have to ignore mod_perl specific references like <CODE>$r</CODE> and the
+ApacheHandler object, and you'll want to read the STANDALONE MODE section
+in
+<STRONG><A HREF="././Interp.html#">HTML::Mason::Interp</A></STRONG>.
 
 
 <P>

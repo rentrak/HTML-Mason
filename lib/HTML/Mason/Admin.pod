@@ -16,10 +16,14 @@ part in Mason's configuration.
 
 =item Config.pm
 
-After installing Mason, edit this file to configure global options,
-following the comments inside. Currently the only options to configure
-are the type of DBM and the serialization method to use for Mason's
-caching mechanisms.
+Config.pm contains global configuration options for Mason.
+Makefile.PL will make initial modifications to the file based on your
+environment; after that, you can edit it by hand, following the
+comments inside.  Currently this file controls:
+
+o whether or not certain optional modules, such as Time::HiRes, should be loaded for enhanced features
+
+o the type of DBM and the serialization method to use for Mason's data caching
 
 =item httpd.conf (srm.conf, access.conf)
 
@@ -98,6 +102,14 @@ component root is the same as the server's DocumentRoot.  More complex
 configurations may specify several different document roots under a
 single component root.
 
+When Mason handles a request, the request filename ($r->filename) must
+be underneath your component root -- that way Mason has a legitimate
+component to start with.  If the filename is not under the component
+root, Mason will place a warning in the error logs and return a 404.
+Unfortunately if your component root or document root goes through a
+soft link, Mason will have trouble comparing the paths and will return
+404. To fix this, set your document root to the true path.
+
 =item Data directory (data_dir)
 
 The data directory is where Mason keeps various files to help
@@ -158,24 +170,27 @@ without warning, because the data cache mechanism is explicitly not
 guaranteed -- developers are warned that cached data may disappear
 anytime and components must still function.
 
+If some reason you want to disable data caching, specify
+C<use_data_cache>=>0 to the Interp object. This will cause all mc_cache
+calls to return undef without doing anything.
+
 =back
 
 =head2 Debugging
 
 A debug file is a Perl script that creates a fake Apache request
-object (C<$r>) and calls the same PerlHandler that Apache
-called. Several ApacheHandler parameters are required to activate and
-configure debug files:
+object (C<$r>) and calls the same PerlHandler that Apache called.
+Debug files are created under C<data_dir/debug/E<lt>usernameE<gt>> for
+authenticated users, otherwise they are placed in
+C<data_dir/debug/anon>.  Several ApacheHandler parameters are required
+to activate and configure debug files:
 
 =over
 
 =item debug_mode
 
 The debug_mode parameter indicates which requests should produce a
-debug file: "all", "none", or "error" (only if a error occurs). Debug
-files are created under C<data_dir/debug/E<lt>usernameE<gt>> for
-authenticated users, otherwise they are placed in
-C<data_dir/debug/anon>.
+debug file: "all", "none", or "error" (only if a error occurs).
 
 =item debug_perl_binary
 
@@ -202,6 +217,14 @@ Here's a sample ApacheHandler constructor with all debug options:
                debug_perl_binary=>'/usr/local/bin/perl',
                debug_handler_script=>'/usr/local/mason/eg/handler.pl',
                debug_handler_proc=>'HTML::Mason::handler');
+
+When replaying a request through a debug file, the global variable
+$HTML::Mason::IN_DEBUG_FILE will be set to 1.  This is useful if you
+want to omit certain flags (like preloading) in handler.pl when
+running under debug.  For example:
+
+    my %extra_flags = ($HTML::Mason::IN_DEBUG_FILE) ? () : (preloads=>[...]);
+    my $interp = new HTML::Mason::Interp (..., %extra_flags);
 
 =head2 Previewer
 
@@ -293,6 +316,124 @@ setup.
 To test whether the previewer is working: restart your server, go to the
 previewer interface, and click "View".  You should see your site's home page.
 
+=head2 System Logs (new in 0.3)
+
+Mason will log various events to a system log file if you so desire.
+This can be useful for performance monitoring and debugging.
+
+The format of the system log was designed to be easy to parse by
+programs, although it is not unduly hard to read for humans.  Every
+event is logged on one line. Each line consists of multiple fields
+delimited by a common separator, by default ctrl-A. The first three
+fields are always the same: time, the name of the event, and the
+current pid ($$).  These are followed by one or more fields specific
+to the event.
+
+The events are:
+
+ EVENT NAME	DESCRIPTION			EXTRA FIELDS
+
+ REQ_START	start of HTTP request		request number, URL + query string
+ REQ_END	end of HTTP request		request number, error flag (1 if error occurred,
+						0 otherwise)
+ CACHE_READ	attempt to read from		component path, cache key, success flag
+		data cache (mc_cache)		(1 if item was found, 0 otherwise)
+ CACHE_STORE	store to data cache		component path, cache key
+ COMP_LOAD	component loaded into memory	component path
+		for first time	
+
+The request number is an incremental value that uniquely identifies
+each request for a given child process. Use it to match up
+REQ_START/REQ_END pairs.
+
+To turn on logging, specify a string value to C<system_log_events>
+containing one or more event names separated by '|'. In additional to
+individual event names, the following names can be used to specify
+multiple events:
+
+ REQUEST = REQ_START | REQ_END
+ CACHE = CACHE_READ | CACHE_STORE
+ ALL = All events
+
+For example, to log REQ_START, REQ_END, and COMP_LOAD events, you could use
+    system_log_events => "REQUEST|COMP_LOAD"
+Note that this is a string, not a set of constants or'd together.
+
+B<Configuration Options>
+
+By default, the system log will be placed in
+data_dir/etc/system.log. You can change this with C<system_log_file>.
+
+The default line separator is ctrl-A. The advantage of this separator
+is that it is very unlikely to appear in any of the fields, making it
+easy to split() the line.  The disadvantage is that it will not always
+display, e.g. from a Unix shell, making the log harder to read
+casually.  You can change the separator to any sequence of characters
+with C<system_log_separator>.
+
+The time on each log line will be of the form "seconds.microseconds"
+if you are using Time::HiRes, and simply "seconds" otherwise.  See
+C<Config.pm> section.
+
+B<Sample Log Parser>
+
+Here is a code skeleton for parsing the various events in a log.  You
+can also find this in eg/parselog.pl in the Mason distribution.
+
+   open(LOG,"mason.log");
+   while (<LOG>) {
+       chomp;
+       my (@fields) = split("\cA");
+       my ($time,$event,$pid) = splice(@fields,0,3);
+       if ($event eq 'REQ_START') {
+           my ($reqnum,$url) = @fields;
+           ...
+       } elsif ($event eq 'REQ_END') {
+           my ($reqnum,$errflag) = @fields;
+           ...
+       } elsif ($event eq 'CACHE_READ') {  
+           my ($comp,$key,$hitflag) = @fields;
+           ...
+       } elsif ($event eq 'CACHE_STORE') { 
+           my ($comp,$key) = @fields;
+           ...
+       } elsif ($event eq 'COMP_LOAD') {
+           my ($comp) = @fields;
+           ...
+       } else {
+           warn "unrecognized event type: $event\n";
+       }
+   }
+   
+
+B<Suggested Uses>
+
+Performance: REQUEST events are useful for analyzing the performance
+of all Mason requests occurring on your site, and identifying the
+slowest requests. (You cannot measure this with standard Apache logs
+since they only record the end time of the request.) eg/perflog.pl
+in the Mason distribution is a log parser that outputs the average
+compute time of each unique URL, in order from slowest to quickest.
+
+Server activity: REQUEST events are useful for determining what
+your web server children are working on, especially when you have a
+runaway.  For a given process, simply tail the log and find the last
+REQ_START event with that process id. (You can also use the Apache
+status page for this, of course.)
+
+Cache efficiency: CACHE events are useful for monitoring cache "hit
+rates" (number of successful reads over total number of reads) over
+all components that use a data cache.  Because stores to a cache are
+more expensive than reads, a high hit rate is essential for the cache
+to have a beneficial effect. If a particular cache hit rate is too
+low, you may want to consider changing how frequently it is expired or
+whether to use it at all.
+
+Load frequency: COMP_LOAD events are useful for determining which
+components are loaded most often and therefore good candidates for
+preloading.
+
+
 =head1 PERFORMANCE TUNING
 
 This section explains Mason's various performance enhancements and how
@@ -316,13 +457,18 @@ component.
 
 store the subroutine body in an object file under
 C<data_dir/obj/I<component-path>>.  Future server processes
-can eval the object file and save time on parsing.  Both entities are
-recomputed if the component source file changes.
+can eval the object file and save time on parsing.
 
 =back
 
+Both entities are recomputed if the component source file changes.
+
 Besides improving performance, object files are essential for
-debugging and interpretation of compilation errors.
+debugging and interpretation of compilation errors. However, if you
+don't want Mason to create object files (e.g. if disk space is
+scarce), you can turn them off by passing C<use_object_files>=>0 to the
+Interp object.
+
 
 =head2 Source References
 
@@ -492,14 +638,16 @@ showing a detailed error message in the browser
 
 =item *
 
-die'ing, which sends a 501 to the browser and lets the error go to the
-error logs. The first option is ideal for development, where you want
+die'ing, which sends a 501 to the browser and lets the error message go to the
+error logs.
+
+=back
+
+The first option is ideal for development, where you want
 immediate feedback on the error.  The second option is usually desired
 for production so that users are not exposed to messy error messages.
 You control this option by setting ah->error_mode to "html" or "fatal"
 respectively.
-
-=back
 
 =head2 Debug mode
 

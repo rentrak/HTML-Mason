@@ -17,9 +17,8 @@ use File::Recurse;
 use IO::File;
 use IO::Seekable;
 use HTML::Mason::Parser;
-use HTML::Mason::Tools qw(read_file);
+use HTML::Mason::Tools qw(read_file pkg_loaded);
 use HTML::Mason::Config;
-use Date::Manip;
 use vars qw($AUTOLOAD $_SUB %_ARGS);
 my @used = ($HTML::Mason::Commands::INTERP);
 
@@ -29,7 +28,8 @@ my %fields =
      current_time => 'real',
      data_dir => undef,
      system_log_file => undef,
-     system_log_events => {},
+     system_log_events => '',
+     system_log_separator => "\cA",
      max_recurse => 16,
      parser => undef,
      preloads => [],
@@ -38,34 +38,36 @@ my %fields =
      use_object_files => 1,
      use_reload_file => 0,
      verbose_compile_error => 0,
+     data_cache_dir => '',
      );
 
 sub new
 {
     my $class = shift;
     my $self = {
-		_permitted => \%fields,
-		%fields,
-		code_cache => {},
-		data_cache_store => {},
-		files_written => [],
-		hooks => [],
-		hook_index => {},
-		last_reload_time => 0,
-		last_reload_file_pos => 0,
-		out_method => sub { print $_[0] },
+	_permitted => \%fields,
+	%fields,
+	code_cache => {},
+	data_cache_store => {},
+	files_written => [],
+	hooks => [],
+	hook_index => {},
+	last_reload_time => 0,
+	last_reload_file_pos => 0,
+	out_method => sub { print $_[0] },
     };
     my (%options) = @_;
     my ($rootDir,$outMethod);
     while (my ($key,$value) = each(%options)) {
-    if (exists($fields{$key})) {
-        $self->{$key} = $value;
-    } elsif ($key eq 'out_method') {
-        $outMethod = $value;
-    } else {
-        die "HTML::Mason::Interp::new: invalid option '$key'\n";
+	if (exists($fields{$key})) {
+	    $self->{$key} = $value;
+	} elsif ($key eq 'out_method') {
+	    $outMethod = $value;
+	} else {
+	    die "HTML::Mason::Interp::new: invalid option '$key'\n";
+	}
     }
-    }
+    $self->{data_cache_dir} ||= ($self->{data_dir} . "/cache");
     die "HTML::Mason::Interp::new: must specify value for comp_root\n" if !$self->{comp_root};
     die "HTML::Mason::Interp::new: must specify value for data_dir\n" if !$self->{data_dir};
     bless $self, $class;
@@ -84,64 +86,67 @@ sub _initialize
     # Create parser if not provided
     #
     if (!$self->parser) {
-    my $p = new HTML::Mason::Parser;
-    $self->parser($p);
+	my $p = new HTML::Mason::Parser;
+	$self->parser($p);
     }
 
     #
     # Create data subdirectories if necessary. mkpath will die on error.
     #
-    foreach my $subdir (qw(obj cache etc)) {
-    my @newdirs = mkpath($self->data_dir."/$subdir",0,0775);
-    $self->push_files_written(@newdirs);
+    foreach my $subdir (qw(obj cache cache/locks etc)) {
+	my @newdirs = mkpath($self->data_dir."/$subdir",0,0775);
+	$self->push_files_written(@newdirs);
+    }
+    
+    #
+    # Open system log file, and convert events string to hash
+    #
+    if ($self->system_log_events) {
+	$self->system_log_file($self->data_dir . "/etc/system.log") if !$self->system_log_file;
+	my $fh = new IO::File ">>".$self->system_log_file
+	    or die "Couldn't open system log file ".$self->{system_log_file}." for append";
+	$fh->autoflush(1);
+	my $eventstr = $self->system_log_events;
+	$eventstr =~ s/\s//g;
+	my %opts = map( ($_, 1), split /\|/, $eventstr);
+	@opts{qw(REQUEST CACHE COMP_LOAD)} = (1,1,1) if $opts{ALL};
+	@opts{qw(CACHE_READ CACHE_WRITE)} = (1,1) if $opts{CACHE};
+	@opts{qw(REQ_START REQ_END)} = (1,1) if $opts{REQUEST};
+	$self->system_log_file($fh);
+	$self->system_log_events(\%opts);
     }
     
     #
     # Preloads
     #
     if ($self->preloads) {
-    my $slen = length($self->comp_root);
-    foreach my $p (@{$self->preloads}) {
-        next if ($p !~ m@^/@);
-        my $fullPath = $self->comp_root . $p;
-        $fullPath =~ s@/$@@g;
-        if (-d $fullPath) {
-        recurse {
-            if (-f $_) {
-            my $compPath = substr($_,$slen);
-            $self->load($compPath);
-            return 0;
-            }
-        } $fullPath;
-        } elsif (-f $fullPath) {
-        my $compPath = substr($fullPath,$slen);
-        $self->load($compPath);
-        }
-    }
+	my $slen = length($self->comp_root);
+	foreach my $p (@{$self->preloads}) {
+	    next if ($p !~ m@^/@);
+	    my $fullPath = $self->comp_root . $p;
+	    $fullPath =~ s@/$@@g;
+	    if (-d $fullPath) {
+		recurse {
+		    if (-f $_) {
+			my $compPath = substr($_,$slen);
+			$self->load($compPath);
+			return 0;
+		    }
+		} $fullPath;
+	    } elsif (-f $fullPath) {
+		my $compPath = substr($fullPath,$slen);
+		$self->load($compPath);
+	    }
+	}
     }
 
     #
     # Adjust to current size of reload file
     #
     if ($self->use_reload_file && -f $self->reload_file) {
-    $self->{last_reload_file_pos} = [stat($self->reload_file)]->[7];
-    $self->{last_reload_time} = [stat($self->reload_file)]->[9];
+	$self->{last_reload_file_pos} = [stat($self->reload_file)]->[7];
+	$self->{last_reload_time} = [stat($self->reload_file)]->[9];
     }
-
-	#
-	# Open system log file if provided, and convert events string to hash
-	# For eventss: "ALL" = "REQUEST|CACHE_READ|COMP_LOAD"
-	#         and: "REQUEST" = "REQ_START|REQ_END"  (but this one's undoc'ed)
-    if ($self->system_log_file) {
-		my $fh = new IO::File ">>".$self->system_log_file
-			or die "Couldn't open system log file for append";
-		$fh->autoflush(1);
-		my %opts = map( ($_, 1), split /\|/, $self->system_log_events);
-		@opts{qw(REQUEST CACHE_READ COMP_LOAD)} = (1,1,1) if $opts{ALL};
-		@opts{qw(REQ_START REQ_END)} = (1,1) if $opts{REQUEST};
-		$self->system_log_file($fh);
-		$self->system_log_events(\%opts);
-	}
 }
 
 sub data_cache_filename
@@ -158,8 +163,9 @@ sub data_cache_filename
 # Shorthand for various data subdirectories and files.
 #
 sub object_dir { return shift->data_dir . "/obj" }
-sub data_cache_dir { return shift->data_dir . "/cache" }
 sub reload_file { return shift->data_dir . "/etc/reload.lst" }
+#this is now explicit
+#sub data_cache_dir { return shift->data_dir . "/cache" }
 
 #
 # exec is the initial entry point for executing a component.
@@ -176,14 +182,13 @@ sub exec {
 
     $self->{stack} = [];
     $self->{exec_state} = {
-    suppressed_hooks => {},
-    abort_flag => 0,
-    abort_retval => undef,
-    error_flag => 0,
+	suppressed_hooks => {},
+	abort_flag => 0,
+	abort_retval => undef,
+	error_flag => 0,
     };
     $self->check_reload_file if ($self->use_reload_file);
-    $result = $self->exec_next($callPath,%args);
-    return $result;
+    return $self->exec_next($callPath,%args);
 }
 
 #
@@ -196,19 +201,19 @@ sub check_reload_file {
     return if (!-f $reloadFile);
     my $lastmod = [stat($reloadFile)]->[9];
     if ($lastmod > $self->{last_reload_time}) {
-    my ($block);
-    my $length = [stat($reloadFile)]->[7];
-    my $fh = new IO::File $reloadFile;
-    return if !$fh;
-    my $pos = $self->{last_reload_file_pos};
-    $fh->seek(&SEEK_SET,$pos);
-    read($fh,$block,$length-$pos);
-    $self->{last_reload_time} = $lastmod;
-    $self->{last_reload_file_pos} = $fh->tell;
-    my @lines = split("\n",$block);
-    foreach my $compPath (@lines) {
-        delete($self->{code_cache}->{$compPath});
-    }
+	my ($block);
+	my $length = [stat($reloadFile)]->[7];
+	my $fh = new IO::File $reloadFile;
+	return if !$fh;
+	my $pos = $self->{last_reload_file_pos};
+	$fh->seek(&SEEK_SET,$pos);
+	read($fh,$block,$length-$pos);
+	$self->{last_reload_time} = $lastmod;
+	$self->{last_reload_file_pos} = $fh->tell;
+	my @lines = split("\n",$block);
+	foreach my $compPath (@lines) {
+	    delete($self->{code_cache}->{$compPath});
+	}
     }
 }
 
@@ -227,31 +232,31 @@ sub exec_next {
     #
     my (@info) = $self->load($callPath);
     if (!@info) {
-    if (!$allowHandlers) {
-        die "could not find component for path '$callPath'\n";
-    } else {
-        #
-        # This hack implements the ALLOW_HANDLERS flag for
-        # backward compatibility with Scribe.  Looks for home and
-        # dhandler files when component not found.  Hopefully can
-        # remove someday soon.
-        #
-        my $pathInfo = '';
-        my $p = $callPath;
-        if (!(@info = $self->load("$p/home"))) {
-        while (!(@info = $self->load("$p/dhandler"))) {
-            my ($basename,$dirname) = fileparse($p);
-            $pathInfo = "/$basename$pathInfo";
-            $p = substr($dirname,0,-1);
-            die "could not find component for path '$callPath'\n" if $p !~ /\S/;
-        }
-        $callPath = "$p/dhandler";
-        my $r = $self->vars('server') or die "No ALLOW_HANDLERS outside of Apache";
-        $r->path_info($pathInfo);
-        } else {
-        $callPath = "$p/home";
-        }
-    }
+	if (!$allowHandlers) {
+	    die "could not find component for path '$callPath'\n";
+	} else {
+	    #
+	    # This hack implements the ALLOW_HANDLERS flag for
+	    # backward compatibility with Scribe.  Looks for home and
+	    # dhandler files when component not found.  Hopefully can
+	    # remove someday soon.
+	    #
+	    my $pathInfo = '';
+	    my $p = $callPath;
+	    if (!(@info = $self->load("$p/home"))) {
+		while (!(@info = $self->load("$p/dhandler"))) {
+		    my ($basename,$dirname) = fileparse($p);
+		    $pathInfo = "/$basename$pathInfo";
+		    $p = substr($dirname,0,-1);
+		    die "could not find component for path '$callPath'\n" if $p !~ /\S/;
+		}
+		$callPath = "$p/dhandler";
+		my $r = $self->vars('server') or die "No ALLOW_HANDLERS outside of Apache";
+		$r->path_info($pathInfo);
+	    } else {
+		$callPath = "$p/home";
+	    }
+	}
     }
     my ($sub,$sourceFile) = @info;
 
@@ -271,8 +276,8 @@ sub exec_next {
     #
     my $depth = $self->depth;
     if ($depth > $self->max_recurse) {
-    my $max = $self->max_recurse;
-    shift(@{$self->{stack}});
+	my $max = $self->max_recurse;
+	shift(@{$self->{stack}});
         die ">$max levels deep in component stack (infinite recursive call?)\n";
     }
 
@@ -288,13 +293,13 @@ sub exec_next {
     $locals->{callFunc} = $sub;
     $locals->{callArgs} = \%args;
     if ($store) {
-    die "exec_next: STORE is not a scalar reference" if ref($store) ne 'SCALAR';
-    $$store = '';
-    $locals->{sink} = sub { $$store .= $_[0] }
+	die "exec_next: STORE is not a scalar reference" if ref($store) ne 'SCALAR';
+	$$store = '';
+	$locals->{sink} = sub { $$store .= $_[0] }
     } elsif ($depth==1) {
-    $locals->{sink} = $self->out_method;
+	$locals->{sink} = $self->out_method;
     } else {
-    $locals->{sink} = $self->{stack}->[1]->{sink};
+	$locals->{sink} = $self->{stack}->[1]->{sink};
     }
     $self->{stack}->[0] = $locals;
 
@@ -308,14 +313,14 @@ sub exec_next {
     #
     my ($result, @result);
     {
-    local $_SUB = $sub;
-    local %_ARGS = %args;
-    local $SIG{'__DIE__'} = sub { confess($_[0]) };
-    if (wantarray) {
-        @result = eval {$sub->(%args);};
-    } else {
-        $result = eval {$sub->(%args);};
-    }
+	local $_SUB = $sub;
+	local %_ARGS = %args;
+	local $SIG{'__DIE__'} = sub { confess($_[0]) };
+	if (wantarray) {
+	    @result = eval {$sub->(%args);};
+	} else {
+	    $result = eval {$sub->(%args);};
+	}
     }
 
     #
@@ -323,11 +328,11 @@ sub exec_next {
     #
     $err = $@;
     if ($err) {
-    
-    #
-    # If we are in an abort state (e.g. user called mc_abort),
-    # just die up til top level.
-    #
+	
+	#
+	# If we are in an abort state (e.g. user called mc_abort),
+	# just die up til top level.
+	#
         if ($self->{exec_state}->{abort_flag}) {
             shift(@{$self->{stack}});
             if (scalar(@{$self->{stack}}) > 0) {
@@ -337,12 +342,12 @@ sub exec_next {
             }
         }
 
-    #
-    # If this is the first level to process the error,
-    # add some information and clean it up.
-    #
+	#
+	# If this is the first level to process the error,
+	# add some information and clean it up.
+	#
         if (!$self->{exec_state}->{error_flag}) {
-        $self->{exec_state}->{error_flag} = 1;
+	    $self->{exec_state}->{error_flag} = 1;
             my $i = index($err,'HTML::Mason::Interp::exec');
             $err = substr($err,0,$i)."..." if $i!=-1;
             $err = "error while executing $callPath:\n$err";
@@ -350,14 +355,14 @@ sub exec_next {
                 $err .= "backtrace: ";
                 $err .= join(" <= ",map($_->{callPath},@{$self->{stack}}));
             }
-    }
-    $err =~ s@\[[^\]]*\] ([^:]+:) @@mg;
+	}
+	$err =~ s@\[[^\]]*\] ([^:]+:) @@mg;
 
-    #
-    # Pass error along to next level.
-    #
-    shift(@{$self->{stack}});
-    die ("$err\n");
+	#
+	# Pass error along to next level.
+	#
+	shift(@{$self->{stack}});
+	die ("$err\n");
     }
 
     #
@@ -407,7 +412,7 @@ sub load {
     # If using reload file, check cache first.
     #
     if (exists($codeCache->{$path}) && $self->use_reload_file) {
-    return @{$codeCache->{$path}->{info}};
+	return @{$codeCache->{$path}->{info}};
     }
     
     #
@@ -416,25 +421,25 @@ sub load {
     #
     $srcfile = $compRoot . $path;
     if (defined($self->alternate_sources)) {
-    my @alts = $self->alternate_sources->('comp',$path);
-    foreach my $alt (@alts) {
-        if (-f $compRoot . $alt) {
-        $srcfile = $compRoot . $alt;
-        last;
-        }
-    }
+	my @alts = $self->alternate_sources->('comp',$path);
+	foreach my $alt (@alts) {
+	    if (-f $compRoot . $alt) {
+		$srcfile = $compRoot . $alt;
+		last;
+	    }
+	}
     }
     return () if (!-f $srcfile);
     if ($self->use_object_files) {
-    $objfile = $self->object_dir . substr($srcfile,length($compRoot));
+	$objfile = $self->object_dir . substr($srcfile,length($compRoot));
     }
-        
+    
     #
     # If not using reload file, check the last modified times of
     # source and object filename.
     #
     if (!$self->use_reload_file) {
-    $srcfilemod = [stat($srcfile)]->[9];
+	$srcfilemod = [stat($srcfile)]->[9];
     }
 
     #
@@ -442,79 +447,80 @@ sub load {
     # use the cached sub.
     #
     if (exists($codeCache->{$path}) && ($self->use_reload_file || $codeCache->{$path}->{lastmod} >= $srcfilemod) && $codeCache->{$path}->{info}->[1] eq $srcfile) {
-    return @{$codeCache->{$path}->{info}};
+	return @{$codeCache->{$path}->{info}};
     } else {
-    if ($self->use_reload_file) {
-        $srcfilemod = [stat($srcfile)]->[9];
-    }
-    $objfilemod = (defined($objfile) && (-f $objfile)) ? [stat($objfile)]->[9] : 0;
-    
-    #
-    # Determine a subroutine.
-    #
-    # If an object file exists, and it is up to date with the
-    # source file, eval the file. A blank object file signifies
-    # a pure text component.
-    #
+	if ($self->use_reload_file) {
+	    $srcfilemod = [stat($srcfile)]->[9];
+	}
+	$objfilemod = (defined($objfile) && (-f $objfile)) ? [stat($objfile)]->[9] : 0;
+	
+	#
+	# Determine a subroutine.
+	#
+	# If an object file exists, and it is up to date with the
+	# source file, eval the file. A blank object file signifies
+	# a pure text component.
+	#
 	$self->write_system_log('COMP_LOAD', $path);	# log the load event
 
-    if ($objfile && $objfilemod >= $srcfilemod) {
-        if ([stat($objfile)]->[7]==0) {
-        $sub = \&pure_text_handler;
-        } else {
-        $self->parser->evaluate(script_file=>$objfile,code=>\$sub,error=>\$err);
-        if ($err) {
-            $sub = sub { die "Error while loading '$objfile' at runtime:\n$err\n" };
-        }
-        }
-    }
+	if ($objfile && $objfilemod >= $srcfilemod) {
+	    if ([stat($objfile)]->[7]==0) {
+		$sub = \&pure_text_handler;
+	    } else {
+		$self->parser->evaluate(script_file=>$objfile,code=>\$sub,error=>\$err);
+		if ($err) {
+		    $sub = sub { die "Error while loading '$objfile' at runtime:\n$err\n" };
+		}
+	    }
+	}
 
-    #
-    # Parse the source file, and possibly save result in object file.
-    #
-    else {
-        my ($script,$objtext,$errmsg,$pureTextFlag);
-        my $success = $self->parser->parse(script_file=>$srcfile, result_text=>\$objtext, error=>\$errmsg, result_code=>\$sub, pure_text_flag=>\$pureTextFlag);
-        $sub = \&pure_text_handler if ($pureTextFlag);
-        if (!$success) {
-        $errmsg = "Error during compilation of $srcfile:\n$errmsg\n";
-        if ($objtext && $self->verbose_compile_error) {
-            my @lines = split(/\n/,$objtext);
-            for (my $l = 0; $l < @lines; $l++) {
-            $errmsg .= sprintf("%4d %s\n",$l+1,$lines[$l]);
-            }
-        }
-        $errmsg =~ s/\'/\\\'/g;
-        $errmsg =~ s/\(eval [0-9]\) //g;
-        my $script = "return sub { die '$errmsg' };";
-        $sub = eval($script);
-        }
-        if ($objfile) {
-        # Create object file.  Note: we attempt to handle
-        # several cases in which a file already exists and we
-        # wish to create a directory, or vice versa.  However,
-        # not every case is handled; to be complete, mkpath
-        # would have to unlink any existing file in its way.
-        my ($dirname) = dirname($objfile);
-        if (!-d $dirname) {
-            unlink($dirname) if (-e $dirname);
-            my @newdirs = mkpath($dirname,0,0775);
-            $self->push_files_written(@newdirs);
-        }
-        rmtree($objfile) if (-d $objfile);
-        my $outfh = new IO::File ">$objfile" or die "Interp::load: cannot open '$objfile' for writing\n";
-        $self->push_files_written($objfile);
-        $outfh->print($objtext) if (!$pureTextFlag);
-        }
-    }
-    
-    #
-    # Cache code in memory
-    #
-    my @info = ($sub,$srcfile);
-    $codeCache->{$path}->{lastmod} = $srcfilemod if !$self->use_reload_file;
-    $codeCache->{$path}->{info} = \@info;
-    return @info;
+	#
+	# Parse the source file, and possibly save result in object file.
+	#
+	else {
+	    my ($script,$objtext,$errmsg,$pureTextFlag);
+	    my $success = $self->parser->parse(script_file=>$srcfile, result_text=>\$objtext, error=>\$errmsg, result_code=>\$sub, pure_text_flag=>\$pureTextFlag);
+	    $sub = \&pure_text_handler if ($pureTextFlag);
+	    if (!$success) {
+		$errmsg = "Error during compilation of $srcfile:\n$errmsg\n";
+		if ($objtext && $self->verbose_compile_error) {
+		    my @lines = split(/\n/,$objtext);
+		    for (my $l = 0; $l < @lines; $l++) {
+			$errmsg .= sprintf("%4d %s\n",$l+1,$lines[$l]);
+		    }
+		}
+		$errmsg =~ s/\'/\\\'/g;
+		$errmsg =~ s/\(eval [0-9]\) //g;
+		($errmsg) = ($errmsg =~ /^(.*)$/s);
+		my $script = "return sub { die '$errmsg' };";
+		$sub = eval($script);
+	    }
+	    if ($objfile) {
+		# Create object file.  Note: we attempt to handle
+		# several cases in which a file already exists and we
+		# wish to create a directory, or vice versa.  However,
+		# not every case is handled; to be complete, mkpath
+		# would have to unlink any existing file in its way.
+		my ($dirname) = dirname($objfile);
+		if (!-d $dirname) {
+		    unlink($dirname) if (-e $dirname);
+		    my @newdirs = mkpath($dirname,0,0775);
+		    $self->push_files_written(@newdirs);
+		}
+		rmtree($objfile) if (-d $objfile);
+		my $outfh = new IO::File ">$objfile" or die "Interp::load: cannot open '$objfile' for writing\n";
+		$self->push_files_written($objfile);
+		$outfh->print($objtext) if (!$pureTextFlag);
+	    }
+	}
+	
+	#
+	# Cache code in memory
+	#
+	my @info = ($sub,$srcfile);
+	$codeCache->{$path}->{lastmod} = $srcfilemod if !$self->use_reload_file;
+	$codeCache->{$path}->{info} = \@info;
+	return @info;
     }
 }
 
@@ -548,16 +554,11 @@ sub stack {
 sub current_time {
     my $self = shift;
     if (@_) {
-    my $value = shift;
-        if ($value eq 'real') {
-            return $self->{current_time} = 'real';
-        } else {
-            my $date = ParseDate($value);
-            die "current_time: bad time string '$value'\n" if !$date;
-            return $self->{current_time} = $date;
-        }
+	my $newtime = shift;
+	die "Interp->current_time: invalid value '$newtime' - must be 'real' or a numeric time value" if $newtime ne 'real' && $newtime !~ /^[0-9]+$/;
+	return $self->{current_time} = $newtime;
     } else {
-    return $self->{current_time};
+	return $self->{current_time};
     }
 }
 
@@ -581,13 +582,13 @@ sub out_method
 {
     my ($self, $value) = @_;
     if (defined($value)) {
-    if (ref($value) eq 'SCALAR') {
-        $self->{out_method} = sub { $$value .= $_[0] };
-    } elsif (ref($value) eq 'CODE') {
-        $self->{out_method} = $value;
-    } else {
-        die "out_method: argument must be a scalar or code reference";
-    }
+	if (ref($value) eq 'SCALAR') {
+	    $self->{out_method} = sub { $$value .= $_[0] };
+	} elsif (ref($value) eq 'CODE') {
+	    $self->{out_method} = $value;
+	} else {
+	    die "out_method: argument must be a scalar or code reference";
+	}
     }
     return $self->{out_method};
 }
@@ -615,7 +616,7 @@ sub add_hook {
     my ($self, %args) = @_;
     my @validTypes = qw(start_comp start_primary end_primary end_comp start_file end_file);
     foreach (qw(name type code)) {
-    die "add_hook: must specify $_\n" if !exists($args{$_});
+	die "add_hook: must specify $_\n" if !exists($args{$_});
     }
     die "add_hook: type must be one of ".join(",",@validTypes)."\n" if !grep($_ eq $args{type},@validTypes);
     die "add_hook: code must be a code reference\n" if ref($args{code}) ne 'CODE';
@@ -628,16 +629,16 @@ sub index_hooks {
     my ($self) = @_;
     my %hookindex;
     foreach my $hook (@{$self->{hooks}}) {
-    my $name = $hook->{name};
-    my $type = $hook->{type};
-    push(@{$hookindex{"$name\cA$type"}},$hook);
-    push(@{$hookindex{"*\cA$type"}},$hook);
-    push(@{$hookindex{"$name\cA*"}},$hook);
+	my $name = $hook->{name};
+	my $type = $hook->{type};
+	push(@{$hookindex{"$name\cA$type"}},$hook);
+	push(@{$hookindex{"*\cA$type"}},$hook);
+	push(@{$hookindex{"$name\cA*"}},$hook);
     }
     my @keys = keys(%hookindex);
     foreach my $key (@keys) {
-    my @hooklst = sort {$a->{order} <=> $b->{order}} @{$hookindex{$key}};
-    $hookindex{$key} = [@hooklst];
+	my @hooklst = sort {$a->{order} <=> $b->{order}} @{$hookindex{$key}};
+	$hookindex{$key} = [@hooklst];
     }
     $self->{hook_index} = {%hookindex};
 }
@@ -664,7 +665,7 @@ sub suppress_hooks {
     my ($self, %args) = @_;
     my @matchhooks = $self->find_hooks(%args);
     foreach my $hook (@matchhooks) {
-    $self->{exec_state}->{suppressed_hooks}->{$hook} = 1;
+	$self->{exec_state}->{suppressed_hooks}->{$hook} = 1;
     }
 }
 
@@ -672,7 +673,7 @@ sub unsuppress_hooks {
     my ($self, %args) = @_;
     my @matchhooks = $self->find_hooks(%args);
     foreach my $hook (@matchhooks) {
-    delete($self->{exec_state}->{suppressed_hooks}->{$hook});
+	delete($self->{exec_state}->{suppressed_hooks}->{$hook});
     }
 }
 
@@ -683,31 +684,31 @@ sub call_hooks {
     @params = @{$args{params}} if (defined($args{params}));
 
     foreach my $hook (@matchhooks) {
-    if (!$self->{exec_state}->{suppressed_hooks}->{$hook}) {
-        $hook->{code}->($self,@params);
-    }
+	if (!$self->{exec_state}->{suppressed_hooks}->{$hook}) {
+	    $hook->{code}->($self,@params);
+	}
     }
 }
 
 #
-# Write a line to the Mason system log, with fields separated by ^A's
-# Each line is automatically prepended with the HIRES.TIME and PID
+# Write a line to the Mason system log.
+# Each line begins with the time, pid, and event name.
 #
 # We only print the line if the log file handle is defined AND the
-# line label is in our system_log_events hash.
+# event name is in our system_log_events hash.
 #
 sub write_system_log {
     my $self = shift;
 
-	if (defined $self->system_log_file) {
-		$self->system_log_file->print(join ("\cA",
-		#scalar gettimeofday,    # HiRes current time
-		time(),				    
-	        $_[0],                  # line label (REQ_START, END, etc)
-	        $$,                     # pid
-	        @_[1..$#_]              # rest of args from caller
-	    ),"\n") if $self->system_log_events->{$_[0]};
-	}
+    if (defined $self->system_log_file && $self->system_log_events->{$_[0]}) {
+	my $time = (pkg_loaded("Time::HiRes") ? scalar(Time::HiRes::gettimeofday()) : time);
+	$self->system_log_file->print(join ($self->system_log_separator,
+					    $time,                  # current time
+					    $_[0],                  # event name
+					    $$,                     # pid
+					    @_[1..$#_]              # event-specific fields
+					    ),"\n");
+    }
 }
 
 sub AUTOLOAD {

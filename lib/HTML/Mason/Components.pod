@@ -595,17 +595,22 @@ expire. Mason supports three types of expiration:
 (e.g. the item expires in an hour, or at midnight). To expire an item
 by time, pass one of these options to the 'store' action.
 
-I<expire_at>: takes an absolute expiration time, in any form
-acceptable to B<Date::Manip::ParseDate>.
+I<expire_at>: takes an absolute expiration time, in Perl time() format
+(number of seconds since the epoch)
 
-I<expire_in>: takes a relative expiration time in the form of a delta
-acceptable to B<Date::Manip::ParseDateDelta>, e.g. '1 hour', '10 min'.
+I<expire_in>: takes a relative expiration time of the form
+"<num><unit>", where <num> is a positive number and <unit> is one of
+sec, seconds, min, minutes, hours, days, weeks, or months. You can
+also use the first letter or singular form of any of these. (This
+notation was adapted from Sullivan Beck's Date::Manip package.)
+E.g. "30sec", "10min", "1hour", "4h".
 
 I<expire_next>: takes a string, either 'hour' or 'day'. It indicates
 an expiration time at the top of the next hour or day.
 
 Examples:
 
+    mc_cache(action=>'store', expire_in=>'15min');
     mc_cache(action=>'store', expire_in=>'2 hours');
     mc_cache(action=>'store', expire_next=>'hour');
 
@@ -621,7 +626,7 @@ parameter, the time when the cache value was last written.
 
 Example:
 
-    # expire the cache if 'myfile' is newer
+    # expire the cache if 'myfile' has changed since the cache was written
     mc_cache(action => 'retrieve',
           expire_if => sub { [stat 'myfile']->[9] > $_[0] });
 
@@ -639,6 +644,14 @@ how they are named.
                        action=>'expire' [, key=>'fookey']);
 
 =back
+
+=head2 Keeping In Memory
+
+The keep_in_memory flag indicates that the cache value should be kept
+in memory after it is stored or retrieved.  Since every child
+process will store its own copy, this flag should be used only for
+small, frequently retrieved cache values. If used, this flag should be
+passed to both the store and retrieve commands.
 
 =head2 Caching All Output 
 
@@ -658,7 +671,7 @@ might rename it to "foo_main" and put this component in its place:
         }
     </%perl_init>
 
-This works, but Mason offers a better shortcut: the
+This works, but is cumbersome. Mason offers a better shortcut: the
 B<mc_cache_self()> command that lets a component cache it's own
 output and eliminates the need for a dummy component. It is typically
 used right at the top of a C<E<lt>%perl_init%E<gt>> section:
@@ -722,17 +735,16 @@ mc_suppress_http_header.
 
 To cancel header suppression, call mc_suppress_http_header(0). 
 
-=head1 DEBUGGING COMPONENTS
+=head1 USING THE PERL DEBUGGER
 
-Since most components contain Perl code, getting a sick component to
-work is basically equivalent to debugging a Perl script, with a few
-restrictions imposed by the fact that components run inside
-mod_perl's embedded Perl interpreter. The main hurdle there,
-obviously, the lack of an interactive debugging environment.
+The Perl debugger is an indispensable tool for identifying and fixing
+bugs in Perl programs.  Unfortunately, in a mod_perl environment one
+is normally unable to use the debugger since programs are run from a
+browser.  Mason removes this limitation by optionally creating a I<debug
+file> for each page request, allowing the request to be replayed from
+the command line or Perl debugger.
 
-Mason threfore includes some workaround features that capture requests
-to "debug files", which can later be fed into Perl's command-line
-debugger. Here is a typical sequence for debugging a Mason component:
+Here is a typical sequence for debugging a Mason page:
 
 =over
 
@@ -821,7 +833,9 @@ various times of day.
 
 The Previewer also provides a debug trace of a page, showing all
 components being called and indicating the portion of HTML each
-component is responsible for.
+component is responsible for. For pages constructed from more than a
+few components, these traces are quite useful for finding the
+component that is outputting a particular piece of HTML.
 
 Your administrator will give you the main Previewer URL, and a set of
 preview ports that you will use to view your site under various
@@ -881,12 +895,27 @@ subroutine within a subroutine, which makes Perl very unhappy.
 Instead, use local anonymous subroutines or create another component
 and call with B<mc_comp>.
 
-=item Do Not Call $r->content
+=item Do Not Call $r->content or "new CGI"
 
 Mason calls C<$r-E<gt>content> itself to read request input, emptying
 the input buffer and leaving a trap for the unwary: subsequent calls
-to C<$r-E<gt>content> hang the server. This is a mod_perl problem, to
-be fixed in an upcoming release.
+to C<$r-E<gt>content> hang the server. This is a mod_perl "feature" that
+may be fixed in an upcoming release.
+
+For the same reason you should not create a CGI object like
+
+  my $query = new CGI;
+
+when handling a POST; the CGI module will try to reread request input
+and hang. Instead, create an empty object:
+
+  my $query = new CGI ("");
+
+such an object can still be used for all of CGI's useful HTML output
+functions. Or, if you really want to use CGI's input functions,
+initialize the object from %ARGS:
+
+  my $query = new CGI (%ARGS);
 
 =item Separating Perl From HTML
 
