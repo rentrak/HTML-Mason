@@ -1,0 +1,13 @@
+<HTML>
+<HEAD>
+<TITLE>
+flags Test
+</TITLE>
+</HEAD>
+<BODY>
+foo
+</BODY>
+</HTML>
+<%flags>
+inherit=>undef   # an inherit flag
+</%flags>

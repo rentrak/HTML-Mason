@@ -297,6 +297,104 @@ plain variable name:
 
     $dbh->prepare...
 
+=head2 Declining image requests
+
+Mason should be prevented from serving images, tarballs, and other
+binary files as regular components. Such a file may inadvertently
+contain a Mason character sequence such as "<%", causing an error.
+
+There are several ways to restrict which file types are handled by Mason.
+One way is with a line at the top of handler(), e.g.:
+
+    return -1 if $r->content_type && $r->content_type !~ m|^text/|i;
+
+This line allows text/html and text/plain to pass through but not much
+else.  It is included (commented out) in the default handler.pl.
+
+Another way is specifying a filename pattern in the Apache
+configuration, e.g.:
+
+    <FilesMatch "(\.html|\.txt|^[^\.]+)$>
+    SetHandler perl-script
+    PerlHandler HTML::Mason
+    </FilesMatch>
+
+This directs Mason to handle only files with .html, .txt, or no extension.
+
+=head2 Securing top-level components
+
+Users may exploit a server-side scripting environment by invoking
+scripts with malicious or unintended arguments. Mason administrators
+need to be particularly wary of this because of the tendency to break
+out "subroutines" into individually accessible file components.
+
+For example, a Mason developer might create a helpful shared component
+for performing sql queries:
+
+    $m->comp('sql_select', table=>'employee', where=>'id=315');
+
+This is a perfectly reasonable component to create and call internally,
+but clearly presents a security risk if accessible via URL:
+
+    http://www.foo.com/sql_select?table=credit_cards&where=*
+
+Of course a web user would have to obtain the name of this component
+through guesswork or other means, but obscurity alone does not
+properly secure a system.  Rather, you should choose a site-wide
+policy for distinguishing top-level components from private
+components, and make sure your developers stick to this policy. You
+can then prevent private components from being served.
+
+One solution is to place all private components inside a directory,
+say /private, that lies under the component root but outside the
+document root.
+
+Another solution is to decide on a naming convention, for example,
+that all private components begin with "_", or that all top-level
+components must end in ".html". Then turn all private requests away
+with a 404 NOT_FOUND (rather than, say, a 403 FORBIDDEN which would
+provide more information than necessary). Use either an Apache directive
+
+    <FilesMatch "^_">
+    SetHandler perl-script
+    PerlHandler "sub { return 404 }"
+    </FilesMatch>
+
+or a handler.pl directive:
+
+    return 404 if $r->filename =~ m{_[^/]+$};
+
+Even after you've safely protected internal components, top-level
+components that process arguments (such as form handlers) still
+present a risk. Users can invoke such a component with arbitrary
+argument values via a handcrafted query string. Always check incoming
+arguments for validity and never place argument values directly into
+SQL, shell commands, etc. Unfortunately, Mason does not yet work with
+with Perl's taint checking which would help ensure these principles.
+
+=head2 Allowing directory requests
+
+By default Mason will decline requests for directories, leaving Apache
+to serve up a directory index or a FORBIDDEN as appropriate.
+Unfortunately this rule applies even if there is a dhandler in the
+directory: /foo/bar/dhandler does not get a chance to
+handle a request for /foo/bar.
+
+If you would like Mason to handle directory requests, do the
+following:
+
+1. Set the ApacheHandler/decline_dirs ApacheHandler parameter to 0.
+
+2. If your handler.pl contains the standard "return -1" line to
+decline non-text requests (as given in the previous section), add a
+clause allowing directory types:
+
+    return -1 if $r->content_type && $r->content_type !~ m|^text/|i
+                 && $r->content_type !~ m|directory$|i;
+
+The dhandler that catches a directory request is responsible for
+setting a reasonable content type.
+
 =head1 STANDARD FEATURES
 
 This section explains how standard Mason features work and how to
@@ -780,7 +878,8 @@ context such as the middle of a table which never gets closed. In batch
 mode, the error message is output neatly and alone.
 
 Batch mode also offers more flexibility in controlling HTTP
-headers. See Devel/sending_http_headers.
+headers (see Devel/sending_http_headers) and in handling
+mid-request error conditions (see Request/clear_buffer).
 
 Stream mode may help get data to the browser more quickly, allowing
 server and browser to work in parallel. It also prevents memory

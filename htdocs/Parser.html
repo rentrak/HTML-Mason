@@ -79,6 +79,27 @@ In a mod_perl environment, <CODE>$r</CODE> (the request object) is automatically
 
 <P>
 
+<DT><STRONG><A NAME="item_default_escape_flags">default_escape_flags
+
+</A></STRONG><DD>
+Escape flags to apply to all &lt;% %&gt; expressions by default. The
+current valid flags are
+
+
+<P>
+
+<PRE>    h - escape for HTML ('&lt;' =&gt; '&amp;lt;', etc.)
+    u - escape for URL (':' =&gt; '%3A', etc.)
+</PRE>
+
+<P>
+
+The developer can override default escape flags on a per-expression basis;
+see <A HREF="././Devel.html#escaping_expressions">escaping_expressions</A>.
+
+
+<P>
+
 <DT><STRONG><A NAME="item_ignore_warnings_expr">ignore_warnings_expr
 
 </A></STRONG><DD>

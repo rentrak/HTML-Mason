@@ -2,6 +2,7 @@
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
+use strict;
 require 5.004;
 
 #----------------------------------------------------------------------
@@ -9,7 +10,6 @@ require 5.004;
 # APACHE-SPECIFIC REQUEST OBJECT
 #
 package HTML::Mason::Request::ApacheHandler;
-require Exporter;
 use vars qw(@ISA);
 @ISA = qw(HTML::Mason::Request);
 
@@ -56,12 +56,7 @@ sub flush_buffer
 # APACHEHANDLER OBJECT
 #
 package HTML::Mason::ApacheHandler;
-require Exporter;
-@ISA = qw(Exporter);
-@EXPORT = qw();
-@EXPORT_OK = qw();
 
-use strict;
 #JS - 6/30 - seems to infinite loop when using debug...help?!
 #use Apache::Constants qw(OK DECLINED SERVER_ERROR NOT_FOUND);
 sub OK { return 0 }
@@ -77,10 +72,15 @@ use HTML::Mason::FakeApache;
 use HTML::Mason::Tools qw(dumper_method html_escape url_unescape pkg_installed);
 use HTML::Mason::Utils;
 use Apache::Status;
-use CGI qw(-private_tempfiles);
+use Apache::URI;
+
+# use() params. Assign defaults, in case ApacheHandler is only require'd.
+use vars qw($LOADED $ARGS_METHOD);
+$LOADED = 0;
+$ARGS_METHOD = undef;
 
 my @used = ($HTML::Mason::IN_DEBUG_FILE);
-	    
+
 # Fields that can be set in new method, with defaults
 my %fields =
     (
@@ -97,6 +97,36 @@ my %fields =
      debug_handler_proc => undef,
      debug_dir_config_keys => [],
      );
+
+sub import
+{
+    shift; # class not needed
+
+    return if $LOADED;
+
+    my %params = @_;
+
+    # safe default.
+    $params{args_method} ||= 'CGI';
+    if ($params{args_method} eq 'CGI')
+    {
+	eval 'use CGI';
+	die $@ if $@;
+	$ARGS_METHOD = '_cgi_args';
+    }
+    elsif ($params{args_method} eq 'mod_perl')
+    {
+	eval 'use Apache::Request;';
+	die $@ if $@;
+	$ARGS_METHOD = '_mod_perl_args';
+    }
+    else
+    {
+	die "Invalid args_method parameter ('$params{args_method}') given to HTML::Mason::ApacheHandler in 'use'\n";
+    }
+
+    $LOADED = 1;
+}
 
 sub new
 {
@@ -120,36 +150,44 @@ sub new
     return $self;
 }
 
+my %status_sub_defined = ();
+
 sub _initialize {
     my ($self) = @_;
 
     my $interp = $self->interp;
 
-    # Add an HTML::Mason menu item to the /perl-status page. Things we report:
-    # -- Interp properties
-    # -- loaded (cached) components
-    my $name = $self->{apache_status_title};
-    my $title;
-    if ($name eq 'mason') {
-        $title='HTML::Mason status';    #item for HTML::Mason module
-    } else {
-        $title=$name;
-        $name=~s/\W/_/g;
+    if ($Apache::Status::VERSION) {
+	# Add an HTML::Mason menu item to the /perl-status page. Things we report:
+	# -- Interp properties
+	# -- loaded (cached) components
+	my $name = $self->apache_status_title;
+	unless ($status_sub_defined{$name}) {
+
+	    my $title;
+	    if ($name eq 'mason') {
+		$title='HTML::Mason status';
+	    } else {
+		$title=$name;
+		$name=~s/\W/_/g;
+	    }
+
+	    my $statsub = sub {
+		my ($r,$q) = @_; # request and CGI objects
+		return [] if !defined($r);
+		my @strings = ();
+
+		push (@strings,
+		      qq(<FONT size="+2"><B>$self->apache_status_title</B></FONT><BR><BR>),
+		      $self->interp_status);
+
+		return \@strings;     # return an array ref
+	    };
+	    Apache::Status->menu_item ($name,$title,$statsub);
+	    $status_sub_defined{$name}++;
+	}
     }
 
-    my $statsub = sub {
-	my($r,$q) = @_; #request and CGI objects
-	return [] if !defined($r);
-	my(@strings);
-
-	push (@strings,
-	      qq(<FONT size="+2"><B>$self->{apache_status}</B></FONT><BR><BR>),
-	      $self->interp_status);
-
-	return \@strings;     #return an array ref
-    };
-    Apache::Status->menu_item ($name,$title,$statsub) if $Apache::Status::VERSION;
-    
     #
     # Create data subdirectories if necessary. mkpath will die on error.
     #
@@ -244,15 +282,6 @@ sub handle_request {
 	if ($debugMode eq 'all' or $debugMode eq 'error');
 
     #
-    # Write debug file as early as possible if debug mode is
-    # 'all'. However, we must unfortunately wait in the case of POSTs
-    # because we don't yet have the stdin content.
-    #
-    my $debugMsg;
-    $debugMsg = $self->write_debug_file($apreq,$debugState)
-	if ($debugMode eq 'all' && $apreq->method ne 'POST');
-
-    #
     # Create an Apache-specific request with additional slots.
     #
     my $request = new HTML::Mason::Request::ApacheHandler
@@ -260,11 +289,12 @@ sub handle_request {
 	 interp=>$interp,
 	 apache_req=>$apreq
 	 );
-
+    
     eval { $retval = handle_request_1($self, $apreq, $request, $debugState) };
     my $err = $@;
     my $err_code = $request->{error_code};
     undef $request;  # ward off memory leak
+    my $err_status = $err ? 1 : 0;
 
     if ($err) {
 	#
@@ -290,15 +320,19 @@ sub handle_request {
 		$apreq->send_http_header();
 	    }
 	    print("<h3>System error</h3><p><pre><font size=-1>$err</font></pre>\n");
-	    $debugMsg = $self->write_debug_file($apreq,$debugState) if ($debugMode eq 'error' || ($debugMode eq 'all' && $apreq->method eq 'POST'));
-	    print("<pre><font size=-1>\n$debugMsg\n</font></pre>\n") if defined($debugMsg);
+	    if ($debugMode eq 'error' or $debugMode eq 'all') {
+		my $debugMsg = $self->write_debug_file($apreq,$debugState);
+		print("<pre><font size=-1>\n$debugMsg\n</font></pre>\n");
+	    }
 	}
     } else {
-	$debugMsg = $self->write_debug_file($apreq,$debugState) if ($debugMode eq 'all' && $apreq->method eq 'POST');
-	print "\n<!--\n$debugMsg\n-->\n" if (defined($debugMsg) && http_header_sent($apreq) && !$apreq->header_only && $apreq->header_out("Content-type") =~ /text\/html/);
+	if ($debugMode eq 'all') {
+	    my $debugMsg = $self->write_debug_file($apreq,$debugState);
+	    print "\n<!--\n$debugMsg\n-->\n" if (http_header_sent($apreq) && !$apreq->header_only && $apreq->header_out("Content-type") =~ /text\/html/);
+	}
     }
 
-    $interp->write_system_log('REQ_END', $self->{request_number}, ($err ? 1 : 0));
+    $interp->write_system_log('REQ_END', $self->{request_number}, $err_status);
     return ($err) ? &OK : (defined($retval)) ? $retval : &OK;
 }
 
@@ -463,11 +497,18 @@ sub handle_request_1
 	    $r->content_type(undef);
 	}
     }
-    
+
+    #
+    # Append path_info if filename does not represent an existing file
+    # (mainly for dhandlers).
+    #
+    my $pathname = $r->filename;
+    $pathname .= $r->path_info unless -f $r->finfo;
+
     #
     # Compute the component path via the resolver.
     #
-    my $comp_path = $interp->resolver->file_to_path($r->filename,$interp);
+    my $comp_path = $interp->resolver->file_to_path($pathname,$interp);
     return NOT_FOUND unless $comp_path;
 
     #
@@ -476,47 +517,21 @@ sub handle_request_1
     if (-f $r->finfo and defined($self->{top_level_predicate})) {
 	return NOT_FOUND unless $self->{top_level_predicate}->($r->filename);
     }
-    
-    #
-    # Create query object and get argument string. Skip if GET with no
-    # query string.  Special case for debug files w/POST -- standard
-    # input not available for CGI to read in this case.
-    #
-    my $q;
-    unless ($r->method eq 'GET' && !scalar($r->args)) {
-	if ($HTML::Mason::IN_DEBUG_FILE && $r->method eq 'POST') {
-	    $q = new CGI ($r->content);
-	} else {
-	    $q = new CGI;
-	}
-	# For POSTs, we finally store the content in the debug state
-	# if debug mode is on.
-	$debugState->{content} = $q->query_string if $debugState && $r->method eq 'POST';
-
-	# Also store in http_input slot of request
-	$request->{http_input} = $q->query_string;
-    }
 
     #
-    # Parse arguments into key/value pairs. Represent multiple valued
-    # keys with array references.
+    # Parse arguments. $ARGS_METHOD may be set by the import
+    # subroutine (_cgi_args or _mod_perl_args).  When inside debug
+    # file, get arguments from special saved hash.  This circumvents
+    # POST content issues.
     #
-    my (%args);
-    if ($q) {
-	foreach my $key ( $q->param ) {
-	    foreach my $value ( $q->param($key) ) {
-		if (exists($args{$key})) {
-		    if (ref($args{$key})) {
-			$args{$key} = [@{$args{$key}}, $value];
-		    } else {
-			$args{$key} = [$args{$key}, $value];
-		    }
-		} else {
-		    $args{$key} = $value;
-		}
-	    }
-	}
+    my %args;
+    die "ARGS_METHOD not defined! Did you 'use HTML::Mason::ApacheHandler'?" unless defined($ARGS_METHOD);
+    if ($HTML::Mason::IN_DEBUG_FILE) {
+	%args = %{$r->{args_hash}};
+    } else {
+	%args = $self->$ARGS_METHOD($r);
     }
+    $debugState->{args_hash} = \%args if $debugState;
 
     #
     # Deprecated output_mode parameter - just pass to request out_mode.
@@ -586,8 +601,69 @@ sub handle_request_1
     } else {
 	$retval = $request->exec($comp_path, %args);
     }
-
+    undef $request; # ward off leak
     return $retval;
+}
+
+#
+# Get %args hash via CGI package
+#
+sub _cgi_args
+{
+    my ($self, $r) = @_;
+
+    my $q;
+    unless ($r->method eq 'GET' && !scalar($r->args)) {
+        $q = CGI->new;
+    }
+
+    return () unless defined $q;
+
+    my %args;
+    foreach my $key ( $q->param ) {
+	foreach my $value ( $q->param($key) ) {
+	    if (exists($args{$key})) {
+		if (ref($args{$key})) {
+		    $args{$key} = [@{$args{$key}}, $value];
+		} else {
+		    $args{$key} = [$args{$key}, $value];
+		}
+	    } else {
+		$args{$key} = $value;
+	    }
+	}
+    }
+
+    return %args;
+}
+
+#
+# Get %args hash via Apache::Request package
+#
+sub _mod_perl_args
+{
+    my ($self, $r) = @_;
+
+    my $apr = Apache::Request->new($r);
+
+    return () unless $apr->param;
+
+    my %args;
+    foreach my $key ( $apr->param ) {
+	foreach my $value ( $apr->param($key) ) {
+	    if (exists($args{$key})) {
+		if (ref($args{$key})) {
+		    $args{$key} = [@{$args{$key}}, $value];
+		} else {
+		    $args{$key} = [$args{$key}, $value];
+		}
+	    } else {
+		$args{$key} = $value;
+	    }
+	}
+    }
+
+    return %args;
 }
 
 sub simulate_debug_request

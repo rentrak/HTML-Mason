@@ -107,6 +107,18 @@ components. The optional argument specifies the return value from <CODE>Interp::
 
 <P>
 
+<a name="item_base_comp">
+
+<DT><STRONG><A NAME="item_base_comp">base_comp
+
+</A></STRONG><DD>
+Returns the current base component for method and attributes. Generally set
+to the original page component; however, if you invoke call_method on a
+component, <CODE>base_comp</CODE> is dynamically set to that component until call_method exits. See <A HREF="././Devel.html#object_oriented_techniques">Object-Oriented Techniques</A> for examples of usage.
+
+
+<P>
+
 <a name="item_cache">
 
 <DT><STRONG><A NAME="item_cache_action_retrieve_store_">cache ([action=&gt;'retrieve|store|expire|keys'], [key=&gt;name],
@@ -325,11 +337,29 @@ object at that index in the list. e.g.
 <DT><STRONG><A NAME="item_call_next_args_">call_next ([args...])
 
 </A></STRONG><DD>
-Calls the component intercepted by an autohandler. With no arguments, the
-original arguments are passed to the component. Any arguments specified
-here serve to augment and override (in case of conflict) the original
-arguments. Works like <CODE>$m-&gt;comp</CODE> in terms of return value and scalar/list context. See the <A HREF="././Devel.html#autohandlers">autohandlers</A> section of the
+Calls the next component in the content wrapping chain; usually called from
+an autohandler. With no arguments, the original arguments are passed to the
+component. Any arguments specified here serve to augment and override (in
+case of conflict) the original arguments. Works like <CODE>$m-&gt;comp</CODE> in terms of return value and scalar/list context. See the <A HREF="././Devel.html#autohandlers">autohandlers</A> section of the
 <EM>Component Developer's Guide</EM> for examples.
+
+
+<P>
+
+<a name="item_clear_buffer">
+
+<DT><STRONG><A NAME="item_clear_buffer">clear_buffer
+
+</A></STRONG><DD>
+Clears the Mason output buffer. Any output sent before this line is
+discarded. Useful for handling error conditions that can only be detected
+in the middle of a request.
+
+
+<P>
+
+clear_buffer only works in batch output mode, and is thwarted by
+<CODE>flush_buffer</CODE>.
 
 
 <P>
@@ -438,9 +468,8 @@ exists.
 <DT><STRONG><A NAME="item_fetch_next">fetch_next
 
 </A></STRONG><DD>
-Returns the component object intercepted by an autohandler. See the
-<A HREF="././Devel.html#autohandlers">autohandlers</A> section of the <EM>Component Developer's Guide</EM>
-for usage and examples.
+Returns the next component in the content wrapping chain; usually called
+from an autohandler. See the <A HREF="././Devel.html#autohandlers">autohandlers</A> section of the <EM>Component Developer's Guide</EM> for usage and examples.
 
 
 <P>

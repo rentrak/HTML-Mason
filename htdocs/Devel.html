@@ -13,6 +13,7 @@
 
 	<LI><A HREF="#name">NAME</A>
 	<LI><A HREF="#description">DESCRIPTION</A>
+	<LI><A HREF="#how_to_use_this_manual">HOW TO USE THIS MANUAL</A>
 	<LI><A HREF="#what_are_components_">WHAT ARE COMPONENTS?</A>
 	<LI><A HREF="#in_line_perl_sections">IN-LINE PERL SECTIONS </A>
 	<UL>
@@ -53,17 +54,43 @@
 		<LI><A HREF="#using_instead">Using @_ instead</A>
 	</UL>
 
-	<LI><A HREF="#other_perl_sections">OTHER PERL SECTIONS</A>
+	<LI><A HREF="#initialization_and_cleanup">INITIALIZATION AND CLEANUP</A>
 	<UL>
 
 		<LI><A HREF="#e_lt_inite_gt_">&lt;%init&gt;</A>
 		<LI><A HREF="#e_lt_cleanupe_gt_">&lt;%cleanup&gt;</A>
-		<LI><A HREF="#e_lt_argse_gt_">&lt;%args&gt;</A>
 		<LI><A HREF="#e_lt_oncee_gt_">&lt;%once&gt;</A>
+		<LI><A HREF="#e_lt_sharede_gt_">&lt;%shared&gt;</A>
+	</UL>
+
+	<LI><A HREF="#embedded_components">EMBEDDED COMPONENTS</A>
+	<UL>
+
 		<LI><A HREF="#e_lt_def_i_name_e_gt_">&lt;%def <EM>name</EM>&gt;</A>
-		<LI><A HREF="#e_lt_filtere_gt_">&lt;%filter&gt;</A>
+		<LI><A HREF="#e_lt_method_i_name_e_gt_">&lt;%method <EM>name</EM>&gt;</A>
+	</UL>
+
+	<LI><A HREF="#flags_and_attributes">FLAGS AND ATTRIBUTES</A>
+	<UL>
+
+		<LI><A HREF="#e_lt_flagse_gt_">&lt;%flags&gt;</A>
+		<LI><A HREF="#e_lt_attre_gt_">&lt;%attr&gt;</A>
+	</UL>
+
+	<LI><A HREF="#filtering">FILTERING</A>
+	<UL>
+
+		<LI><A HREF="#_lt_filter_gt_section">&lt;%filter&gt; section</A>
+		<LI><A HREF="#_m_call_self_command">$m->call_self command</A>
+		<LI><A HREF="#how_filtering_works">How filtering works</A>
+	</UL>
+
+	<LI><A HREF="#other_syntax">OTHER SYNTAX</A>
+	<UL>
+
 		<LI><A HREF="#e_lt_doce_gt_">&lt;%doc&gt;</A>
 		<LI><A HREF="#e_lt_texte_gt_">&lt;%text&gt;</A>
+		<LI><A HREF="#escaping_expressions">Escaping expressions</A>
 		<LI><A HREF="#_at_end_of_line">\ at end of line</A>
 	</UL>
 
@@ -79,14 +106,6 @@
 		<LI><A HREF="#guarantees_or_lack_thereof_">Guarantees (or lack thereof)</A>
 	</UL>
 
-	<LI><A HREF="#filtering">FILTERING</A>
-	<UL>
-
-		<LI><A HREF="#_lt_filter_gt_section">&lt;%filter&gt; section</A>
-		<LI><A HREF="#_m_call_self_command">$m->call_self command</A>
-		<LI><A HREF="#how_filtering_works">How filtering works</A>
-	</UL>
-
 	<LI><A HREF="#sending_http_headers">SENDING HTTP HEADERS</A>
 	<LI><A HREF="#using_the_perl_debugger">USING THE PERL DEBUGGER</A>
 	<UL>
@@ -99,7 +118,17 @@
 
 	<LI><A HREF="#using_the_perl_profiler">USING THE PERL PROFILER</A>
 	<LI><A HREF="#the_previewer">THE PREVIEWER</A>
-	<LI><A HREF="#tips_and_traps">TIPS AND TRAPS</A>
+	<LI><A HREF="#object_oriented_techniques">OBJECT-ORIENTED TECHNIQUES</A>
+	<UL>
+
+		<LI><A HREF="#determining_inheritance">Determining inheritance</A>
+		<LI><A HREF="#content_wrapping">Content wrapping</A>
+		<LI><A HREF="#accessing_methods_and_attributes">Accessing methods and attributes</A>
+		<LI><A HREF="#sharing_data">Sharing data</A>
+		<LI><A HREF="#example">Example</A>
+	</UL>
+
+	<LI><A HREF="#common_traps">COMMON TRAPS</A>
 	<LI><A HREF="#author">AUTHOR</A>
 	<LI><A HREF="#see_also">SEE ALSO</A>
 </UL>
@@ -135,6 +164,79 @@ performance tuning, component caching, and so on.
 
 I strongly suggest that you have a working Mason to play with as you work
 through these examples. Other component examples can be found in the <CODE>samples/</CODE> directory.
+
+
+<P>
+
+<P>
+<HR>
+<H1><A NAME="how_to_use_this_manual">HOW TO USE THIS MANUAL
+
+</A></H1>
+This manual has grown a bit too large over time. It will eventually split
+into at least two documents (tutorial and reference manual). I've tried to
+keep related sections together, but this creates a non-optimal order for
+beginners.
+
+
+<P>
+
+If you are just learning Mason and want to get started quickly, I recommend
+the following sections:
+
+
+<P>
+
+o <A HREF="#what_are_components_">What Are Components?</A>
+
+
+
+
+<P>
+
+o <A HREF="#in_line_perl_sections">In-Line Perl Sections</A>
+
+
+
+
+<P>
+
+o <A HREF="#calling_components">Calling Components</A>
+
+
+
+
+<P>
+
+o <A HREF="#passing_parameters">Passing Parameters</A>
+
+
+
+
+<P>
+
+o <A HREF="#initialization_and_cleanup">Initialization and Cleanup</A> (mainly &lt;%init&gt;)
+
+
+<P>
+
+o <A HREF="#data_caching">Data Caching</A>
+
+
+
+
+<P>
+
+o <A HREF="#sending_http_headers">Sending HTTP Headers</A>
+
+
+
+
+<P>
+
+o <A HREF="#common_traps">Common Traps</A>
+
+
 
 
 <P>
@@ -251,9 +353,9 @@ After 12 pm, the output of this component is:
 
 This short example demonstrates the three primary ``in-line'' Perl
 sections. In-line sections are generally embedded within HTML and execute
-in the order they appear. Other, specialized Perl sections are tied to
-component events like initialization and cleanup, argument definition, etc.
-Those are covered later in <EM><A HREF="#other_perl_sections">Other Perl Sections</A></EM>.
+in the order they appear. Other sections (&lt;%init&gt;, &lt;%args&gt;,
+etc.) are tied to component events like initialization, cleanup, and
+argument definition.
 
 
 <P>
@@ -645,7 +747,7 @@ a component <CODE>is_netscape</CODE> that analyzes the user agent to determine w
 <P>
 
 <PRE>    &lt;%perl&gt;
-    mu $ua = $r-&gt;header_in('User-Agent');
+    my $ua = $r-&gt;header_in('User-Agent');
     return ($ua =~ /Mozilla/i &amp;&amp; $ua !~ /MSIE/i) ? 1 : 0;
     &lt;/%perl&gt;
 </PRE>
@@ -732,10 +834,10 @@ What happens when a user requests a component that doesn't exist? In this
 case Mason scans backward through the URI, checking each directory for a
 component named <EM>dhandler</EM> (``default handler''). If found, the dhandler is invoked and is expected to
 use
-<CODE>$r-&gt;path_info</CODE> (the virtual location) as the parameter to some access function, perhaps a
-database lookup or location in another filesystem. In a sense, dhandlers
-are similar in spirit to Perl's AUTOLOAD feature; they are the ``component
-of last resort'' when a URL points to a non-existent component.
+<CODE>$m-&gt;dhandler_arg</CODE> as the parameter to some access function, perhaps a database lookup or
+location in another filesystem. In a sense, dhandlers are similar in spirit
+to Perl's AUTOLOAD feature; they are the ``component of last resort'' when
+a URL points to a non-existent component.
 
 
 <P>
@@ -763,11 +865,8 @@ In this case Mason constructs the following search path:
 
 <P>
 
-The found dhandler would read ``/LocalNews/Story1'' from
-<CODE>$r-&gt;path_info</CODE> and use it as a retrieval key into a database of stories. Optionally, the
-Mason command
-<CODE>$m-&gt;dhandler_arg</CODE> returns the same path_info stripped of the leading slash
-(``LocalNews/locStory1.html'').
+The found dhandler would read ``LocalNews/Story1'' from
+<CODE>$m-&gt;dhandler_arg</CODE> and use it as a retrieval key into a database of stories.
 
 
 <P>
@@ -794,14 +893,22 @@ Here's how a simple /newsfeeds/dhandler might look:
 
 <P>
 
-The administrator can customize the file name used for dhandlers, or turn
-off dhandlers entirely, with the <A HREF="./Interp.html#item_dhandler_name">dhandler_name</A> Interp parameter.
+By default dhandlers do not get a chance to handle requests to a directory
+itself (e.g. /newsfeeds). These are automatically deferred to Apache, which
+generates an index page or a FORBIDDEN error. Often this is desirable, but
+if necessary the administrator can let in directory requests as well; see <A HREF="././Admin.html#allowing_requests_for_directorie">Allowing requests for directories</A>.
 
 
 <P>
 
 A component or dhandler that does not want to handle a particular request
 may defer control to the next dhandler by calling <CODE>$m-&gt;decline</CODE>.
+
+
+<P>
+
+The administrator can customize the file name used for dhandlers, or turn
+off dhandlers entirely, with the <A HREF="./Interp.html#item_dhandler_name">dhandler_name</A> Interp parameter.
 
 
 <P>
@@ -820,9 +927,10 @@ variables.
 <P>
 
 Autohandlers are directory based. When Mason determines the top-level
-component, it checks that directory for a component called ``autohandler'';
-if it exists, it is called instead. After performing its actions, the
-autohandler typically calls <CODE>$m-&gt;call_next</CODE> to transfer control to the original intended component.
+component, it checks that directory and all parent directories for a
+component called ``autohandler''. If found, the autohandler is called
+first. After performing its actions, the autohandler typically calls
+<CODE>$m-&gt;call_next</CODE> to transfer control to the original intended component. 
 
 
 <P>
@@ -836,8 +944,8 @@ the URL.
 
 <P>
 
-Here is an autohandler that adds a common header and footer to each page in
-the directory:
+Here is an autohandler that adds a common header and footer to each page
+underneath its directory:
 
 
 <P>
@@ -856,15 +964,14 @@ the directory:
 
 <P>
 
-Same idea, with separate components for header/footer in the same
-directory:
+Same idea, using components for the header/footer:
 
 
 <P>
 
-<PRE>    &lt;&amp; header &amp;&gt;
+<PRE>    &lt;&amp; /shared/header &amp;&gt;
     &lt;% $m-&gt;call_next %&gt;
-    &lt;&amp; footer &amp;&gt;
+    &lt;&amp; /shared/footer &amp;&gt;
 </PRE>
 
 <P>
@@ -884,66 +991,35 @@ hostname to relative image URLs:
 
 <P>
 
-Most of the time autohandler can simply call <CODE>$m-&gt;call_next</CODE> without needing to know what component was called. However, should you need
-it, the component object is available from <CODE>$m-&gt;fetch_next</CODE>. For example, here we base the page title partly on the component name:
-
-
-<P>
-
-<PRE>    &lt;HTML&gt;
-    &lt;HEAD&gt;&lt;TITLE&gt;McHuffy Incorporated: &lt;% $section %&gt;&lt;/TITLE&gt;&lt;/HEAD&gt;
-    &lt;% $m-&gt;call_next %&gt;
-    &lt;/BODY&gt;
-    &lt;/HTML&gt;
-    
-    &lt;%init&gt;
-    my $comp = $m-&gt;fetch_next;
-    my $section = ($comp-&gt;name eq 'mktg.html' ? 'Marketing' : ...);
-    &lt;/%init&gt;
-</PRE>
-
-<P>
-
-<CODE>$m-&gt;fetch_next</CODE> is also useful for calling the component manually, e.g. if you want to
+Most of the time autohandler can simply call <CODE>$m-&gt;call_next</CODE>
+without needing to know what the next component is. However, should you
+need it, the component object is available from
+<CODE>$m-&gt;fetch_next</CODE>. This is useful for calling the component manually, e.g. if you want to
 suppress some original arguments or if you want to use <CODE>$m-&gt;scomp</CODE> to store and process the output.
 
 
 <P>
 
-By default autohandlers apply only to the current directory, not to its
-subdirectories. The Mason administrator can turn on the flag
-<A HREF="./Interp.html#item_allow_recursive_autohandlers">allow_recursive_autohandlers</A> that makes autohandlers apply to all subdirectories. Be warned that this
-mode entails a performance and readability cost. On every request Mason has
-to scan not only the current directory but all parent directories for a
-file named ``autohandler''. Likewise, someone trying to determine how a
-page is rendered has to scan through parent directories.
+What happens if more than one autohandler applies to a page? Prior to
+version 0.85, only the most specific autohandler would execute. In 0.85 and
+beyond each autohandler gets a chance to run. The top-most autohandler runs
+first; each $m-&gt;call_next transfers control to the next autohandler and
+finally to the originally called component. This allows you, for example,
+to combine general site-wide templates and more specific section-based
+templates.
 
 
 <P>
 
-That said, the applications of recursive autohandlers (e.g. applying a
-site-wide template) can be compelling enough to overcome these
-disadvantages.
+Autohandlers can be made even more powerful in conjunction with Mason's
+object-oriented style features: methods, attributes, and inheritance. In
+the interest of space these are discussed in a separate section, <A HREF="././Devel.html#object_oriented_techniques">Object-Oriented Techniques</A>.
 
 
 <P>
 
-If you have recursive mode turned on but want a particular autohandler to
-apply only to the current directory, use a conditional like this:
-
-
-<P>
-
-<PRE>    &lt;%init&gt;
-    return $m-&gt;call_next if ($m-&gt;fetch_next-&gt;dir_path eq $m-&gt;current_comp-&gt;dir_path);
-    ... rest of autohandler ...
-    &lt;/%init&gt;
-</PRE>
-
-<P>
-
-You can customize the file name used for autohandlers, or turn off
-autohandlers entirely, with the <A HREF="./Interp.html#item_autohandler_name">autohandler_name</A>
+The administrator can customize the file name used for autohandlers, or
+turn off autohandlers entirely, with the <A HREF="./Interp.html#item_autohandler_name">autohandler_name</A>
 Interp parameter.
 
 
@@ -975,18 +1051,6 @@ directory.
 dhandlers and autohandlers can even be used in the same directory. For
 example, you might have a mix of real URLs and virtual URLs to which you
 would like to apply a common template/filter.
-
-
-<P>
-
-Prior to version 0.6, dhandlers were the only way to accomplish tasks like
-applying a standard template across multiple components. However, this
-application of dhandlers has several disadvantages. First, you must
-perversely ``hide'' your existing components so that Mason will not find
-them and instead invoke the dhandler! Second, you must manually check
-whether the subsequent component exists and handle ``not found'' errors.
-The upshot is that autohandlers are better suited for many tasks previously
-solved by dhandlers.
 
 
 <P>
@@ -1204,17 +1268,10 @@ subcomponents created with &lt;%def&gt;.
 
 <P>
 <HR>
-<H1><A NAME="other_perl_sections">OTHER PERL SECTIONS
+<H1><A NAME="initialization_and_cleanup">INITIALIZATION AND CLEANUP
 
 </A></H1>
-In this section we describe other specialized sections you can place in
-your component.
-
-
-<P>
-
-If you are starting out and this list appears daunting, just make sure you
-know the two most commonly used sections: &lt;%init&gt; and &lt;%args&gt;.
+The following sections contain blocks of Perl to execute at specific times.
 
 
 <P>
@@ -1224,69 +1281,62 @@ know the two most commonly used sections: &lt;%init&gt; and &lt;%args&gt;.
 <H2><A NAME="e_lt_inite_gt_">&lt;%init&gt;
 
 </A></H2>
-Used for initialization code. For example: connecting to a database and
-selecting out rows; opening a file and reading its contents into a list.
+This section contains initialization code that executes as soon as the
+component is called. For example: checking that a user is logged in;
+selecting rows from a database into a list; parsing the contents of a file
+into a data structure.
 
 
 <P>
 
-Technically a &lt;%init&gt; block is equivalent to a &lt;%perl&gt; block at
-the beginning of the component. However, there is an aesthetic advantage of
-placing this block at the end of the component rather than the beginning.
-In the following example, a database query is used to preload the
-<CODE>@persons</CODE> list-of-hashes; it lets us hide the technical details
-at the bottom.
+Technically a &lt;<CODE>%init</CODE>&gt; block is equivalent to a &lt;<CODE>%perl</CODE>&gt;
+block at the beginning of the component. However, there is an aesthetic
+advantage of placing this block at the end of the component rather than the
+beginning.
 
 
 <P>
 
-<PRE>    &lt;H2&gt;Birthdays Next Week&lt;/H2&gt;
-    &lt;TABLE BORDER=1&gt;
-    &lt;TR&gt;&lt;TH&gt;Name&lt;/TH&gt;&lt;TH&gt;Birthday&lt;/TH&gt;&lt;/TR&gt;
-    % foreach (@persons) {
-        &lt;TR&gt;&lt;TD&gt;&lt;%$_-&gt;{name}%&gt;&lt;/TD&gt;&lt;TD&gt;&lt;%$_-&gt;{birthday}%&gt;&lt;/TD&gt;&lt;/TR&gt;
-    % }
-    &lt;/TABLE&gt;
+We've found that the most readable components (especially for
+non-programmers) contain HTML in one continuous block at the top, with
+simple substitutions for dynamic elements but no distracting blocks of Perl
+code. At the bottom an &lt;<CODE>%init</CODE>&gt; block sets up the substitution variables. This organization allows
+non-programmers to work with the HTML without getting distracted or
+discouraged by Perl code. For example:
+
+
+<P>
+
+<PRE>    &lt;html&gt;
+    &lt;head&gt;&lt;title&gt;&lt;% $headline %&gt;&lt;/title&gt;&lt;/head&gt;
+    &lt;body&gt;
+    &lt;h2&gt;&lt;% $headline %&gt;&lt;/h2&gt;
+    By &lt;% $author %&gt;, &lt;% $date %&gt;&lt;p&gt;
+    
+    &lt;% $body %&gt;
+    
+    &lt;/body&gt;&lt;/html&gt;
 </PRE>
 
 <P>
 
-<PRE>    &lt;%INIT&gt;
-    # Assuming DBI/DBD and Date::Manip are already loaded ...
-    # Query MySQL for employees with birthdays next week.
-    # Results are stored in the @persons list-of-hashes.
+<PRE>    &lt;%init&gt;
+    # Fetch article from database
+    my $dbh = DBI::connect ...;
+    my $sth = $dbh-&gt;prepare(&quot;select * from articles where id = $article_id&quot;);
+    my ($headline,$date,$author,$body) = $sth-&gt;fetchrow_array;
+    # Massage the fields
+    $headline = uc($headline);
+    my ($year,$month,$day) = split('-',$date);
+    $date = &quot;$month/$day&quot;;
+    &lt;/%init&gt;
 </PRE>
 
 <P>
 
-<PRE>    my (@persons, $name, $birthday);    # local vars
-</PRE>
-
-<P>
-
-<PRE>    # Calculate &quot;MM-DD&quot; dates for this and next Sunday
-    my $Sun = UnixDate(&amp;ParseDate(&quot;Sunday&quot;), &quot;%m-%d&quot;);
-    my $nextSun = UnixDate(&amp;DateCalc(&quot;Sunday&quot;, &quot;+7 days&quot;), &quot;%m-%d&quot;);
-</PRE>
-
-<P>
-
-<PRE>    my $dbh = DBI-&gt;connect('DBI:mysql:myDB', 'nobody' );
-    my $sth = $dbh-&gt;prepare(
-       qq{ SELECT name, DATE_FORMAT(birthday, 'm-d')
-           FROM emp
-           WHERE DATE_FORMAT(birthday,'m-d') BETWEEN '$Sun' AND '$nextSun'
-         } );
-    $sth-&gt;execute;              # other DBDs want this after the bind
-    $sth-&gt;bind_columns(undef, \($name, $birthday) );
-</PRE>
-
-<P>
-
-<PRE>    while ($sth-&gt;fetch) {
-        push (@persons, {name=&gt;$name, birthday=&gt;$birthday} );
-    }
-    &lt;/%INIT&gt;
+<PRE>    &lt;%args&gt;
+    $article_id
+    &lt;/%args&gt;
 </PRE>
 
 <P>
@@ -1296,36 +1346,16 @@ at the bottom.
 <H2><A NAME="e_lt_cleanupe_gt_">&lt;%cleanup&gt;
 
 </A></H2>
-Used for cleanup code. For example: closing a database connection or
-closing a file handle.
+This section contains cleanup code that executes just before the component
+exits. For example: closing a database connection or closing a file handle.
 
 
 <P>
 
-Technically a &lt;%cleanup&gt; block is equivalent to a &lt;%perl&gt; block
-at the end of the component, but has aesthetic value as marking a cleanup
-section.
-
-
-<P>
-
-Recall that the end of a component corresponds to the end of a subroutine
-block. Since Perl is so darned good at cleaning up stuff at the end of
-blocks, &lt;%cleanup&gt; sections are rarely needed.
-
-
-<P>
-
-<P>
-<HR>
-<H2><A NAME="e_lt_argse_gt_">&lt;%args&gt;
-
-</A></H2>
-This section contains a list of argument declarations, one per line. Each
-declaration contains a type character ($, @, or %), a name, and optionally
-'=&gt;' followed by a default value. The default value must be a valid Perl
-expression of matching type (scalar, list, hash). Each declaration may end
-with a comment marked by '#'. See <A HREF="#accessing_parameters">Accessing Parameters</A> above for usage and examples.
+Technically a &lt;<CODE>%cleanup</CODE>&gt; block is equivalent to a &lt;<CODE>%perl</CODE>&gt; block at the end of the component. Since a component corresponds a
+subroutine block, and since Perl is so darned good at cleaning up stuff at
+the end of blocks,
+&lt;<CODE>%cleanup</CODE>&gt; sections are rarely needed.
 
 
 <P>
@@ -1335,8 +1365,13 @@ with a comment marked by '#'. See <A HREF="#accessing_parameters">Accessing Para
 <H2><A NAME="e_lt_oncee_gt_">&lt;%once&gt;
 
 </A></H2>
-This code executes once when the component is loaded. Unlike the other
-sections, its scope is above the component subroutine instead of inside it.
+This code executes once when the component is loaded. Variables declared in
+this section can be seen in all of a component's code and persist for the
+lifetime of the component.
+
+
+<P>
+
 Useful for declaring persistent component-scoped lexical variables
 (especially objects that are expensive to create), declaring subroutines
 (both named and anonymous), and initializing state.
@@ -1355,7 +1390,8 @@ uses the component. However, if the component is preloaded, this code will
 only execute once in the parent. Unless you have total control over what
 components will be preloaded, it is safest to avoid initializing variables
 that can't survive a <CODE>fork(),</CODE> e.g. DBI handles. Use the
-following trick to initialize such variables in the &lt;%init&gt; section:
+following trick to initialize such variables in the &lt;<CODE>%init</CODE>&gt;
+section:
 
 
 <P>
@@ -1380,17 +1416,60 @@ following trick to initialize such variables in the &lt;%init&gt; section:
 
 <P>
 <HR>
-<H2><A NAME="e_lt_def_i_name_e_gt_">&lt;%def <EM>name</EM>&gt;
+<H2><A NAME="e_lt_sharede_gt_">&lt;%shared&gt;
 
 </A></H2>
-Each instance of this section creates a subcomponent embedded inside the
-current component. Inside you may place anything that a regular component
-contains: embedded Perl, <CODE>&lt;%init&gt;</CODE> and <CODE>&lt;%args&gt;</CODE> sections, etc. (The only prohibited tag is another <CODE>&lt;%def&gt;</CODE>, but this will be supported eventually).
+As with &lt;%once&gt;, variables declared in this section can be seen in
+all of a component's code: the main component, subcomponents, and methods.
+However, the code runs once per request (whenever the component is used)
+and its variables last only til the end of the request.
 
 
 <P>
 
-The <EM>name</EM> consists of characters in the set <CODE>[A-Za-z0-9._-]</CODE>. To call a subcomponent simply use its name in &lt;&amp; &amp;&gt; or <CODE>$m-&gt;comp</CODE>. A subcomponent can only be seen from its parent component.
+Useful for initializing variables needed in, say, the main body and one
+more subcomponents or methods. See <A HREF="././Devel.html#object_oriented_techniques">Object-Oriented Techniques</A> for an example of usage.
+
+
+<P>
+
+Avoid using &lt;%shared&gt; for side-effect code that needs to run at a
+predictable time during page generation. You may assume only that
+&lt;%shared&gt; runs just before the first code that needs it and runs at
+most once per request. &lt;%init&gt; offers more a predictable execution
+time.
+
+
+<P>
+
+Any component with a &lt;%shared&gt; section incurs an extra performance
+penalty, because (as currently implemented) Mason must recreate its
+anonymous subroutines the first time each new request uses the component.
+The exact penalty varies between systems and for most applications will be
+unnoticeable. However, one should avoid using &lt;%shared&gt; when patently
+unnecessary, e.g. when an &lt;%init&gt; would work as well.
+
+
+<P>
+
+<P>
+<HR>
+<H1><A NAME="embedded_components">EMBEDDED COMPONENTS
+
+</A></H1>
+<P>
+<HR>
+<H2><A NAME="e_lt_def_i_name_e_gt_">&lt;%def <EM>name</EM>&gt;
+
+</A></H2>
+Each instance of this section creates a <EM>subcomponent</EM> embedded inside the current component. Inside you may place anything that a
+regular component contains, with the exception of &lt;%def&gt;,
+&lt;%method&gt;, &lt;%once&gt;, and &lt;%shared&gt; tags.
+
+
+<P>
+
+The <EM>name</EM> consists of characters in the set <CODE>[A-Za-z0-9._-]</CODE>. To call a subcomponent simply use its name in &lt;&amp; &amp;&gt; or <CODE>$m-&gt;comp</CODE>. A subcomponent can only be seen from the surrounding component.
 
 
 <P>
@@ -1412,10 +1491,10 @@ file-based components and also call any of your ``sibling'' subcomponents.
 
 <P>
 
-The scope of a subcomponent is outside the parent component subroutine, so
-you cannot refer to arguments or <CODE>my</CODE> variables declared in the parent component. However a subcomponent can
-declare its own <CODE>&lt;%args&gt;</CODE>
-section and have relevant values passed in.
+The lexical scope of a subcomponent is separate from the main component.
+However a subcomponent can declare its own &lt;%args&gt; section and have
+relevant values passed in. You can also use a &lt;%shared&gt; section to
+declare variables visible from both scopes.
 
 
 <P>
@@ -1448,16 +1527,333 @@ standardized hyperlink:
 
 <P>
 <HR>
-<H2><A NAME="e_lt_filtere_gt_">&lt;%filter&gt;
+<H2><A NAME="e_lt_method_i_name_e_gt_">&lt;%method <EM>name</EM>&gt;
 
 </A></H2>
-This section allows you to filter the output of the component through an
-arbitrary block of code. Upon entry to this code, <CODE>$_</CODE> contains
-the component output, and you are expected to modify it in place. See the <A HREF="#filtering">FILTERING</A> section for usage and examples.
+Each instance of this section creates a <EM>method</EM> embedded inside the current component. Methods resemble subcomponents in
+terms of naming, contents, and scope. However, while subcomponents can only
+be seen from the parent component, methods are meant to be called from
+other components.
 
 
 <P>
 
+There are two ways to call a method. First, via a path of the form
+``comp:method'':
+
+
+<P>
+
+<PRE>    &lt;&amp; /foo/bar:method1 &amp;&gt;
+</PRE>
+
+<P>
+
+<PRE>    $m-&gt;comp('/foo/bar:method1');
+</PRE>
+
+<P>
+
+Second, via the call_method component method:
+
+
+<P>
+
+<PRE>    my $comp = $m-&gt;fetch_comp('/foo/bar');
+    ...
+    $comp-&gt;call_method('method1');
+</PRE>
+
+<P>
+
+Methods are commonly used in conjunction with autohandlers to make
+templates more flexible. See <A HREF="././Devel.html#object_oriented_techniques">Object-Oriented Techniques</A> for more information.
+
+
+<P>
+
+<P>
+<HR>
+<H1><A NAME="flags_and_attributes">FLAGS AND ATTRIBUTES
+
+</A></H1>
+The &lt;<CODE>%flags</CODE>&gt; and &lt;<CODE>%attr</CODE>&gt; sections consist of key/value pairs, one per line, joined by '=&gt;'. The
+key and value in each pair must be valid Perl hash keys and values
+respectively. An optional comment may follow each line.
+
+
+<P>
+
+<P>
+<HR>
+<H2><A NAME="e_lt_flagse_gt_">&lt;%flags&gt;
+
+</A></H2>
+Use this section to set official Mason flags that affect the current
+component's behavior.
+
+
+<P>
+
+Currently there is only one flag, &lt;tt&gt;inherit&lt;/tt&gt;, which specifies the component's &lt;i&gt;parent&lt;/i&gt; in the form of a relative or absolute component path. A component
+inherits methods and attributes from its parent; see <A HREF="././Devel.html#object_oriented_techniques">Object-Oriented Techniques</A> for examples.
+
+
+<P>
+
+<PRE>    &lt;%flags&gt;
+    inherit=&gt;'/site_handler'
+    &lt;/%flags&gt;
+</PRE>
+
+<P>
+
+<P>
+<HR>
+<H2><A NAME="e_lt_attre_gt_">&lt;%attr&gt;
+
+</A></H2>
+Use this section to assign static key/value attributes that can be queried
+from other components.
+
+
+<P>
+
+<PRE>    &lt;%attr&gt;
+    color=&gt;'blue'
+    fonts=&gt;[qw(arial geneva helvetica)]
+    &lt;/%attr&gt;
+</PRE>
+
+<P>
+
+To query an attribute of a component, use the <CODE>attr</CODE> method:
+
+
+<P>
+
+<PRE>    my $color = $comp-&gt;attr('color')
+</PRE>
+
+<P>
+
+where <CODE>$comp</CODE> is a component object.
+
+
+<P>
+
+Mason evaluates attribute values once when loading the component. This
+makes them faster but less flexible than methods.
+
+
+<P>
+
+<P>
+<HR>
+<H1><A NAME="filtering">FILTERING
+
+</A></H1>
+This section describes several ways to apply filtering functions over the
+results of the current component. By separating out and hiding a filter
+that, say, changes HTML in a complex way, we allow non-programmers to work
+in a cleaner HTML environment.
+
+
+<P>
+
+<P>
+<HR>
+<H2><A NAME="_lt_filter_gt_section">&lt;%filter&gt; section
+
+</A></H2>
+The &lt;%filter&gt; section allows you to arbitrarily filter the output of
+the current component. Upon entry to this code, <CODE>$_</CODE> contains
+the component output, and you are expected to modify it in place. The code
+has access to component arguments and can invoke subroutines, call other
+components, etc.
+
+
+<P>
+
+This simple filter converts the component output to UPPERCASE:
+
+
+<P>
+
+<PRE>    &lt;%filter&gt;
+    tr/a-z/A-Z/
+    &lt;/%filter&gt;
+</PRE>
+
+<P>
+
+The following navigation bar uses a filter to ``unlink'' and highlight the
+item corresponding to the current page:
+
+
+<P>
+
+<PRE>    &lt;a href=&quot;/&quot;&gt;Home&lt;/a&gt; | &lt;a href=&quot;/products/&quot;&gt;Products&lt;/a&gt; | 
+    &lt;a href=&quot;/bg.html&quot;&gt;Background&lt;/a&gt; | &lt;a href=&quot;/finance/&quot;&gt;Financials&lt;/a&gt; | 
+    &lt;a href=&quot;/support/&quot;&gt;Tech Support&lt;/a&gt; | &lt;a href=&quot;/contact.html&quot;&gt;Contact Us&lt;/a&gt;
+</PRE>
+
+<P>
+
+<PRE>    &lt;%filter&gt;
+    my $uri = $r-&gt;uri;
+    s{&lt;a href=&quot;$uri/?&quot;&gt;(.*?)&lt;/a&gt;} {&lt;b&gt;$1&lt;/b&gt;}i;
+    &lt;/%filter&gt;
+</PRE>
+
+<P>
+
+This allows a designer to code such a navigation bar intuitively without <CODE>if</CODE> statements surrounding each link! Note that the regular expression need not
+be very robust as long as you have control over what will appear in the
+body.
+
+
+<P>
+
+<P>
+<HR>
+<H2><A NAME="_m_call_self_command">$m->call_self command
+
+</A></H2>
+This command allows you to filter both the output and the return value of
+the current component. It is fairly advanced; for most purposes the
+<CODE>&lt;%filter&gt;</CODE> tag above will be sufficient and simpler.
+
+
+<P>
+
+<CODE>$m-&gt;call_self</CODE> takes two arguments. The first is a scalar reference and will be populated
+with the component output. The second is either a scalar or list reference
+and will be populated with the component return value; the type of
+reference determines whether the component will be called in scalar or list
+context. Both of these arguments are optional; you may pass undef if you
+don't care about one of them.
+
+
+<P>
+
+<CODE>$m-&gt;call_self</CODE> acts like a <CODE>fork()</CODE> in the sense that it will return twice with
+different values. When it returns 0, you allow control to pass through to
+the rest of your component. When it returns 1, that means the component has
+finished and you can begin filtering the output and/or return value. (Don't
+worry, it doesn't really do a fork! See next section for explanation.)
+
+
+<P>
+
+The following examples would generally appear at the top of a <CODE>&lt;%init&gt;</CODE>
+section. Here is a no-op <CODE>$m-&gt;call_self</CODE> that leaves the output and return value untouched:
+
+
+<P>
+
+<PRE>    if ($m-&gt;call_self(my \$output, my \$retval)) {  # assumes Perl 5.005 or greater
+        $m-&gt;out($output);
+        return $retval;
+    }
+</PRE>
+
+<P>
+
+Here is a simple output filter that makes the output all uppercase, just
+like the <CODE>&lt;%filter&gt;</CODE> example above. Note that we ignore both the original and the final return
+value.
+
+
+<P>
+
+<PRE>    if ($m-&gt;call_self(my \$output, undef)) {
+        $m-&gt;out(uc($output));
+        return;
+    }
+</PRE>
+
+<P>
+
+<CODE>$m-&gt;call_self</CODE> can even convert output to a return value or vice versa. In the next
+component we provide a nice friendly format for non-programmers to
+represent data with, and use a filter to construct and return a
+corresponding Perl data structure from it:
+
+
+<P>
+
+<PRE>    # id        lastname        firstname
+    59286       Sherman         Karen
+    31776       Dawson          Robert
+    29482       Lee             Brenda
+    ...
+</PRE>
+
+<P>
+
+<PRE>    &lt;%init&gt;
+    if ($m-&gt;call_self(my \$output, undef)) {
+        foreach (split(&quot;\n&quot;,$output)) {
+            next if /^#/ || !/\S/;
+            my @vals = split(/\s+/);
+            push(@people,{id=&gt;$vals[0],last=&gt;$vals[1],first=&gt;$vals[2]});
+        }
+        return @people;
+    }
+    &lt;/%init&gt;
+</PRE>
+
+<P>
+
+Now we can get a list of hashes directly from this component.    
+
+
+<P>
+
+<P>
+<HR>
+<H2><A NAME="how_filtering_works">How filtering works
+
+</A></H2>
+<CODE>$m-&gt;call_self</CODE> (and <CODE>&lt;%filter&gt;</CODE>, which is built on it) uses a bit of magic to accomplish everything in one
+line. If you're curious, here's how it works:
+
+
+<P>
+
+o A component foo calls <CODE>$m-&gt;call_self</CODE> for the first time.
+
+
+<P>
+
+o <CODE>$m-&gt;call_self</CODE> sets an internal flag and calls foo again recursively, changing the output
+stream to capture content into a buffer.
+
+
+<P>
+
+o foo again calls <CODE>$m-&gt;call_self</CODE> which, seeing the flag, returns 0 immediately.
+
+
+<P>
+
+o foo goes about its business and generates content into the <CODE>$m-&gt;call_self</CODE> buffer.
+
+
+<P>
+
+o When control is returned to <CODE>$m-&gt;call_self</CODE>, it places the content and return value in the references provided, and
+returns 1.
+
+
+<P>
+
+<P>
+<HR>
+<H1><A NAME="other_syntax">OTHER SYNTAX
+
+</A></H1>
 <P>
 <HR>
 <H2><A NAME="e_lt_doce_gt_">&lt;%doc&gt;
@@ -1465,8 +1861,8 @@ the component output, and you are expected to modify it in place. See the <A HRE
 </A></H2>
 Text in this section is treated as a comment and ignored. Most useful for a
 component's main documentation. One can easily write a program to sift
-through a set of components and pull out their &lt;%doc&gt; blocks to form
-a reference page.
+through a set of components and pull out their &lt;<CODE>%doc</CODE>&gt;
+blocks to form a reference page.
 
 
 <P>
@@ -1493,8 +1889,9 @@ HTML.
 <H2><A NAME="e_lt_texte_gt_">&lt;%text&gt;
 
 </A></H2>
-Turns off processing of Mason syntax; text is passed through unmodified.
-Useful, for example, when documenting Mason itself from a component:
+Text in this section is passed through unmodified by Mason. Any Mason
+syntax inside it is ignored. Useful, for example, when documenting Mason
+itself from a component:
 
 
 <P>
@@ -1507,12 +1904,68 @@ Useful, for example, when documenting Mason itself from a component:
 
 <P>
 
-This works for almost everything, but doesn't let you output &lt;/%text&gt; itself! When all else fails, use <CODE>$m-&gt;out</CODE>:
+This works for almost everything, but doesn't let you output
+&lt;/%text&gt; itself! When all else fails, use <CODE>$m-&gt;out</CODE>:
 
 
 <P>
 
 <PRE>    %$m-&gt;out('The tags are &lt;%text&gt; and &lt;/%text&gt;.');
+</PRE>
+
+<P>
+
+<P>
+<HR>
+<H2><A NAME="escaping_expressions">Escaping expressions
+
+</A></H2>
+Mason has facilities for <EM>escaping</EM> the output from &lt;% %&gt; tags, on either a site-wide or a per-expression
+basis.
+
+
+<P>
+
+Any &lt;% %&gt; expression may be terminated by a '|' and one or more
+single-letter escape flags (plus arbitrary whitespace):
+
+
+<P>
+
+<PRE>    &lt;% $file_data |h %&gt;
+</PRE>
+
+<P>
+
+The current valid flags are
+
+
+<P>
+
+<PRE>    h - escape for HTML ('&lt;' =&gt; '&amp;lt;', etc.)
+    u - escape for URL (':' =&gt; '%3A', etc.)
+    n - turn off default escape flags
+</PRE>
+
+<P>
+
+The administrator may specify a set of default escape flags via the <A HREF="./Parser.html#item_default_escape_flags">default_escape_flags</A> Parser parameter. For example, if the administrator specifies
+
+
+<P>
+
+<PRE>    default_escape_flags=&gt;'h'
+</PRE>
+
+<P>
+
+then all &lt;% %&gt; expressions will automatically be HTML-escaped. In this case you
+would use the <CODE>n</CODE> flag to turn off HTML-escaping for a specific expression:
+
+
+<P>
+
+<PRE>    &lt;% $html_block |n %&gt;
 </PRE>
 
 <P>
@@ -1963,207 +2416,6 @@ repeat the attempt several times and finally die with an error.
 
 <P>
 <HR>
-<H1><A NAME="filtering">FILTERING
-
-</A></H1>
-This section describes several ways to apply filtering functions over the
-results of the current component. By separating out and hiding a filter
-that, say, changes HTML in a complex way, we allow non-programmers to work
-in a cleaner HTML environment.
-
-
-<P>
-
-<P>
-<HR>
-<H2><A NAME="_lt_filter_gt_section">&lt;%filter&gt; section
-
-</A></H2>
-The &lt;%filter&gt; section allows you to arbitrarily filter the output of
-the current component. Upon entry to this code, <CODE>$_</CODE> contains
-the component output, and you are expected to modify it in place. The code
-has access to component arguments and can invoke subroutines, call other
-components, etc.
-
-
-<P>
-
-This simple filter converts the component output to UPPERCASE:
-
-
-<P>
-
-<PRE>    &lt;%filter&gt;
-    tr/a-z/A-Z/
-    &lt;/%filter&gt;
-</PRE>
-
-<P>
-
-The following navigation bar uses a filter to ``unlink'' and highlight the
-item corresponding to the current page:
-
-
-<P>
-
-<PRE>    &lt;a href=&quot;/&quot;&gt;Home&lt;/a&gt; | &lt;a href=&quot;/products/&quot;&gt;Products&lt;/a&gt; | 
-    &lt;a href=&quot;/bg.html&quot;&gt;Background&lt;/a&gt; | &lt;a href=&quot;/finance/&quot;&gt;Financials&lt;/a&gt; | 
-    &lt;a href=&quot;/support/&quot;&gt;Tech Support&lt;/a&gt; | &lt;a href=&quot;/contact.html&quot;&gt;Contact Us&lt;/a&gt;
-</PRE>
-
-<P>
-
-<PRE>    &lt;%filter&gt;
-    my $uri = $r-&gt;uri;
-    s{&lt;a href=&quot;$uri/?&quot;&gt;(.*?)&lt;/a&gt;} {&lt;b&gt;$1&lt;/b&gt;}i;
-    &lt;/%filter&gt;
-</PRE>
-
-<P>
-
-This allows a designer to code such a navigation bar intuitively without <CODE>if</CODE> statements surrounding each link! Note that the regular expression need not
-be very robust as long as you have control over what will appear in the
-body.
-
-
-<P>
-
-<P>
-<HR>
-<H2><A NAME="_m_call_self_command">$m->call_self command
-
-</A></H2>
-This command allows you to filter both the output and the return value of
-the current component. It is fairly advanced; for most purposes the
-<CODE>&lt;%filter&gt;</CODE> tag above will be sufficient and simpler.
-
-
-<P>
-
-<CODE>$m-&gt;call_self</CODE> takes two arguments. The first is a scalar reference and will be populated
-with the component output. The second is either a scalar or list reference
-and will be populated with the component return value; the type of
-reference determines whether the component will be called in scalar or list
-context. Both of these arguments are optional; you may pass undef if you
-don't care about one of them.
-
-
-<P>
-
-<CODE>$m-&gt;call_self</CODE> acts like a <CODE>fork()</CODE> in the sense that it will return twice with
-different values. When it returns 0, you allow control to pass through to
-the rest of your component. When it returns 1, that means the component has
-finished and you can begin filtering the output and/or return value. (Don't
-worry, it doesn't really do a fork! See next section for explanation.)
-
-
-<P>
-
-The following examples would generally appear at the top of a <CODE>&lt;%init&gt;</CODE>
-section. Here is a no-op <CODE>$m-&gt;call_self</CODE> that leaves the output and return value untouched:
-
-
-<P>
-
-<PRE>    if ($m-&gt;call_self(my \$output, my \$retval)) {  # assumes Perl 5.005 or greater
-        $m-&gt;out($output);
-        return $retval;
-    }
-</PRE>
-
-<P>
-
-Here is a simple output filter that makes the output all uppercase, just
-like the <CODE>&lt;%filter&gt;</CODE> example above. Note that we ignore both the original and the final return
-value.
-
-
-<P>
-
-<PRE>    if ($m-&gt;call_self(my \$output, undef)) {
-        $m-&gt;out(uc($output));
-        return;
-    }
-</PRE>
-
-<P>
-
-<CODE>$m-&gt;call_self</CODE> can even convert output to a return value or vice versa. In the next
-component we provide a nice friendly format for non-programmers to
-represent data with, and use a filter to construct and return a
-corresponding Perl data structure from it:
-
-
-<P>
-
-<PRE>    # id        lastname        firstname
-    59286       Sherman         Karen
-    31776       Dawson          Robert
-    29482       Lee             Brenda
-    ...
-</PRE>
-
-<P>
-
-<PRE>    &lt;%perl_init&gt;
-    if ($m-&gt;call_self(my \$output, undef)) {
-        foreach (split(&quot;\n&quot;,$output)) {
-            next if /^#/ || !/\S/;
-            my @vals = split(/\s+/);
-            push(@people,{id=&gt;$vals[0],last=&gt;$vals[1],first=&gt;$vals[2]});
-        }
-        return @people;
-    }
-    &lt;/%perl_init&gt;
-</PRE>
-
-<P>
-
-Now we can get a list of hashes directly from this component.    
-
-
-<P>
-
-<P>
-<HR>
-<H2><A NAME="how_filtering_works">How filtering works
-
-</A></H2>
-<CODE>$m-&gt;call_self</CODE> (and <CODE>&lt;%filter&gt;</CODE>, which is built on it) uses a bit of magic to accomplish everything in one
-line. If you're curious, here's how it works:
-
-
-<P>
-
-o A component foo calls <CODE>$m-&gt;call_self</CODE> for the first time.
-
-
-<P>
-
-o <CODE>$m-&gt;call_self</CODE> sets an internal flag and calls foo again recursively, changing the output
-stream to capture content into a buffer.
-
-
-<P>
-
-o foo again calls <CODE>$m-&gt;call_self</CODE> which, seeing the flag, returns 0 immediately.
-
-
-<P>
-
-o foo goes about its business and generates content into the <CODE>$m-&gt;call_self</CODE> buffer.
-
-
-<P>
-
-o When control is returned to <CODE>$m-&gt;call_self</CODE>, it places the content and return value in the references provided, and
-returns 1.
-
-
-<P>
-
-<P>
-<HR>
 <H1><A NAME="sending_http_headers">SENDING HTTP HEADERS
 
 </A></H1>
@@ -2179,8 +2431,8 @@ sent manually.
 To determine the exact header behavior on your system, you need to know
 whether your server's <A HREF="././Interp.html#item_out_mode">out_mode</A> is 'batch' (meaning all output is buffered until the end) or 'stream' (all
 output is sent immediately). Your administrator should have this
-information. If your administrator hasn't touched out_mode then it is
-probably 'batch', the default.
+information. If your administrator doesn't know then it is probably
+'batch', the default.
 
 
 <P>
@@ -2641,7 +2893,396 @@ reflects your actual browser.
 
 <P>
 <HR>
-<H1><A NAME="tips_and_traps">TIPS AND TRAPS
+<H1><A NAME="object_oriented_techniques">OBJECT-ORIENTED TECHNIQUES
+
+</A></H1>
+Earlier you learned how to assign a common template to an entire hierarchy
+of pages using <CODE>autohandlers</CODE>. The basic template looks like:
+
+
+<P>
+
+<PRE>    header HTML
+    &lt;% $m-&gt;call_next %&gt;
+    footer HTML
+</PRE>
+
+<P>
+
+However, sometimes you'll want a more flexible template that adjusts to the
+requested page. You might want to allow each page or subsection to specify
+a title, background color, or logo image while leaving the rest of the
+template intact. You might want some pages or subsections to use a
+different template, or to ignore templates entirely.
+
+
+<P>
+
+These issues can be addressed with the object-oriented style primitives
+introduced in Mason 0.85.
+
+
+<P>
+
+Note: we use the term object-oriented loosely. Mason borrows concepts like
+inheritance, methods, and attributes from object methodology but implements
+them in a shallow way to solve a particular set of problems. Future
+redesigns may incorporate a deeper object architecture if the current
+prototype proves successful.
+
+
+<P>
+
+<P>
+<HR>
+<H2><A NAME="determining_inheritance">Determining inheritance
+
+</A></H2>
+Every component may have a single <EM>parent</EM>. The default parent is a component named <CODE>autohandler</CODE> in the closest parent directory. This rule applies to autohandlers too: an
+autohandler may not have itself as a parent but may have an autohandler
+further up the tree as its parent.
+
+
+<P>
+
+You can use the <CODE>inherit</CODE> flag to override a component's parent:
+
+
+<P>
+
+<PRE>    &lt;%flags&gt;
+    inherit=&gt;'/foo/bar'
+    &lt;/%flags&gt;
+</PRE>
+
+<P>
+
+If you specify undef as the parent, then the component inherits from no
+one. This is how to suppress templates.
+
+
+<P>
+
+Currently there is no way to specify a parent dynamically at run-time, or
+to specify multiple parents.
+
+
+<P>
+
+<P>
+<HR>
+<H2><A NAME="content_wrapping">Content wrapping
+
+</A></H2>
+At page execution time, Mason builds a chain of components from the called
+component, its parent, its parent's parent, and so on. Execution begins
+with the top-most component; calling
+<CODE>$m-&gt;call_next</CODE> passes control to the next component in the chain. This is the familiar
+autohandler ``wrapping'' behavior, generalized for any number of
+arbitrarily named templates.
+
+
+<P>
+
+<P>
+<HR>
+<H2><A NAME="accessing_methods_and_attributes">Accessing methods and attributes
+
+</A></H2>
+A template can access methods and/or attributes of the requested page.
+First, use <CODE>$m-&gt;base_comp</CODE> to get a handle on the appropriate component:
+
+
+<P>
+
+<PRE>    my $self = $m-&gt;base_comp;
+</PRE>
+
+<P>
+
+<CODE>$self</CODE> now refers to the component corresponding to the
+requested page (the component at the end of the chain).
+
+
+<P>
+
+To access a method for the page, use <CODE>call_method</CODE>:
+
+
+<P>
+
+<PRE>    $self-&gt;call_method('header');
+</PRE>
+
+<P>
+
+or alternatively a path of the form 'SELF:method':
+
+
+<P>
+
+<PRE>    &lt;&amp; SELF:header &amp;&gt;
+    $m-&gt;comp('SELF:header')
+</PRE>
+
+<P>
+
+In the context of a component path, SELF is shorthand for
+<CODE>$m-&gt;base_comp</CODE>.
+
+
+<P>
+
+Each of the above looks for a method named 'header' in the page component.
+If no such method exists, the chain of parents is searched upwards, until
+ultimately a ``method not found'' error occurs. Use 'method_exists' to
+avoid this error for questionable method calls:
+
+
+<P>
+
+<PRE>    if ($self-&gt;method_exists('header')) { ...
+</PRE>
+
+<P>
+
+To defer to the method of your parent, use <CODE>parent</CODE>:
+
+
+<P>
+
+<PRE>    $m-&gt;current_comp-&gt;parent-&gt;call_method('header')
+</PRE>
+
+<P>
+
+or alternatively a path of the form 'PARENT:method':
+
+
+<P>
+
+<PRE>    &lt;&amp; PARENT:header &amp;&gt;
+    $m-&gt;comp('PARENT:header')
+</PRE>
+
+<P>
+
+In the context of a component path, PARENT is shorthand for
+<CODE>$m-&gt;current_comp-&gt;parent</CODE>.
+
+
+<P>
+
+The rules for attributes are similar. To access an attribute for the page,
+use <CODE>attr</CODE>:
+
+
+<P>
+
+<PRE>    my $color = $self-&gt;attr('color')
+</PRE>
+
+<P>
+
+This looks for an attribute named 'color' in the <CODE>$self</CODE>
+component. If no such attribute exists, the chain of parents is searched
+upwards, until ultimately an ``attribute not found'' error occurs. Use
+'attr_exists' to avoid this error for questionable attributes:
+
+
+<P>
+
+<PRE>    if ($self-&gt;attr_exists('color')) { ...
+</PRE>
+
+<P>
+
+<P>
+<HR>
+<H2><A NAME="sharing_data">Sharing data
+
+</A></H2>
+A component's main body and its methods occupy separate lexical scopes.
+Variables declared, say, in the &lt;%init&gt; section of the main component
+cannot be seen from methods.
+
+
+<P>
+
+To share variables, declare them either in the &lt;%once&gt; or
+&lt;%shared&gt; section. Both sections have an all-inclusive scope. The
+&lt;%once&gt; section runs once when the component loads; its variables are
+persistent for the lifetime of the component. The &lt;%shared&gt; section
+runs once per request (when needed), just before any code in the component
+runs; its variables last only til the end of the request.
+
+
+<P>
+
+In the following example, various sections of code require information
+about the logged-in user. We use a &lt;%shared&gt; section to fetch these
+in a single request.
+
+
+<P>
+
+<PRE>    &lt;%attr&gt;
+    title=&gt;sub { &quot;Account for $full_name&quot; }
+    &lt;/%attr&gt;
+    
+    &lt;%method lefttoc&gt;
+    &lt;i&gt;&lt;% $full_name %&gt;&lt;/i&gt;
+    (&lt;a href=&quot;logout.html&quot;&gt;Log out&lt;/a&gt;)&lt;br&gt;
+    ...
+    &lt;/%method&gt;
+    
+    Welcome, &lt;% $fname %&gt;. Here are your options:
+    
+    &lt;%shared&gt;
+    my $dbh = DBI::connect ...;
+    my $user = $r-&gt;connection-&gt;user;
+    my $sth = $dbh-&gt;prepare(&quot;select lname,fname, from users where user_id = '$user'&quot;);
+    my ($lname,$fname) = $sth-&gt;fetchrow_array;
+    my $full_name = &quot;$first $last&quot;;
+    &lt;/%shared&gt;
+</PRE>
+
+<P>
+
+&lt;%shared&gt; presents a good alternative to &lt;%init&gt; when data is
+needed across multiple scopes. Outside these situations, &lt;%init&gt; is
+preferred for its slightly greater speed and predictable execution model.
+
+
+<P>
+
+<P>
+<HR>
+<H2><A NAME="example">Example
+
+</A></H2>
+Let's say we have three components:
+
+
+<P>
+
+<PRE>    /autohandler
+    /products/autohandler
+    /products/index.html
+</PRE>
+
+<P>
+
+and that a request comes in for /products/index.html.
+
+
+<P>
+
+/autohandler contains a general template for the site, referring to a
+number of standard methods and attributes for each page:
+
+
+<P>
+
+<PRE>    &lt;head&gt;
+    &lt;title&gt;&lt;&amp; SELF:title &amp;&gt;&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body bgcolor=&quot;&lt;% $self-&gt;attr('bgcolor') %&gt;&quot;&gt;
+    &lt;&amp; SELF:header &amp;&gt;
+    &lt;table&gt;&lt;tr&gt;&lt;td&gt;
+</PRE>
+
+<P>
+
+<PRE>    &lt;% $m-&gt;call_next %&gt;
+</PRE>
+
+<P>
+
+<PRE>    &lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+    &lt;&amp; SELF:footer &amp;&gt;
+    &lt;/body&gt;
+</PRE>
+
+<P>
+
+<PRE>    &lt;%init&gt;
+    my $self = $m-&gt;base_comp;
+    ...
+    &lt;/%init&gt;
+</PRE>
+
+<P>
+
+<PRE>    &lt;%attr&gt;
+    bgcolor=&gt;'white'
+    &lt;/%attr&gt;
+</PRE>
+
+<P>
+
+<PRE>    &lt;%method title&gt;
+    McGuffey Inc.
+    &lt;/%method&gt;
+</PRE>
+
+<P>
+
+<PRE>    &lt;%method header&gt;
+    &lt;h2&gt;&lt;&amp; SELF:title &amp;&gt;&lt;/h2&gt;&lt;p&gt;
+    &lt;/%method&gt;
+</PRE>
+
+<P>
+
+<PRE>    &lt;%method footer&gt;
+    &lt;/%method&gt;
+</PRE>
+
+<P>
+
+Notice how we provide defaults for each method and attribute, even if
+blank.
+
+
+<P>
+
+/products/autohandler overrides some attributes and methods for the
+/products section of the site.
+
+
+<P>
+
+<PRE>    &lt;%attr&gt;
+    bgcolor=&gt;'beige'
+    &lt;/%attr&gt;
+    &lt;%method title&gt;
+    McGuffey Inc.: Products
+    &lt;/%method&gt;
+</PRE>
+
+<P>
+
+<PRE>    &lt;% $m-&gt;call_next %&gt;
+</PRE>
+
+<P>
+
+Note that this component, though it only defines attributes and methods,
+must call <CODE>$m-&gt;call_next</CODE> if it wants the rest of the chain to run.
+
+
+<P>
+
+/products/index.html might override a few attributes, but mainly provides a
+primary section for the body.
+
+
+<P>
+
+<P>
+<HR>
+<H1><A NAME="common_traps">COMMON TRAPS
 
 </A></H1>
 <DL>
@@ -2703,26 +3344,6 @@ the object from %ARGS:
 
 <PRE>  my $query = new CGI (\%ARGS);
 </PRE>
-
-<P>
-
-<DT><STRONG><A NAME="item_Separate_Perl_from_HTML">Separate Perl from HTML
-
-</A></STRONG><DD>
-In our experience, the most readable components, especially for
-non-programmer designers and editors, contain full HTML in one continuous
-block at the top with simple substitutions for dynamic elements
-(&lt;%$name%&gt;, &lt;%$salary%&gt;) but no distracting blocks of Perl
-code. At the bottom an &lt;%init&gt; block sets up the substitution
-variables -- getting <CODE>$name</CODE> from the database, calculating
-$salary, etc. This organization allows non-programmers to work with the
-HTML without getting distracted or discouraged by Perl code.
-
-
-<P>
-
-This technique does sacrifice some performance for readability.
-
 
 <P>
 

@@ -24,24 +24,19 @@ my %fields =
      error_code => undef,
      interp => undef,
      out_method => undef,
-     out_mode => undef,
+     out_mode => undef
      );
-# Create read-only accessor routines
-foreach my $f (keys %fields) {
-    no strict 'refs';
-    *{$f} = sub {my $s=shift; die "cannot modify request field $f" if @_; return $s->{$f}};
-}
 
 sub new
 {
     my $class = shift;
     my $self = {
 	%fields,
-	autohandler_next => undef,
 	dhandler_arg => undef,
 	error_flag => undef,
 	out_buffer => '',
 	stack_array => undef,
+	wrapper_chain => undef
     };
     my (%options) = @_;
     while (my ($key,$value) = each(%options)) {
@@ -106,8 +101,8 @@ sub exec {
 	$orig_path = $path = $comp;
 	if (!($comp = $interp->load($path))) {
 	    if (defined($interp->{dhandler_name}) and $comp = $interp->find_comp_upwards($path,$interp->{dhandler_name})) {
-		my $parent = $comp->dir_path;
-		($self->{dhandler_arg} = $path) =~ s{^$parent/}{};
+		my $parent_path = $comp->dir_path;
+		($self->{dhandler_arg} = $path) =~ s{^$parent_path/?}{};
 	    }
 	}
 	unless ($comp) {
@@ -121,29 +116,23 @@ sub exec {
     # This label is for declined requests.
     retry:
     
-    # Check for autohandler.
-    if (defined($interp->{autohandler_name})) {
-	my $parent = $comp->dir_path;
-	my $autocomp;
-	if (!$interp->{allow_recursive_autohandlers}) {
-	    $autocomp = $interp->load("$parent/".$interp->{autohandler_name});
-	} else {
-	    $autocomp = $interp->find_comp_upwards($parent,$interp->{autohandler_name});
-	}
-	if (defined($autocomp)) {
-	    $self->{autohandler_next} = [$comp,\@args];
-	    $comp = $autocomp;
-	}
+    # Build wrapper chain.
+    my @wrapper_chain = ($comp);
+    for (my $parent = $comp->parent; $parent; $parent = $parent->parent) {
+	unshift(@wrapper_chain,$parent);
+	die "inheritance chain length > 32 (infinite inheritance loop?)" if (@wrapper_chain > 32);
     }
+    my $first_comp = shift(@wrapper_chain);
+    $self->{wrapper_chain} = [@wrapper_chain];
 
     # Call the first component.
     my ($result, @result);
     if (wantarray) {
 	local $SIG{'__DIE__'} = sub { confess($_[0]) };
-	@result = eval {$self->comp($comp, @args)};
+	@result = eval {$self->comp({base_comp=>$comp}, $first_comp, @args)};
     } else {
 	local $SIG{'__DIE__'} = sub { confess($_[0]) };
-	$result = eval {$self->comp($comp, @args)};
+	$result = eval {$self->comp({base_comp=>$comp}, $first_comp, @args)};
     }
     my $err = $@;
 
@@ -206,7 +195,6 @@ sub cache
     my $interp = $self->interp;
     return undef unless $interp->use_data_cache;
     $options{action} = $options{action} || 'retrieve';
-    $options{key} = $options{key} || 'main';
     
     my $comp = $self->current_comp;
     $options{cache_file} = $comp->cache_file
@@ -215,15 +203,20 @@ sub cache
 	$options{memory_cache} = $interp->{data_cache_store};
 	delete($options{keep_in_memory});
     }
-    
-    my $results = HTML::Mason::Utils::access_data_cache(%options);
-    if ($options{action} eq 'retrieve') {
-	$interp->write_system_log('CACHE_READ',$comp->title,$options{key},
-				  defined $results ? 1 : 0);
-    } elsif ($options{action} eq 'store') {
-	$interp->write_system_log('CACHE_WRITE',$comp->title,$options{key});
+
+    if ($options{action} eq 'retrieve' or $options{action} eq 'store') {
+	my $results = HTML::Mason::Utils::access_data_cache(%options);
+	if ($options{action} eq 'retrieve') {
+	    $interp->write_system_log('CACHE_READ',$comp->title,$options{key} || 'main',
+				      defined $results ? 1 : 0);
+	} elsif ($options{action} eq 'store') {
+	    $interp->write_system_log('CACHE_WRITE',$comp->title,$options{key} || 'main');
+	}
+	return $results;
+    } else {
+	return HTML::Mason::Utils::access_data_cache(%options);
     }
-    return $results;
+
 }
 
 sub cache_self
@@ -283,11 +276,21 @@ sub cache_self
 #
 sub call { shift->comp(@_) }
 
+sub call_dynamic {
+    my ($m, $key, @args) = @_;
+    my $comp = ($m->current_comp->is_subcomp) ? $m->current_comp->owner : $m->current_comp;
+    if (!defined($comp->{dynamic_subs_request}) or $comp->{dynamic_subs_request} ne $m) {
+	$comp->{dynamic_subs_hash} = $comp->{dynamic_subs_init}->();
+	$comp->{dynamic_subs_request} = $m;
+    }
+    my $sub = $comp->{dynamic_subs_hash}->{$key} or die "call_dynamic: assert error - could not find code for key $key in component ".$comp->title;
+    return $sub->(@args);
+}
+
 sub call_next {
     my ($self,@extra_args) = @_;
-    my $aref = $self->{autohandler_next} or die "call_next: no autohandler invoked";
-    my ($comp, $args_ref) = @$aref;
-    my @args = (@$args_ref,@extra_args);
+    my $comp = shift(@{$self->{wrapper_chain}}) or die "call_next: no next component to invoke";
+    my @args = (@{$self->current_args},@extra_args);
     return $self->comp($comp, @args);
 }
 
@@ -357,7 +360,7 @@ sub call_self
 sub comp_exists
 {
     my ($self,$path) = @_;
-    return $self->interp->lookup($self->process_comp_path($path)) ? 1 : 0;
+    return $self->interp->lookup($self->interp->process_comp_path($path,$self->current_comp->dir_path)) ? 1 : 0;
 }
 
 sub decline
@@ -381,34 +384,62 @@ sub dhandler_arg { shift->{dhandler_arg} }
 
 #
 # Given a component path (absolute or relative), returns a component.
-# Does relative->absolute conversion as well as checking for local
-# subcomponents.
+# Handles SELF and PARENT, comp:method, relative->absolute
+# conversion, and local subcomponents.
 #
 sub fetch_comp
 {
     my ($self,$path) = @_;
     die "fetch_comp: requires path as first argument" unless defined($path);
 
+    #
+    # Handle paths SELF and PARENT
+    #
+    if ($path eq 'SELF') {
+	return $self->base_comp;
+    }
+    if ($path eq 'PARENT') {
+	return $self->current_comp->parent || die "PARENT designator used from component with no parent";
+    }
+
+    #
+    # Handle paths of the form comp_path:method_name
+    #
+    if (index($path,':') != -1) {
+	my $method_comp;
+	my ($owner_path,$method_name) = split(':',$path,2);
+	my $owner_comp = $self->fetch_comp($owner_path)
+	    or die "could not find component for path '$owner_path'\n";
+	$owner_comp->_locate_inherited('methods',$method_name,\$method_comp)
+	    or die "no method '$method_name' for component ".$owner_comp->title;
+	return $method_comp;
+    }
+    
+    #
+    # If path does not contain a slash, check for a subcomponent in the
+    # current component first.
+    #
     if ($path !~ /\//) {
+	my $cur_comp = $self->current_comp;
 	# Check my subcomponents.
-	if (my $comp = $self->current_comp->subcomps->{$path}) {	
-	    return $comp;
+	if (my $subcomp = $cur_comp->subcomps->{$path}) {	
+	    return $subcomp;
 	}
-	# If I am a subcomponent, also check my parent's subcomponents.
+	# If I am a subcomponent, also check my owner's subcomponents.
 	# This won't work when we go to multiply embedded subcomponents...
-	if ($self->current_comp->is_subcomp and my $comp = $self->current_comp->parent_comp->subcomps->{$path}) {
-	    return $comp;
+	if ($cur_comp->is_subcomp and my $subcomp = $cur_comp->owner->subcomps->{$path}) {
+	    return $subcomp;
 	}
     }
-    $path = $self->process_comp_path($path);
-    return $self->{interp}->load($path);
+
+    #
+    # Otherwise pass the absolute path to interp->load.
+    #
+    $path = $self->interp->process_comp_path($path,$self->current_comp->dir_path);
+    return $self->interp->load($path);
 }
 
-sub fetch_next {
-    my ($self) = @_;
-    my $aref = $self->{autohandler_next} or die "fetch_next: no autohandler invoked";
-    return $aref ? $aref->[0] : undef;
-}
+sub fetch_next { return shift->{wrapper_chain}->[0] }
 
 sub file
 {
@@ -417,8 +448,9 @@ sub file
     unless (is_absolute_path($file)) {
 	if ($interp->static_file_root) {
 	    $file = $interp->static_file_root . "/" . $file;
-	} elsif (my $dir_path = $self->current_comp->dir_path) {
-	    $file = $interp->comp_root . $dir_path . "/" . $file;
+	} elsif ($self->current_comp->is_file_based) {
+	    my $source_dir = $self->current_comp->source_dir;
+	    $file = "$source_dir/$file";
 	} else {
 	    $file = "/$file";
 	}
@@ -492,7 +524,13 @@ sub comp {
     }
 }
 sub comp1 {
-    my ($self, $comp, @args) = @_;
+    my $self = shift;
+
+    # Get modifiers: optional hash reference passed in as first argument.
+    my %mods;
+    %mods = %{shift()} if (ref($_[0]) eq 'HASH');
+
+    my ($comp,@args) = @_;
     my $interp = $self->{interp};
     my $depth = $REQ_DEPTH;
     die "comp: requires path or component as first argument" unless defined($comp);
@@ -534,13 +572,20 @@ sub comp1 {
     }
 
     #
+    # Determine base_comp (base component for method and attribute
+    # references). Stays the same unless passed in as a modifier.
+    #
+    my $base_comp = exists($mods{base_comp}) ? $mods{base_comp} : $self->top_stack->{base_comp};
+    
+    #
     # Check for maximum recursion.
     #
     die "$depth levels deep in component stack (infinite recursive call?)\n" if ($depth >= $interp->{max_recurse});
 
     # Push new frame onto stack and increment (localized) depth.
     my $stack = $self->stack;
-    push(@$stack,{'comp'=>$comp,args=>[@args],sink=>$sink});
+    my $frame = {'comp'=>$comp,args=>[@args],sink=>$sink,base_comp=>$base_comp};
+    push(@$stack,$frame);
     $REQ_DEPTH++;
 
     # Call start_comp hooks.
@@ -593,6 +638,12 @@ sub scomp {
     die $err if $err;
 
     return $store;
+}
+
+sub process_comp_path
+{
+    my ($self) = shift;
+    return $self->interp->process_comp_path(@_,$self->current_comp->dir_path);
 }
 
 #
@@ -660,26 +711,16 @@ sub debug_hook
 sub current_comp { return $_[0]->top_stack->{'comp'} }
 sub current_args { return $_[0]->top_stack->{args} }
 sub current_sink { return $_[0]->top_stack->{sink} }
+sub base_comp { return $_[0]->top_stack->{base_comp} }
 
-#
-# Return the absolute version of a component path. Handles . and ..
-# Empty string resolves to current component path. Optional second
-# argument is directory path to resolve relative paths against.
-#
-sub process_comp_path
-{
-    my ($self,$comp_path,$dir_path) = @_;
-    if ($comp_path !~ /\S/) {
-	return $self->current_comp->path;
-    }
-    if ($comp_path !~ m@^/@) {
-	$dir_path = $self->current_comp->dir_path unless defined($dir_path);
-	die "relative component path ($comp_path) used from component with no current directory" unless $dir_path;
-	$comp_path = $dir_path . ($dir_path eq "/" ? "" : "/") . $comp_path;
-    }
-    while ($comp_path =~ s@/[^/]+/\.\.@@) {}
-    while ($comp_path =~ s@/\./@/@) {}
-    return $comp_path;    
-}
+# Create generic read-only accessor routines
+
+sub aborted { return shift->{aborted} }
+sub aborted_value { return shift->{aborted_value} }
+sub count { return shift->{count} }
+sub declined { return shift->{declined} }
+sub interp { return shift->{interp} }
+sub out_method { return shift->{out_method} }
+sub out_mode { return shift->{out_mode} }
 
 1;

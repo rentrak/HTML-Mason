@@ -74,9 +74,10 @@ stand-alone Perl script), see the <A HREF="#standalone_mode">STANDALONE MODE</A>
 <DT><STRONG><A NAME="item_allow_recursive_autohandlers">allow_recursive_autohandlers
 
 </A></STRONG><DD>
-True or undef, default is undef. If true, autohandlers apply both to their
-own directories and all subdirectories; if undef, only to their own
-directories. See the <A HREF="././Devel.html#autohandlers">autohandlers</A> section of the Component Developer's Guide for a discussion of the pros and
+True or undef. Default is true as of verison 0.85. If true, autohandlers
+apply both to their own directories and all subdirectories; if undef, only
+to their own directories. See the
+<A HREF="././Devel.html#autohandlers">autohandlers</A> section of the Component Developer's Guide for a discussion of the pros and
 cons.
 
 
@@ -206,7 +207,7 @@ not look for dhandlers.
 
 </A></STRONG><DD>
 The maximum component stack depth the interpreter is allowed to descend
-before signalling an error. Default is 16.
+before signalling an error. Default is 32.
 
 
 <P>
@@ -278,6 +279,15 @@ Undefined by default; if left undefined, relative path names to <CODE>$m-</CODE>
 
 <P>
 
+<DT><STRONG><A NAME="item_system_log_events">system_log_events
+
+</A></STRONG><DD>
+A string value indicating one or more events to record in the system log,
+separated by ``|''. Default is to log nothing.
+
+
+<P>
+
 <DT><STRONG><A NAME="item_system_log_file">system_log_file
 
 </A></STRONG><DD>
@@ -291,15 +301,6 @@ Absolute path of system log. Default is data_dir/etc/system.log.
 </A></STRONG><DD>
 Separator to use between fields on a line in the system log. Default is
 ctrl-A (``\cA'').
-
-
-<P>
-
-<DT><STRONG><A NAME="item_system_log_events">system_log_events
-
-</A></STRONG><DD>
-A string value indicating one or more events to record in the system log,
-separated by ``|''. Default is to log nothing.
 
 
 <P>

@@ -25,10 +25,11 @@ stand-alone Perl script), see the STANDALONE MODE section below.
 
 =item allow_recursive_autohandlers
 
-True or undef, default is undef. If true, autohandlers apply both to
-their own directories and all subdirectories; if undef, only to their
-own directories. See the Devel/autohandlers section of the
-Component Developer's Guide for a discussion of the pros and cons.
+True or undef. Default is true as of verison 0.85. If true,
+autohandlers apply both to their own directories and all
+subdirectories; if undef, only to their own directories. See the
+Devel/autohandlers section of the Component Developer's Guide for a
+discussion of the pros and cons.
 
 =item autohandler_name
 
@@ -98,7 +99,7 @@ undef, Mason will not look for dhandlers.
 =item max_recurse
 
 The maximum component stack depth the interpreter is allowed to
-descend before signalling an error.  Default is 16.
+descend before signalling an error.  Default is 32.
 
 =item out_method
 
@@ -145,6 +146,11 @@ not require a trailing slash. For example, if the file root is
 relative path names to C<$m->file()> are prepended with the
 current component directory.
 
+=item system_log_events
+
+A string value indicating one or more events to record in the system
+log, separated by "|". Default is to log nothing.
+
 =item system_log_file
 
 Absolute path of system log.  Default is data_dir/etc/system.log.
@@ -152,11 +158,6 @@ Absolute path of system log.  Default is data_dir/etc/system.log.
 =item system_log_separator
 
 Separator to use between fields on a line in the system log. Default is ctrl-A ("\cA").
-
-=item system_log_events
-
-A string value indicating one or more events to record in the system
-log, separated by "|". Default is to log nothing.
 
 =item use_data_cache
 

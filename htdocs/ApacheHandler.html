@@ -14,6 +14,7 @@
 	<LI><A HREF="#name">NAME</A>
 	<LI><A HREF="#synopsis">SYNOPSIS</A>
 	<LI><A HREF="#description">DESCRIPTION</A>
+	<LI><A HREF="#parameters_to_the_use_declarat">PARAMETERS TO THE use() DECLARATION</A>
 	<LI><A HREF="#parameters_to_the_new_contruct">PARAMETERS TO THE new() CONTRUCTOR</A>
 	<LI><A HREF="#accessor_methods">ACCESSOR METHODS</A>
 	<LI><A HREF="#author">AUTHOR</A>
@@ -36,6 +37,11 @@ HTML::Mason::ApacheHandler - Mason/mod_perl interface
 <H1><A NAME="synopsis">SYNOPSIS
 
 </A></H1>
+<PRE>    use HTML::Mason::ApacheHandler;
+</PRE>
+
+<P>
+
 <PRE>    my $ah = new HTML::Mason::ApacheHandler (..name/value params..);
     ...
     sub handler {
@@ -64,6 +70,45 @@ from the HTML::Mason::handler() routine in handler.pl.
 
 <P>
 
+<P>
+<HR>
+<H1><A NAME="parameters_to_the_use_declarat">PARAMETERS TO THE use() DECLARATION
+
+</A></H1>
+The following are parameters to pass explicitly when using
+HTML::Mason::ApacheHandler. The line must precede 'use HTML::Mason' to take
+effect; otherwise HTML::Mason implicitly imports ApacheHandler with default
+settings. e.g.
+
+
+<P>
+
+<PRE>    use HTML::Mason::ApacheHandler (args_method=&gt;'mod_perl');
+    use HTML::Mason;
+</PRE>
+
+<P>
+
+<DL>
+<DT><STRONG><A NAME="item_args_method">args_method
+
+</A></STRONG><DD>
+Method to use for unpacking GET and POST arguments. The valid options are
+'CGI' and 'mod_perl'; these indicate that a CGI.pm or Apache::Request
+object (respectively) will be created for the purposes of argument
+handling. These objects are, unfortunately, not yet accessible from
+components.
+
+
+<P>
+
+CGI is the default and comes with most Perl systems. You may wish to switch
+to Apache::Request (available from CPAN) for speed and memory efficiency.
+
+
+<P>
+
+</DL>
 <P>
 <HR>
 <H1><A NAME="parameters_to_the_new_contruct">PARAMETERS TO THE new() CONTRUCTOR
@@ -101,6 +146,17 @@ feature.
 </A></STRONG><DD>
 The <STRONG>debug_*</STRONG> parameters control Mason's use of debug files. Component <A HREF="././Admin.html#debugging">debugging</A> procedures are fully described in the <EM>Mason
 Administrator's Guide</EM>.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_decline_dirs">decline_dirs
+
+</A></STRONG><DD>
+Indicates whether Mason should decline directory requests, leaving Apache
+to serve up a directory index or a FORBIDDEN error as appropriate. Default
+is 1. See <A HREF="././Admin.html#allowing_directory_requests">Allowing directory requests</A>
+for more information about handling directories with Mason.
 
 
 <P>

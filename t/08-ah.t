@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 BEGIN { $HTML::Mason::IN_DEBUG_FILE = 1 if !$HTML::Mason::IN_DEBUG_FILE }
 use Cwd;
+use CGI;
 use strict;
 use vars (qw($root $branch $comp_root $data_dir));
 
@@ -47,6 +48,7 @@ sub fake_apache {
 	'ENV' => {
 	},
 	"args\$" => undef,
+	"args_hash" => {},
 	%$options
     };
     $dref->{filename} = $dref->{document_root}.$dref->{uri};
@@ -73,6 +75,9 @@ sub try_exec_with_ah {
     $r->{headers_out_method} = sub { $buf .= $_[0] };
     $r->headers_out('X-Mason-Test' => 'Initial value');
 
+    # Stop CGI from reinitializing with same params
+    CGI::initialize_globals();
+
     # Handle request.
     my $retval = eval { $ah->handle_request($r) };
     if (my $err = $@) {
@@ -85,23 +90,14 @@ sub try_exec_with_ah {
     compare_results ($test_name, $buf);
 }
 
-print "1..9\n";
+print "1..5\n";
 
 try_exec_with_ah('/basic','basic',{},{});
-try_exec_with_ah('/notfound','notfound',{},{});
 
 try_exec_with_ah('/headers','headers-batch',{output_mode=>'batch'},{});
 try_exec_with_ah('/headers','headers-stream',{output_mode=>'stream'},{});
-
-try_exec_with_ah('/headers-blank','headers-blank-batch',{output_mode=>'batch'},{});
-try_exec_with_ah('/headers-blank','headers-blank-stream',{output_mode=>'stream'},{});
-
-try_exec_with_ah('/basic','basic-with-true-predicate',{top_level_predicate=>sub {$_[0] =~ /basic/}},{});
-try_exec_with_ah('/basic','basic-with-false-predicate',{top_level_predicate=>sub {$_[0] =~ /notbasic/}},{});
-
-{ my $qs = 'scalar=5&list=a&list=b&hash=key&hash=value';
-  local $ENV{QUERY_STRING} = $qs;
-  local $ENV{REQUEST_METHOD} = 'GET';
-  try_exec_with_ah('/args','args',{},{"args\$" => $qs}); }
+{ my $qs = 'blank=1';
+  try_exec_with_ah('/headers','headers-batch-blank',{output_mode=>'batch'},{"args_hash" => {blank=>1}});
+  try_exec_with_ah('/headers','headers-stream-blank',{output_mode=>'stream'},{"args_hash" => {blank=>1}}); }
 
 1;

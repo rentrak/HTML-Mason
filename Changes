@@ -5,6 +5,51 @@ available at http://www.masonhq.com/changes.html.
 
 ** denotes an incompatible change
 
+0.85  Sun May  7 23:37:18 PDT 2000
+
+    - Added object-oriented primitives to components. Components can
+      define methods and attributes and inherit from parent components.
+      Templates can access the current page's methods and attributes for
+      greater flexibility.
+    - ** Major improvements/changes to autohandler feature. Autohandlers
+      are now recursive by default, and all applicable autohandlers for a
+      given page get a chance to run. If you have multiple autohandlers in
+      parent/child directories, or if you used autohandlers with
+      allow_recursive_autohandlers=0, you will need to adjust for the new
+      policy.
+    - Integrated a revamped parse_component that is cleaner, more modular
+      and easier to subclass. Courtesy of Dave Rolsky.
+    - New <%shared> section contains code that executes once per request
+      and whose declarations are visible from the main component, methods
+      and subcomponents alike.
+    - Added escape flags for <% %> output. Can now HTML-escape or
+      URI-escape expressions on a site-wide or per-expression
+      basis.
+    - Added choice of CGI or Apache::Request when using
+      ApacheHandler. (submitted by Dave Rolsky)
+    - Documented $m->clear_buffer, which removes all pending output from
+      the buffer.
+    - Fixed keys and expires cache actions from m->cache
+      interface. (suggested by Matt Hoskins)
+    - dhandlers can now serve their own directory; added documentation
+      about handling directories.
+    - Fixed dhandler bug introduced in 0.81 whereby $m->dhandler_arg only
+      contains the first branch of a multi-branch argument.
+    - Removed memory leak in ApacheHandler::handle_request_1. (submitted
+      by Pascal Eeftinck and Renzo Toma)
+    - Changed parent_comp() to owner() for subcomponents/methods.
+    - Increased maximum recurse level from 16 to 32.
+    - Reorganized syntax section of developer's manual and added a "how to
+      use this manual" section.
+    - Added an UPGRADE guide to distribution.
+    - Added section about securing top-level components to Admin.pod.
+      (suggested by Sean Cazzell)
+    - Added section about declining image requests to Admin.pod.
+    - Eliminated "Subroutine status_mason redefined" warning when creating
+      multiple ApacheHandlers.
+    - Updated cookie expiration in CD-ME example. (reported by Renzo Toma)
+    - Added a "-f" flag to rm in faq Makefile. (reported by Jeremy Taylor)
+
 0.81  Sun Feb 20 23:39:05 PST 2000
 
     - Fixed small 0.8 bugs with automatic header sending. Headers are now
@@ -75,6 +120,7 @@ available at http://www.masonhq.com/changes.html.
     - Added improved, separate session_handler.pl for session handling.
     - ** mc_comp_source no longer works for non-existent components.
     - ** Removed mc_date legacy command.
+    - Many new test scripts.
     - Added warnings about using Mason with mod_perl DSO.
     - Added more site configuration examples to Admin.pod.
     - Split object parameter methods (interp->comp_root, etc.) into

@@ -256,11 +256,20 @@ Returns the object filename for this component.
 
 <P>
 
-<DT><STRONG><A NAME="item_parent_comp">parent_comp
+<DT><STRONG><A NAME="item_owner">owner
 
 </A></STRONG><DD>
-Defined only for subcomponents; returns the parent component that this
+Defined only for subcomponents; returns the component that this
 subcomponent was defined in.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_parent">parent
+
+</A></STRONG><DD>
+Returns the parent of this component for inheritance purposes, by default
+the nearest <CODE>autohandler</CODE> in or above the component's directory. Can be changed via the <CODE>inherit</CODE> flag.
 
 
 <P>

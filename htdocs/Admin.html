@@ -32,6 +32,9 @@
 		<LI><A HREF="#file_ownership">File ownership</A>
 		<LI><A HREF="#persistent_user_sessions">Persistent user sessions</A>
 		<LI><A HREF="#using_global_variables">Using global variables</A>
+		<LI><A HREF="#declining_image_requests">Declining image requests</A>
+		<LI><A HREF="#securing_top_level_components">Securing top-level components</A>
+		<LI><A HREF="#allowing_directory_requests">Allowing directory requests</A>
 	</UL>
 
 	<LI><A HREF="#standard_features">STANDARD FEATURES</A>
@@ -577,6 +580,185 @@ plain variable name:
 
 <PRE>    $dbh-&gt;prepare...
 </PRE>
+
+<P>
+
+<P>
+<HR>
+<H2><A NAME="declining_image_requests">Declining image requests
+
+</A></H2>
+Mason should be prevented from serving images, tarballs, and other binary
+files as regular components. Such a file may inadvertently contain a Mason
+character sequence such as ``&lt;%'', causing an error.
+
+
+<P>
+
+There are several ways to restrict which file types are handled by Mason.
+One way is with a line at the top of <CODE>handler(),</CODE> e.g.:
+
+
+<P>
+
+<PRE>    return -1 if $r-&gt;content_type &amp;&amp; $r-&gt;content_type !~ m|^text/|i;
+</PRE>
+
+<P>
+
+This line allows text/html and text/plain to pass through but not much
+else. It is included (commented out) in the default handler.pl.
+
+
+<P>
+
+Another way is specifying a filename pattern in the Apache configuration,
+e.g.:
+
+
+<P>
+
+<PRE>    &lt;FilesMatch &quot;(\.html|\.txt|^[^\.]+)$&gt;
+    SetHandler perl-script
+    PerlHandler HTML::Mason
+    &lt;/FilesMatch&gt;
+</PRE>
+
+<P>
+
+This directs Mason to handle only files with .html, .txt, or no extension.
+
+
+<P>
+
+<P>
+<HR>
+<H2><A NAME="securing_top_level_components">Securing top-level components
+
+</A></H2>
+Users may exploit a server-side scripting environment by invoking scripts
+with malicious or unintended arguments. Mason administrators need to be
+particularly wary of this because of the tendency to break out
+``subroutines'' into individually accessible file components.
+
+
+<P>
+
+For example, a Mason developer might create a helpful shared component for
+performing sql queries:
+
+
+<P>
+
+<PRE>    $m-&gt;comp('sql_select', table=&gt;'employee', where=&gt;'id=315');
+</PRE>
+
+<P>
+
+This is a perfectly reasonable component to create and call internally, but
+clearly presents a security risk if accessible via URL:
+
+
+<P>
+
+<PRE>    http://www.foo.com/sql_select?table=credit_cards&amp;where=*
+</PRE>
+
+<P>
+
+Of course a web user would have to obtain the name of this component
+through guesswork or other means, but obscurity alone does not properly
+secure a system. Rather, you should choose a site-wide policy for
+distinguishing top-level components from private components, and make sure
+your developers stick to this policy. You can then prevent private
+components from being served.
+
+
+<P>
+
+One solution is to place all private components inside a directory, say
+/private, that lies under the component root but outside the document root.
+
+
+<P>
+
+Another solution is to decide on a naming convention, for example, that all
+private components begin with ``_'', or that all top-level components must
+end in ``.html''. Then turn all private requests away with a 404 NOT_FOUND
+(rather than, say, a 403 FORBIDDEN which would provide more information
+than necessary). Use either an Apache directive
+
+
+<P>
+
+<PRE>    &lt;FilesMatch &quot;^_&quot;&gt;
+    SetHandler perl-script
+    PerlHandler &quot;sub { return 404 }&quot;
+    &lt;/FilesMatch&gt;
+</PRE>
+
+<P>
+
+or a handler.pl directive:
+
+
+<P>
+
+<PRE>    return 404 if $r-&gt;filename =~ m{_[^/]+$};
+</PRE>
+
+<P>
+
+Even after you've safely protected internal components, top-level
+components that process arguments (such as form handlers) still present a
+risk. Users can invoke such a component with arbitrary argument values via
+a handcrafted query string. Always check incoming arguments for validity
+and never place argument values directly into SQL, shell commands, etc.
+Unfortunately, Mason does not yet work with with Perl's taint checking
+which would help ensure these principles.
+
+
+<P>
+
+<P>
+<HR>
+<H2><A NAME="allowing_directory_requests">Allowing directory requests
+
+</A></H2>
+By default Mason will decline requests for directories, leaving Apache to
+serve up a directory index or a FORBIDDEN as appropriate. Unfortunately
+this rule applies even if there is a dhandler in the directory:
+/foo/bar/dhandler does not get a chance to handle a request for /foo/bar.
+
+
+<P>
+
+If you would like Mason to handle directory requests, do the following:
+
+
+<P>
+
+1. Set the <A HREF="./ApacheHandler.html#item_decline_dirs">decline_dirs</A> ApacheHandler parameter to 0.
+
+
+<P>
+
+2. If your handler.pl contains the standard ``return -1'' line to decline
+non-text requests (as given in the previous section), add a clause allowing
+directory types:
+
+
+<P>
+
+<PRE>    return -1 if $r-&gt;content_type &amp;&amp; $r-&gt;content_type !~ m|^text/|i
+                 &amp;&amp; $r-&gt;content_type !~ m|directory$|i;
+</PRE>
+
+<P>
+
+The dhandler that catches a directory request is responsible for setting a
+reasonable content type.
+
 
 <P>
 
@@ -1337,7 +1519,7 @@ message is output neatly and alone.
 
 <P>
 
-Batch mode also offers more flexibility in controlling HTTP headers. See <A HREF="././Devel.html#sending_http_headers">sending_http_headers</A>.
+Batch mode also offers more flexibility in controlling HTTP headers (see <A HREF="././Devel.html#sending_http_headers">sending_http_headers</A>) and in handling mid-request error conditions (see <A HREF="././Request.html#clear_buffer">clear_buffer</A>).
 
 
 <P>

@@ -328,7 +328,7 @@ and make sure mod_mime_magic is not active.
 
 That's it for the Apache configuration. Next you will need to configure
 Mason's <CODE>handler.pl</CODE> file, a sample of which is in
-<CODE>eg/handler.pl</CODE>. Here you must make some decisions:
+<CODE>eg/handler.pl</CODE> in the Mason distribution. Here you must make some decisions:
 
 
 <P>
@@ -387,7 +387,7 @@ line
 
 <P>
 
-<PRE>    return -1 if $r-&gt;content_type &amp;&amp; $r-&gt;content_type !~ m|^text/|io;
+<PRE>    return -1 if $r-&gt;content_type &amp;&amp; $r-&gt;content_type !~ m|^text/|i;
 </PRE>
 
 <P>

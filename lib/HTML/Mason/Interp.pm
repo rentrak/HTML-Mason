@@ -27,7 +27,7 @@ require Time::HiRes if $HTML::Mason::Config{use_time_hires};
 # Fields that can be set in new method, with defaults
 my %fields =
     (
-     allow_recursive_autohandlers => 0,
+     allow_recursive_autohandlers => 1,
      autohandler_name => 'autohandler',
      code_cache_max_size => 10*1024*1024,
      comp_root => undef,
@@ -37,7 +37,7 @@ my %fields =
      dhandler_name => 'dhandler',
      system_log_file => undef,
      system_log_separator => "\cA",
-     max_recurse => 16,
+     max_recurse => 32,
      out_mode => 'batch',
      parser => undef,
      preloads => [],
@@ -212,6 +212,21 @@ sub check_reload_file {
 	    }
 	}
     }
+}
+
+#
+# Return the absolute version of a component path. Handles . and ..
+# Second argument is directory path to resolve relative paths against.
+#
+sub process_comp_path
+{
+    my ($self,$comp_path,$dir_path) = @_;
+    if ($comp_path !~ m@^/@) {
+	$comp_path = $dir_path . ($dir_path eq "/" ? "" : "/") . $comp_path;
+    }
+    while ($comp_path =~ s@/[^/]+/\.\.@@) {}
+    while ($comp_path =~ s@/\./@/@) {}
+    return $comp_path;    
 }
 
 #
