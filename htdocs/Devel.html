@@ -1266,6 +1266,16 @@ indicating when the data should expire:</P>
 <P>To change the expiration time for a piece of data, call <CODE>set</CODE> again
 with the new expiration. To expire an item immediately, use
 <CODE>$m-&gt;cache-&gt;remove</CODE>.</P>
+<P>The <CODE>expire_if</CODE> option from Mason 1.0x and earlier is currently not
+supported, though a version of it may be added to <CODE>Cache::Cache</CODE> in
+the future. For now, you can use tests on <CODE>get_object()</CODE> to
+conditionally expire a cache. For example, this code expires <CODE>$key</CODE>
+whenever a particular <CODE>$file</CODE> changes:</P>
+<PRE>
+    if (my $co = $m-&gt;cache-&gt;get_object($key) and
+        $co-&gt;get_created_at &lt; (stat($file))[9]) {
+        $m-&gt;cache-&gt;remove($key);
+    }</PRE>
 <P>You can also expire a cache item from an external script; see
 <A HREF="#accessing a cache externally">Accessing a Cache Externally</A> below.</P>
 <P>

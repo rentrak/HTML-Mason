@@ -293,7 +293,7 @@ This object is created only once by its container.
 
 =item * interp_class
 
-
+The interp class coordinates multiple objects to handle request execution
 
 Type:               string
 
@@ -317,7 +317,7 @@ This object is created only once by its container.
 
 =item * lexer_class
 
-
+This class generates compiler events based on the components source
 
 Type:               string
 

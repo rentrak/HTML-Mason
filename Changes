@@ -5,7 +5,23 @@ available at http://www.masonhq.com/changes.html.
 
 ** denotes an incompatible change
 
-1.12
+1.1201  July 24, 2002
+
+      [ ENHANCEMENTS ]
+
+    - Added details to the UPGRADE document on what has changed with the
+      caching system.
+    - Added some documentation on how to arbitrarily expire items in the
+      cache with the new caching system.  This is in HTML::Mason::Devel.
+
+      [ BUG FIXES ]
+
+    - Fixed a compilation error in HTML::Mason::Tools that was occuring
+      with Perl 5.00503.
+    - Made sure that <%method> and <%def> tags are treated
+      case-insensitively.
+
+1.12  July 23, 2002
 
       [ ENHANCEMENTS ]
 
@@ -152,6 +168,7 @@ available at http://www.masonhq.com/changes.html.
       has been split between the Lexer and Compiler objects.
     - ** The debug file feature has been removed.
     - ** The previewer has been removed.
+    - ** The system log feature has been removed.
     - ** The Interp use_reload_files parameter has been removed.  The new
       static_source parameter provides a useful, and conceptually simpler,
       replacement.

@@ -238,7 +238,7 @@ if ( $mod_perl::VERSION < 1.99 )
 
 use vars qw($VERSION);
 
-$VERSION = sprintf '%2d.%02d', q$Revision: 1.240 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf '%2d.%02d', q$Revision: 1.242 $ =~ /(\d+)\.(\d+)/;
 
 use Class::Container;
 use base qw(Class::Container);
@@ -264,7 +264,9 @@ BEGIN
 
     __PACKAGE__->contained_objects
 	(
-	 interp => 'HTML::Mason::Interp',
+	 interp => { class => 'HTML::Mason::Interp',
+                     descr => 'The interp class coordinates multiple objects to handle request execution'
+                   },
 	);
 }
 
