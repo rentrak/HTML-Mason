@@ -148,7 +148,7 @@ sub _initialize {
 
 	return \@strings;     #return an array ref
     };
-    Apache::Status->menu_item ($name,$title,$statsub);
+    Apache::Status->menu_item ($name,$title,$statsub) if $Apache::Status::VERSION;
     
     #
     # Create data subdirectories if necessary. mkpath will die on error.
@@ -245,18 +245,33 @@ sub handle_request {
 
     #
     # Write debug file as early as possible if debug mode is
-    # 'all'. However, we must unfortunatly wait in the case of POSTs
+    # 'all'. However, we must unfortunately wait in the case of POSTs
     # because we don't yet have the stdin content.
     #
     my $debugMsg;
     $debugMsg = $self->write_debug_file($apreq,$debugState)
 	if ($debugMode eq 'all' && $apreq->method ne 'POST');
 
-    eval { $retval = handle_request_1($self, $apreq, $debugState) };
+    #
+    # Create an Apache-specific request with additional slots.
+    #
+    my $request = new HTML::Mason::Request::ApacheHandler
+	(ah=>$self,
+	 interp=>$interp,
+	 apache_req=>$apreq
+	 );
+
+    eval { $retval = handle_request_1($self, $apreq, $request, $debugState) };
     my $err = $@;
-    my $err_status = $err ? 1 : 0;
+    my $err_code = $request->{error_code};
+    undef $request;  # ward off memory leak
 
     if ($err) {
+	#
+	# If first component was not found, return 404.
+	#
+	return 404 if defined($err_code) and $err_code eq 'top_not_found';
+	
 	#
 	# Take out date stamp and (eval nnn) prefix
 	# Add server name, uri, referer, and agent
@@ -283,7 +298,7 @@ sub handle_request {
 	print "\n<!--\n$debugMsg\n-->\n" if (defined($debugMsg) && http_header_sent($apreq) && !$apreq->header_only && $apreq->header_out("Content-type") =~ /text\/html/);
     }
 
-    $interp->write_system_log('REQ_END', $self->{request_number}, $err_status);
+    $interp->write_system_log('REQ_END', $self->{request_number}, ($err ? 1 : 0));
     return ($err) ? &OK : (defined($retval)) ? $retval : &OK;
 }
 
@@ -411,7 +426,6 @@ sub capture_debug_state
     }
     
     $d{'args@'} = [$r->args];
-    
     $d{'args$'} = scalar($r->args);
     
     $expr = '';
@@ -435,14 +449,14 @@ sub capture_debug_state
 
 sub handle_request_1
 {
-    my ($self,$r,$debugState) = @_;
+    my ($self,$r,$request,$debugState) = @_;
     my $interp = $self->interp;
 
     #
     # If filename is a directory, then either decline or simply reset
     # the content type, depending on the value of decline_dirs.
     #
-    if (-d $r->filename) {
+    if (-d $r->finfo) {
 	if ($self->decline_dirs) {
 	    return DECLINED;
 	} else {
@@ -453,36 +467,14 @@ sub handle_request_1
     #
     # Compute the component path via the resolver.
     #
-    my $compPath = $interp->resolver->file_to_path($r->filename,$interp);
-    return NOT_FOUND unless $compPath;
-
-    $compPath =~ s@/$@@ if $compPath ne '/';
-    while ($compPath =~ s@//@/@) {}
-
-    #
-    # Try to load the component; if not found, try dhandlers
-    # ("default handlers"); otherwise return not found.
-    #
-    my ($comp,$dhandlerArg);
-    if (!($comp = $interp->load($compPath))) {
-	if ($interp->dhandler_name and $comp = $interp->find_comp_upwards($compPath,$interp->dhandler_name)) {
-	    my $remainder = ($comp->dir_path eq '/') ? $compPath : substr($compPath,length($comp->dir_path));
-	    my $pathInfo = $remainder.$r->path_info;
-	    $r->path_info($pathInfo);
-	    $dhandlerArg = substr($pathInfo,1);
-	} else {
-	    return NOT_FOUND;
-	}
-    }
+    my $comp_path = $interp->resolver->file_to_path($r->filename,$interp);
+    return NOT_FOUND unless $comp_path;
 
     #
     # Decline if file does not pass top level predicate.
     #
-    if (defined($self->{top_level_predicate})) {
-	my $srcfile = $comp->source_file;
-	if (!$self->{top_level_predicate}->($srcfile)) {
-	    return NOT_FOUND;
-	}
+    if (-f $r->finfo and defined($self->{top_level_predicate})) {
+	return NOT_FOUND unless $self->{top_level_predicate}->($r->filename);
     }
     
     #
@@ -500,6 +492,9 @@ sub handle_request_1
 	# For POSTs, we finally store the content in the debug state
 	# if debug mode is on.
 	$debugState->{content} = $q->query_string if $debugState && $r->method eq 'POST';
+
+	# Also store in http_input slot of request
+	$request->{http_input} = $q->query_string;
     }
 
     #
@@ -524,18 +519,6 @@ sub handle_request_1
     }
 
     #
-    # Create an Apache-specific request with additional slots.
-    #
-    my $request = new HTML::Mason::Request::ApacheHandler
-	(ah=>$self,
-	 interp=>$interp,
-	 http_input=>($q ? $q->query_string : ''),
-	 apache_req=>$r
-	 );
-
-    $request->{dhandler_arg} = $dhandlerArg if (defined($dhandlerArg));
-
-    #
     # Deprecated output_mode parameter - just pass to request out_mode.
     #
     if (my $mode = $self->output_mode) {
@@ -543,28 +526,43 @@ sub handle_request_1
     }
 
     #
+    # Set up interpreter global variables.
+    #
+    $interp->set_global(r=>$r);
+
+    #
     # Craft the out method for this request to handle automatic http
     # headers.
     #
+    my $retval;
     if ($self->auto_send_headers) {
 	my $headers_sent = 0;
 	my $delay_buf = '';
 	my $out_method = sub {
-	    # Check to see if the header has been sent, first via a fast
-	    # flag, then via a slightly slower $r test.
+	    # Check to see if the headers have been sent, first by fast
+	    # variable check, then by slightly slower $r check.
 	    unless ($headers_sent) {
 		unless (http_header_sent($r)) {
-		    # If the header has not been sent, buffer initial
-		    # whitespace so as to delay headers.
+		    # If header has not been sent, buffer initial whitespace
+		    # so as to delay headers.
 		    if ($_[0] !~ /\S/) {
 			$delay_buf .= $_[0];
 			return;
 		    } else {
 			$r->send_http_header();
-			$request->abort() if $r->header_only;
+			
+			# If this is a HEAD request and our Mason request is
+			# still active, abort it.
+			if ($r->header_only) {
+			    $request->abort if $request->depth > 0;
+			    return;
+			}
 		    }
 		}
-		$interp->out_method->($delay_buf) if $delay_buf ne '';
+		unless ($delay_buf eq '') {
+		    $interp->out_method->($delay_buf);
+		    $delay_buf = '';
+		}
 		$headers_sent = 1;
 	    }
 	    $interp->out_method->($_[0]);
@@ -575,17 +573,21 @@ sub handle_request_1
 	    $request->top_stack->{sink} = $interp->out_method if $request->out_mode eq 'stream' and $request->top_stack->{sink} eq $request->out_method;
 	};
 	$request->{out_method} = $out_method;
-    }
-    
-    #
-    # Set up interpreter global variables.
-    #
-    $interp->set_global(r=>$r);
 
-    #
-    # Finally, execute request.
-    #
-    return $request->exec($comp, %args);
+	$retval = $request->exec($comp_path, %args);
+
+	# On a success code, send headers and any buffered whitespace
+	# if it has not already been sent. On an error code, leave it
+	# to Apache to send the headers.
+	if (!$headers_sent and (!$retval or $retval==200)) {
+	    $r->send_http_header() unless http_header_sent($r);
+	    $interp->out_method->($delay_buf) unless $delay_buf eq '';
+	}
+    } else {
+	$retval = $request->exec($comp_path, %args);
+    }
+
+    return $retval;
 }
 
 sub simulate_debug_request

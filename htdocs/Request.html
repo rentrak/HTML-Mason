@@ -95,6 +95,8 @@ subcomponent takes precedence.
 <H1><A NAME="methods">METHODS
 
 </A></H1>
+<a name="item_abort">
+
 <DL>
 <DT><STRONG><A NAME="item_abort_return_value_">abort ([return value])
 
@@ -104,6 +106,8 @@ components. The optional argument specifies the return value from <CODE>Interp::
 
 
 <P>
+
+<a name="item_cache">
 
 <DT><STRONG><A NAME="item_cache_action_retrieve_store_">cache ([action=&gt;'retrieve|store|expire|keys'], [key=&gt;name],
 [value=&gt;data], [keep_in_memory=&gt;0|1], [expire options...])
@@ -274,6 +278,8 @@ content normally. Finally <CODE>$m-&gt;cache_self</CODE> returns the list (retva
 
 <P>
 
+<a name="item_caller_args">
+
 <DT><STRONG><A NAME="item_caller_args">caller_args
 
 </A></STRONG><DD>
@@ -294,7 +300,7 @@ specified stack level. e.g.
 
 <P>
 
-<a name="callers">
+<a name="item_callers">
 
 <DT><STRONG><A NAME="item_callers">callers
 
@@ -314,6 +320,8 @@ object at that index in the list. e.g.
 
 <P>
 
+<a name="item_call_next">
+
 <DT><STRONG><A NAME="item_call_next_args_">call_next ([args...])
 
 </A></STRONG><DD>
@@ -325,6 +333,8 @@ arguments. Works like <CODE>$m-&gt;comp</CODE> in terms of return value and scal
 
 
 <P>
+
+<a name="item_comp">
 
 <DT><STRONG><A NAME="item_comp_comp_option_value_">comp (comp, option=&gt;value, ...)
 
@@ -346,6 +356,8 @@ The &lt;&amp; &amp;&gt; tag provides a convenient shortcut for <CODE>$m-&gt;comp
 
 <P>
 
+<a name="item_comp_exists">
+
 <DT><STRONG><A NAME="item_comp_exists_comp_path_">comp_exists (comp_path)
 
 </A></STRONG><DD>
@@ -353,6 +365,8 @@ Returns 1 if <EM>comp_path</EM> is the path of an existing component, 0 otherwis
 
 
 <P>
+
+<a name="item_count">
 
 <DT><STRONG><A NAME="item_count">count
 
@@ -363,7 +377,7 @@ interpreter.
 
 <P>
 
-<a name="current_comp">
+<a name="item_current_comp">
 
 <DT><STRONG><A NAME="item_current_comp">current_comp
 
@@ -372,6 +386,8 @@ Returns the current component object.
 
 
 <P>
+
+<a name="item_decline">
 
 <DT><STRONG><A NAME="item_decline">decline
 
@@ -384,6 +400,8 @@ the Apache DECLINED status except in name.
 
 <P>
 
+<a name="item_depth">
+
 <DT><STRONG><A NAME="item_depth">depth
 
 </A></STRONG><DD>
@@ -392,6 +410,8 @@ is 1, which indicates we are in the top-level component.
 
 
 <P>
+
+<a name="item_dhandler_arg">
 
 <DT><STRONG><A NAME="item_dhandler_arg">dhandler_arg
 
@@ -402,7 +422,7 @@ remainder of the URI or <CODE>Interp::exec</CODE> path when the dhandler directo
 
 <P>
 
-<a name="fetch_comp">
+<a name="item_fetch_comp">
 
 <DT><STRONG><A NAME="item_fetch_comp_comp_path_">fetch_comp (comp_path)
 
@@ -412,6 +432,8 @@ exists.
 
 
 <P>
+
+<a name="item_fetch_next">
 
 <DT><STRONG><A NAME="item_fetch_next">fetch_next
 
@@ -423,6 +445,8 @@ for usage and examples.
 
 <P>
 
+<a name="item_file">
+
 <DT><STRONG><A NAME="item_file_filename_">file (filename)
 
 </A></STRONG><DD>
@@ -433,6 +457,8 @@ current component directory if no static file root is defined.
 
 <P>
 
+<a name="item_file_root">
+
 <DT><STRONG><A NAME="item_file_root">file_root
 
 </A></STRONG><DD>
@@ -440,6 +466,8 @@ Returns the static file root, used by <CODE>$m-&gt;file</CODE> to resolve relati
 
 
 <P>
+
+<a name="item_flush_buffer">
 
 <DT><STRONG><A NAME="item_flush_buffer">flush_buffer
 
@@ -452,6 +480,8 @@ responsive.
 
 <P>
 
+<a name="item_interp">
+
 <DT><STRONG><A NAME="item_interp">interp
 
 </A></STRONG><DD>
@@ -459,6 +489,8 @@ Returns the Interp object associated with this request.
 
 
 <P>
+
+<a name="item_out">
 
 <DT><STRONG><A NAME="item_out_string_">out (string)
 
@@ -475,6 +507,8 @@ interpreter.
 
 <P>
 
+<a name="item_parser">
+
 <DT><STRONG><A NAME="item_parser">parser
 
 </A></STRONG><DD>
@@ -482,6 +516,8 @@ Returns the Parser object associated with this request.
 
 
 <P>
+
+<a name="item_process_comp_path">
 
 <DT><STRONG><A NAME="item_process_comp_path_comp_path_">process_comp_path (comp_path)
 
@@ -491,6 +527,8 @@ Given a <EM>comp_path</EM>, returns the corresponding absolute component path.
 
 <P>
 
+<a name="item_scomp">
+
 <DT><STRONG><A NAME="item_scomp">scomp
 
 </A></STRONG><DD>
@@ -499,6 +537,8 @@ Like <CODE>$m-&gt;comp</CODE>, but returns the component output as a string inst
 
 
 <P>
+
+<a name="item_time">
 
 <DT><STRONG><A NAME="item_time">time
 
@@ -528,6 +568,8 @@ the ApacheHandler.
 
 <P>
 
+<a name="item_ah">
+
 <DL>
 <DT><STRONG><A NAME="item_ah">ah
 
@@ -536,6 +578,8 @@ Returns the ApacheHandler object associated with this request.
 
 
 <P>
+
+<a name="item_http_input">
 
 <DT><STRONG><A NAME="item_http_input">http_input
 
@@ -548,6 +592,8 @@ good way to get at the value of $r-&gt;content.
 
 
 <P>
+
+<a name="item_apache_req">
 
 <DT><STRONG><A NAME="item_apache_req">apache_req
 
