@@ -591,20 +591,27 @@ as output from components caled during the parent request.  Of course,
 you can change this.</P>
 <P>Here are some examples:</P>
 <PRE>
-  % my $req = $m-&gt;make_subrequest;
-  % $req-&gt;exec( '/some/comp', id =&gt; 172 );</PRE>
+  &lt;%perl&gt;
+   my $req = $m-&gt;make_subrequest( comp =&gt; '/somp/comp', args =&gt; [ id =&gt; 172 ] );
+   $req-&gt;exec;
+  &lt;/%perl&gt;</PRE>
 <P>If you want to capture the subrequest's output in a scalar, you can
 simply pass an <CODE>out_method</CODE> parameter to <CODE>$m-&gt;make_subrequest</CODE>:</P>
 <PRE>
-  % my $buffer;
-  % my $req = $m-&gt;make_subrequest( out_method =&gt; \$buffer );
-  % $req-&gt;exec( '/some/comp', id =&gt; 172 );</PRE>
+  &lt;%perl&gt;
+   my $buffer;
+   my $req =
+       $m-&gt;make_subrequest
+           ( comp =&gt; '/somp/comp', args =&gt; [ id =&gt; 172 ], out_method =&gt; \$buffer );
+   $req-&gt;exec;
+  &lt;/%perl&gt;</PRE>
 <P>Now <CODE>$buffer</CODE> contains all the output from that call to <EM>/some/comp</EM>.</P>
-<P>For convenience, Mason also provides an <CODE>$m-&gt;subexec</CODE> method that
-internally calls <CODE>$m-&gt;make_subrequest</CODE> and then calls <CODE>exec</CODE> on
-the created request, all in one fell swoop.  This is useful in cases
-where you have no need to override any of the parent request's
-parameters.</P>
+<P>For convenience, Mason also provides an <CODE>$m-&gt;subexec</CODE> method.
+This method takes the same arguments as <CODE>$m-&gt;comp</CODE> and internally
+calls <CODE>$m-&gt;make_subrequest</CODE> and then <CODE>exec</CODE> on the created
+request, all in one fell swoop.  This is useful in cases where you
+have no need to override any of the parent request object's
+attributes.</P>
 <P>By default, output from a subrequest appears inline in the calling
 component, at the point where it is executed.  If you wish to do
 something else, you will need to explicitly override the subrequest's

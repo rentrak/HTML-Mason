@@ -10,6 +10,11 @@
 #        returns its error conditions, or upgrade to Perl 5.6.0 or
 #        greater, which has its own bugs.
 
+#
+# A much simpler alternative to this is to simply use the
+# HTML::Mason::Request::WithApacheSession code available from CPAN.
+#
+
 package MyMason::MyApp;
 
 # Bring in main Mason package.
@@ -40,11 +45,6 @@ use strict;
 #
 my $ah = new HTML::Mason::ApacheHandler( comp_root => '<component root>',
                                          data_dir => '<data directory>' );
-
-# Activate the following if running httpd as root (the normal case).
-# Resets ownership of all files created by Mason at startup.
-#
-#chown (Apache->server->uid, Apache->server->gid, $ah->interp->files_written);
 
 sub handler
 {
@@ -95,3 +95,14 @@ sub handler
 }
 
 1;
+
+
+__END__
+
+In your httpd.conf, add something like this:
+
+ PerlRequire /path/to/handler.pl
+ <FilesMatch "\.html$">
+   SetHandler perl-script
+   PerlHandler MyMason::MyApp
+ </FilesMatch>

@@ -150,9 +150,11 @@ to a temporary variable.</P>
 <DT><STRONG><A NAME="item_base_comp">base_comp</A></STRONG><BR>
 <DD>
 Returns the current base component for method and attributes.
-Generally set to the original page component; however, if you invoke
-call_method on a component, <A HREF="#item_base_comp"><CODE>base_comp</CODE></A> is dynamically set to that
-component until call_method exits. See <A HREF="Devel.html#objectoriented techniques">Object-Oriented Techniques in the <EM>Component Developer's Guide</EM></A> for examples of usage.
+Initially, the base component is the same as the requested component
+(returned by <A HREF="#item_request_comp"><CODE>$m-&gt;request_comp</CODE></A>.  However, whenever a component
+call is made, the base component changes to the called component,
+unless the component call was made uses a component object for its
+first argument, or the call starts with SELF: or PARENT:.
 <a name="item_cache"><P></P>
 <DT><STRONG><A NAME="item_cache">cache (cache_class=&gt;'...', [cache_options])</A></STRONG><BR>
 <DD>
@@ -412,11 +414,13 @@ use.  If called when no Mason request is active it will return
 <DD>
 Returns the Interp object associated with this request.
 <a name="item_make_subrequest"><P></P>
-<DT><STRONG><A NAME="item_make_subrequest">make_subrequest (parameters)</A></STRONG><BR>
+<DT><STRONG><A NAME="item_make_subrequest">make_subrequest (comp =&gt; path, args =&gt; arrayref, other parameters)</A></STRONG><BR>
 <DD>
 This method creates a new Request object which inherits its parent's
 settable properties, such as <A HREF="#item_autoflush"><CODE>autoflush</CODE></A> and <A HREF="#item_out_method"><CODE>out_method</CODE></A>.  These
 values may be overridden by passing parameters to this method.
+<P>The ``comp'' parameter is required, while all other parameters are
+optional.</P>
 <P>See the <A HREF="Devel.html#subrequests">Subrequests section in the <EM>Component Developer's Guide</EM></A> for more details about the
 subrequest feature.</P>
 <a name="item_out"><P></P>

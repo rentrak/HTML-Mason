@@ -155,6 +155,9 @@ sub _handle_error
     if (isa_mason_exception($err, 'TopLevelNotFound')) {
 	die $err;
     } else {
+        if ( $self->error_format eq 'html' ) {
+            $self->apache_req->content_type('text/html');
+        }
 	$self->SUPER::_handle_error($err);
     }
 }
@@ -235,7 +238,7 @@ if ( $mod_perl::VERSION < 1.99 )
 
 use vars qw($VERSION);
 
-$VERSION = sprintf '%2d.%02d', q$Revision: 1.225 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf '%2d.%02d', q$Revision: 1.229 $ =~ /(\d+)\.(\d+)/;
 
 use Class::Container;
 use base qw(Class::Container);
@@ -720,7 +723,7 @@ sub request_args
     #
     my (%args, $cgi_object);
     if ($self->args_method eq 'mod_perl') {
-	$r = Apache::Request->new($r);
+	$r = Apache::Request->new($r) unless UNIVERSAL::isa($r, 'Apache::Request');
 	%args = $self->_mod_perl_args($r);
     } else {
 	$cgi_object = CGI->new;
@@ -865,24 +868,6 @@ sub return_not_found
     return NOT_FOUND;
 }
 
-sub _handler_1 ($$)
-{
-    my ($package, $r) = @_;
-
-    my $ah = $AH || $package->make_ah($r);
-
-    return $ah->handle_request($r);
-}
-
-sub _handler_2 : method
-{
-    my ($package, $r) = @_;
-
-    my $ah = $AH || $package->make_ah($r);
-
-    return $ah->handle_request($r);
-}
-
 #
 # PerlHandler HTML::Mason::ApacheHandler
 #
@@ -890,11 +875,29 @@ BEGIN
 {
     if ( $mod_perl::VERSION < 1.99 )
     {
-        *handler = \&_handler_1;
+        eval <<'EOF';
+sub handler ($$)
+{
+    my ($package, $r) = @_;
+
+    my $ah = $AH || $package->make_ah($r);
+
+    return $ah->handle_request($r);
+}
+EOF
     }
     else
     {
-        *handler = \&_handler_2;
+        eval <<'EOF';
+sub handler : method
+{
+    my ($package, $r) = @_;
+
+    my $ah = $AH || $package->make_ah($r);
+
+    return $ah->handle_request($r);
+}
+EOF
     }
 }
 
