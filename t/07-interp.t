@@ -122,11 +122,8 @@ My directory is /interp/comp_root_test.
 I have 0 subcomponent(s).
 My title is /interp/comp_root_test/shared [main].
 
-My object file is /.../obj/main/interp/comp_root_test/shared
 My path is /interp/comp_root_test/shared.
 My comp_id is /main/interp/comp_root_test/shared.
-My source file is /.../comps/interp/comp_root_test/shared
-My source dir is /.../comps/interp/comp_root_test
 
 
 
@@ -155,11 +152,8 @@ My directory is /interp/comp_root_test.
 I have 0 subcomponent(s).
 My title is /interp/comp_root_test/private1 [main].
 
-My object file is /.../obj/main/interp/comp_root_test/private1
 My path is /interp/comp_root_test/private1.
 My comp_id is /main/interp/comp_root_test/private1.
-My source file is /.../comps/interp/comp_root_test/private1
-My source dir is /.../comps/interp/comp_root_test
 
 
 
@@ -188,17 +182,26 @@ My directory is /interp/comp_root_test.
 I have 0 subcomponent(s).
 My title is /interp/comp_root_test/private2 [alt].
 
-My object file is /.../obj/alt/interp/comp_root_test/private2
 My path is /interp/comp_root_test/private2.
 My comp_id is /alt/interp/comp_root_test/private2.
-My source file is /.../alt_root/interp/comp_root_test/private2
-My source dir is /.../alt_root/interp/comp_root_test
 
 
 
 EOF
 		    );
 
+#------------------------------------------------------------
+
+    $group->add_test( name => 'current_time',
+		      description => 'test current_time interp param',
+		      interp_params => { current_time => 945526402 },
+		      component => <<'EOF',
+<% $m->time %>
+EOF
+		      expect => <<'EOF',
+945526402
+EOF
+		    );
 
 #------------------------------------------------------------
 
@@ -900,10 +903,11 @@ Hello World!
 EOF
 			  expect => <<'EOF',
 Hello World!
-Cache::MemoryCache
+HTML::Mason::Cache::MemoryCache
 EOF
 			  );
     }
+
 #------------------------------------------------------------
 
     $group->add_support( path => 'no_comp_root_helper',
@@ -939,6 +943,44 @@ EOF
 		    );
 
 #------------------------------------------------------------
+
+    if ( load_pkg('Switch') )
+    {
+        $group->add_test( name => 'source_filter',
+                          description => 'make sure source filters work',
+                          component => <<'EOF',
+no explosion
+<%init>
+use Switch;
+
+my $x = 1;
+
+switch ($x) { case 1 { $x = 2 } }
+</%init>
+EOF
+                          expect => <<'EOF',
+no explosion
+EOF
+                        );
+    }
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'escape_falgs',
+		      description => 'test setting escape flags via constructor',
+                      interp_params =>
+                      { escape_flags => { uc => sub { ${$_[0]} = uc ${$_[0]} } } },
+		      component => <<'EOF',
+<% 'upper case' | uc %>
+EOF
+		      expect => <<'EOF',
+UPPER CASE
+EOF
+		    );
+
+
+#------------------------------------------------------------
+
 
     return $group;
 }

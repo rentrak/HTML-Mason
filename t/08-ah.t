@@ -37,8 +37,9 @@ kill_httpd(1);
 test_load_apache();
 
 my $tests = 4; # multi conf tests
-$tests += 54 if my $have_libapreq = have_module('Apache::Request');
+$tests += 57 if my $have_libapreq = have_module('Apache::Request');
 $tests += 40 if my $have_cgi      = have_module('CGI');
+$tests += 15 if my $have_tmp      = (-d '/tmp' and -w '/tmp');
 $tests++ if $have_cgi && $mod_perl::VERSION >= 1.24;
 $tests++ if my $have_filter = have_module('Apache::Filter');
 print "1..$tests\n";
@@ -47,12 +48,12 @@ print STDERR "\n";
 
 write_test_comps();
 
-if ($have_libapreq) {        # 54 tests
+if ($have_libapreq) {        # 57 tests
     cleanup_data_dir();
     apache_request_tests(1); # 22 tests
 
     cleanup_data_dir();
-    apache_request_tests(0); # 17 tests
+    apache_request_tests(0); # 20 tests
 
     cleanup_data_dir();
     no_config_tests();       # 15 tests
@@ -62,6 +63,12 @@ if ($have_libapreq) {        # 54 tests
         filter_tests();      # 1 tests
     }
 }
+
+if ($have_tmp) {
+    cleanup_data_dir();
+    single_level_serverroot_tests();  # 15 tests
+}
+
 
 if ($have_cgi) {             # 40 tests (+ 1?)
     cleanup_data_dir();
@@ -257,6 +264,21 @@ EOF
 Interp class: <% ref $m->interp %>
 EOF
               );
+
+    write_comp( 'old_html_escape', <<'EOF',
+<% '<>' | old_h %>
+EOF
+              );
+
+    write_comp( 'old_html_escape2', <<'EOF',
+<% '<>' | old_h2 %>
+EOF
+              );
+
+    write_comp( 'uc_escape', <<'EOF',
+<% 'upper case' | uc %>
+EOF
+              );
 }
 
 sub cgi_tests
@@ -358,6 +380,39 @@ Status code: 0
 EOF
 						   );
 	ok($success);
+
+	$response = Apache::test->fetch('/comps/old_html_escape');
+	$actual = filter_response($response, $with_handler);
+	$success = HTML::Mason::Tests->check_output( actual => $actual,
+						     expect => <<'EOF',
+X-Mason-Test: Initial value
+&lt;&gt;
+Status code: 0
+EOF
+						   );
+	ok($success);
+
+	$response = Apache::test->fetch('/comps/old_html_escape2');
+	$actual = filter_response($response, $with_handler);
+	$success = HTML::Mason::Tests->check_output( actual => $actual,
+						     expect => <<'EOF',
+X-Mason-Test: Initial value
+&lt;&gt;
+Status code: 0
+EOF
+						   );
+	ok($success);
+
+	$response = Apache::test->fetch('/comps/uc_escape');
+	$actual = filter_response($response, $with_handler);
+	$success = HTML::Mason::Tests->check_output( actual => $actual,
+						     expect => <<'EOF',
+X-Mason-Test: Initial value
+UPPER CASE
+Status code: 0
+EOF
+						   );
+	ok($success);
     }
 
     kill_httpd(1);
@@ -369,6 +424,13 @@ sub no_config_tests
 
     standard_tests(0);
 
+    kill_httpd(1);
+}
+
+sub single_level_serverroot_tests
+{
+    start_httpd('single_level_serverroot');
+    standard_tests(0);
     kill_httpd(1);
 }
 

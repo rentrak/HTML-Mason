@@ -5,8 +5,10 @@ use lib 'lib', 't/lib';
 use Cwd;
 use File::Path;
 use File::Basename;
+use File::Spec;
 
-use HTML::Mason::Tools qw(load_pkg);
+# Don't load HTML::Mason::* modules here, because in Makefile.PL we
+# might not yet have the proper prerequisites installed.
 
 use vars qw(%APACHE);
 
@@ -116,8 +118,14 @@ EOF
 <IfDefine mod_perl_no_handler>
   PerlSetVar  MasonArgsMethod mod_perl
   PerlSetVar  MasonCompRoot "root => $APACHE{comp_root}"
+  PerlAddVar  MasonCompRoot "root2 => $APACHE{data_dir}"
   PerlSetVar  MasonDataDir  "$APACHE{data_dir}"
   PerlSetVar  MasonDeclineDirs 0
+
+  PerlSetVar  MasonEscapeFlags "old_h  => \\&HTML::Mason::Escapes::basic_html_escape"
+  PerlAddVar  MasonEscapeFlags "old_h2 => basic_html_escape"
+  PerlAddVar  MasonEscapeFlags "uc => sub { \${\$_[0]} = uc \${\$_[0]}; }"
+
   SetHandler  perl-script
   PerlModule  HTML::Mason::ApacheHandler
   PerlHandler HTML::Mason::ApacheHandler
@@ -148,6 +156,13 @@ EOF
 
 <IfDefine no_config>
   SetHandler  perl-script
+  PerlHandler HTML::Mason::ApacheHandler
+</IfDefine>
+
+<IfDefine single_level_serverroot>
+  ServerRoot /tmp
+  SetHandler perl-script
+  PerlSetVar MasonDataDir /tmp/one/two
   PerlHandler HTML::Mason::ApacheHandler
 </IfDefine>
 
@@ -198,7 +213,7 @@ $filter_handler
   PerlHandler HTML::Mason::ApacheHandler FilterTest
 </IfDefine>
 EOF
-    }
+    } # matches 'if ( load_pkg('Apache::Filter') )'
 
     local $^W;
     Apache::test->write_httpd_conf
@@ -362,6 +377,32 @@ sub _libs
     $libs .= ' );';
 
     return $libs;
+}
+
+# Copied from HTML::Mason::Tools
+sub load_pkg {
+    my ($pkg, $nf_error) = @_;
+
+    my $file = File::Spec->catfile( split /::/, $pkg );
+    $file .= '.pm';
+    return 1 if exists $INC{$file};
+
+    eval "use $pkg";
+
+    if ($@) {
+	if ($@ =~ /^Can\'t locate .* in \@INC/) {
+	    if (defined($nf_error)) {
+		die sprintf("Can't locate %s in \@INC. %s\n(\@INC contains: %s)",
+			    $pkg, $nf_error, "@INC");
+	    } else {
+		undef $@;
+		return 0;
+	    }
+	} else {
+	    die $@;
+	}
+    }
+    return 1;
 }
 
 1;

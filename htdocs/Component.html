@@ -1,241 +1,316 @@
-<HTML>
-<HEAD>
-<TITLE>HTML::Mason::Component - Mason Component Class</TITLE>
-<LINK REV="made" HREF="mailto:perl@packages.debian.org">
-</HEAD>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>HTML::Mason::Component - Mason Component Class</title>
+<link rev="made" href="mailto:root@localhost" />
+</head>
 
-<BODY>
+<body style="background-color: white">
 
-<A NAME="__index__"></A>
+<p><a name="__index__"></a></p>
 <!-- INDEX BEGIN -->
 
-<UL>
+<ul>
 
-	<LI><A HREF="#name">NAME</A></LI>
-	<LI><A HREF="#synopsis">SYNOPSIS</A></LI>
-	<LI><A HREF="#description">DESCRIPTION</A></LI>
-	<UL>
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
 
-		<LI><A HREF="#creating_and_accessing_component">CREATING AND ACCESSING COMPONENTS</A></LI>
-	</UL>
+		<li><a href="#creating_and_accessing_components">CREATING AND ACCESSING COMPONENTS</a></li>
+	</ul>
 
-	<LI><A HREF="#methods">METHODS</A></LI>
-	<LI><A HREF="#filebased_methods">FILE-BASED METHODS</A></LI>
-	<LI><A HREF="#see_also">SEE ALSO</A></LI>
-</UL>
+	<li><a href="#methods">METHODS</a></li>
+	<li><a href="#filebased_methods">FILE-BASED METHODS</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
 <!-- INDEX END -->
 
-<HR>
-<P>
-<H1><A NAME="name">NAME</A></H1>
-<P>HTML::Mason::Component - Mason Component Class</P>
-<P>
-<HR>
-<H1><A NAME="synopsis">SYNOPSIS</A></H1>
-<PRE>
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>HTML::Mason::Component - Mason Component Class</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
     my $comp1 = $m-&gt;current_comp;
     my $comp2 = $m-&gt;callers(1);
-    my $comp3 = $m-&gt;fetch_comp('foo/bar');</PRE>
-<PRE>
+    my $comp3 = $m-&gt;fetch_comp('foo/bar');</pre>
+<pre>
     foreach ($comp1,$comp2,$comp3) {
        print &quot;My name is &quot;.$_-&gt;title.&quot;.\n&quot;;
-    }</PRE>
-<P>
-<HR>
-<H1><A NAME="description">DESCRIPTION</A></H1>
-<P>Mason uses the Component class to store components loaded into
-memory. Components come from three distinct sources:</P>
-<OL>
-<LI>
+    }</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Mason uses the Component class to store components loaded into
+memory. Components come from three distinct sources:</p>
+<ol>
+<li></li>
 File-based: loaded from a source or object file.
-<P></P>
-<LI>
-Subcomponents: embedded components defined with the <CODE>&lt;%def&gt;</CODE> 
-or <CODE>&lt;%method&gt;</CODE> tags.
-<P></P>
-<LI>
-Anonymous: created on-the-fly with the <CODE>make_component</CODE> Interp method.
-<P></P></OL>
-<P>Some of the methods below return different values (or nothing at all)
-depending on the component type.</P>
-<P>The component API is primarily useful for introspection, e.g. ``what
+<p></p>
+<li></li>
+Subcomponents: embedded components defined with the <code>&lt;%def&gt;</code> 
+or <code>&lt;%method&gt;</code> tags.
+<p></p>
+<li></li>
+Anonymous: created on-the-fly with the <code>make_component</code> Interp method.
+<p></p></ol>
+<p>Some of the methods below return different values (or nothing at all)
+depending on the component type.</p>
+<p>The component API is primarily useful for introspection, e.g. ``what
 component called me'' or ``does the next component take a certain
 argument''.  You can build complex Mason sites without ever dealing
-directly with a component object.</P>
-<P>
-<H2><A NAME="creating_and_accessing_component">CREATING AND ACCESSING COMPONENTS</A></H2>
-<P>Common ways to get handles on existing component objects include the
-<A HREF="Request.html#current_comp">Request-&gt;current_comp</A>,
-<A HREF="Request.html#callers">Request-&gt;callers</A>, and
-<A HREF="Request.html#fetch_comp">Request-&gt;fetch_comp</A> methods.</P>
-<P>There is no published <CODE>new</CODE> method, because creating a component
-requires an Interpreter. Use the <A HREF="Interp.html#make_component">Interp's make_component</A> method to create a
-new component dynamically.</P>
-<P>Similarly, there is no <CODE>execute</CODE> or <CODE>call</CODE> method, because calling a
+directly with a component object.</p>
+<p>
+</p>
+<h2><a name="creating_and_accessing_components">CREATING AND ACCESSING COMPONENTS</a></h2>
+<p>Common ways to get handles on existing component objects include the
+<a href="/HTML/Mason/Request.html#current_comp">Request-&gt;current_comp</a>,
+<a href="/HTML/Mason/Request.html#callers">Request-&gt;callers</a>, and
+<a href="/HTML/Mason/Request.html#fetch_comp">Request-&gt;fetch_comp</a> methods.</p>
+<p>There is no published <code>new</code> method, because creating a component
+requires an Interpreter. Use the <a href="/HTML/Mason/Interp.html#make_component">Interp's make_component</a> method to create a
+new component dynamically.</p>
+<p>Similarly, there is no <code>execute</code> or <code>call</code> method, because calling a
 component requires a request. All of the interfaces for calling a
-component (&lt;&amp; &amp;&gt;, <CODE>$m-</CODE>comp&gt;, <CODE>$interp-&gt;exec</CODE>)
+component (&lt;&amp; &amp;&gt;, <code>$m-</code>comp&gt;, <code>$interp-&gt;exec</code>)
 which normally take a component path will also take a component
-object.</P>
-<P>
-<HR>
-<H1><A NAME="methods">METHODS</A></H1>
-<DL>
-<DT><STRONG><A NAME="item_attr">attr (name)</A></STRONG><BR>
-<DD>
+object.</p>
+<p>
+</p>
+<hr />
+<h1><a name="methods">METHODS</a></h1>
+<dl>
+<dt><strong><a name="item_attr">attr (name)</a></strong><br />
+</dt>
+<dd>
 Looks for the specified attribute in this component and its parents,
 returning the first value found. Dies with an error if not
-found. Attributes are declared in the <CODE>&lt;%attr&gt;</CODE> section.
-<P></P>
-<DT><STRONG><A NAME="item_attr_if_exists">attr_if_exists (name)</A></STRONG><BR>
-<DD>
+found. Attributes are declared in the <code>&lt;%attr&gt;</code> section.
+</dd>
+<p></p>
+<dt><strong><a name="item_attr_if_exists">attr_if_exists (name)</a></strong><br />
+</dt>
+<dd>
 This method works exactly like the one above but returns undef if the
 attribute does not exist.
-<P></P>
-<DT><STRONG><A NAME="item_attr_exists">attr_exists (name)</A></STRONG><BR>
-<DD>
+</dd>
+<p></p>
+<dt><strong><a name="item_attr_exists">attr_exists (name)</a></strong><br />
+</dt>
+<dd>
 Returns true if the specified attribute exists in this component or
 one of its parents, undef otherwise.
-<P></P>
-<DT><STRONG><A NAME="item_load_time">load_time</A></STRONG><BR>
-<DD>
-Returns the time (in Perl <CODE>time()</CODE> format) when this component object
-was created.
-<P></P>
-<DT><STRONG><A NAME="item_declared_args">declared_args</A></STRONG><BR>
-<DD>
+</dd>
+<p></p>
+<dt><strong><a name="item_call_method">call_method (name, args...)</a></strong><br />
+</dt>
+<dd>
+Looks for the specified user-defined method in this component and its
+parents, calling the first one found. Dies with an error if not found.
+Methods are declared in the <code>&lt;%method&gt;</code> section.
+</dd>
+<p></p>
+<dt><strong><a name="item_create_time">create_time</a></strong><br />
+</dt>
+<dd>
+A synonym for <a href="/HTML/Mason/Component.html#item_load_time">load_time</a> (deprecated).
+</dd>
+<p></p>
+<dt><strong><a name="item_declared_args">declared_args</a></strong><br />
+</dt>
+<dd>
 Returns a reference to a hash of hashes representing the arguments
-declared in the <CODE>&lt;%args&gt;</CODE> section. The keys of the main hash are the
-variable names including prefix (e.g. <CODE>$foo</CODE>, <CODE>@list</CODE>). Each	
+declared in the <code>&lt;%args&gt;</code> section. The keys of the main hash are the
+variable names including prefix (e.g. <code>$foo</code>, <code>@list</code>). Each	
 secondary hash contains:
-<UL>
-<LI>
+</dd>
+<ul>
+<li></li>
 'default': the string specified for default value (e.g. 'fido') or undef
 if none specified.  Note that in general this is not the default value
 itself but rather a Perl expression that gets evaluated every time the
 component runs.
-<P></P></UL>
-<P>For example:</P>
-<PRE>
+<p></p></ul>
+<p>For example:</p>
+<pre>
   # does $comp have an argument called $fido?
-  if (exists($comp-&gt;declared_args-&gt;{'$fido'})) { ... }</PRE>
-<PRE>
+  if (exists($comp-&gt;declared_args-&gt;{'$fido'})) { ... }</pre>
+<pre>
   # does $fido have a default value?
-  if (defined($comp-&gt;declared_args-&gt;{'$fido'}-&gt;{default})) { ... }</PRE>
-<DT><STRONG><A NAME="item_dir_path">dir_path</A></STRONG><BR>
-<DD>
+  if (defined($comp-&gt;declared_args-&gt;{'$fido'}-&gt;{default})) { ... }</pre>
+<dt><strong><a name="item_dir_path">dir_path</a></strong><br />
+</dt>
+<dd>
 Returns the component's notion of a current directory, relative to the
 component root; this is used to resolve relative component paths. For
 file-based components this is the full component path minus the filename.
 For subcomponents this is the same as the component that defines it.
 Undefined for anonymous components.
-<P></P>
-<DT><STRONG><A NAME="item_flag">flag (name)</A></STRONG><BR>
-<DD>
+</dd>
+<p></p>
+<dt><strong><a name="item_flag">flag (name)</a></strong><br />
+</dt>
+<dd>
 Returns the value for the specified system flag.  Flags are declared
-in the <CODE>&lt;%flags&gt;</CODE> section and affect the behavior of the component.
+in the <code>&lt;%flags&gt;</code> section and affect the behavior of the component.
 Unlike attributes, flags values do not get inherited from parent components.
-<P></P>
-<DT><STRONG><A NAME="item_is_subcomp">is_subcomp</A></STRONG><BR>
-<DD>
-Returns true if this is a subcomponent of another component.
-<P></P>
-<DT><STRONG><A NAME="item_is_file_based">is_file_based</A></STRONG><BR>
-<DD>
+</dd>
+<p></p>
+<dt><strong><a name="item_is_subcomp">is_subcomp</a></strong><br />
+</dt>
+<dd>
+Returns true if this is a subcomponent of another component.  For
+historical reasons, this returns true for both methods and
+subcomponents.
+</dd>
+<p></p>
+<dt><strong><a name="item_is_method">is_method</a></strong><br />
+</dt>
+<dd>
+Returns true if this is a method.
+</dd>
+<p></p>
+<dt><strong><a name="item_is_file_based">is_file_based</a></strong><br />
+</dt>
+<dd>
 Returns true if this component was loaded from a source or object
 file.
-<P></P>
-<DT><STRONG><A NAME="item_call_method">call_method (name, args...)</A></STRONG><BR>
-<DD>
-Looks for the specified user-defined method in this component and its
-parents, calling the first one found. Dies with an error if not found.
-Methods are declared in the <CODE>&lt;%method&gt;</CODE> section.
-<P></P>
-<DT><STRONG><A NAME="item_method_exists">method_exists (name)</A></STRONG><BR>
-<DD>
+</dd>
+<a name="item_load_time"></a><p></p>
+<dt><strong><a name="item_load_time">load_time</a></strong><br />
+</dt>
+<dd>
+Returns the time (in Perl <code>time()</code> format) when this component object
+was created.
+</dd>
+<p></p>
+<dt><strong><a name="item_method_exists">method_exists (name)</a></strong><br />
+</dt>
+<dd>
 Returns true if the specified user-defined method exists in this
 component or one of its parents, undef otherwise.
-<P></P>
-<DT><STRONG><A NAME="item_name">name</A></STRONG><BR>
-<DD>
+</dd>
+<p></p>
+<dt><strong><a name="item_methods">methods</a></strong><br />
+</dt>
+<dd>
+This method works exactly like the
+<a href="/HTML/Mason/Component.html#item_subcomps">subcomps</a> method, but it
+returns methods, not subcomponents.
+</dd>
+<dd>
+<p>Methods are declared in <code>&lt;%method&gt;</code> sections.</p>
+</dd>
+<p></p>
+<dt><strong><a name="item_name">name</a></strong><br />
+</dt>
+<dd>
 Returns a short name of the component.  For file-based components this
 is the filename without the path. For subcomponents this is the name
-specified in <CODE>&lt;%def&gt;</CODE>. Undefined for anonymous components.
-<P></P>
-<DT><STRONG><A NAME="item_object_file">object_file</A></STRONG><BR>
-<DD>
+specified in <code>&lt;%def&gt;</code>. Undefined for anonymous components.
+</dd>
+<p></p>
+<dt><strong><a name="item_object_file">object_file</a></strong><br />
+</dt>
+<dd>
 Returns the object filename for this component.
-<P></P>
-<DT><STRONG><A NAME="item_owner">owner</A></STRONG><BR>
-<DD>
+</dd>
+<p></p>
+<dt><strong><a name="item_owner">owner</a></strong><br />
+</dt>
+<dd>
 Defined only for subcomponents; returns the component that this
 subcomponent was defined in.
-<P></P>
-<DT><STRONG><A NAME="item_parent">parent</A></STRONG><BR>
-<DD>
+</dd>
+<p></p>
+<dt><strong><a name="item_parent">parent</a></strong><br />
+</dt>
+<dd>
 Returns the parent of this component for inheritance purposes, by
-default the nearest <CODE>autohandler</CODE> in or above the component's directory.
-Can be changed via the <CODE>inherit</CODE> flag.
-<P></P>
-<DT><STRONG><A NAME="item_path">path</A></STRONG><BR>
-<DD>
+default the nearest <code>autohandler</code> in or above the component's directory.
+Can be changed via the <code>inherit</code> flag.
+</dd>
+<p></p>
+<dt><strong><a name="item_path">path</a></strong><br />
+</dt>
+<dd>
 Returns the entire path of this component, relative to the component root.
-<P></P>
-<DT><STRONG><A NAME="item_scall_method">scall_method (name, args...)</A></STRONG><BR>
-<DD>
-Like <A HREF="#call_method_name_args_">Component-&gt;call_method (name, args...)</A>, but returns the method output as a string instead of
+</dd>
+<p></p>
+<dt><strong><a name="item_scall_method">scall_method (name, args...)</a></strong><br />
+</dt>
+<dd>
+Like <a href="#call_method_(name,_args...)">Component-&gt;call_method (name, args...)</a>, but returns the method output as a string instead of
 printing it. (Think sprintf versus printf.) The method's return value,
 if any, is discarded.
-<P></P>
-<DT><STRONG><A NAME="item_subcomps">subcomps</A></STRONG><BR>
-<DD>
+</dd>
+<a name="item_subcomps"></a><p></p>
+<dt><strong><a name="item_subcomps">subcomps</a></strong><br />
+</dt>
+<dd>
 With no arguments, returns a hashref containing the subcomponents defined
 in this component, with names as keys and component objects as values.
 With one argument, returns the subcomponent of that name
 or undef if no such subcomponent exists. e.g.
-<PRE>
+</dd>
+<dd>
+<pre>
     if (my $subcomp = $comp-&gt;subcomps('.link')) {
         ...
-    }</PRE>
-<P>Subcomponents are declared in <CODE>&lt;%def&gt;</CODE> sections.</P>
-<P></P>
-<DT><STRONG><A NAME="item_methods">methods</A></STRONG><BR>
-<DD>
-This method works exactly like the subcomps method, but it returns
-methods, not subcomponents.
-<P>Methods are declared in <CODE>&lt;%method&gt;</CODE> sections.</P>
-<P></P>
-<DT><STRONG><A NAME="item_title">title</A></STRONG><BR>
-<DD>
+    }</pre>
+</dd>
+<dd>
+<p>Subcomponents are declared in <code>&lt;%def&gt;</code> sections.</p>
+</dd>
+<p></p>
+<dt><strong><a name="item_title">title</a></strong><br />
+</dt>
+<dd>
 Returns a printable string denoting this component.  It is intended to
 uniquely identify a component within a given interpreter although this
 is not 100% guaranteed. Mason uses this string in error messages,
 among other places.
-<P>For file-based components this is the component path.  For
+</dd>
+<dd>
+<p>For file-based components this is the component path.  For
 subcomponents this is ``parent_component_path:subcomponent_name''. For
-anonymous components this is a unique label like ``[anon 17]''.</P>
-<P></P></DL>
-<P>
-<HR>
-<H1><A NAME="filebased_methods">FILE-BASED METHODS</A></H1>
-<P>The following methods apply only to file-based components (those
+anonymous components this is a unique label like ``[anon 17]''.</p>
+</dd>
+<p></p></dl>
+<p>
+</p>
+<hr />
+<h1><a name="filebased_methods">FILE-BASED METHODS</a></h1>
+<p>The following methods apply only to file-based components (those
 loaded from source or object files). They return undef for other
-component types.</P>
-<DL>
-<DT><STRONG><A NAME="item_source_file">source_file</A></STRONG><BR>
-<DD>
+component types.</p>
+<dl>
+<dt><strong><a name="item_source_file">source_file</a></strong><br />
+</dt>
+<dd>
 Returns the source filename for this component.
-<P></P>
-<DT><STRONG><A NAME="item_source_dir">source_dir</A></STRONG><BR>
-<DD>
+</dd>
+<p></p>
+<dt><strong><a name="item_source_dir">source_dir</a></strong><br />
+</dt>
+<dd>
 Returns the directory of the source filename for this component.
-<P></P></DL>
-<P>
-<HR>
-<H1><A NAME="see_also">SEE ALSO</A></H1>
-<P><A HREF="Mason.html">HTML::Mason</A>,
-<A HREF="Devel.html">HTML::Mason::Devel</A>,
-<A HREF="Request.html">HTML::Mason::Request</A></P>
+</dd>
+<p></p></dl>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/HTML/Mason.html">HTML::Mason</a>,
+<a href="/HTML/Mason/Devel.html">HTML::Mason::Devel</a>,
+<a href="/HTML/Mason/Request.html">HTML::Mason::Request</a></p>
 
-</BODY>
+</body>
 
-</HTML>
+</html>

@@ -6,495 +6,1276 @@
 # Edit that script instead of this document.
 #
 
-__END__
-
 =head1 NAME
 
-HTML::Mason::Params - Constructor parameter documentation
+HTML::Mason::Params - Mason configuration parameters
 
 =head1 DESCRIPTION
 
-Mason has a lot of objects, most of which accept parameters when
-passed to their constructor.  However, since most Mason objects are
-made by other Mason objects, rather than by end users, Mason has been
-designed so that when one object contains another, the container
-object can accept constructor params not only for itself, but also for
-any of its contained objects.
+This document lists all of the Mason configuration parameters that are
+intended to be used by end users.
 
-This means that typically, you simply make a top level object such as
-an ApacheHandler or Interp object, and pass it whatever parameters you
-want to set for any Mason object.
+=head1 PERL AND APACHE NAMES
 
-Of course, many people simply configure Mason via their httpd.conf
-file, and don't ever make a Mason object.
+Each parameter has two names: a Perl version and an Apache version.
+The Perl version uses C<lowercase_with_underscores>, while the Apache
+version uses C<StudlyCaps> with a C<Mason> prefix. The conversion from
+one version to the other is otherwise very predictable. For example,
 
-This document lists B<all> of the Mason parameters that are intended
-to be used by end users.
+=over
 
-=head1 PARAMETERS
+=item *
+
+C<autohandler_name> C<E<lt>--E<gt>> C<MasonAutohandlerName>
+
+=item *
+
+C<comp_root> C<E<lt>--E<gt>> C<MasonCompRoot>
+
+=item *
+
+C<data_cache_defaults> C<E<lt>--E<gt>> C<MasonDataCacheDefaults>
+
+=back
+
+=head2 Where Apache Names Are Used
+
+The Apache parameter names are used in the Apache configuration file
+in an L<httpd-based configuration|HTML::Mason::Admin/configuration via
+httpd.conf directives>. They are B<only> effective if you have
+
+   PerlHandler HTML::Mason::ApacheHandler
+
+in your C<httpd.conf>. They B<cannot> be used in conjunction with a
+L<handler.pl-based configuration|HTML::Mason::Admin/Configuring via handler script>.
+
+=head2 Where Perl Names Are Used
+
+The Perl parameter names are used from Perl code, i.e. anywhere other
+than the Apache configuration file. For example,
 
 =over 4
 
-=item * allow_globals
+=item *
 
-An array of names of Perl variables that are allowed globally within components
+In an L<handler.pl-based configuration|HTML::Mason::Admin/Configuring
+via handler script>, you can pass most of these parameters to the
+L<ApacheHandler|HTML::Mason::ApacheHandler> constructor.
+
+=item *
+
+In a L<standalone Mason script|HTML::Mason::Admin/Using Mason from a
+standalone script>, you can pass most of these parameters to the
+L<Interp|HTML::Mason::Interp> constructor.
+
+=item *
+
+When launching a L<subrequest|HTML::Mason::Devel/Subrequests>, you can
+pass any of the C<HTML::Mason::Request> parameters to
+L<make_subrequest|HTML::Mason::Request/item_make_subrequest>.
+
+=back
+
+=head1 PARAMETERS
+
+
+
+=head2 allow_globals
+
+=begin text
+
+Perl name:          allow_globals
+
+Apache name:        MasonAllowGlobals
 
 Type:               list
 
-Name in httpd.conf: MasonAllowGlobals
+Default:            []
 
 Belongs to:         L<HTML::Mason::Compiler|HTML::Mason::Compiler>
 
-=item * apache_status_title
 
-The title of the Apache::Status page
+
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>allow_globals</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonAllowGlobals</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>list</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>[]</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Compiler.html">HTML::Mason::Compiler</a>   </td></tr> </table> 
+
+
+List of variable names, complete with prefix (C<$@%>), that you intend
+to use as globals in components.  Normally global variables are
+forbidden by C<strict>, but any variable mentioned in this list is
+granted a reprieve via a "use vars" statement. For example:
+
+    allow_globals => [qw($DBH %session)]
+
+In a mod_perl environment, C<$r> (the request object) is automatically
+added to this list.
+
+
+=head2 apache_status_title
+
+=begin text
+
+Perl name:          apache_status_title
+
+Apache name:        MasonApacheStatusTitle
 
 Type:               string
 
 Default:            HTML::Mason status
 
-Name in httpd.conf: MasonApacheStatusTitle
-
 Belongs to:         L<HTML::Mason::ApacheHandler|HTML::Mason::ApacheHandler>
 
-=item * args_method
 
-Whether to use CGI.pm or Apache::Request for parsing the incoming HTTP request
+
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>apache_status_title</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonApacheStatusTitle</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>string</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>HTML::Mason status</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="ApacheHandler.html">HTML::Mason::ApacheHandler</a>   </td></tr> </table> 
+
+
+Title that you want this ApacheHandler to appear as under
+Apache::Status.  Default is "HTML::Mason status".  This is useful if
+you create more than one ApacheHandler object and want them all
+visible via Apache::Status.
+
+
+=head2 args_method
+
+=begin text
+
+Perl name:          args_method
+
+Apache name:        MasonArgsMethod
 
 Type:               string
 
 Default:            mod_perl
 
-Name in httpd.conf: MasonArgsMethod
-
 Belongs to:         L<HTML::Mason::ApacheHandler|HTML::Mason::ApacheHandler>
 
-=item * auto_send_headers
 
-Whether HTTP headers should be auto-generated
+
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>args_method</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonArgsMethod</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>string</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>mod_perl</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="ApacheHandler.html">HTML::Mason::ApacheHandler</a>   </td></tr> </table> 
+
+
+Method to use for unpacking GET and POST arguments. The valid options
+are 'CGI' and 'mod_perl'; these indicate that a C<CGI.pm> or
+C<Apache::Request> object (respectively) will be created for the purposes
+of argument handling.
+
+'mod_perl' is the default and requires that you have installed the
+C<Apache::Request> package.
+
+If the args_method is 'CGI', the Mason request object (C<$m>) will have a
+method called C<cgi_object> available.  This method returns the CGI
+object used for argument processing.
+
+If args_method is 'mod_perl', the C<$r> global is upgraded to an
+Apache::Request object. This object inherits all Apache methods and
+adds a few of its own, dealing with parameters and file uploads.  See
+L<Apache::Request|Apache::Request> for more information.
+
+While Mason will load C<Apache::Request> or C<CGI> as needed at runtime, it
+is recommended that you preload the relevant module either in your
+F<httpd.conf> or F<handler.pl> file, as this will save some memory.
+
+
+=head2 auto_send_headers
+
+=begin text
+
+Perl name:          auto_send_headers
+
+Apache name:        MasonAutoSendHeaders
 
 Type:               boolean
 
 Default:            1
 
-Name in httpd.conf: MasonAutoSendHeaders
+Belongs to:         C<HTML::Mason::Request::ApacheHandler>
 
-Belongs to:         L<HTML::Mason::Request::ApacheHandler|HTML::Mason::Request::ApacheHandler>
 
-=item * autoflush
 
-Whether output should be buffered or sent immediately
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>auto_send_headers</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonAutoSendHeaders</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>boolean</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>1</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><tt>HTML::Mason::Request::ApacheHandler</tt>   </td></tr> </table> 
+
+
+True or false, default is true.  Indicates whether Mason should
+automatically send HTTP headers before sending content back to the
+client. If you set to false, you should call C<$r-E<gt>send_http_header>
+manually.
+
+See the L<sending HTTP headers|HTML::Mason::Devel/sending HTTP headers> section of the developer's manual for more details about the automatic
+header feature.
+
+
+=head2 autoflush
+
+=begin text
+
+Perl name:          autoflush
+
+Apache name:        MasonAutoflush
 
 Type:               boolean
 
 Default:            0
 
-Name in httpd.conf: MasonAutoflush
-
 Belongs to:         L<HTML::Mason::Request|HTML::Mason::Request>
 
-=item * autohandler_name
 
-The filename to use for Mason's 'autohandler' capability
+
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>autoflush</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonAutoflush</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>boolean</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>0</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Request.html">HTML::Mason::Request</a>   </td></tr> </table> 
+
+
+True or false, default is false. Indicates whether to flush the output buffer
+after every string is output. Turn on autoflush if you need to send partial
+output to the client, for example in a progress meter.
+
+
+=head2 autohandler_name
+
+=begin text
+
+Perl name:          autohandler_name
+
+Apache name:        MasonAutohandlerName
 
 Type:               string
 
 Default:            autohandler
 
-Name in httpd.conf: MasonAutohandlerName
-
 Belongs to:         L<HTML::Mason::Interp|HTML::Mason::Interp>
 
-=item * buffer_class
 
-This class receives component output and dispatches it appropriately
+
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>autohandler_name</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonAutohandlerName</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>string</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>autohandler</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Interp.html">HTML::Mason::Interp</a>   </td></tr> </table> 
+
+
+File name used for L<autohandlers|HTML::Mason::Devel/autohandlers>. Default is "autohandler".
+
+
+=head2 buffer_class
+
+=begin text
+
+Perl name:          buffer_class
+
+Apache name:        MasonBufferClass
 
 Type:               string
 
-Name in httpd.conf: MasonBufferClass
+Default:            HTML::Mason::Buffer
 
 Belongs to:         L<HTML::Mason::Request|HTML::Mason::Request>
 
-This object is created multiple times by its container.
 
-=item * code_cache_max_size
 
-The maximum size of the component code cache
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>buffer_class</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonBufferClass</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>string</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>HTML::Mason::Buffer</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Request.html">HTML::Mason::Request</a>   </td></tr> </table> 
+
+
+The class to use when creating buffers. Defaults to
+L<HTML::Mason::Buffer|HTML::Mason::Buffer>.
+
+
+=head2 code_cache_max_size
+
+=begin text
+
+Perl name:          code_cache_max_size
+
+Apache name:        MasonCodeCacheMaxSize
 
 Type:               string
 
 Default:            10485760
 
-Name in httpd.conf: MasonCodeCacheMaxSize
-
 Belongs to:         L<HTML::Mason::Interp|HTML::Mason::Interp>
 
-=item * comp_class
 
-The class into which component objects will be blessed
+
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>code_cache_max_size</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonCodeCacheMaxSize</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>string</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>10485760</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Interp.html">HTML::Mason::Interp</a>   </td></tr> </table> 
+
+
+Specifies the maximum size, in bytes, of the in-memory code cache
+where components are stored. Default is 10 MB. See the ADMIN<code
+cache> section of the administrator's manual for further details.
+
+
+=head2 comp_class
+
+=begin text
+
+Perl name:          comp_class
+
+Apache name:        MasonCompClass
 
 Type:               string
 
 Default:            HTML::Mason::Component
 
-Name in httpd.conf: MasonCompClass
-
 Belongs to:         L<HTML::Mason::Compiler::ToObject|HTML::Mason::Compiler::ToObject>
 
-=item * comp_root
 
-A string or array of arrays indicating the search path for component calls
+
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>comp_class</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonCompClass</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>string</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>HTML::Mason::Component</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Compiler/ToObject.html">HTML::Mason::Compiler::ToObject</a>   </td></tr> </table> 
+
+
+The class into which component objects are blessed.  This defaults to
+L<HTML::Mason::Component|HTML::Mason::Component>.
+
+
+=head2 comp_root
+
+=begin text
+
+Perl name:          comp_root
+
+Apache name:        MasonCompRoot
 
 Type:               list
 
-Default:            filesystem root
-
-Name in httpd.conf: MasonCompRoot
+Default:            Varies
 
 Belongs to:         L<HTML::Mason::Resolver::File|HTML::Mason::Resolver::File>
 
-=item * compiler
 
-A Compiler object for compiling components
 
-Type:               object
 
-Default:            HTML::Mason::Compiler::ToObject->new
+=end text
 
-Belongs to:         L<HTML::Mason::Interp|HTML::Mason::Interp>
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>comp_root</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonCompRoot</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>list</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>Varies</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Resolver/File.html">HTML::Mason::Resolver::File</a>   </td></tr> </table> 
 
-This object is created only once by its container.
 
-=item * compiler_class
+The component root marks the top of your component hierarchy and
+defines how component paths are translated into real file paths. For
+example, if your component root is F</usr/local/httpd/docs>, a component
+path of F</products/index.html> translates to the file
+F</usr/local/httpd/docs/products/index.html>.
 
-This class is used to translate component source into code
+Under L<Apache|HTML::Mason::ApacheHandler> and
+L<CGI|HTML::Mason::CGIHandler>, comp_root defaults to the server's
+document root. In standalone mode comp_root defaults to the current
+working directory.
+
+This parameter may be either a scalar or an array reference.  If it is
+a scalar, it should be a filesystem path indicating the component
+root. If it is an array reference, it should be of the following form:
+
+ [ [ key1 => '/path/to/root' ],
+   [ key2 => '/path/to/other/root' ] ]
+
+The "keys" for each path must be unique names and their "values" must
+be filesystem paths.  These paths will be searched in the provided
+order whenever a component path must be resolved to a filesystem path.
+
+
+=head2 compiler_class
+
+=begin text
+
+Perl name:          compiler_class
+
+Apache name:        MasonCompilerClass
 
 Type:               string
 
-Name in httpd.conf: MasonCompilerClass
+Default:            HTML::Mason::Compiler::ToObject
 
 Belongs to:         L<HTML::Mason::Interp|HTML::Mason::Interp>
 
-This object is created only once by its container.
 
-=item * data_cache_defaults
 
-A hash of default parameters for Cache::Cache
 
-Type:               hash
+=end text
 
-Name in httpd.conf: MasonDataCacheDefaults
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>compiler_class</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonCompilerClass</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>string</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>HTML::Mason::Compiler::ToObject</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Interp.html">HTML::Mason::Interp</a>   </td></tr> </table> 
+
+
+The class to use when creating a compiler. Defaults to
+L<HTML::Mason::Compiler|HTML::Mason::Compiler>.
+
+
+=head2 current_time
+
+=begin text
+
+Perl name:          current_time
+
+Apache name:        MasonCurrentTime
+
+Type:               string
+
+Default:            real
+
+Belongs to:         L<HTML::Mason::Interp|HTML::Mason::Interp>
+
+
+
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>current_time</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonCurrentTime</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>string</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>real</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Interp.html">HTML::Mason::Interp</a>   </td></tr> </table> 
+
+
+Interpreter's notion of the current time (deprecated).
+
+
+=head2 data_cache_api
+
+=begin text
+
+Perl name:          data_cache_api
+
+Apache name:        MasonDataCacheApi
+
+Type:               string
+
+Default:            1.1
 
 Belongs to:         L<HTML::Mason::Request|HTML::Mason::Request>
 
-=item * data_dir
 
-A directory for storing cache files and other state information
+
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>data_cache_api</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonDataCacheApi</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>string</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>1.1</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Request.html">HTML::Mason::Request</a>   </td></tr> </table> 
+
+
+The C<$m-E<gt>cache> API to use. '1.1', the default, indicates the newer
+API L<documented in this manual|HTML::Mason::Request/item_cache>.
+'1.0' indicates the old API documented in 1.0x and earlier. This
+compatibility layer is provided as a convenience for users upgrading
+from older versions of Mason, but will not be supported indefinitely.
+
+
+=head2 data_cache_defaults
+
+=begin text
+
+Perl name:          data_cache_defaults
+
+Apache name:        MasonDataCacheDefaults
+
+Type:               hash
+
+Default:            None
+
+Belongs to:         L<HTML::Mason::Request|HTML::Mason::Request>
+
+
+
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>data_cache_defaults</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonDataCacheDefaults</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>hash</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>None</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Request.html">HTML::Mason::Request</a>   </td></tr> </table> 
+
+
+A hash reference of default options to use for the C<$m-E<gt>cache>
+command. For example, to use the C<MemoryCache> implementation
+by default,
+
+    data_cache_defaults => {cache_class => 'MemoryCache'}
+
+These settings are overriden by options given to particular
+C<$m-E<gt>cache> calls.
+
+
+=head2 data_dir
+
+=begin text
+
+Perl name:          data_dir
+
+Apache name:        MasonDataDir
 
 Type:               string
 
-Name in httpd.conf: MasonDataDir
+Default:            None
 
 Belongs to:         L<HTML::Mason::Interp|HTML::Mason::Interp>
 
-=item * decline_dirs
 
-Whether Mason should decline to handle requests for directories
+
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>data_dir</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonDataDir</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>string</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>None</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Interp.html">HTML::Mason::Interp</a>   </td></tr> </table> 
+
+
+The data directory is a writable directory that Mason uses for various
+features and optimizations: for example, component object files and
+data cache files. Mason will create the directory on startup, if necessary, and set its
+permissions according to the web server User/Group.
+
+Under L<Apache|HTML::Mason::ApacheHandler>, data_dir defaults to a
+directory called "mason" under the Apache server root. You will
+need to change this on certain systems that assign a high-level
+server root such as F</usr>!
+
+In non-Apache environments, data_dir has no default. If it is left
+unspecified, Mason will not use the L<object files|HTML::Mason::Admin/object files> section of the administrator's manual, and the default
+L<data cache class|HTML::Mason::Request/item_cache> will be
+C<MemoryCache> instead of C<FileCache>.
+
+
+=head2 decline_dirs
+
+=begin text
+
+Perl name:          decline_dirs
+
+Apache name:        MasonDeclineDirs
 
 Type:               boolean
 
 Default:            1
 
-Name in httpd.conf: MasonDeclineDirs
-
 Belongs to:         L<HTML::Mason::ApacheHandler|HTML::Mason::ApacheHandler>
 
-=item * default_escape_flags
 
-Escape flags that will apply by default to all Mason tag output
+
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>decline_dirs</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonDeclineDirs</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>boolean</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>1</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="ApacheHandler.html">HTML::Mason::ApacheHandler</a>   </td></tr> </table> 
+
+
+True or false, default is true. Indicates whether Mason should decline
+directory requests, leaving Apache to serve up a directory index or a
+C<FORBIDDEN> error as appropriate. See the L<allowing directory requests|HTML::Mason::Admin/allowing directory requests> section of the administrator's manual
+for more information about handling directories with Mason.
+
+
+=head2 default_escape_flags
+
+=begin text
+
+Perl name:          default_escape_flags
+
+Apache name:        MasonDefaultEscapeFlags
 
 Type:               string
 
-Name in httpd.conf: MasonDefaultEscapeFlags
+Default:            []
 
 Belongs to:         L<HTML::Mason::Compiler|HTML::Mason::Compiler>
 
-=item * dhandler_name
 
-The filename to use for Mason's 'dhandler' capability
+
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>default_escape_flags</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonDefaultEscapeFlags</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>string</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>[]</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Compiler.html">HTML::Mason::Compiler</a>   </td></tr> </table> 
+
+
+Escape flags to apply to all <% %> expressions by default. The current
+valid flags are
+
+    h - escape for HTML ('<' => '&lt;', etc.)
+    u - escape for URL (':' => '%3A', etc.)
+
+The developer can override default escape flags on a per-expression
+basis; see the L<escaping expressions|HTML::Mason::Devel/escaping expressions> section of the developer's manual.
+
+If you want to set I<multiple> flags as the default, this should be
+given as a reference to an array of flags.
+
+
+=head2 dhandler_name
+
+=begin text
+
+Perl name:          dhandler_name
+
+Apache name:        MasonDhandlerName
 
 Type:               string
 
 Default:            dhandler
 
-Name in httpd.conf: MasonDhandlerName
-
 Belongs to:         L<HTML::Mason::Request|HTML::Mason::Request>
 
-=item * error_format
 
-How error conditions are returned to the caller (brief, text, line or html)
+
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>dhandler_name</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonDhandlerName</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>string</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>dhandler</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Request.html">HTML::Mason::Request</a>   </td></tr> </table> 
+
+
+File name used for L<dhandlers|HTML::Mason::Devel/dhandlers>. Default is "dhandler".
+
+
+=head2 error_format
+
+=begin text
+
+Perl name:          error_format
+
+Apache name:        MasonErrorFormat
 
 Type:               string
 
-Default:            text
-
-Name in httpd.conf: MasonErrorFormat
+Default:            Varies
 
 Belongs to:         L<HTML::Mason::Request|HTML::Mason::Request>
 
-=item * error_mode
 
-How error conditions are manifest (output or fatal)
+
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>error_format</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonErrorFormat</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>string</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>Varies</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Request.html">HTML::Mason::Request</a>   </td></tr> </table> 
+
+
+Indicates how errors are formatted. The built-in choices are
+
+=over
+
+=item *
+
+I<brief> - just the error message with no trace information
+
+=item *
+
+I<text> - a multi-line text format
+
+=item *
+
+I<line> - a single-line text format, with different pieces of information separated by tabs (useful for log files)
+
+=item *
+
+I<html> - a fancy html format
+
+=back
+
+The default format under L<Apache|HTML::Mason::ApacheHandler> and
+L<CGI|HTML::Mason::CGIHandler> is either I<line> or I<html> depending
+on whether the error mode is I<fatal> or I<output>, respectively. The
+default for standalone mode is I<text>.
+
+The formats correspond to C<HTML::Mason::Exception> methods named
+as_I<format>. You can define your own format by creating an
+appropriately named method; for example, to define an "xml" format,
+create a method C<HTML::Mason::Exception::as_xml> patterned after one of
+the built-in methods.
+
+
+=head2 error_mode
+
+=begin text
+
+Perl name:          error_mode
+
+Apache name:        MasonErrorMode
 
 Type:               string
 
-Default:            fatal
-
-Name in httpd.conf: MasonErrorMode
+Default:            Varies
 
 Belongs to:         L<HTML::Mason::Request|HTML::Mason::Request>
 
-=item * ignore_warnings_expr
 
-A regular expression describing Perl warning messages to ignore
+
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>error_mode</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonErrorMode</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>string</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>Varies</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Request.html">HTML::Mason::Request</a>   </td></tr> </table> 
+
+
+Indicates how errors are returned to the caller.  The choices are
+I<fatal>, meaning die with the error, and I<output>, meaning output
+the error just like regular output.
+
+The default under L<Apache|HTML::Mason::ApacheHandler> and
+L<CGI|HTML::Mason::CGIHandler> is I<output>, causing the error to be
+displayed in the browser.  The default for standalone mode is
+I<fatal>.
+
+
+=head2 escape_flags
+
+=begin text
+
+Perl name:          escape_flags
+
+Apache name:        MasonEscapeFlags
+
+Type:               list
+
+Default:            None
+
+Belongs to:         L<HTML::Mason::Interp|HTML::Mason::Interp>
+
+
+
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>escape_flags</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonEscapeFlags</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>list</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>None</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Interp.html">HTML::Mason::Interp</a>   </td></tr> </table> 
+
+
+A hash reference of escape flags to set for this object.  See the
+section on the L<C<set_escape()>
+method|HTML::Mason::Interp/set_escape> for more details.
+
+
+=head2 ignore_warnings_expr
+
+=begin text
+
+Perl name:          ignore_warnings_expr
+
+Apache name:        MasonIgnoreWarningsExpr
 
 Type:               regex
 
 Default:            qr/Subroutine .* redefined/i
 
-Name in httpd.conf: MasonIgnoreWarningsExpr
-
 Belongs to:         L<HTML::Mason::Interp|HTML::Mason::Interp>
 
-=item * in_package
 
-The package in which component execution will take place
+
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>ignore_warnings_expr</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonIgnoreWarningsExpr</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>regex</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>qr/Subroutine .* redefined/i</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Interp.html">HTML::Mason::Interp</a>   </td></tr> </table> 
+
+
+Regular expression indicating which warnings to ignore when loading
+components. Any warning that is not ignored will prevent the
+component from being loaded and executed. For example:
+
+    ignore_warnings_expr =>
+        'Global symbol.*requires explicit package'
+
+If undef, all warnings are heeded; if '.', all warnings are ignored.
+
+By default, this is set to 'Subroutine .* redefined'.  This allows you
+to declare global subroutines inside <%once> sections and not receive
+an error when the component is reloaded.
+
+
+=head2 in_package
+
+=begin text
+
+Perl name:          in_package
+
+Apache name:        MasonInPackage
 
 Type:               string
 
 Default:            HTML::Mason::Commands
 
-Name in httpd.conf: MasonInPackage
-
 Belongs to:         L<HTML::Mason::Compiler::ToObject|HTML::Mason::Compiler::ToObject>
 
-=item * interp
 
-A Mason interpreter for processing components
 
-Type:               object
 
-Default:            HTML::Mason::Interp->new
+=end text
 
-Belongs to:         L<HTML::Mason::ApacheHandler|HTML::Mason::ApacheHandler>
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>in_package</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonInPackage</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>string</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>HTML::Mason::Commands</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Compiler/ToObject.html">HTML::Mason::Compiler::ToObject</a>   </td></tr> </table> 
 
-This object is created only once by its container.
 
-=item * interp_class
+This is the package in which a component's code is executed.  For
+historical reasons, this defaults to C<HTML::Mason::Commands>.
 
-The interp class coordinates multiple objects to handle request execution
 
-Type:               string
+=head2 interp_class
 
-Name in httpd.conf: MasonInterpClass
+=begin text
 
-Belongs to:         L<HTML::Mason::ApacheHandler|HTML::Mason::ApacheHandler>
+Perl name:          interp_class
 
-This object is created only once by its container.
-
-=item * lexer
-
-A Lexer object that will scan component text during compilation
-
-Type:               object
-
-Default:            HTML::Mason::Lexer->new
-
-Belongs to:         L<HTML::Mason::Compiler|HTML::Mason::Compiler>
-
-This object is created only once by its container.
-
-=item * lexer_class
-
-This class generates compiler events based on the components source
+Apache name:        MasonInterpClass
 
 Type:               string
 
-Name in httpd.conf: MasonLexerClass
+Default:            HTML::Mason::Interp
+
+Belongs to:         L<HTML::Mason::ApacheHandler|HTML::Mason::ApacheHandler>
+
+
+
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>interp_class</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonInterpClass</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>string</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>HTML::Mason::Interp</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="ApacheHandler.html">HTML::Mason::ApacheHandler</a>   </td></tr> </table> 
+
+
+The class to use when creating a interpreter. Defaults to
+L<HTML::Mason::Interp|HTML::Mason::Interp>.
+
+
+=head2 lexer_class
+
+=begin text
+
+Perl name:          lexer_class
+
+Apache name:        MasonLexerClass
+
+Type:               string
+
+Default:            HTML::Mason::Lexer
 
 Belongs to:         L<HTML::Mason::Compiler|HTML::Mason::Compiler>
 
-This object is created only once by its container.
 
-=item * max_recurse
 
-The maximum recursion depth for component, inheritance, and request stack
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>lexer_class</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonLexerClass</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>string</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>HTML::Mason::Lexer</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Compiler.html">HTML::Mason::Compiler</a>   </td></tr> </table> 
+
+
+The class to use when creating a lexer. Defaults to L<HTML::Mason::Lexer|HTML::Mason::Lexer>.
+
+
+=head2 max_recurse
+
+=begin text
+
+Perl name:          max_recurse
+
+Apache name:        MasonMaxRecurse
 
 Type:               string
 
 Default:            32
 
-Name in httpd.conf: MasonMaxRecurse
+Belongs to:         L<HTML::Mason::Request|HTML::Mason::Request>
+
+
+
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>max_recurse</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonMaxRecurse</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>string</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>32</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Request.html">HTML::Mason::Request</a>   </td></tr> </table> 
+
+
+The maximum recursion depth for the component stack, for the request
+stack, and for the inheritance stack. An error is signalled if the
+maximum is exceeded.  Default is 32.
+
+
+=head2 out_method
+
+=begin text
+
+Perl name:          out_method
+
+Apache name:        MasonOutMethod
+
+Type:               code
+
+Default:            Print to STDOUT
 
 Belongs to:         L<HTML::Mason::Request|HTML::Mason::Request>
 
-=item * out_method
 
-A subroutine or scalar reference through which all output will pass
 
-Type:               code
 
-Default:            sub { print STDOUT grep {defined} @_ }
+=end text
 
-Name in httpd.conf: MasonOutMethod
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>out_method</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonOutMethod</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>code</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>Print to STDOUT</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Request.html">HTML::Mason::Request</a>   </td></tr> </table> 
 
-Belongs to:         L<HTML::Mason::Request|HTML::Mason::Request>
 
-=item * postamble
+Indicates where to send output. If out_method is a reference to a
+scalar, output is appended to the scalar.  If out_method is a
+reference to a subroutine, the subroutine is called with each output
+string. For example, to send output to a file called "mason.out":
 
-A chunk of Perl code to add to the end of each compiled component
+    my $fh = new IO::File ">mason.out";
+    ...
+    out_method => sub { $fh->print($_[0]) }
 
-Type:               string
+By default, out_method prints to standard output. Under
+L<Apache|HTML::Mason::ApacheHandler>, standard output is
+redirected to C<< $r->print >>.
 
-Name in httpd.conf: MasonPostamble
 
-Belongs to:         L<HTML::Mason::Compiler::ToObject|HTML::Mason::Compiler::ToObject>
+=head2 postamble
 
-=item * postprocess_perl
+=begin text
 
-A subroutine through which all Perl code will be sent during compilation
+Perl name:          postamble
 
-Type:               code
-
-Name in httpd.conf: MasonPostprocessPerl
-
-Belongs to:         L<HTML::Mason::Compiler|HTML::Mason::Compiler>
-
-=item * postprocess_text
-
-A subroutine through which all plain text will be sent during compilation
-
-Type:               code
-
-Name in httpd.conf: MasonPostprocessText
-
-Belongs to:         L<HTML::Mason::Compiler|HTML::Mason::Compiler>
-
-=item * preamble
-
-A chunk of Perl code to add to the beginning of each compiled component
+Apache name:        MasonPostamble
 
 Type:               string
 
-Name in httpd.conf: MasonPreamble
+Default:            None
 
 Belongs to:         L<HTML::Mason::Compiler::ToObject|HTML::Mason::Compiler::ToObject>
 
-=item * preloads
 
-A list of components to load immediately when creating the Interpreter
+
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>postamble</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonPostamble</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>string</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>None</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Compiler/ToObject.html">HTML::Mason::Compiler::ToObject</a>   </td></tr> </table> 
+
+
+Text given for this parameter is placed at the end of each component. See also L<preamble|HTML::Mason::Params/preamble>.
+
+
+=head2 postprocess_perl
+
+=begin text
+
+Perl name:          postprocess_perl
+
+Apache name:        MasonPostprocessPerl
+
+Type:               code
+
+Default:            None
+
+Belongs to:         L<HTML::Mason::Compiler|HTML::Mason::Compiler>
+
+
+
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>postprocess_perl</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonPostprocessPerl</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>code</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>None</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Compiler.html">HTML::Mason::Compiler</a>   </td></tr> </table> 
+
+
+Sub reference that is called to postprocess the Perl portion of a
+compiled component, just before it is assembled into its final
+subroutine form.  The sub is called with a single parameter, a scalar
+reference to the Perl portion of the component.  The sub is expected
+to process the string in-place. See also
+L<preprocess|HTML::Mason::Params/preprocess> and L<postprocess_text|HTML::Mason::Params/postprocess_text>.
+
+
+=head2 postprocess_text
+
+=begin text
+
+Perl name:          postprocess_text
+
+Apache name:        MasonPostprocessText
+
+Type:               code
+
+Default:            None
+
+Belongs to:         L<HTML::Mason::Compiler|HTML::Mason::Compiler>
+
+
+
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>postprocess_text</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonPostprocessText</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>code</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>None</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Compiler.html">HTML::Mason::Compiler</a>   </td></tr> </table> 
+
+
+Sub reference that is called to postprocess the text portion of a
+compiled component, just before it is assembled into its final
+subroutine form.  The sub is called with a single parameter, a scalar
+reference to the text portion of the component.  The sub is expected
+to process the string in-place. See also
+L<preprocess|HTML::Mason::Params/preprocess> and L<postprocess_perl|HTML::Mason::Params/postprocess_perl>.
+
+
+=head2 preamble
+
+=begin text
+
+Perl name:          preamble
+
+Apache name:        MasonPreamble
+
+Type:               string
+
+Default:            None
+
+Belongs to:         L<HTML::Mason::Compiler::ToObject|HTML::Mason::Compiler::ToObject>
+
+
+
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>preamble</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonPreamble</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>string</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>None</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Compiler/ToObject.html">HTML::Mason::Compiler::ToObject</a>   </td></tr> </table> 
+
+
+Text given for this parameter is placed at the beginning of each component. See also L<postamble|HTML::Mason::Params/postamble>.
+
+
+=head2 preloads
+
+=begin text
+
+Perl name:          preloads
+
+Apache name:        MasonPreloads
 
 Type:               list
 
-Name in httpd.conf: MasonPreloads
+Default:            None
 
 Belongs to:         L<HTML::Mason::Interp|HTML::Mason::Interp>
 
-=item * preprocess
 
-A subroutine through which all component text will be sent during compilation
+
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>preloads</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonPreloads</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>list</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>None</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Interp.html">HTML::Mason::Interp</a>   </td></tr> </table> 
+
+
+A list of component paths, optionally with glob wildcards, to load
+when the interpreter initializes. e.g.
+
+    preloads => ['/foo/index.html','/bar/*.pl']
+
+Default is the empty list.  For maximum performance, this should only
+be used for components that are frequently viewed and rarely updated.
+See the the L<preloading|HTML::Mason::Admin/preloading> section of the administrator's manual section of the administrator's manual for
+further details.
+
+As mentioned in the developer's manual, a component's C<< <%once> >>
+section is executed when it is loaded.  For preloaded components, this
+means that this section will be executed before a Mason or Apache
+request exist, so preloading a component that uses C<$m> or C<$r> in a
+C<< <%once> >> section will fail.
+
+
+=head2 preprocess
+
+=begin text
+
+Perl name:          preprocess
+
+Apache name:        MasonPreprocess
 
 Type:               code
 
-Name in httpd.conf: MasonPreprocess
+Default:            None
 
 Belongs to:         L<HTML::Mason::Compiler|HTML::Mason::Compiler>
 
-=item * request_class
 
-Objects returned by make_request are members of this class
 
-Type:               string
 
-Name in httpd.conf: MasonRequestClass
+=end text
 
-Belongs to:         L<HTML::Mason::Interp|HTML::Mason::Interp>
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>preprocess</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonPreprocess</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>code</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>None</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Compiler.html">HTML::Mason::Compiler</a>   </td></tr> </table> 
 
-This object is created multiple times by its container.
 
-=item * resolver
+Sub reference that is called to preprocess each component before Parser does
+it's magic.  The sub is called with a single parameter, a scalar reference
+to the script.  The sub is expected to process the script in-place.   This is
+one way to extend the HTML::Mason syntax with new tags, etc., although a much
+more flexible way is to subclass the Lexer or Compiler class. See also
+L<postprocess_text|HTML::Mason::Params/postprocess_text> and L<postprocess_perl|HTML::Mason::Params/postprocess_perl>.
 
-A Resolver object for fetching components from storage
 
-Type:               object
+=head2 request_class
 
-Default:            HTML::Mason::Resolver::File->new
+=begin text
 
-Belongs to:         L<HTML::Mason::Interp|HTML::Mason::Interp>
+Perl name:          request_class
 
-This object is created only once by its container.
-
-=item * resolver_class
-
-This class is expected to return component information based on a component path
+Apache name:        MasonRequestClass
 
 Type:               string
 
-Name in httpd.conf: MasonResolverClass
+Default:            HTML::Mason::Request
 
 Belongs to:         L<HTML::Mason::Interp|HTML::Mason::Interp>
 
-This object is created only once by its container.
 
-=item * static_source
 
-When true, we only compile source files once
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>request_class</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonRequestClass</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>string</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>HTML::Mason::Request</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Interp.html">HTML::Mason::Interp</a>   </td></tr> </table> 
+
+
+The class to use when creating requests. Defaults to
+L<HTML::Mason::Request|HTML::Mason::Request>.
+
+
+=head2 resolver_class
+
+=begin text
+
+Perl name:          resolver_class
+
+Apache name:        MasonResolverClass
+
+Type:               string
+
+Default:            HTML::Mason::Resolver::File
+
+Belongs to:         L<HTML::Mason::Interp|HTML::Mason::Interp>
+
+
+
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>resolver_class</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonResolverClass</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>string</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>HTML::Mason::Resolver::File</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Interp.html">HTML::Mason::Interp</a>   </td></tr> </table> 
+
+
+The class to use when creating a resolver. Defaults to
+L<HTML::Mason::Resolver::File|HTML::Mason::Resolver::File>.
+
+
+=head2 static_source
+
+=begin text
+
+Perl name:          static_source
+
+Apache name:        MasonStaticSource
 
 Type:               boolean
 
 Default:            0
 
-Name in httpd.conf: MasonStaticSource
-
 Belongs to:         L<HTML::Mason::Interp|HTML::Mason::Interp>
 
-=item * subcomp_class
 
-The class into which subcomponent objects will be blessed
+
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>static_source</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonStaticSource</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>boolean</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>0</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Interp.html">HTML::Mason::Interp</a>   </td></tr> </table> 
+
+
+True or false, default is false. When false, Mason checks the
+timestamp of the component source file each time the component is used
+to see if it has changed. This provides the instant feedback for
+source changes that is expected for development.  However it does
+entail a file stat for each component executed.
+
+When true, Mason assumes that the component source tree is unchanging:
+it will not check component source files to determine if the memory
+cache or object file has expired.  This can save many file stats per
+request. However, in order to get Mason to recognize a component
+source change, you must remove object files and restart the server (so
+as to clear the memory cache).
+
+Use this feature for live sites where performance is crucial and
+where updates are infrequent and well-controlled.
+
+
+=head2 subcomp_class
+
+=begin text
+
+Perl name:          subcomp_class
+
+Apache name:        MasonSubcompClass
 
 Type:               string
 
 Default:            HTML::Mason::Component::Subcomponent
 
-Name in httpd.conf: MasonSubcompClass
-
 Belongs to:         L<HTML::Mason::Compiler::ToObject|HTML::Mason::Compiler::ToObject>
 
-=item * use_object_files
 
-Whether to cache component objects on disk
+
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>subcomp_class</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonSubcompClass</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>string</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>HTML::Mason::Component::Subcomponent</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Compiler/ToObject.html">HTML::Mason::Compiler::ToObject</a>   </td></tr> </table> 
+
+
+The class into which subcomponent objects are blessed.  This defaults
+to L<HTML::Mason::Component::Subcomponent|HTML::Mason::Component::Subcomponent>.
+
+
+=head2 use_object_files
+
+=begin text
+
+Perl name:          use_object_files
+
+Apache name:        MasonUseObjectFiles
 
 Type:               boolean
 
 Default:            1
-
-Name in httpd.conf: MasonUseObjectFiles
 
 Belongs to:         L<HTML::Mason::Interp|HTML::Mason::Interp>
 
-=item * use_strict
 
-Whether to turn on Perl's 'strict' pragma in components
+
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>use_object_files</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonUseObjectFiles</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>boolean</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>1</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Interp.html">HTML::Mason::Interp</a>   </td></tr> </table> 
+
+
+True or false, default is true.  Specifies whether Mason creates
+object files to save the results of component parsing. You may want to
+turn off object files for disk space reasons, but otherwise this
+should be left alone.
+
+
+=head2 use_strict
+
+=begin text
+
+Perl name:          use_strict
+
+Apache name:        MasonUseStrict
 
 Type:               boolean
 
 Default:            1
 
-Name in httpd.conf: MasonUseStrict
-
 Belongs to:         L<HTML::Mason::Compiler::ToObject|HTML::Mason::Compiler::ToObject>
 
-=back
 
-=cut
+
+
+=end text
+
+=for html <table border=0 cellspacing=1>  <tr><td>Perl name:</td><td>&nbsp;</td><td>use_strict</td></tr>  <tr><td>Apache name:</td><td>&nbsp;</td><td>MasonUseStrict</td></tr>  <tr><td>Type:</td><td>&nbsp;</td><td>boolean</td></tr>  <tr><td>Default:</td><td>&nbsp;</td><td>1</td></tr> <tr><td>Belongs to:</td><td>&nbsp;</td><td><a href="Compiler/ToObject.html">HTML::Mason::Compiler::ToObject</a>   </td></tr> </table> 
+
+
+True or false, default is true. Indicates whether or not a given
+component should C<use strict>.
+
+
+
+
+
+
+
+
+
+

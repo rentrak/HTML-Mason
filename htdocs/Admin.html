@@ -1,313 +1,322 @@
-<HTML>
-<HEAD>
-<TITLE>HTML::Mason::Admin - Mason Administrator's Guide</TITLE>
-<LINK REV="made" HREF="mailto:perl@packages.debian.org">
-</HEAD>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>HTML::Mason::Admin - Mason Administrator's Manual</title>
+<link rev="made" href="mailto:root@localhost" />
+</head>
 
-<BODY>
+<body style="background-color: white">
 
-<A NAME="__index__"></A>
+<p><a name="__index__"></a></p>
 <!-- INDEX BEGIN -->
 
-<UL>
+<ul>
 
-	<LI><A HREF="#name">NAME</A></LI>
-	<LI><A HREF="#description">DESCRIPTION</A></LI>
-	<LI><A HREF="#site_configuration_methods">SITE CONFIGURATION METHODS</A></LI>
-	<UL>
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#site_configuration_methods">SITE CONFIGURATION METHODS</a></li>
+	<ul>
 
-		<LI><A HREF="#minimal_configuration">MINIMAL CONFIGURATION</A></LI>
-		<LI><A HREF="#configuration_via_httpd_conf_dir">CONFIGURATION VIA httpd.conf DIRECTIVES</A></LI>
-		<LI><A HREF="#configuring_via_handler_script">CONFIGURING VIA HANDLER SCRIPT</A></LI>
-	</UL>
+		<li><a href="#minimal_configuration">MINIMAL CONFIGURATION</a></li>
+		<li><a href="#configuration_via_httpd.conf_directives">CONFIGURATION VIA httpd.conf DIRECTIVES</a></li>
+		<li><a href="#configuring_via_handler_script">CONFIGURING VIA HANDLER SCRIPT</a></li>
+	</ul>
 
-	<LI><A HREF="#server_configuration">SERVER CONFIGURATION</A></LI>
-	<UL>
+	<li><a href="#server_configuration">SERVER CONFIGURATION</a></li>
+	<ul>
 
-		<LI><A HREF="#component_root">Component root</A></LI>
-		<LI><A HREF="#data_directory">Data directory</A></LI>
-		<LI><A HREF="#external_modules">External modules</A></LI>
-		<LI><A HREF="#declining_image_requests">Declining image requests</A></LI>
-		<LI><A HREF="#securing_toplevel_components">Securing top-level components</A></LI>
-		<LI><A HREF="#allowing_directory_requests">Allowing directory requests</A></LI>
-	</UL>
+		<li><a href="#component_root">Component root</a></li>
+		<li><a href="#data_directory">Data directory</a></li>
+		<li><a href="#external_modules">External modules</a></li>
+		<li><a href="#declining_image_requests">Declining image requests</a></li>
+		<li><a href="#securing_toplevel_components">Securing top-level components</a></li>
+		<li><a href="#allowing_directory_requests">Allowing directory requests</a></li>
+	</ul>
 
-	<LI><A HREF="#development">DEVELOPMENT</A></LI>
-	<UL>
+	<li><a href="#development">DEVELOPMENT</a></li>
+	<ul>
 
-		<LI><A HREF="#global_variables">Global variables</A></LI>
-		<LI><A HREF="#sessions">Sessions</A></LI>
-		<LI><A HREF="#data_caching">Data caching</A></LI>
-	</UL>
+		<li><a href="#global_variables">Global variables</a></li>
+		<li><a href="#sessions">Sessions</a></li>
+		<li><a href="#data_caching">Data caching</a></li>
+	</ul>
 
-	<LI><A HREF="#performance">PERFORMANCE</A></LI>
-	<UL>
+	<li><a href="#performance">PERFORMANCE</a></li>
+	<ul>
 
-		<LI><A HREF="#code_cache">Code cache</A></LI>
-		<LI><A HREF="#object_files">Object files</A></LI>
-		<LI><A HREF="#preloading">Preloading</A></LI>
-		<LI><A HREF="#static_source_mode">Static source mode</A></LI>
-	</UL>
+		<li><a href="#code_cache">Code cache</a></li>
+		<li><a href="#object_files">Object files</a></li>
+		<li><a href="#preloading">Preloading</a></li>
+		<li><a href="#static_source_mode">Static source mode</a></li>
+	</ul>
 
-	<LI><A HREF="#error_reporting">ERROR REPORTING</A></LI>
-	<LI><A HREF="#configuring_virtual_sites">CONFIGURING VIRTUAL SITES</A></LI>
-	<UL>
+	<li><a href="#error_reporting">ERROR REPORTING</a></li>
+	<li><a href="#configuring_virtual_sites">CONFIGURING VIRTUAL SITES</a></li>
+	<ul>
 
-		<LI><A HREF="#multiple_sites_one_component_ro">Multiple sites, one component root</A></LI>
-		<LI><A HREF="#multiple_sites_multiple_compone">Multiple sites, multiple component roots</A></LI>
-	</UL>
+		<li><a href="#multiple_sites,_one_component_root">Multiple sites, one component root</a></li>
+		<li><a href="#multiple_sites,_multiple_component_roots">Multiple sites, multiple component roots</a></li>
+	</ul>
 
-	<LI><A HREF="#running_outside_of_mod_perl">RUNNING OUTSIDE OF MOD_PERL</A></LI>
-	<UL>
+	<li><a href="#running_outside_of_mod_perl">RUNNING OUTSIDE OF MOD_PERL</a></li>
+	<ul>
 
-		<LI><A HREF="#using_mason_from_a_cgi_script">Using Mason from a CGI script</A></LI>
-		<LI><A HREF="#using_mason_from_a_standalone_sc">Using Mason from a standalone script</A></LI>
-	</UL>
+		<li><a href="#using_mason_from_a_cgi_script">Using Mason from a CGI script</a></li>
+		<li><a href="#using_mason_from_a_standalone_script">Using Mason from a standalone script</a></li>
+	</ul>
 
-	<LI><A HREF="#authors">AUTHORS</A></LI>
-	<LI><A HREF="#see_also">SEE ALSO</A></LI>
-</UL>
+	<li><a href="#authors">AUTHORS</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
 <!-- INDEX END -->
 
-<HR>
-<P>
-<H1><A NAME="name">NAME</A></H1>
-<P>HTML::Mason::Admin - Mason Administrator's Guide</P>
-<P>
-<HR>
-<H1><A NAME="description">DESCRIPTION</A></H1>
-<P>This guide is intended for the sysadmin/webmaster in charge of
-installing, configuring, or tuning a Mason system.</P>
-<P>
-<HR>
-<H1><A NAME="site_configuration_methods">SITE CONFIGURATION METHODS</A></H1>
-<P>There are three ways to configure a Mason site:</P>
-<UL>
-<LI>
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>HTML::Mason::Admin - Mason Administrator's Manual</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This manual is written for the sysadmin/webmaster in charge of
+installing, configuring, or tuning a Mason system.</p>
+<p>
+</p>
+<hr />
+<h1><a name="site_configuration_methods">SITE CONFIGURATION METHODS</a></h1>
+<p>There are three ways to configure a Mason site:</p>
+<ul>
+<li></li>
 Minimal configuration, relying on default Mason behavior. Simplest and least flexible.
-<P></P>
-<LI>
+<p></p>
+<li></li>
 Configuration via httpd.conf directives. Medium complexity and flexibility.
-<P></P>
-<LI>
+<p></p>
+<li></li>
 Configuration via a handler script (handler.pl). Most complex and most flexible.
-<P></P></UL>
-<P>The next three sections discuss these methods in detail. We recommend
+<p></p></ul>
+<p>The next three sections discuss these methods in detail. We recommend
 that you start with the simplest method and work your way forward as
-the need for flexibility arises.</P>
-<P>It is important to note that you cannot mix httpd.conf configuration
+the need for flexibility arises.</p>
+<p>It is important to note that you cannot mix httpd.conf configuration
 directives with a handler script.  Depending on how you declare your
-<CODE>PerlHandler</CODE>, one or the other will always take precedence and the
-other will be ignored.</P>
-<P>Mason is very flexible, and you can replace parts of it by creating
+<code>PerlHandler</code>, one or the other will always take precedence and the
+other will be ignored.</p>
+<p>Mason is very flexible, and you can replace parts of it by creating
 your own classes.  This documentation assumes that you are simply
 using the classes provide in the Mason distribution.  Customizing and
 subclassing is covered in the
-<A HREF="Subclassing.html">Subclassing</A> document.</P>
-<P>
-<H2><A NAME="minimal_configuration">MINIMAL CONFIGURATION</A></H2>
-<P>The absolutely most minimal configuration looks like this:</P>
-<PRE>
-    PerlModule HTML::Mason::ApacheHandler</PRE>
-<PRE>
+<a href="/HTML/Mason/Subclassing.html">Subclassing</a> document.</p>
+<p>
+</p>
+<h2><a name="minimal_configuration">MINIMAL CONFIGURATION</a></h2>
+<p>The absolutely most minimal configuration looks like this:</p>
+<pre>
+    PerlModule HTML::Mason::ApacheHandler</pre>
+<pre>
     &lt;FilesMatch &quot;\.html$&quot;&gt;
         SetHandler perl-script
         PerlHandler HTML::Mason::ApacheHandler
-    &lt;/FilesMatch&gt;</PRE>
-<P>This configuration tells Apache to serve all .html files under your
+    &lt;/FilesMatch&gt;</pre>
+<p>This configuration tells Apache to serve all .html files under your
 document root through Mason.  The PerlModule line tells mod_perl to
-load Mason once at startup time, saving time and memory.</P>
-<P>
-<H2><A NAME="configuration_via_httpd_conf_dir">CONFIGURATION VIA httpd.conf DIRECTIVES</A></H2>
-<P>Mason's configuration parameters are set via mod_perl's <CODE>PerlSetVar</CODE>
-and <CODE>PerlAddVar</CODE> directives (the latter is only available in mod_perl
+load Mason once at startup time, saving time and memory.</p>
+<p>
+</p>
+<h2><a name="configuration_via_httpd.conf_directives">CONFIGURATION VIA httpd.conf DIRECTIVES</a></h2>
+<p>Mason's configuration parameters are set via mod_perl's <code>PerlSetVar</code>
+and <code>PerlAddVar</code> directives (the latter is only available in mod_perl
 version 1.24 and greater).  Though these parameters are all strings in
 your httpd.conf file, Mason treats them as if they were several
-different types:</P>
-<UL>
-<LI><STRONG><A NAME="item_string">string</A></STRONG><BR>
-
+different types:</p>
+<ul>
+<li><strong><a name="item_string">string</a></strong><br />
+</li>
 The variable's value is simply taken literally and used.  The string
 should be surrounded by quotes if the string contains whitespace, and
 these quotes will be automatically removed by Apache before Mason sees
 the variable.
-<P></P>
-<LI><STRONG><A NAME="item_boolean">boolean</A></STRONG><BR>
-
+<p></p>
+<li><strong><a name="item_boolean">boolean</a></strong><br />
+</li>
 The variable's value is used as a boolean, and is subject to Perl's
 rules on truth/falseness.  It is recommended that you use 0 (false) or
 1 (true) for these arguments.
-<P></P>
-<LI><STRONG><A NAME="item_code">code</A></STRONG><BR>
-
-The string is treated as a piece of code and <CODE>eval</CODE>'ed.  This is used
+<p></p>
+<li><strong><a name="item_code">code</a></strong><br />
+</li>
+The string is treated as a piece of code and <code>eval</code>'ed.  This is used
 for parameters that expect subroutine references.  For example, an
 anonymous subroutine might look like:
-<PRE>
- PerlSetVar  MasonOutMode  &quot;sub { ... }&quot;</PRE>
-<P>A named subroutine call would look like this:</P>
-<PRE>
- PerlSetVar  MasonOutMode  &quot;\&amp;handle_output&quot;</PRE>
-<P></P>
-<LI><STRONG><A NAME="item_list">list</A></STRONG><BR>
-
-To set a list parameter, use <CODE>PerlAddVar</CODE> for the values, like this:
-<PRE>
+<pre>
+ PerlSetVar  MasonOutMode  &quot;sub { ... }&quot;</pre>
+<p>A named subroutine call would look like this:</p>
+<pre>
+ PerlSetVar  MasonOutMode  &quot;\&amp;handle_output&quot;</pre>
+<p></p>
+<li><strong><a name="item_list">list</a></strong><br />
+</li>
+To set a list parameter, use <code>PerlAddVar</code> for the values, like this:
+<pre>
  PerlAddVar  MasonPreloads  /foo/bar/baz.comp
- PerlAddVar  MasonPreloads  /foo/bar/quux.comp</PRE>
-<P>As noted above, <CODE>PerlAddVar</CODE> is only available in mod_perl 1.24 and
+ PerlAddVar  MasonPreloads  /foo/bar/quux.comp</pre>
+<p>As noted above, <code>PerlAddVar</code> is only available in mod_perl 1.24 and
 up.  This means that it is only possible to assign a single value
-(using <CODE>PerlSetVar</CODE>) to list parameters if you are using a mod_perl
-older than 1.24.</P>
-<P></P></UL>
-<P>See <A HREF="Params.html">HTML::Mason::Params</A> for a full list
-of parameters.</P>
-<P>
-<H2><A NAME="configuring_via_handler_script">CONFIGURING VIA HANDLER SCRIPT</A></H2>
-<P>For maximum flexibility, you may choose to write a custom script to
+(using <code>PerlSetVar</code>) to list parameters if you are using a mod_perl
+older than 1.24.</p>
+<p></p></ul>
+<p>See <a href="/HTML/Mason/Params.html">HTML::Mason::Params</a> for a full list
+of parameters.</p>
+<p>
+</p>
+<h2><a name="configuring_via_handler_script">CONFIGURING VIA HANDLER SCRIPT</a></h2>
+<p>For maximum flexibility, you may choose to write a custom script to
 create your Mason objects and handle requests.  In our documentation
-and examples we call this script <CODE>handler.pl</CODE> and place it in the
-Apache <CODE>conf/</CODE> subdirectory, though you may name it and place it
-wherever you like.</P>
-<P>The <CODE>handler.pl</CODE> file is responsible for creating the AapcheHandler
+and examples we call this script <code>handler.pl</code> and place it in the
+Apache <code>conf/</code> subdirectory, though you may name it and place it
+wherever you like.</p>
+<p>The <code>handler.pl</code> file is responsible for creating the AapcheHandler
 object and supplying the many parameters that control how your
 components are parsed and executed. It also provides the opportunity
 to execute arbitrary code at three junctures: the server
-initialization, the beginning of a request, and the end of a request.</P>
-<P>Here is a simple <CODE>handler.pl</CODE>, also provided in the <CODE>eg/</CODE> directory:</P>
-<PRE>
+initialization, the beginning of a request, and the end of a request.</p>
+<p>Here is a simple <code>handler.pl</code>, also provided in the <code>eg/</code> directory:</p>
+<pre>
    #!/usr/bin/perl
    #
    # A basic, functional Mason handler.pl.
    #
    package MyMason::MyApp;
-</PRE>
-<PRE>
-
+   
    # Bring in Mason with Apache support.
    use HTML::Mason::ApacheHandler;
-   use strict;</PRE>
-<PRE>
-
+   use strict;
+   
    # List of modules that you want to use within components.
    { package HTML::Mason::Commands;
      use Data::Dumper;
-   }</PRE>
-<PRE>
-
+   }
+   
    # Create ApacheHandler object at startup.
-   my $ah = HTML::Mason::ApacheHandler-&gt;new();</PRE>
-<PRE>
-
+   my $ah =
+       HTML::Mason::ApacheHandler-&gt;new
+           ( comp_root =&gt; '/path/to/comp_root',
+             data_dir   =&gt; '/path/to/data_dir',);
+   
    sub handler
    {
-       my ($r) = @_;</PRE>
-<PRE>
-
+       my ($r) = @_;
+   
        my $status = $ah-&gt;handle_request($r);
        return $status;
-   }</PRE>
-<PRE>
-
-   1;</PRE>
-<P>Copy this file into your Apache <CODE>conf/</CODE> subdirectory, and place the
-following into your httpd.conf:</P>
-<PRE>
-    PerlRequire conf/handler.pl</PRE>
-<PRE>
+   }
+   
+   1;</pre>
+<p>Copy this file into your Apache <code>conf/</code> subdirectory, and place the
+following into your httpd.conf:</p>
+<pre>
+    PerlRequire conf/handler.pl</pre>
+<pre>
     &lt;FilesMatch &quot;\.html$&quot;&gt;
         SetHandler perl-script
         PerlHandler MyMason::MyApp    # notice - no ::ApacheHandler!
-    &lt;/FilesMatch&gt;</PRE>
-<P>replacing MyMason::MyApp with a package name of your choosing.</P>
-<P>At this point, your configuration should act identically to a minimal
-httpd configuration. You can now configure your server by:</P>
-<UL>
-<LI>
+    &lt;/FilesMatch&gt;</pre>
+<p>replacing MyMason::MyApp with a package name of your choosing.</p>
+<p>At this point, your configuration should act identically to a minimal
+httpd configuration. You can now configure your server by:</p>
+<ul>
+<li></li>
 Adding parameters to the ApacheHandler constructor. e.g.
-<PRE>
-    HTML::Mason::ApacheHandler-&gt;new( ... );</PRE>
-<P></P>
-<LI>
+<pre>
+    HTML::Mason::ApacheHandler-&gt;new( ... );</pre>
+<p></p>
+<li></li>
 Adding use statements for modules that you want to use within components. e.g.
-<P></P>
-<LI>
+<p></p>
+<li></li>
 Adding code before the handler subroutine, to be executed once by the parent
 httpd process.
-<P></P>
-<LI>
+<p></p>
+<li></li>
 Adding code inside the handler subroutine, to be executed before or after
 each request.
-<P></P></UL>
-<P>
-<HR>
-<H1><A NAME="server_configuration">SERVER CONFIGURATION</A></H1>
-<P>
-<H2><A NAME="component_root">Component root</A></H2>
-<P>The component root marks the top of your component hierarchy.  When
-running Mason with the CGIHandler or ApacheHandler modules, this
-defaults to your document root.</P>
-<P>The component root defines how component paths are translated into
+<p></p></ul>
+<p>
+</p>
+<hr />
+<h1><a name="server_configuration">SERVER CONFIGURATION</a></h1>
+<p>
+</p>
+<h2><a name="component_root">Component root</a></h2>
+<p>The component root (<a href="/HTML/Mason/Params.html#comp_root">comp_root</a>) marks the top of your component
+hierarchy.  When running Mason with the CGIHandler or ApacheHandler
+modules, this defaults to your document root.</p>
+<p>The component root defines how component paths are translated into
 real file paths. If your component root is /usr/local/httpd/docs, a
 component path of /products/index.html translates to the file
-/usr/local/httpd/docs/products/index.html.</P>
-<P>One cannot call a component outside the component root. If Apache
+/usr/local/httpd/docs/products/index.html.</p>
+<p>One cannot call a component outside the component root. If Apache
 passes a file through Mason that is outside the component root (say,
 as the result of an Alias) you will get a 404 and a warning in the
-logs.</P>
-<P>You may also specify multiple component roots in the spirit of Perl's
-<CODE>@INC</CODE>. Each root is assigned a key that identifies the root
-mnemonically to a component developer. For example, in httpd.conf:</P>
-<PRE>
+logs.</p>
+<p>You may also specify multiple component roots in the spirit of Perl's
+<code>@INC</code>. Each root is assigned a key that identifies the root
+mnemonically to a component developer. For example, in httpd.conf:</p>
+<pre>
     PerlAddVar  MasonCompRoot &quot;private =&gt; /usr/home/joe/comps&quot;
-    PerlAddVar  MasonCompRoot &quot;main =&gt; /usr/local/www/htdocs&quot;</PRE>
-<P>or in handler.pl:</P>
-<PRE>
+    PerlAddVar  MasonCompRoot &quot;main =&gt; /usr/local/www/htdocs&quot;</pre>
+<p>or in handler.pl:</p>
+<pre>
     comp_root =&gt; [ [ private =&gt; '/usr/home/joe/comps' ],
-                   [ main    =&gt; '/usr/local/www/htdocs' ] ]</PRE>
-<P>This specifies two component roots, a main component tree and a
+                   [ main    =&gt; '/usr/local/www/htdocs' ] ]</pre>
+<p>This specifies two component roots, a main component tree and a
 private tree which overrides certain components.  The order is
-respected ala <CODE>@INC</CODE>, so <EM>private</EM> is searched first and <EM>main</EM> second.
-(We chose the <CODE>=&gt;</CODE> notation because it looks cleaner, but note that
-this is a list of lists, not a hash.)</P>
-<P>Keys must be unique in a case-insensitive comparison.</P>
-<P>
-<H2><A NAME="data_directory">Data directory</A></H2>
-<P>The data directory is a writable directory that Mason uses for various
-features and optimizations. By default, it is a directory called
-``mason'' under your Apache server root.</P>
-<P>Mason will create the directory on startup, if necessary, and set its
-permissions according to the web server User/Group.</P>
-<P>
-<H2><A NAME="external_modules">External modules</A></H2>
-<P>Components will often need access to external Perl modules. There are
-three basic ways to bring them in.</P>
-<OL>
-<LI>
+respected ala <code>@INC</code>, so <em>private</em> is searched first and <em>main</em> second.
+(We chose the <code>=&gt;</code> notation because it looks cleaner, but note that
+this is a list of lists, not a hash.)</p>
+<p>Keys must be unique in a case-insensitive comparison.</p>
+<p>
+</p>
+<h2><a name="data_directory">Data directory</a></h2>
+<p>The data directory (<a href="/HTML/Mason/Params.html#data_dir">data_dir</a>) is a writable directory that Mason
+uses for various features and optimizations. By default, it is a
+directory called ``mason'' under your Apache server root. You will need
+to change this on certain systems that assign a high-level server root
+such as <em>/usr</em>!</p>
+<p>Mason will create the directory on startup, if necessary, and set its
+permissions according to the web server User/Group.</p>
+<p>
+</p>
+<h2><a name="external_modules">External modules</a></h2>
+<p>Components will often need access to external Perl modules. There are
+three basic ways to bring them in.</p>
+<ol>
+<li></li>
 The httpd PerlModule directive:
-<PRE>
+<pre>
     PerlModule CGI
-    PerlModule LWP</PRE>
-<P></P>
-<LI>
-In the &lt;%once&gt; section of the <CODE>component(s)</CODE> that use the module.
-<PRE>
+    PerlModule LWP</pre>
+<p></p>
+<li></li>
+In the &lt;%once&gt; section of the <code>component(s)</code> that use the module.
+<pre>
     &lt;%once&gt;
     use CGI ':standard';
     use LWP;
-    &lt;/%once&gt;</PRE>
-<P></P>
-<LI>
+    &lt;/%once&gt;</pre>
+<p></p>
+<li></li>
 In a handler.pl:
-<PRE>
+<pre>
     { package HTML::Mason::Commands;
       use CGI ':standard';
       use LWP;
-      ... }</PRE>
-<P></P></OL>
-<P>Each method has its own trade-offs:</P>
-<UL>
-<LI>
+      ... }</pre>
+<p></p></ol>
+<p>Each method has its own trade-offs:</p>
+<ul>
+<li></li>
 The first and third method ensure that the module will be loaded by
 the Apache parent process at startup time, saving time and memory.
 The second method, in contrast, will cause the modules to be loaded by
@@ -315,289 +324,341 @@ each server child. On the other hand this could save memory if the
 component and module are rarely used. See the mod_perl guide's tuning
 section and Vivek Khera's mod_perl tuning guide for more details on
 this issue.
-<P></P>
-<LI>
+<p></p>
+<li></li>
 The second and third method use the modules from inside the package
-used by components (<CODE>HTML::Mason::Commands</CODE>), meaning that exported
+used by components (<code>HTML::Mason::Commands</code>), meaning that exported
 method names and other symbols will be usable from components.  The
-first method, in contrast, will import symbols into the <CODE>main</CODE>
+first method, in contrast, will import symbols into the <code>main</code>
 package. The significance of this depends on whether the modules
 export symbols and whether you want to use them from components.
-<P></P>
-<LI>
+<p></p>
+<li></li>
 The first and second method work with an Apache-only configuration,
 while the third method obviously requires a handler.pl. On the other
 hand, you approximate the effect of a handler.pl using a preloaded,
 top-level autohandler.
-<P></P></UL>
-<P>
-<H2><A NAME="declining_image_requests">Declining image requests</A></H2>
-<P>Mason should be prevented from serving images, tarballs, and other
-binary files as regular components. Performance will suffer, and such
-a file may inadvertently contain a Mason character sequence such as
-``&lt;%''.</P>
-<P>There are several ways to restrict which file types are handled by Mason.</P>
-<P>One way is to specify a filename pattern in the Apache configuration,
-e.g.:</P>
-<PRE>
+<p></p></ul>
+<p>
+</p>
+<h2><a name="declining_image_requests">Declining image requests</a></h2>
+<p>Mason should be prevented from serving images, tarballs, and other
+binary files as regular components. Not only will performance suffer,
+but binary files may inadvertently contain a Mason character sequence
+such as ``&lt;%''.</p>
+<p>There are several ways to restrict which file types are handled by
+Mason.  One way is to use <code>FilesMatch</code>, e.g.</p>
+<pre>
     &lt;FilesMatch &quot;(\.html|\.txt|^[^\.]+)$&quot;&gt;
      SetHandler perl-script
      PerlHandler HTML::Mason
-    &lt;/FilesMatch&gt;</PRE>
-<P>This directs Mason to handle only files with .html or .txt extension,
-as well as those files with no extension.</P>
-<P>Another way, if you are using a <CODE>handler.pl</CODE> script, is to include
-a line like the following at the top of your <CODE>handler()</CODE> subroutine:</P>
-<PRE>
-    return -1 if $r-&gt;content_type &amp;&amp; $r-&gt;content_type !~ m|^text/|i;</PRE>
-<P>This line handles requests for text/* MIME types, such as text/html
-and text/plain, and declines others.</P>
-<P>
-<H2><A NAME="securing_toplevel_components">Securing top-level components</A></H2>
-<P>Users may exploit a server-side scripting environment by invoking
+    &lt;/FilesMatch&gt;</pre>
+<p>This directs Mason to handle only files with .html or .txt extension,
+as well as those files with no extension. The disadvantage of this
+method is that the filename must exist for the <code>FilesMatch</code> to match.
+You will not be able to use <a href="/HTML/Mason/Devel.html#dhandlers">dhandlers</a>
+to catch non-existent files.</p>
+<p>A second way is to use <code>LocationMatch</code> to indicate the extensions
+that should <em>not</em> be served through Mason, e.g.</p>
+<pre>
+    &lt;LocationMatch &quot;\.(gif|jpe?g|png|gz)$&quot;&gt;
+     SetHandler default-handler
+    &lt;/LocationMatch&gt;</pre>
+<p>This will send all extensions not listed through Mason, regardless
+of whether the file exists, thus working well with dhandlers. The
+disadvantage of this method is that you have to explicitly list all
+of the non-Mason extensions used on your site.</p>
+<p>A third way, if you are using a <code>handler.pl</code> script, is to include
+a line like the following at the top of your <code>handler()</code> subroutine:</p>
+<pre>
+    return -1 if $r-&gt;content_type &amp;&amp; $r-&gt;content_type !~ m|^text/|i;</pre>
+<p>This line handles requests for text/* MIME types, such as text/html
+and text/plain, and declines others. The disadvantage of this method
+is that it requires a bit of Perl code to run for every image request.</p>
+<p>
+</p>
+<h2><a name="securing_toplevel_components">Securing top-level components</a></h2>
+<p>Users may exploit a server-side scripting environment by invoking
 scripts with malicious or unintended arguments. Mason administrators
 need to be particularly wary of this because of the tendency to break
-out ``subroutines'' into individually accessible file components.</P>
-<P>For example, a Mason developer might create a helpful shared component
-for performing sql queries:</P>
-<PRE>
-    $m-&gt;comp('sql_select', table=&gt;'employee', where=&gt;'id=315');</PRE>
-<P>This is a perfectly reasonable component to create and call internally,
-but clearly presents a security risk if accessible via URL:</P>
-<PRE>
-    <A HREF="http://www.foo.com/sql_select?table=credit_cards&amp">http://www.foo.com/sql_select?table=credit_cards&amp</A>;where=*</PRE>
-<P>Of course a web user would have to obtain the name of this component
+out ``subroutines'' into individually accessible file components.</p>
+<p>For example, a Mason developer might create a helpful shared component
+for performing sql queries:</p>
+<pre>
+    $m-&gt;comp('sql_select', table=&gt;'employee', where=&gt;'id=315');</pre>
+<p>This is a perfectly reasonable component to create and call internally,
+but clearly presents a security risk if accessible via URL:</p>
+<pre>
+    <a href="http://www.foo.com/sql_select?table=credit_cards&amp;where=">http://www.foo.com/sql_select?table=credit_cards&amp;where=</a>*</pre>
+<p>Of course a web user would have to obtain the name of this component
 through guesswork or other means, but obscurity alone does not
 properly secure a system.  Rather, you should choose a site-wide
 policy for distinguishing top-level components from private
 components, and make sure your developers stick to this policy. You
-can then prevent private components from being served.</P>
-<P>One solution is to place all private components inside a directory,
+can then prevent private components from being served.</p>
+<p>One solution is to place all private components inside a directory,
 say /private, that lies under the component root but outside the
-document root.</P>
-<P>Another solution is to decide on a naming convention, for example,
+document root. e.g.</p>
+<pre>
+  component root:     /usr/mason/comps
+  document root:      /usr/mason/comps/htdocs
+  private components: /usr/mason/comps/private</pre>
+<p>Another solution is to decide on a naming convention, for example,
 that all private components begin with ``_'', or that all top-level
 components must end in ``.html''. Then turn all private requests away
 with a 404 NOT_FOUND (rather than, say, a 403 FORBIDDEN which would
-provide more information than necessary). Use either an Apache directive</P>
-<PRE>
+provide more information than necessary). Use either an Apache directive</p>
+<pre>
     PerlModule Apache::Constants
     &lt;FilesMatch &quot;^_&quot;&gt;
     SetHandler perl-script
     PerlInitHandler Apache::Constants::NOT_FOUND
-    &lt;/FilesMatch&gt;</PRE>
-<P>or a <CODE>handler.pl</CODE> directive:</P>
-<PRE>
-    return 404 if $r-&gt;filename =~ m{^_[^/]+$};</PRE>
-<P>Even after you've safely protected internal components, top-level
+    &lt;/FilesMatch&gt;</pre>
+<p>or a <code>handler.pl</code> directive:</p>
+<pre>
+    return 404 if $r-&gt;filename =~ m{^_[^/]+$};</pre>
+<p>Even after you've safely protected internal components, top-level
 components that process arguments (such as form handlers) still
 present a risk. Users can invoke such a component with arbitrary
 argument values via a handcrafted query string. Always check incoming
 arguments for validity and never place argument values directly into
-SQL, shell commands, etc.</P>
-<P>
-<H2><A NAME="allowing_directory_requests">Allowing directory requests</A></H2>
-<P>By default Mason will decline requests for directories, leaving Apache
+SQL, shell commands, etc.</p>
+<p>
+</p>
+<h2><a name="allowing_directory_requests">Allowing directory requests</a></h2>
+<p>By default Mason will decline requests for directories, leaving Apache
 to serve up a directory index or a FORBIDDEN as appropriate.
 Unfortunately this rule applies even if there is a dhandler in the
 directory: /foo/bar/dhandler does not get a chance to
-handle a request for /foo/bar/.</P>
-<P>If you would like Mason to handle directory requests, do the
-following:</P>
-<P>1. Set the <A HREF="ApacheHandler.html#decline_dirs">decline_dirs</A>
-parameter to 0.</P>
-<P>2. If you are using a <CODE>handler.pl</CODE> and it contains a ``return -1'' line
+handle a request for /foo/bar/.</p>
+<p>If you would like Mason to handle directory requests, do the
+following:</p>
+<p>1. Set <a href="/HTML/Mason/Params.html#decline_dirs">decline_dirs</a> to 0.</p>
+<p>2. If you are using a <code>handler.pl</code> and it contains a ``return -1'' line
 to decline non-text requests (as given in the previous section), add a
-clause allowing directory types:</P>
-<PRE>
+clause allowing directory types:</p>
+<pre>
     return -1 if $r-&gt;content_type &amp;&amp; $r-&gt;content_type !~ m|^text/|i
-                 &amp;&amp; $r-&gt;content_type !~ m|directory$|i;</PRE>
-<P>The dhandler that catches a directory request is responsible for
-setting a reasonable content type.</P>
-<P>
-<HR>
-<H1><A NAME="development">DEVELOPMENT</A></H1>
-<P>
-<H2><A NAME="global_variables">Global variables</A></H2>
-<P>Global variables can make programs harder to read, maintain, and
+                 &amp;&amp; $r-&gt;content_type !~ m|directory$|i;</pre>
+<p>The dhandler that catches a directory request is responsible for
+setting a reasonable content type.</p>
+<p>
+</p>
+<hr />
+<h1><a name="development">DEVELOPMENT</a></h1>
+<p>
+</p>
+<h2><a name="global_variables">Global variables</a></h2>
+<p>Global variables can make programs harder to read, maintain, and
 debug, and this is no less true for Mason components.  Due to the
 persistent mod_perl environment, globals require extra initialization
-and cleanup care.</P>
-<P>That said, there are times when it is very useful to make a value
+and cleanup care.</p>
+<p>That said, there are times when it is very useful to make a value
 available to all Mason components: a DBI database handle, a hash of
-user session information, the server root for forming absolute URLs.</P>
-<P>Because Mason by default parses components in <CODE>strict</CODE> mode, you'll
+user session information, the server root for forming absolute URLs.</p>
+<p>Because Mason by default parses components in <code>strict</code> mode, you'll
 need to declare a global if you don't want to access it with an
-explicit package name. The easiest way to declare a global is with the
-<CODE>MasonAllowGlobals</CODE> parameter:</P>
-<PRE>
-   PerlSetVar MasonAllowGlobals $dbh
-   PerlAddVar MasonAllowGlobals $user</PRE>
-<P>Since all components run in the same package, you'll be able to set
-the global in one component and access it in all the others.</P>
-<P>Autohandlers are common places to assign values to globals.  Use the
+explicit package name. The easiest way to declare a global is with
+the <a href="/HTML/Mason/Params.html#allow_globals">allow_globals</a> parameter.</p>
+<p>Since all components run in the same package, you'll be able to set
+the global in one component and access it in all the others.</p>
+<p>Autohandlers are common places to assign values to globals.  Use the
 &lt;tt&gt;&amp;lt;%once&amp;gt;&lt;/tt&gt; section if the global only needs to be
 initialized at load time, or the &lt;tt&gt;&amp;lt;%init&amp;gt;&lt;/tt&gt; section if it
-needs to be initialized every request.</P>
-<P>
-<H2><A NAME="sessions">Sessions</A></H2>
-<P>Mason does not have a built-in session mechanism. However, with a page
-or so of code in your <CODE>handler.pl</CODE>, you can integrate Jeffrey Baker's
-<CODE>Apache::Session</CODE> into your application and make a tied global
-session variable available to all components.</P>
-<P>The Mason Sessions How-To, at ..., is the best source of information
-about this surprisingly tricky subject.</P>
-<P>
-<H2><A NAME="data_caching">Data caching</A></H2>
-<P>Data caching is implemented with DeWitt Clinton's <CODE>Cache::Cache</CODE>
+needs to be initialized every request.</p>
+<p>
+</p>
+<h2><a name="sessions">Sessions</a></h2>
+<p>Mason does not have a built-in session mechanism, but several
+external options are available:</p>
+<ul>
+<li></li>
+HTML::Mason::Request::WithApacheSession, available from CPAN,
+adds a cookie-based session to every request.
+<p></p>
+<li></li>
+Apache::Session, available from CPAN, can be integrated with about a
+page of code in a handler.pl. This is more complex but more flexible
+than the above. See the Mason Sessions How-To at
+<a href="http://www.masonhq.com/user/adpacifico/ApacheSessionMason.html">http://www.masonhq.com/user/adpacifico/ApacheSessionMason.html</a> for a
+complete guide.
+<p></p></ul>
+<p>
+</p>
+<h2><a name="data_caching">Data caching</a></h2>
+<p>Data caching is implemented with DeWitt Clinton's <code>Cache::Cache</code>
 module.  For full understanding of this section you should read the
-documentation for <CODE>Cache::Cache</CODE> as well as for relevant subclasses
-(e.g. <CODE>Cache::FileCache</CODE>).</P>
-<DL>
-<DT><STRONG><A NAME="item_Cache_files">Cache files</A></STRONG><BR>
-<DD>
-By default, <CODE>Cache::FileCache</CODE> is the subclass used for data caching,
-although this may be overriden by the developer. <CODE>Cache::FileCache</CODE>
+documentation for <code>Cache::Cache</code> as well as for relevant subclasses
+(e.g. <code>Cache::FileCache</code>).</p>
+<dl>
+<dt><strong><a name="item_cache_files">Cache files</a></strong><br />
+</dt>
+<dd>
+By default, <code>Cache::FileCache</code> is the subclass used for data caching,
+although this may be overriden by the developer. <code>Cache::FileCache</code>
 creates a separate subdirectory for every component that uses caching,
 and one file some number of levels underneath that subdirectory for
 each cached item.  The root of the cache tree is
-<CODE>data_dir/cache</CODE>. The name of the cache subdirectory for a component
-is determined by the function <CODE>HTML::Mason::Utils::data_cache_namespace</CODE>.
-<P></P>
-<DT><STRONG><A NAME="item_Default_constructor_options">Default constructor options</A></STRONG><BR>
-<DD>
-Ordinarily, when <CODE>$m-&gt;cache</CODE> is called, Mason passes to the cache
-constructor the <CODE>namespace</CODE>, <CODE>username</CODE>, and <CODE>cache_root</CODE> options,
-along with any other options given in the <CODE>$m-&gt;cache</CODE> method.
-<P>You may specify other default constructor options with the
-<A HREF="Interp.html#data_cache_defaults">data_cache_defaults</A>
-parameter. For example,</P>
-<PRE>
+<a href="/HTML/Mason/Params.html#data_dir">data_dir</a>/<code>cache</code>. The name of the cache subdirectory for a component
+is determined by the function <code>HTML::Mason::Utils::data_cache_namespace</code>.
+</dd>
+<p></p>
+<dt><strong><a name="item_default_constructor_options">Default constructor options</a></strong><br />
+</dt>
+<dd>
+Ordinarily, when <code>$m-&gt;cache</code> is called, Mason passes to the cache
+constructor the <code>namespace</code>, <code>username</code>, and <code>cache_root</code> options,
+along with any other options given in the <code>$m-&gt;cache</code> method.
+</dd>
+<dd>
+<p>You may specify other default constructor options with the
+<a href="/HTML/Mason/Params.html#data_cache_defaults">data_cache_defaults</a> parameter. For example,</p>
+</dd>
+<dd>
+<pre>
     data_cache_defaults =&gt;
        { cache_class =&gt; 'SizeAwareFileCache',
          cache_depth =&gt; 2,
-         default_expires_in =&gt; '1 hour' }</PRE>
-<P>Any options passed to individual <CODE>$m-&gt;cache</CODE> calls override these
-defaults.</P>
-<P></P>
-<DT><STRONG><A NAME="item_Disabling_data_caching">Disabling data caching</A></STRONG><BR>
-<DD>
+         default_expires_in =&gt; '1 hour' }</pre>
+</dd>
+<dd>
+<p>Any options passed to individual <code>$m-&gt;cache</code> calls override these
+defaults.</p>
+</dd>
+<p></p>
+<dt><strong><a name="item_disabling_data_caching">Disabling data caching</a></strong><br />
+</dt>
+<dd>
 If for some reason you want to disable data caching entirely, use
-<PRE>
-    data_cache_defaults =&gt; {cache_class =&gt; 'NullCache'}</PRE>
-<P>This subclass faithfully implements the cache API but never stores data.</P>
-<P></P></DL>
-<P>
-<HR>
-<H1><A NAME="performance">PERFORMANCE</A></H1>
-<P>This section explains Mason's various performance enhancements and how
-to administer them.</P>
-<P>
-<H2><A NAME="code_cache">Code cache</A></H2>
-<P>When Mason loads a component, it places it in a memory cache.</P>
-<P>The maximum size of the cache is specified with the <A HREF="Interp.html#code_cache_max_size">Interp's code_cache_max_size</A>
-parameter; default is 10MB.  When the cache fills up, Mason frees up
-space by discarding a number of components. The discard algorithm is
-least frequently used (LFU), with a periodic decay to gradually
-eliminate old frequency information. In a nutshell, the components
-called most often in recent history should remain in the cache.  Very
-large components (over 20% of the maximum cache size) never get
-cached, on the theory that they would force out too many other
-components.</P>
-<P>Note that the ``size'' of a component in memory cannot literally be
+</dd>
+<dd>
+<pre>
+    data_cache_defaults =&gt; {cache_class =&gt; 'NullCache'}</pre>
+</dd>
+<dd>
+<p>This subclass faithfully implements the cache API but never stores data.</p>
+</dd>
+<p></p></dl>
+<p>
+</p>
+<hr />
+<h1><a name="performance">PERFORMANCE</a></h1>
+<p>This section explains Mason's various performance enhancements and how
+to administer them.</p>
+<p>
+</p>
+<h2><a name="code_cache">Code cache</a></h2>
+<p>When Mason loads a component, it places it in a memory cache.</p>
+<p>The maximum size of the cache is specified with the
+<a href="/HTML/Mason/Params.html#code_cache_max_size">code_cache_max_size</a> parameter.  When the cache fills up, Mason
+frees up space by discarding a number of components. The discard
+algorithm is least frequently used (LFU), with a periodic decay to
+gradually eliminate old frequency information. In a nutshell, the
+components called most often in recent history should remain in the
+cache.  Very large components (over 20% of the maximum cache size)
+never get cached, on the theory that they would force out too many
+other components.</p>
+<p>Note that the ``size'' of a component in memory cannot literally be
 measured.  It is estimated by the length of the source text plus some
 overhead.  Your process growth will not match the code cache
-size exactly.</P>
-<P>You can prepopulate the cache with components that you know will be
-accessed often; see <A HREF="#preloading">Preloading</A>. Note that preloaded components
+size exactly.</p>
+<p>You can prepopulate the cache with components that you know will be
+accessed often; see <a href="#preloading">Preloading</a>. Note that preloaded components
 possess no special status in the cache and can be discarded like any
-others.</P>
-<P>Naturally, a cache entry is invalidated if the corresponding component
-source file changes.</P>
-<P>To turn off code caching completely, set <A HREF="Interp.html#code_cache_max_size">Interp's code_cache_max_size</A> to 0.</P>
-<P>
-<H2><A NAME="object_files">Object files</A></H2>
-<P>The in-memory code cache is only useful on a per-process basis.  Each
+others.</p>
+<p>Naturally, a cache entry is invalidated if the corresponding component
+source file changes.</p>
+<p>To turn off code caching completely, set <a href="/HTML/Mason/Params.html#code_cache_max_size">code_cache_max_size</a> to 0.</p>
+<p>
+</p>
+<h2><a name="object_files">Object files</a></h2>
+<p>The in-memory code cache is only useful on a per-process basis.  Each
 process must build and maintain its own cache. Shared memory caches
 are conceivable in the future, but even those will not survive between
-web server restarts.</P>
-<P>As a secondary, longer-term cache mechanism, Mason stores a compiled
-form of each component in an object file under
-<CODE>data_dir/obj/component-path</CODE>. Any server process can eval the
-object file and save time on parsing the component source file.  The
-object file is recreated whenever the source file changes.</P>
-<P>Besides improving performance, object files can be useful for
+web server restarts.</p>
+<p>As a secondary, longer-term cache mechanism, Mason stores a compiled
+form of each component in an object file under <a href="/HTML/Mason/Params.html#data_dir">data_dir</a>/<code>obj</code>. Any
+server process can eval the object file and save time on parsing the
+component source file.  The object file is recreated whenever the
+source file changes.</p>
+<p>Besides improving performance, object files can be useful for
 debugging.  If you feel the need to see what your source has been
 translated into, you can peek inside an object file to see exactly how
 Mason converted a given component to a Perl object. This is crucial
 for pre-1.10 Mason, in which error line numbers are based on the
-object file rather than the source file.</P>
-<P>If you change any Compiler or Lexer parameters, you must remove object
+object file rather than the source file.</p>
+<p>If you change any Compiler or Lexer parameters, you must remove object
 files previously created under that compiler or lexer for the changes
-to take effect.</P>
-<P>If for some reason you don't want Mason to create object files, set
-the <A HREF="Interp.html#use_object_files">Interp's use_object_files</A>
-parameter to 0.</P>
-<P>
-<H2><A NAME="preloading">Preloading</A></H2>
-<P>You can tell Mason to preload a set of components in the parent
-process, rather than loading them on demand, using the <A HREF="Interp.html#preloads">Interp's preloads</A> parameter.  Each child server
-will start with those components loaded in the memory cache. The
-trade-offs are:</P>
-<DL>
-<DT><STRONG><A NAME="item_time">time</A></STRONG><BR>
-<DD>
+to take effect.</p>
+<p>If for some reason you don't want Mason to create object files, set
+<a href="/HTML/Mason/Params.html#use_object_files">use_object_files</a> to 0.</p>
+<p>
+</p>
+<h2><a name="preloading">Preloading</a></h2>
+<p>You can tell Mason to preload a set of components in the parent
+process, rather than loading them on demand, using the <a href="/HTML/Mason/Params.html#preloads">preloads</a>
+parameter.  Each child server will start with those components loaded
+in the memory cache. The trade-offs are:</p>
+<dl>
+<dt><strong><a name="item_time">time</a></strong><br />
+</dt>
+<dd>
 a small one-time startup cost, but children save time by not
 having to load the components
-<P></P>
-<DT><STRONG><A NAME="item_memory">memory</A></STRONG><BR>
-<DD>
+</dd>
+<p></p>
+<dt><strong><a name="item_memory">memory</a></strong><br />
+</dt>
+<dd>
 a fatter initial server, but the memory for preloaded components are
 shared by all children.  This is similar to the advantage of using
 modules only in the parent process.
-<P></P></DL>
-<P>Try to preload components that are used frequently and do not change
+</dd>
+<p></p></dl>
+<p>Try to preload components that are used frequently and do not change
 often.  (If a preloaded component changes, all the children will have
-to reload it from scratch.)</P>
-<P>
-<H2><A NAME="static_source_mode">Static source mode</A></H2>
-<P>As described above, Mason checks the timestamp of a component source
+to reload it from scratch.)</p>
+<p>
+</p>
+<h2><a name="static_source_mode">Static source mode</a></h2>
+<p>As described above, Mason checks the timestamp of a component source
 file every time that component is called. This can add up to a lot
-of file stats.</P>
-<P>If you have a live site with infrequent and well-controlled updates,
-you may choose to use
-<A HREF="Interp.html#static_source">static_source</A> mode. In this mode
-Mason will not check source timestamps when it uses an in-memory cache
-or object file.  The disadvantage is that you must remove object files
-and restart the server whenever you change component source; however
-this process can be easily automated.</P>
-<P>
-<HR>
-<H1><A NAME="error_reporting">ERROR REPORTING</A></H1>
-<P>When an error occurs, Mason can respond by:</P>
-<UL>
-<LI>
+of file stats.</p>
+<p>If you have a live site with infrequent and well-controlled updates,
+you may choose to use <a href="/HTML/Mason/Params.html#static_source">static_source</a> mode. In this mode Mason will
+not check source timestamps when it uses an in-memory cache or object
+file.  The disadvantage is that you must remove object files and
+restart the server whenever you change component source; however this
+process can be easily automated.</p>
+<p>
+</p>
+<hr />
+<h1><a name="error_reporting">ERROR REPORTING</a></h1>
+<p>When an error occurs, Mason can respond by:</p>
+<ul>
+<li></li>
 showing a detailed error message in the browser in HTML.
-<P></P>
-<LI>
+<p></p>
+<li></li>
 die'ing, which sends a 501 to the browser and lets the error message go to the
 error logs.
-<P></P></UL>
-<P>The first behavior is ideal for development, where you want immediate
+<p></p></ul>
+<p>The first behavior is ideal for development, where you want immediate
 feedback on the error.  The second behavior is usually desired for
 production so that users are not exposed to messy error messages.  You
-choose the behavior by setting
-<A HREF="Request.html#error_mode">error_mode</A> to ``output'' or ``fatal''
-respectively.</P>
-<P>
-<HR>
-<H1><A NAME="configuring_virtual_sites">CONFIGURING VIRTUAL SITES</A></H1>
-<P>These examples extend the single site configurations given so far.</P>
-<P>
-<H2><A NAME="multiple_sites_one_component_ro">Multiple sites, one component root</A></H2>
-<P>If you want to share some components between your sites, arrange your
-httpd.conf so that all DocumentRoots live under a single component space:</P>
-<PRE>
+choose the behavior by setting <a href="/HTML/Mason/Params.html#error_mode">error_mode</a> to ``output'' or ``fatal''
+respectively.</p>
+<p>
+</p>
+<hr />
+<h1><a name="configuring_virtual_sites">CONFIGURING VIRTUAL SITES</a></h1>
+<p>These examples extend the single site configurations given so far.</p>
+<p>
+</p>
+<h2><a name="multiple_sites,_one_component_root">Multiple sites, one component root</a></h2>
+<p>If you want to share some components between your sites, arrange your
+httpd.conf so that all DocumentRoots live under a single component space:</p>
+<pre>
     # Web site #1
     &lt;VirtualHost www.site1.com&gt;
         DocumentRoot /usr/local/www/htdocs/site1
@@ -605,8 +666,8 @@ httpd.conf so that all DocumentRoots live under a single component space:</P>
             SetHandler perl-script
             PerlHandler HTML::Mason::ApacheHandler
         &lt;/Location&gt;
-    &lt;/VirtualHost&gt;</PRE>
-<PRE>
+    &lt;/VirtualHost&gt;</pre>
+<pre>
     # Web site #2
     &lt;VirtualHost www.site2.com&gt;
         DocumentRoot /usr/local/www/htdocs/site2
@@ -614,56 +675,57 @@ httpd.conf so that all DocumentRoots live under a single component space:</P>
             SetHandler perl-script
             PerlHandler HTML::Mason::ApacheHandler
         &lt;/Location&gt;
-    &lt;/VirtualHost&gt;</PRE>
-<PRE>
+    &lt;/VirtualHost&gt;</pre>
+<pre>
     # Mason configuration
     PerlSetVar MasonCompRoot &quot;/usr/local/www/htdocs&quot;
     PerlSetVar MasonDataDir &quot;/usr/local/mason&quot;
-    PerlModule HTML::Mason::ApacheHandler</PRE>
-<P>The directory structure for this scenario might look like:</P>
-<PRE>
+    PerlModule HTML::Mason::ApacheHandler</pre>
+<p>The directory structure for this scenario might look like:</p>
+<pre>
     /usr/local/www/htdocs/  # component root
         +- shared/          # shared components
         +- site1/           # DocumentRoot for first site
-        +- site2/           # DocumentRoot for second site</PRE>
-<P>Incoming URLs for each site can only request components in their
+        +- site2/           # DocumentRoot for second site</pre>
+<p>Incoming URLs for each site can only request components in their
 respective DocumentRoots, while components internally can call other
 components anywhere in the component space. The shared/ directory
 is a private directory for use by components, inaccessible from
-the Web.</P>
-<P>
-<H2><A NAME="multiple_sites_multiple_compone">Multiple sites, multiple component roots</A></H2>
-<P>Sometimes your sites need to have completely distinct component
+the Web.</p>
+<p>
+</p>
+<h2><a name="multiple_sites,_multiple_component_roots">Multiple sites, multiple component roots</a></h2>
+<p>Sometimes your sites need to have completely distinct component
 hierarchies, e.g. if you are providing Mason ISP services for multiple
 users. In this case the component root must change depending on the
 site requested. Since you can't change an interpreter's component root
-dynamically, you need to maintain separate <CODE>ApacheHandler</CODE> objects
-for each site in your <CODE>handler.pl</CODE>:</P>
-<PRE>
+dynamically, you need to maintain separate <code>ApacheHandler</code> objects
+for each site in your <code>handler.pl</code>:</p>
+<pre>
     my %ah;
     foreach my $site (qw(site1 site2 site3)) {
         $ah{$site} = new HTML::Mason::ApacheHandler
             (comp_root =&gt; &quot;/usr/local/www/$site&quot;,
              data_dir =&gt; &quot;/usr/local/mason/$site&quot;);
-    }</PRE>
-<PRE>
-    ...</PRE>
-<PRE>
+    }</pre>
+<pre>
+    ...</pre>
+<pre>
     sub handler {
         my ($r) = @_;
         my $site = $r-&gt;dir_config('site');
         $ah{$site}-&gt;handle_request($r);
-    }</PRE>
-<P>We assume each virtual server configuration section has a</P>
-<PRE>
-    PerlSetVar site &lt;site_name&gt;</PRE>
-<P>Above we pre-create all Mason objects in the parent. Another scheme is to
-create objects on demand in the child:</P>
-<PRE>
-    my %ah;</PRE>
-<PRE>
-    ...</PRE>
-<PRE>
+    }</pre>
+<p>We assume each virtual server configuration section has a</p>
+<pre>
+    PerlSetVar site &lt;site_name&gt;</pre>
+<p>Above we pre-create all Mason objects in the parent. Another scheme is to
+create objects on demand in the child:</p>
+<pre>
+    my %ah;</pre>
+<pre>
+    ...</pre>
+<pre>
     sub handler {
         my ($r) = @_;
         my $site = $r-&gt;dir_config('site');
@@ -672,87 +734,92 @@ create objects on demand in the child:</P>
             my $comp_root = $r-&gt;dir_config('comp_root');
             $ah{$site} = new HTML::Mason::ApacheHandler(comp_root=&gt;$comp_root,...);
         }
-    }</PRE>
-<P>The advantage of the second scheme is that you don't have to hardcode
-as much information in the <CODE>handler.pl</CODE>. The disadvantage is a slight
+    }</pre>
+<p>The advantage of the second scheme is that you don't have to hardcode
+as much information in the <code>handler.pl</code>. The disadvantage is a slight
 memory and performance impact. On development servers this shouldn't
-matter; on production servers you may wish to profile the two schemes.</P>
-<P>
-<HR>
-<H1><A NAME="running_outside_of_mod_perl">RUNNING OUTSIDE OF MOD_PERL</A></H1>
-<P>Although Mason is most commonly used in conjunction with mod_perl, the
+matter; on production servers you may wish to profile the two schemes.</p>
+<p>
+</p>
+<hr />
+<h1><a name="running_outside_of_mod_perl">RUNNING OUTSIDE OF MOD_PERL</a></h1>
+<p>Although Mason is most commonly used in conjunction with mod_perl, the
 APIs are flexible enough to use in any environment. Below we describe
 the two most common alternative environments, CGI and standalone
-scripts.</P>
-<P>
-<H2><A NAME="using_mason_from_a_cgi_script">Using Mason from a CGI script</A></H2>
-<P>The easiest way to use Mason via a CGI script is with the <A HREF="CGIHandler.html">CGIHandler module</A> module.</P>
-<P>Here is a skeleton CGI script that calls a component and sends the
-output to the browser.</P>
-<PRE>
+scripts.</p>
+<p>
+</p>
+<h2><a name="using_mason_from_a_cgi_script">Using Mason from a CGI script</a></h2>
+<p>The easiest way to use Mason via a CGI script is with the <a href="/HTML/Mason/CGIHandler.html">CGIHandler module</a> module.</p>
+<p>Here is a skeleton CGI script that calls a component and sends the
+output to the browser.</p>
+<pre>
     #!/usr/bin/perl
-    use HTML::Mason::CGIHandler;</PRE>
-<PRE>
+    use HTML::Mason::CGIHandler;</pre>
+<pre>
     my $h = new HTML::Mason::CGIHandler
      (
       data_dir  =&gt; '/home/jethro/code/mason_data',
-     );</PRE>
-<PRE>
-    $h-&gt;handle_request;</PRE>
-<P>The relevant portions of the httpd.conf file look like:</P>
-<PRE>
+     );</pre>
+<pre>
+    $h-&gt;handle_request;</pre>
+<p>The relevant portions of the httpd.conf file look like:</p>
+<pre>
     DocumentRoot /path/to/comp/root
-    ScriptAlias /cgi-bin/ /path/to/cgi-bin/</PRE>
-<PRE>
+    ScriptAlias /cgi-bin/ /path/to/cgi-bin/</pre>
+<pre>
     Action html-mason /cgi-bin/mason_handler.cgi
     &lt;FilesMatch &quot;\.html$&quot;&gt;
      SetHandler html-mason
-    &lt;/FilesMatch&gt;</PRE>
-<P>This simply causes Apache to call the mason_handler.cgi script every
+    &lt;/FilesMatch&gt;</pre>
+<p>This simply causes Apache to call the mason_handler.cgi script every
 time a file under the component root is requested.  This script uses
-the <A HREF="CGIHandler.html">CGIHandler class</A> to do most of the
-heavy lifting.  See that class's documentation ofr more details.</P>
-<P>
-<H2><A NAME="using_mason_from_a_standalone_sc">Using Mason from a standalone script</A></H2>
-<P>Mason can be used as a pure text templating solution -- like
+the <a href="/HTML/Mason/CGIHandler.html">CGIHandler class</a> to do most of the
+heavy lifting.  See that class's documentation ofr more details.</p>
+<p>
+</p>
+<h2><a name="using_mason_from_a_standalone_script">Using Mason from a standalone script</a></h2>
+<p>Mason can be used as a pure text templating solution -- like
 Text::Template and its brethren, but with more power (and of course
-more complexity).</P>
-<P>Here is a bare-bones script that calls a component file and sends
-the result to standard output:</P>
-<PRE>
+more complexity).</p>
+<p>Here is a bare-bones script that calls a component file and sends
+the result to standard output:</p>
+<pre>
     my $interp = HTML::Mason::Interp-&gt;new ();
-    $interp-&gt;exec(&lt;absolute-file-path&gt;, &lt;args&gt;...);</PRE>
-<P>Because no component root was specified, the root is set to '/' and
+    $interp-&gt;exec(&lt;absolute-file-path&gt;, &lt;args&gt;...);</pre>
+<p>Because no component root was specified, the root is set to '/' and
 any file on the system may be used as a component. If you have a
 well defined and contained component tree, you'll probably want to
-specify a component root.</P>
-<P>Because no data directory was specified, object files will not be
+specify a component root.</p>
+<p>Because no data directory was specified, object files will not be
 created and data caching will not work in the default manner. If
-performance is an issue, you will want to specify a data directory.</P>
-<P>Here's a slightly fuller script that specifies a component root and
+performance is an issue, you will want to specify a data directory.</p>
+<p>Here's a slightly fuller script that specifies a component root and
 data directory, and captures the result in a variable rather than
-sending to standard output:</P>
-<PRE>
+sending to standard output:</p>
+<pre>
     my $outbuf;
     my $interp = HTML::Mason::Interp-&gt;new
         (comp_root  =&gt; '/path/to/comp_root',
          data_dir   =&gt; '/path/to/data_dir',
          out_method =&gt; \$outbuf
          );
-    $interp-&gt;exec(&lt;component-path&gt;, &lt;args&gt;...);</PRE>
-<P>
-<HR>
-<H1><A NAME="authors">AUTHORS</A></H1>
-<P>Jonathan Swartz &lt;<A HREF="mailto:swartz@pobox.com">swartz@pobox.com</A>&gt;, Dave Rolsky &lt;<A HREF="mailto:autarch@urth.org">autarch@urth.org</A>&gt;, Ken Williams &lt;<A HREF="mailto:ken@mathforum.org">ken@mathforum.org</A>&gt;</P>
-<P>
-<HR>
-<H1><A NAME="see_also">SEE ALSO</A></H1>
-<P><A HREF="Mason.html">HTML::Mason</A>,
-<A HREF="Interp.html">HTML::Mason::Interp</A>,
-<A HREF="ApacheHandler.html">HTML::Mason::ApacheHandler</A>,
-<A HREF="Lexer.html">HTML::Mason::Lexer</A>,
-<A HREF="Compiler.html">HTML::Mason::Compiler</A></P>
+    $interp-&gt;exec(&lt;component-path&gt;, &lt;args&gt;...);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="authors">AUTHORS</a></h1>
+<p>Jonathan Swartz &lt;<a href="mailto:swartz@pobox.com">swartz@pobox.com</a>&gt;, Dave Rolsky &lt;<a href="mailto:autarch@urth.org">autarch@urth.org</a>&gt;, Ken Williams &lt;<a href="mailto:ken@mathforum.org">ken@mathforum.org</a>&gt;</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/HTML/Mason.html">HTML::Mason</a>,
+<a href="/HTML/Mason/Interp.html">HTML::Mason::Interp</a>,
+<a href="/HTML/Mason/ApacheHandler.html">HTML::Mason::ApacheHandler</a>,
+<a href="/HTML/Mason/Lexer.html">HTML::Mason::Lexer</a>,
+<a href="/HTML/Mason/Compiler.html">HTML::Mason::Compiler</a></p>
 
-</BODY>
+</body>
 
-</HTML>
+</html>

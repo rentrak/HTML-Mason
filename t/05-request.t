@@ -798,5 +798,44 @@ EOF
 
 #------------------------------------------------------------
 
+    $group->add_support( path => '/support/return/nothing',
+			 component => <<'EOF',
+wantarray is <% defined(wantarray) ? "defined" : "undefined" %>
+EOF
+		       );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'return_nothing',
+		      description => 'tests exec in non-return context',
+		      component => <<'EOF',
+% my $req = $m->make_subrequest(comp=>'/request/support/return/nothing');
+% $req->exec();
+EOF
+		      expect => <<'EOF',
+wantarray is undefined
+EOF
+		    );
+
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'caller_in_subcomp',
+		      description => 'tests $m->caller() in subcomponent',
+		      component => <<'EOF',
+<%def .foo>
+ <% $m->caller->name %>
+</%def>
+<& .foo &>
+EOF
+		      expect => <<'EOF',
+
+ caller_in_subcomp
+EOF
+		    );
+
+
+#------------------------------------------------------------
+
     return $group;
 }

@@ -1,246 +1,390 @@
-<HTML>
-<HEAD>
-<TITLE>HTML::Mason::Interp - Mason Component Interpreter</TITLE>
-<LINK REV="made" HREF="mailto:perl@packages.debian.org">
-</HEAD>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>HTML::Mason::Interp - Mason Component Interpreter</title>
+<link rev="made" href="mailto:root@localhost" />
+</head>
 
-<BODY>
+<body style="background-color: white">
 
-<A NAME="__index__"></A>
+<p><a name="__index__"></a></p>
 <!-- INDEX BEGIN -->
 
-<UL>
+<ul>
 
-	<LI><A HREF="#name">NAME</A></LI>
-	<LI><A HREF="#synopsis">SYNOPSIS</A></LI>
-	<LI><A HREF="#description">DESCRIPTION</A></LI>
-	<LI><A HREF="#parameters_for_new_constructor">PARAMETERS FOR <CODE>new()</CODE> CONSTRUCTOR</A></LI>
-	<LI><A HREF="#accessor_methods">ACCESSOR METHODS</A></LI>
-	<LI><A HREF="#other_methods">OTHER METHODS</A></LI>
-	<LI><A HREF="#see_also">SEE ALSO</A></LI>
-</UL>
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#parameters_to_the_new()_constructor">PARAMETERS TO THE <code>new()</code> CONSTRUCTOR</a></li>
+	<li><a href="#accessor_methods">ACCESSOR METHODS</a></li>
+	<li><a href="#other_methods">OTHER METHODS</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
 <!-- INDEX END -->
 
-<HR>
-<P>
-<H1><A NAME="name">NAME</A></H1>
-<P>HTML::Mason::Interp - Mason Component Interpreter</P>
-<P>
-<HR>
-<H1><A NAME="synopsis">SYNOPSIS</A></H1>
-<PRE>
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>HTML::Mason::Interp - Mason Component Interpreter</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
     my $i = new HTML::Mason::Interp (data_dir=&gt;'/usr/local/mason',
                                      comp_root=&gt;'/usr/local/www/htdocs/',
-                                     ...other params...);</PRE>
-<P>
-<HR>
-<H1><A NAME="description">DESCRIPTION</A></H1>
-<P>Interp is the Mason workhorse, executing components and routing their
+                                     ...other params...);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Interp is the Mason workhorse, executing components and routing their
 output and errors to all the right places. In a mod_perl environment,
 Interp objects are handed off immediately to an ApacheHandler object
 which internally calls the Interp implementation methods. In that case
-the only user method is the <CODE>new()</CODE> constructor.</P>
-<P>
-<HR>
-<H1><A NAME="parameters_for_new_constructor">PARAMETERS FOR <CODE>new()</CODE> CONSTRUCTOR</A></H1>
-<DL>
-<DT><STRONG><A NAME="item_autohandler_name">autohandler_name</A></STRONG><BR>
-<DD>
-File name used for autohandlers. Default is ``autohandler''.
-<P></P>
-<DT><STRONG><A NAME="item_autoflush">autoflush</A></STRONG><BR>
-<DD>
-This parameter indicates whether or not requests created by this
-interpreter should have autoflush turned on or off by default.
-<P></P>
-<DT><STRONG><A NAME="item_code_cache_max_size">code_cache_max_size</A></STRONG><BR>
-<DD>
+the only user method is the <code>new()</code> constructor.</p>
+<p>
+</p>
+<hr />
+<h1><a name="parameters_to_the_new()_constructor">PARAMETERS TO THE <code>new()</code> CONSTRUCTOR</a></h1>
+<dl>
+<dt><strong><a name="item_autohandler_name">autohandler_name</a></strong><br />
+</dt>
+<dd>
+File name used for <a href="/HTML/Mason/Devel.html#autohandlers">autohandlers</a>. Default is ``autohandler''.
+</dd>
+<p></p>
+<dt><strong><a name="item_code_cache_max_size">code_cache_max_size</a></strong><br />
+</dt>
+<dd>
 Specifies the maximum size, in bytes, of the in-memory code cache
-where components are stored. e.g.
-<PRE>
-    code_cache_max_size =&gt; 20*1024*1024
-    code_cache_max_size =&gt; 20_000_000</PRE>
-<P>Default is 10 MB. See the <A HREF="Admin.html#code cache">Code Cache section in the <EM>Admin Guide</EM></A> for further details.</P>
-<P></P>
-<DT><STRONG><A NAME="item_compiler">compiler</A></STRONG><BR>
-<DD>
-The Compiler object to associate with this Interpreter.  If none is
-provided a default compiler using the
-<CODE>HTML::Mason::Compiler::ToObject</CODE> and <CODE>HTML::Mason::Lexer</CODE> classes
-will be created.
-<P></P>
-<DT><STRONG><A NAME="item_data_dir">data_dir</A></STRONG><BR>
-<DD>
-The Mason data directory. Mason's various data directories (obj,
-cache, etc), live within the data_dir.
-<P>If this parameter is not given then there are several results.  First,
-Mason will not use object files, since it has no place to put them.
-Second, the default caching class for the request object will be
-Cache::MemoryCache instead of Cache::FileCache.</P>
-<P></P>
-<DT><STRONG><A NAME="item_data_cache_defaults">data_cache_defaults</A></STRONG><BR>
-<DD>
-A hash reference of default options to use for the <CODE>$m-&gt;cache</CODE>
-command. For example, to use the Cache::MemoryCache implementation
-by default,
-<PRE>
-    data_cache_defaults =&gt; {cache_class =&gt; 'MemoryCache'}</PRE>
-<P>These settings are overriden by options given to particular
-<CODE>$m-&gt;cache</CODE> calls.</P>
-<P></P>
-<DT><STRONG><A NAME="item_static_source">static_source</A></STRONG><BR>
-<DD>
+where components are stored. Default is 10 MB. See the ADMIN&lt;code
+cache&gt; section of the administrator's manual for further details.
+</dd>
+<p></p>
+<dt><strong><a name="item_compiler">compiler</a></strong><br />
+</dt>
+<dd>
+The Compiler object to associate with this Interpreter.  By default a
+new object of class <a href="/HTML/Mason/Params.html#compiler_class">compiler_class</a> will be created.
+</dd>
+<p></p>
+<dt><strong><a name="item_compiler_class">compiler_class</a></strong><br />
+</dt>
+<dd>
+The class to use when creating a compiler. Defaults to
+<a href="/HTML/Mason/Compiler.html">HTML::Mason::Compiler</a>.
+</dd>
+<p></p>
+<dt><strong><a name="item_current_time">current_time</a></strong><br />
+</dt>
+<dd>
+Interpreter's notion of the current time (deprecated).
+</dd>
+<p></p>
+<dt><strong><a name="item_data_dir">data_dir</a></strong><br />
+</dt>
+<dd>
+The data directory is a writable directory that Mason uses for various
+features and optimizations: for example, component object files and
+data cache files. Mason will create the directory on startup, if necessary, and set its
+permissions according to the web server User/Group.
+</dd>
+<dd>
+<p>Under <a href="/HTML/Mason/ApacheHandler.html">Apache</a>, data_dir defaults to a
+directory called ``mason'' under the Apache server root. You will
+need to change this on certain systems that assign a high-level
+server root such as <em>/usr</em>!</p>
+</dd>
+<dd>
+<p>In non-Apache environments, data_dir has no default. If it is left
+unspecified, Mason will not use the <a href="/HTML/Mason/Admin.html#object_files">object files</a> section of the administrator's manual, and the default
+<a href="/HTML/Mason/Request.html#item_cache">data cache class</a> will be
+<code>MemoryCache</code> instead of <code>FileCache</code>.</p>
+</dd>
+<p></p>
+<dt><strong><a name="item_escape_flags">escape_flags</a></strong><br />
+</dt>
+<dd>
+A hash reference of escape flags to set for this object.  See the
+section on the <a href="/HTML/Mason/Interp.html#set_escape"><a href="#item_set_escape"><code>set_escape()</code></a> method</a> for more details.
+</dd>
+<p></p>
+<dt><strong><a name="item_ignore_warnings_expr">ignore_warnings_expr</a></strong><br />
+</dt>
+<dd>
+Regular expression indicating which warnings to ignore when loading
+components. Any warning that is not ignored will prevent the
+component from being loaded and executed. For example:
+</dd>
+<dd>
+<pre>
+    ignore_warnings_expr =&gt;
+        'Global symbol.*requires explicit package'</pre>
+</dd>
+<dd>
+<p>If undef, all warnings are heeded; if '.', all warnings are ignored.</p>
+</dd>
+<dd>
+<p>By default, this is set to 'Subroutine .* redefined'.  This allows you
+to declare global subroutines inside &lt;%once&gt; sections and not receive
+an error when the component is reloaded.</p>
+</dd>
+<p></p>
+<dt><strong><a name="item_preloads">preloads</a></strong><br />
+</dt>
+<dd>
+A list of component paths, optionally with glob wildcards, to load
+when the interpreter initializes. e.g.
+</dd>
+<dd>
+<pre>
+    preloads =&gt; ['/foo/index.html','/bar/*.pl']</pre>
+</dd>
+<dd>
+<p>Default is the empty list.  For maximum performance, this should only
+be used for components that are frequently viewed and rarely updated.
+See the the <a href="/HTML/Mason/Admin.html#preloading">preloading</a> section of the administrator's manual section of the administrator's manual for
+further details.</p>
+</dd>
+<dd>
+<p>As mentioned in the developer's manual, a component's <code>&lt;%once&gt;</code>
+section is executed when it is loaded.  For preloaded components, this
+means that this section will be executed before a Mason or Apache
+request exist, so preloading a component that uses <code>$m</code> or <code>$r</code> in a
+<code>&lt;%once&gt;</code> section will fail.</p>
+</dd>
+<p></p>
+<dt><strong><a name="item_request_class">request_class</a></strong><br />
+</dt>
+<dd>
+The class to use when creating requests. Defaults to
+<a href="/HTML/Mason/Request.html">HTML::Mason::Request</a>.
+</dd>
+<p></p>
+<dt><strong><a name="item_resolver">resolver</a></strong><br />
+</dt>
+<dd>
+The Resolver object to associate with this Compiler. By default a new
+object of class <a href="/HTML/Mason/Params.html#resolver_class">resolver_class</a> will be created.
+</dd>
+<p></p>
+<dt><strong><a name="item_resolver_class">resolver_class</a></strong><br />
+</dt>
+<dd>
+The class to use when creating a resolver. Defaults to
+<a href="/HTML/Mason/Resolver/File.html">HTML::Mason::Resolver::File</a>.
+</dd>
+<p></p>
+<dt><strong><a name="item_static_source">static_source</a></strong><br />
+</dt>
+<dd>
 True or false, default is false. When false, Mason checks the
 timestamp of the component source file each time the component is used
 to see if it has changed. This provides the instant feedback for
 source changes that is expected for development.  However it does
 entail a file stat for each component executed.
-<P>When true, Mason assumes that the component source tree is unchanging:
+</dd>
+<dd>
+<p>When true, Mason assumes that the component source tree is unchanging:
 it will not check component source files to determine if the memory
 cache or object file has expired.  This can save many file stats per
 request. However, in order to get Mason to recognize a component
 source change, you must remove object files and restart the server (so
-as to clear the memory cache).</P>
-<P>Use this feature for live sites where performance is crucial and
-where updates are infrequent and well-controlled.</P>
-<P></P>
-<DT><STRONG><A NAME="item_ignore_warnings_expr">ignore_warnings_expr</A></STRONG><BR>
-<DD>
-Regular expression indicating which warnings to ignore when loading
-components. Any warning that is not ignored will prevent the
-component from being loaded and executed. For example:
-<PRE>
-    ignore_warnings_expr =&gt;
-        'Global symbol.*requires explicit package'</PRE>
-<P>If undef, all warnings are heeded; if '.', all warnings are ignored.</P>
-<P>By default, this is set to 'Subroutine .* redefined'.  This allows you
-to declare global subroutines inside &lt;%once&gt; sections and not receive
-an error when the component is reloaded.</P>
-<P></P>
-<DT><STRONG><A NAME="item_preloads">preloads</A></STRONG><BR>
-<DD>
-A list of component paths, optionally with glob wildcards, to load
-when the interpreter initializes. e.g.
-<PRE>
-    preloads =&gt; ['/foo/index.html','/bar/*.pl']</PRE>
-<P>Default is the empty list.  For maximum performance, this should only
-be used for components that are frequently viewed and rarely updated.
-See the <A HREF="Admin.html#preloading">preloading section in the <EM>Admin Guide</EM></A> for further details.</P>
-<P>As mentioned in the developer's guide, a component's <CODE>&lt;%once&gt;</CODE>
-section is executed when it is loaded.  For preloaded components, this
-means that this section will be executed before a Mason or Apache
-request exist, so preloading a component that uses <CODE>$m</CODE> or <CODE>$r</CODE> in a
-<CODE>&lt;%once&gt;</CODE> section will fail.</P>
-<P></P>
-<DT><STRONG><A NAME="item_resolver">resolver</A></STRONG><BR>
-<DD>
-The Resolver object to associate with this Interpreter.  If none is
-provided, a default Resolver will be created.
-<P></P>
-<DT><STRONG><A NAME="item_use_object_files">use_object_files</A></STRONG><BR>
-<DD>
+as to clear the memory cache).</p>
+</dd>
+<dd>
+<p>Use this feature for live sites where performance is crucial and
+where updates are infrequent and well-controlled.</p>
+</dd>
+<p></p>
+<dt><strong><a name="item_use_object_files">use_object_files</a></strong><br />
+</dt>
+<dd>
 True or false, default is true.  Specifies whether Mason creates
 object files to save the results of component parsing. You may want to
 turn off object files for disk space reasons, but otherwise this
 should be left alone.
-<P></P></DL>
-<P>
-<HR>
-<H1><A NAME="accessor_methods">ACCESSOR METHODS</A></H1>
-<P>All of the above properties have standard accessor methods of the same
+</dd>
+<p></p></dl>
+<p>
+</p>
+<hr />
+<h1><a name="accessor_methods">ACCESSOR METHODS</a></h1>
+<p>All of the above properties have standard accessor methods of the same
 name. In general, no arguments retrieves the value, and one argument
-sets and returns the value.  For example:</P>
-<PRE>
+sets and returns the value.  For example:</p>
+<pre>
     my $interp = new HTML::Mason::Interp (...);
     my $c = $interp-&gt;compiler;
-    $interp-&gt;dhandler_name(&quot;da-handler&quot;);</PRE>
-<P>The following properties can be queried but not modified: data_dir,
-preloads.</P>
-<P>
-<HR>
-<H1><A NAME="other_methods">OTHER METHODS</A></H1>
-<a name="item_exec"></a><DL>
-<DT><STRONG><A NAME="item_exec">exec (comp, args...)</A></STRONG><BR>
-<DD>
-Creates a new HTML::Mason::Request object for the given <EM>comp</EM> and
-<EM>args</EM>, and executes it. The return value is the return value of
-<EM>comp</EM>, if any.
-<P>This is useful for running Mason outside of a web environment.
-See <A HREF="Admin.html#using mason from a standalone script">Using Mason from a standalone script in the HTML::Mason::Admin manpage</A>
-for examples.</P>
-<P>This method isn't generally useful in a mod_perl environment; see
-<A HREF="Devel.html#subrequests">subrequests</A> instead.</P>
-<a name="item_set_global"></a><P></P>
-<DT><STRONG><A NAME="item_set_global">set_global ($varname, [values...])</A></STRONG><BR>
-<DD>
-This method sets a global to be used in components. <CODE>varname</CODE> is a
-variable name, optionally preceded with a prefix (<CODE>$</CODE>, <CODE>@</CODE>, or
-<CODE>%</CODE>); if the prefix is omitted then <CODE>$</CODE> is assumed. <CODE>varname</CODE> is
+    $interp-&gt;code_cache_max_size(20 * 1024 * 1024);</pre>
+<p>The following properties can be queried but not modified: data_dir,
+preloads.</p>
+<p>
+</p>
+<hr />
+<h1><a name="other_methods">OTHER METHODS</a></h1>
+<a name="item_exec"></a><dl>
+<dt><strong><a name="item_exec">exec (comp, args...)</a></strong><br />
+</dt>
+<dd>
+Creates a new HTML::Mason::Request object for the given <em>comp</em> and
+<em>args</em>, and executes it. The return value is the return value of
+<em>comp</em>, if any.
+</dd>
+<dd>
+<p>This is useful for running Mason outside of a web environment.
+See <a href="/HTML/Mason/Admin.html#using_mason_from_a_standalone_script">Using Mason from a standalone script in the HTML::Mason::Admin manpage</a>
+for examples.</p>
+</dd>
+<dd>
+<p>This method isn't generally useful in a mod_perl environment; see
+<a href="/HTML/Mason/Devel.html#subrequests">subrequests</a> instead.</p>
+</dd>
+<a name="item_set_escape"></a><p></p>
+<dt><strong><a name="item_set_escape">set_escape ($name =&gt; see below])</a></strong><br />
+</dt>
+<dd>
+This method is called to add an escape flag to the list of known
+escapes for the interpreter.  The flag may only consist of the
+characters matching <code>\w</code> and the dash (-).
+</dd>
+<dd>
+<p>The right hand side may be one of several things.  It can be a
+subroutine reference.  It can also be a string match <code>/^\w+$/</code>, in
+which case it is assumed to be the name of a subroutine in the
+<code>HTML::Mason::Escapes</code> module.  Finally, if it is a string that does
+not match the above regex, then it is assumed to be <code>eval</code>able code,
+which will return a subroutine reference.</p>
+</dd>
+<dd>
+<p>When setting these with <code>PerlSetVar</code> directives in an Apache
+configuration file, you can set them like this:</p>
+</dd>
+<dd>
+<pre>
+  PerlSetVar  MasonEscapeFlags  &quot;flag  =&gt; \&amp;subroutine&quot;
+  PerlSetVar  MasonEscapeFlags  &quot;uc    =&gt; sub { ${$_[0]} = uc ${$_[0]}; }&quot;
+  PerlAddVar  MasonEscapeFlags  &quot;thing =&gt; other_thing&quot;</pre>
+</dd>
+<a name="item_remove_escape"></a><p></p>
+<dt><strong><a name="item_remove_escape">remove_escape ($name)</a></strong><br />
+</dt>
+<dd>
+Given an escape name, this removes that escape from the interpreter's
+known escapes.  If the name is not recognized, it is simply ignored.
+</dd>
+<p></p>
+<dt><strong><a name="item_apply_escapes">apply_escapes ($text, $flags, [more flags...])</a></strong><br />
+</dt>
+<dd>
+This method applies a one or more escapes to a piece of text.  The
+escapes are specified by giving their flag.  Each escape is applied to
+the text in turn, after which the now-modified text is returned.
+</dd>
+<a name="item_set_global"></a><p></p>
+<dt><strong><a name="item_set_global">set_global ($varname, [values...])</a></strong><br />
+</dt>
+<dd>
+This method sets a global to be used in components. <code>varname</code> is a
+variable name, optionally preceded with a prefix (<code>$</code>, <code>@</code>, or
+<code>%</code>); if the prefix is omitted then <code>$</code> is assumed. <code>varname</code> is
 followed by a value, in the case of a scalar, or by one or more values
 in the case of a list or hash.  For example:
-<PRE>
+</dd>
+<dd>
+<pre>
     # Set a global variable $dbh containing the database handle
-    $interp-&gt;set_global(dbh =&gt; DBI-&gt;connect(...));</PRE>
-<PRE>
+    $interp-&gt;set_global(dbh =&gt; DBI-&gt;connect(...));</pre>
+</dd>
+<dd>
+<pre>
     # Set a global hash %session from a local hash
-    $interp-&gt;set_global('%session', %s);</PRE>
-<P>The global is set in the package that components run in: usually
-<CODE>HTML::Mason::Commands</CODE>, although this can be overridden via the
-<A HREF="Compiler.html#in_package">Compiler's in_package</A> parameter.
-The lines above, for example, are equivalent to:</P>
-<PRE>
+    $interp-&gt;set_global('%session', %s);</pre>
+</dd>
+<dd>
+<p>The global is set in the package that components run in: usually
+<code>HTML::Mason::Commands</code>, although this can be overridden via the
+<a href="/HTML/Mason/Params.html#in_package">in_package</a> parameter.
+The lines above, for example, are equivalent to:</p>
+</dd>
+<dd>
+<pre>
     $HTML::Mason::Commands::dbh = DBI-&gt;connect(...);
-    %HTML::Mason::Commands::session = %s;</PRE>
-<P>assuming that <CODE>in_package</CODE> has not been changed.</P>
-<P>Any global that you set should also be registered with the
-<A HREF="Compiler.html#allow_globals">Compiler's allow_globals</A>
-parameter; otherwise you'll get warnings from <CODE>strict</CODE>.</P>
-<a name="item_comp_exists"></a><P></P>
-<DT><STRONG><A NAME="item_comp_exists">comp_exists (path)</A></STRONG><BR>
-<DD>
-Given an <EM>absolute</EM> component path, this method returns a boolean
+    %HTML::Mason::Commands::session = %s;</pre>
+</dd>
+<dd>
+<p>assuming that <a href="/HTML/Mason/Params.html#in_package">in_package</a> has not been changed.</p>
+</dd>
+<dd>
+<p>Any global that you set should also be registered with the
+<a href="/HTML/Mason/Params.html#allow_globals">allow_globals</a> parameter; otherwise you'll get warnings from
+<code>strict</code>.</p>
+</dd>
+<a name="item_comp_exists"></a><p></p>
+<dt><strong><a name="item_comp_exists">comp_exists (path)</a></strong><br />
+</dt>
+<dd>
+Given an <em>absolute</em> component path, this method returns a boolean
 value indicating whether or not a component exists for that path.
-<a name="item_make_component"></a><P></P>
-<DT><STRONG><A NAME="item_make_component">make_component (comp_source =&gt; ... )</A></STRONG><BR>
-<DD>
-<DT><STRONG>make_component (comp_file =&gt; ... )</STRONG><BR>
-<DD>
+</dd>
+<a name="item_make_component"></a><p></p>
+<dt><strong><a name="item_make_component">make_component (comp_source =&gt; ... )</a></strong><br />
+</dt>
+<dt><strong>make_component (comp_file =&gt; ... )</strong><br />
+</dt>
+<dd>
 This method compiles Mason component source code and returns a
-Component object.  The source may be passed in as a string in <CODE>comp_source</CODE>,
-or as a filename in <CODE>comp_file</CODE>.  When using <CODE>comp_file</CODE>, the
+Component object.  The source may be passed in as a string in <code>comp_source</code>,
+or as a filename in <code>comp_file</code>.  When using <code>comp_file</code>, the
 filename is specified as a path on the file system, not as a path
 relative to Mason's component root (see 
-<A HREF="Request.html#fetch_comp">Request-&gt;fetch_comp</A> for that).
-<P>If Mason encounters an error during processing, an exception will be thrown.</P>
-<P>Example of usage:</P>
-<PRE>
+<a href="/HTML/Mason/Request.html#fetch_comp">Request-&gt;fetch_comp</a> for that).
+</dd>
+<dd>
+<p>If Mason encounters an error during processing, an exception will be thrown.</p>
+</dd>
+<dd>
+<p>Example of usage:</p>
+</dd>
+<dd>
+<pre>
     # Make an anonymous component
     my $anon_comp =
       eval { $interp-&gt;make_component
                ( comp_source =&gt; '&lt;%perl&gt;my $name = &quot;World&quot;;&lt;/%perl&gt;Hello &lt;% $name %&gt;!' ) };
-    die $@ if $@;</PRE>
-<PRE>
-    $m-&gt;comp($anon_comp);</PRE>
-<a name="item_load"></a><P></P>
-<DT><STRONG><A NAME="item_load">load (path)</A></STRONG><BR>
-<DD>
+    die $@ if $@;</pre>
+</dd>
+<dd>
+<pre>
+    $m-&gt;comp($anon_comp);</pre>
+</dd>
+<a name="item_load"></a><p></p>
+<dt><strong><a name="item_load">load (path)</a></strong><br />
+</dt>
+<dd>
 Returns the component object corresponding to an absolute component
-<CODE>path</CODE>, or undef if none exists.
-<a name="item_comp_root"></a><P></P>
-<DT><STRONG><A NAME="item_comp_root">comp_root (comp_root)</A></STRONG><BR>
-<DD>
-This is a convenience method which simply calls the <A HREF="#item_comp_root"><CODE>comp_root</CODE></A>
+<code>path</code>, or undef if none exists.
+</dd>
+<a name="item_comp_root"></a><p></p>
+<dt><strong><a name="item_comp_root">comp_root (comp_root)</a></strong><br />
+</dt>
+<dd>
+This is a convenience method which simply calls the <a href="#item_comp_root"><code>comp_root</code></a>
 method in the resolver object.  Obviously, if you are using a custom
-resolver class which does not have a <A HREF="#item_comp_root"><CODE>comp_root</CODE></A> method, then this
+resolver class which does not have a <a href="#item_comp_root"><code>comp_root</code></a> method, then this
 convenience method will not work.
-<P></P></DL>
-<P>
-<HR>
-<H1><A NAME="see_also">SEE ALSO</A></H1>
-<P><A HREF="Mason.html">HTML::Mason</A>,
-<A HREF="Admin.html">HTML::Mason::Admin</A>,
-<A HREF="ApacheHandler.html">HTML::Mason::ApacheHandler</A></P>
+</dd>
+<p></p></dl>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/HTML/Mason.html">HTML::Mason</a>,
+<a href="/HTML/Mason/Admin.html">HTML::Mason::Admin</a>,
+<a href="/HTML/Mason/ApacheHandler.html">HTML::Mason::ApacheHandler</a></p>
 
-</BODY>
+</body>
 
-</HTML>
+</html>

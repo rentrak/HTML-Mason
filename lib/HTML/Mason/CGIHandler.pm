@@ -105,11 +105,12 @@ sub cgi_object {
 sub redirect {
     my $self = shift;
     my $url = shift;
+    my $status = shift || 302;
 
     $self->clear_buffer;
 
     $self->{cgi_request}->header_out( Location => $url );
-    $self->{cgi_request}->http_header;
+    $self->{cgi_request}->http_header( Status => $status );
 
     $self->abort;
 }
@@ -230,8 +231,7 @@ about the particular details of invoking Mason on each request.
 If you want to use Mason components from I<within> a regular CGI
 script (or any other Perl program, for that matter), then you don't
 need this module.  You can simply follow the directions in
-L<HTLM::Mason::Admin/Using Mason from a standalone script|"Using Mason
-from a standalone script">.    
+the L<Using Mason from a standalone script|HTML::Mason::Admin/Using Mason from a standalone script> section of the administrator's manual.
 
 This module also provides an C<$r> request object for use inside
 components, similar to the Apache request object under

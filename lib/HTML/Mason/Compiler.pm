@@ -23,7 +23,7 @@ BEGIN
 	(
 	 allow_globals        => { parse => 'list',   type => ARRAYREF, default => [],
 				   descr => "An array of names of Perl variables that are allowed globally within components" },
-	 default_escape_flags => { parse => 'string', type => SCALAR,   default => '',
+	 default_escape_flags => { parse => 'string', type => SCALAR | ARRAYREF,   default => [],
 				   descr => "Escape flags that will apply by default to all Mason tag output" },
 	 lexer                => { isa => 'HTML::Mason::Lexer',
 				   descr => "A Lexer object that will scan component text during compilation" },
@@ -43,8 +43,7 @@ BEGIN
 
 use HTML::Mason::MethodMaker
     ( read_write => [ map { [ $_ => __PACKAGE__->validation_spec->{$_} ] }
-		     qw( default_escape_flags
-                          lexer
+                      qw( lexer
                           preprocess
                           postprocess_perl
                           postprocess_text
@@ -52,11 +51,15 @@ use HTML::Mason::MethodMaker
 		    ],
     );
 
+my $old_escape_re = qr/^[hnu]+$/;
 
 sub new
 {
     my $class = shift;
     my $self = $class->SUPER::new(@_);
+
+    $self->default_escape_flags( $self->{default_escape_flags} )
+        if defined $self->{default_escape_flags};
 
     # Verify the validity of the global names
     $self->allow_globals( @{$self->{allow_globals}} );
@@ -103,7 +106,6 @@ sub object_id
 
 my %top_level_only_block = map { $_ => 1 } qw( cleanup once shared );
 my %valid_comp_flag = map { $_ => 1 } qw( inherit );
-my %valid_escape_flag = map { $_ => 1 } qw( h n u );
 
 sub add_allowed_globals
 {
@@ -131,6 +133,36 @@ sub allow_globals
     }
 
     return @{ $self->{allow_globals} };
+}
+
+sub default_escape_flags
+{
+    my $self = shift;
+
+    return $self->{default_escape_flags} unless @_;
+
+    my $flags = shift;
+
+    unless ( defined $flags )
+    {
+        $self->{default_escape_flags} = [];
+        return;
+    }
+
+    # make sure this is always an arrayref
+    unless ( ref $flags )
+    {
+        if ( $flags =~ /^[hu]+$/ )
+        {
+            $self->{default_escape_flags} = [ split //, $flags ];
+        }
+        else
+        {
+            $self->{default_escape_flags} = [ $flags ];
+        }
+    }
+
+    return $self->{default_escape_flags};
 }
 
 sub compile
@@ -255,24 +287,22 @@ sub perl_block
 
 sub text
 {
-    my $self = shift;
-    my %p = @_;
+    my ($self, %p) = @_;
+    my $tref = ref($p{text}) ? $p{text} : \$p{text};  # Allow a reference
 
-    eval { $self->postprocess_text->(\$p{text}) if $self->postprocess_text };
+    eval { $self->postprocess_text->($tref) } if $self->postprocess_text;
     compiler_error $@ if $@;
 
-    $p{text} =~ s,(['\\]),\\$1,g;
+    $$tref =~ s,(['\\]),\\$1,g;
 
-    my $code = "\$m->print( '$p{text}' );\n";
-
-    $self->_add_body_code($code);
+    $self->_add_body_code("\$m->print( '$$tref' );\n");
 }
 
 sub text_block
 {
     my $self = shift;
     my %p = @_;
-    $self->text(text => $p{block});
+    $self->text(text => \$p{block});
 }
 
 sub end_block
@@ -356,29 +386,45 @@ sub substitution
     my %p = @_;
 
     my $text = $p{substitution};
-    if ( $p{escape} || $self->default_escape_flags )
+
+    if ( ( exists $p{escape} && defined $p{escape} ) ||
+         @{ $self->{default_escape_flags} }
+       )
     {
-	my %flags;
-	%flags = map { $_ => 1 } split //, $p{escape} if $p{escape};
-	foreach (keys %flags)
-	{
-	    $self->lexer->throw_syntax_error("invalid <% %> escape flag: '$_'")
-		unless $valid_escape_flag{$_};
-	}
-	unless ( delete $flags{n} )
-	{
-	    foreach ( split //, $self->default_escape_flags )
-	    {
-		$flags{$_} = 1;
-	    }
-	}
-	my $flags = join ', ', map { "'$_'" } keys %flags;
-	$text = "\$_escape->( $text, $flags )";
+        my @flags;
+        if ( defined $p{escape} )
+        {
+            $p{escape} =~ s/\s+$//;
+
+            if ( $p{escape} =~ /$old_escape_re/ )
+            {
+                @flags = split //, $p{escape};
+            }
+            else
+            {
+                @flags = split /\s*,\s*/, $p{escape};
+            }
+        }
+
+        # is there any way to check the flags for validity and still
+        # allow them to be dynamically set from components?
+
+        unshift @flags, @{ $self->default_escape_flags }
+            unless grep { $_ eq 'n' } @flags;
+
+        my %seen;
+	my $flags =
+            ( join ', ',
+              map { $seen{$_}++ ? () : "'$_'" }
+              grep { $_ ne 'n' } @flags
+            );
+
+        $text = "\$m->interp->apply_escapes( (join '', ($text)), $flags )" if $flags;
     }
 
     my $code = "\$m->print( $text );\n";
 
-    eval { $self->postprocess_perl->(\$code) if $self->postprocess_perl };
+    eval { $self->postprocess_perl->(\$code) } if $self->postprocess_perl;
     compiler_error $@ if $@;
 
     $self->_add_body_code($code);
@@ -400,7 +446,7 @@ sub component_call
     }
 
     my $code = "\$m->comp( $call );\n";
-    eval { $self->postprocess_perl->(\$code) if $self->postprocess_perl };
+    eval { $self->postprocess_perl->(\$code) } if $self->postprocess_perl;
     compiler_error $@ if $@;
 
     $self->_add_body_code($code);
@@ -417,7 +463,7 @@ sub component_content_call
 
     my $code = "\$m->comp( { content => sub {\n";
 
-    eval { $self->postprocess_perl->(\$code) if $self->postprocess_perl };
+    eval { $self->postprocess_perl->(\$code) } if $self->postprocess_perl;
     compiler_error $@ if $@;
 
     $self->_add_body_code($code);
@@ -442,7 +488,7 @@ sub component_content_call_end
 
     my $code = "} }, $call );\n";
 
-    eval { $self->postprocess_perl->(\$code) if $self->postprocess_perl };
+    eval { $self->postprocess_perl->(\$code) } if $self->postprocess_perl;
     compiler_error $@ if $@;
 
     $self->_add_body_code($code);
@@ -455,7 +501,7 @@ sub perl_line
 
     my $code = "$p{line}\n";
 
-    eval { $self->postprocess_perl->(\$code) if $self->postprocess_perl };
+    eval { $self->postprocess_perl->(\$code) } if $self->postprocess_perl;
     compiler_error $@ if $@;
 
     $self->_add_body_code($code);
@@ -464,17 +510,16 @@ sub perl_line
 sub _add_body_code
 {
     my $self = shift;
-    my $code = shift;
 
     my $comment;
     if ( $self->lexer->line_number )
     {
 	my $line = $self->lexer->line_number;
 	my $file = $self->lexer->name;
-	$comment = "#line $line $file\n";
+	$self->{current_comp}{body} .= "#line $line $file\n";
     }
 
-    $self->{current_comp}{body} .= "$comment$code";
+    $self->{current_comp}{body} .= $_[0];
 }
 
 sub dump
@@ -552,6 +597,74 @@ The compiler starts the compilation process by calling its lexer's
 C<lex> method and passing itself as the C<compiler> parameter.  The
 lexer then calls various methods in the compiler as it parses the
 component source.
+
+=head1 PARAMETERS TO THE new() CONSTRUCTOR
+
+=over 4
+
+=item allow_globals
+
+List of variable names, complete with prefix (C<$@%>), that you intend
+to use as globals in components.  Normally global variables are
+forbidden by C<strict>, but any variable mentioned in this list is
+granted a reprieve via a "use vars" statement. For example:
+
+    allow_globals => [qw($DBH %session)]
+
+In a mod_perl environment, C<$r> (the request object) is automatically
+added to this list.
+
+=item default_escape_flags
+
+Escape flags to apply to all <% %> expressions by default. The current
+valid flags are
+
+    h - escape for HTML ('<' => '&lt;', etc.)
+    u - escape for URL (':' => '%3A', etc.)
+
+The developer can override default escape flags on a per-expression
+basis; see the L<escaping expressions|HTML::Mason::Devel/escaping expressions> section of the developer's manual.
+
+If you want to set I<multiple> flags as the default, this should be
+given as a reference to an array of flags.
+
+=item lexer
+
+The Lexer object to associate with this Compiler. By default a new
+object of class L<lexer_class|HTML::Mason::Params/lexer_class> will be created.
+
+=item lexer_class
+
+The class to use when creating a lexer. Defaults to L<HTML::Mason::Lexer|HTML::Mason::Lexer>.
+
+=item preprocess
+
+Sub reference that is called to preprocess each component before Parser does
+it's magic.  The sub is called with a single parameter, a scalar reference
+to the script.  The sub is expected to process the script in-place.   This is
+one way to extend the HTML::Mason syntax with new tags, etc., although a much
+more flexible way is to subclass the Lexer or Compiler class. See also
+L<postprocess_text|HTML::Mason::Params/postprocess_text> and L<postprocess_perl|HTML::Mason::Params/postprocess_perl>.
+
+=item postprocess_text
+
+Sub reference that is called to postprocess the text portion of a
+compiled component, just before it is assembled into its final
+subroutine form.  The sub is called with a single parameter, a scalar
+reference to the text portion of the component.  The sub is expected
+to process the string in-place. See also
+L<preprocess|HTML::Mason::Params/preprocess> and L<postprocess_perl|HTML::Mason::Params/postprocess_perl>.
+
+=item postprocess_perl
+
+Sub reference that is called to postprocess the Perl portion of a
+compiled component, just before it is assembled into its final
+subroutine form.  The sub is called with a single parameter, a scalar
+reference to the Perl portion of the component.  The sub is expected
+to process the string in-place. See also
+L<preprocess|HTML::Mason::Params/preprocess> and L<postprocess_text|HTML::Mason::Params/postprocess_text>.
+
+=back
 
 =head1 METHODS
 

@@ -1,10 +1,10 @@
 =head1 NAME
 
-HTML::Mason::Admin - Mason Administrator's Guide
+HTML::Mason::Admin - Mason Administrator's Manual
 
 =head1 DESCRIPTION
 
-This guide is intended for the sysadmin/webmaster in charge of
+This manual is written for the sysadmin/webmaster in charge of
 installing, configuring, or tuning a Mason system.
 
 =head1 SITE CONFIGURATION METHODS
@@ -141,7 +141,10 @@ Here is a simple C<handler.pl>, also provided in the C<eg/> directory:
    }
    
    # Create ApacheHandler object at startup.
-   my $ah = HTML::Mason::ApacheHandler->new();
+   my $ah =
+       HTML::Mason::ApacheHandler->new
+           ( comp_root => '/path/to/comp_root',
+             data_dir   => '/path/to/data_dir',);
    
    sub handler
    {
@@ -196,9 +199,9 @@ each request.
 
 =head2 Component root
 
-The component root marks the top of your component hierarchy.  When
-running Mason with the CGIHandler or ApacheHandler modules, this
-defaults to your document root.
+The component root (L<comp_root|HTML::Mason::Params/comp_root>) marks the top of your component
+hierarchy.  When running Mason with the CGIHandler or ApacheHandler
+modules, this defaults to your document root.
 
 The component root defines how component paths are translated into
 real file paths. If your component root is /usr/local/httpd/docs, a
@@ -232,9 +235,11 @@ Keys must be unique in a case-insensitive comparison.
 
 =head2 Data directory
 
-The data directory is a writable directory that Mason uses for various
-features and optimizations. By default, it is a directory called
-"mason" under your Apache server root.
+The data directory (L<data_dir|HTML::Mason::Params/data_dir>) is a writable directory that Mason
+uses for various features and optimizations. By default, it is a
+directory called "mason" under your Apache server root. You will need
+to change this on certain systems that assign a high-level server root
+such as F</usr>!
 
 Mason will create the directory on startup, if necessary, and set its
 permissions according to the web server User/Group.
@@ -308,14 +313,12 @@ top-level autohandler.
 =head2 Declining image requests
 
 Mason should be prevented from serving images, tarballs, and other
-binary files as regular components. Performance will suffer, and such
-a file may inadvertently contain a Mason character sequence such as
-"<%".
+binary files as regular components. Not only will performance suffer,
+but binary files may inadvertently contain a Mason character sequence
+such as "<%".
 
-There are several ways to restrict which file types are handled by Mason.
-
-One way is to specify a filename pattern in the Apache configuration,
-e.g.:
+There are several ways to restrict which file types are handled by
+Mason.  One way is to use C<FilesMatch>, e.g.
 
     <FilesMatch "(\.html|\.txt|^[^\.]+)$">
      SetHandler perl-script
@@ -323,15 +326,31 @@ e.g.:
     </FilesMatch>
 
 This directs Mason to handle only files with .html or .txt extension,
-as well as those files with no extension.
+as well as those files with no extension. The disadvantage of this
+method is that the filename must exist for the C<FilesMatch> to match.
+You will not be able to use L<dhandlers|HTML::Mason::Devel/dhandlers>
+to catch non-existent files.
 
-Another way, if you are using a C<handler.pl> script, is to include
+A second way is to use C<LocationMatch> to indicate the extensions
+that should I<not> be served through Mason, e.g.
+
+    <LocationMatch "\.(gif|jpe?g|png|gz)$">
+     SetHandler default-handler
+    </LocationMatch>
+
+This will send all extensions not listed through Mason, regardless
+of whether the file exists, thus working well with dhandlers. The
+disadvantage of this method is that you have to explicitly list all
+of the non-Mason extensions used on your site.
+
+A third way, if you are using a C<handler.pl> script, is to include
 a line like the following at the top of your handler() subroutine:
 
     return -1 if $r->content_type && $r->content_type !~ m|^text/|i;
 
 This line handles requests for text/* MIME types, such as text/html
-and text/plain, and declines others.
+and text/plain, and declines others. The disadvantage of this method
+is that it requires a bit of Perl code to run for every image request.
 
 =head2 Securing top-level components
 
@@ -359,7 +378,11 @@ can then prevent private components from being served.
 
 One solution is to place all private components inside a directory,
 say /private, that lies under the component root but outside the
-document root.
+document root. e.g.
+
+  component root:     /usr/mason/comps
+  document root:      /usr/mason/comps/htdocs
+  private components: /usr/mason/comps/private
 
 Another solution is to decide on a naming convention, for example,
 that all private components begin with "_", or that all top-level
@@ -395,8 +418,7 @@ handle a request for /foo/bar/.
 If you would like Mason to handle directory requests, do the
 following:
 
-1. Set the L<decline_dirs|HTML::Mason::ApacheHandler/decline_dirs>
-parameter to 0.
+1. Set L<decline_dirs|HTML::Mason::Params/decline_dirs> to 0.
 
 2. If you are using a C<handler.pl> and it contains a "return -1" line
 to decline non-text requests (as given in the previous section), add a
@@ -423,11 +445,8 @@ user session information, the server root for forming absolute URLs.
 
 Because Mason by default parses components in C<strict> mode, you'll
 need to declare a global if you don't want to access it with an
-explicit package name. The easiest way to declare a global is with the
-C<MasonAllowGlobals> parameter:
-
-   PerlSetVar MasonAllowGlobals $dbh
-   PerlAddVar MasonAllowGlobals $user
+explicit package name. The easiest way to declare a global is with
+the L<allow_globals|HTML::Mason::Params/allow_globals> parameter.
 
 Since all components run in the same package, you'll be able to set
 the global in one component and access it in all the others.
@@ -439,13 +458,25 @@ needs to be initialized every request.
 
 =head2 Sessions
 
-Mason does not have a built-in session mechanism. However, with a page
-or so of code in your C<handler.pl>, you can integrate Jeffrey Baker's
-C<Apache::Session> into your application and make a tied global
-session variable available to all components.
+Mason does not have a built-in session mechanism, but several
+external options are available:
 
-The Mason Sessions How-To, at ..., is the best source of information
-about this surprisingly tricky subject.
+=over
+
+=item *
+
+HTML::Mason::Request::WithApacheSession, available from CPAN,
+adds a cookie-based session to every request.
+
+=item *
+
+Apache::Session, available from CPAN, can be integrated with about a
+page of code in a handler.pl. This is more complex but more flexible
+than the above. See the Mason Sessions How-To at
+http://www.masonhq.com/user/adpacifico/ApacheSessionMason.html for a
+complete guide.
+
+=back
 
 =head2 Data caching
 
@@ -463,7 +494,7 @@ although this may be overriden by the developer. C<Cache::FileCache>
 creates a separate subdirectory for every component that uses caching,
 and one file some number of levels underneath that subdirectory for
 each cached item.  The root of the cache tree is
-C<data_dir/cache>. The name of the cache subdirectory for a component
+L<data_dir|HTML::Mason::Params/data_dir>/C<cache>. The name of the cache subdirectory for a component
 is determined by the function C<HTML::Mason::Utils::data_cache_namespace>.
 
 =item Default constructor options
@@ -473,8 +504,7 @@ constructor the C<namespace>, C<username>, and C<cache_root> options,
 along with any other options given in the C<< $m->cache >> method.
 
 You may specify other default constructor options with the
-L<data_cache_defaults|HTML::Mason::Interp/data_cache_defaults>
-parameter. For example,
+L<data_cache_defaults|HTML::Mason::Params/data_cache_defaults> parameter. For example,
 
     data_cache_defaults =>
        { cache_class => 'SizeAwareFileCache',
@@ -503,16 +533,15 @@ to administer them.
 
 When Mason loads a component, it places it in a memory cache.
 
-The maximum size of the cache is specified with the L<Interp's
-code_cache_max_size|HTML::Mason::Interp/code_cache_max_size>
-parameter; default is 10MB.  When the cache fills up, Mason frees up
-space by discarding a number of components. The discard algorithm is
-least frequently used (LFU), with a periodic decay to gradually
-eliminate old frequency information. In a nutshell, the components
-called most often in recent history should remain in the cache.  Very
-large components (over 20% of the maximum cache size) never get
-cached, on the theory that they would force out too many other
-components.
+The maximum size of the cache is specified with the
+L<code_cache_max_size|HTML::Mason::Params/code_cache_max_size> parameter.  When the cache fills up, Mason
+frees up space by discarding a number of components. The discard
+algorithm is least frequently used (LFU), with a periodic decay to
+gradually eliminate old frequency information. In a nutshell, the
+components called most often in recent history should remain in the
+cache.  Very large components (over 20% of the maximum cache size)
+never get cached, on the theory that they would force out too many
+other components.
 
 Note that the "size" of a component in memory cannot literally be
 measured.  It is estimated by the length of the source text plus some
@@ -527,8 +556,7 @@ others.
 Naturally, a cache entry is invalidated if the corresponding component
 source file changes.
 
-To turn off code caching completely, set L<Interp's
-code_cache_max_size|HTML::Mason::Interp/code_cache_max_size> to 0.
+To turn off code caching completely, set L<code_cache_max_size|HTML::Mason::Params/code_cache_max_size> to 0.
 
 =head2 Object files
 
@@ -538,10 +566,10 @@ are conceivable in the future, but even those will not survive between
 web server restarts.
 
 As a secondary, longer-term cache mechanism, Mason stores a compiled
-form of each component in an object file under
-C<data_dir/obj/I<component-path>>. Any server process can eval the
-object file and save time on parsing the component source file.  The
-object file is recreated whenever the source file changes.
+form of each component in an object file under L<data_dir|HTML::Mason::Params/data_dir>/C<obj>. Any
+server process can eval the object file and save time on parsing the
+component source file.  The object file is recreated whenever the
+source file changes.
 
 Besides improving performance, object files can be useful for
 debugging.  If you feel the need to see what your source has been
@@ -555,16 +583,14 @@ files previously created under that compiler or lexer for the changes
 to take effect.
 
 If for some reason you don't want Mason to create object files, set
-the L<Interp's use_object_files|HTML::Mason::Interp/use_object_files>
-parameter to 0.
+L<use_object_files|HTML::Mason::Params/use_object_files> to 0.
 
 =head2 Preloading
 
 You can tell Mason to preload a set of components in the parent
-process, rather than loading them on demand, using the L<Interp's
-preloads|HTML::Mason::Interp/preloads> parameter.  Each child server
-will start with those components loaded in the memory cache. The
-trade-offs are:
+process, rather than loading them on demand, using the L<preloads|HTML::Mason::Params/preloads>
+parameter.  Each child server will start with those components loaded
+in the memory cache. The trade-offs are:
 
 =over
 
@@ -592,12 +618,11 @@ file every time that component is called. This can add up to a lot
 of file stats.
 
 If you have a live site with infrequent and well-controlled updates,
-you may choose to use
-L<static_source|HTML::Mason::Interp/static_source> mode. In this mode
-Mason will not check source timestamps when it uses an in-memory cache
-or object file.  The disadvantage is that you must remove object files
-and restart the server whenever you change component source; however
-this process can be easily automated.
+you may choose to use L<static_source|HTML::Mason::Params/static_source> mode. In this mode Mason will
+not check source timestamps when it uses an in-memory cache or object
+file.  The disadvantage is that you must remove object files and
+restart the server whenever you change component source; however this
+process can be easily automated.
 
 =head1 ERROR REPORTING
 
@@ -619,8 +644,7 @@ error logs.
 The first behavior is ideal for development, where you want immediate
 feedback on the error.  The second behavior is usually desired for
 production so that users are not exposed to messy error messages.  You
-choose the behavior by setting
-L<error_mode|HTML::Mason::Request/error_mode> to "output" or "fatal"
+choose the behavior by setting L<error_mode|HTML::Mason::Params/error_mode> to "output" or "fatal"
 respectively.
 
 =head1 CONFIGURING VIRTUAL SITES

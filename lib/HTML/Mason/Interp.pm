@@ -11,6 +11,7 @@ use File::Basename;
 use File::Path;
 use File::Spec;
 use HTML::Mason;
+use HTML::Mason::Escapes;
 use HTML::Mason::Request;
 use HTML::Mason::Resolver::File;
 use HTML::Mason::Tools qw(make_fh read_file taint_is_on load_pkg);
@@ -34,8 +35,12 @@ BEGIN
 					   descr => "The maximum size of the component code cache" },
 	 compiler                     => { isa => 'HTML::Mason::Compiler',
 					   descr => "A Compiler object for compiling components" },
+	 current_time                 => { parse => 'string', default => 'real', optional => 1,
+					   type => SCALAR, descr => "Current time (deprecated)" },
 	 data_dir                     => { parse => 'string', optional => 1, type => SCALAR,
 					   descr => "A directory for storing cache files and other state information" },
+         escape_flags                 => { parse => 'list', optional => 1, type => HASHREF,
+                                           descr => "A list of escape flags to set (as if calling the set_escape() method" },
 	 static_source                => { parse => 'boolean', default => 0, type => BOOLEAN,
 					   descr => "When true, we only compile source files once" },
 	 # OBJECT cause qr// returns an object
@@ -82,6 +87,7 @@ use HTML::Mason::MethodMaker
 
       read_write_contained => { request =>
 				[ [ autoflush => { type => BOOLEAN } ],
+				  [ data_cache_api => { type => SCALAR } ],
 				  [ data_cache_defaults => { type => HASHREF } ],
 				  [ dhandler_name => { type => SCALAR } ],
 				  [ error_format => { type => SCALAR } ],
@@ -144,6 +150,24 @@ sub _initialize
 		or warn "Didn't find any components for preload pattern '$pattern'";
 	    foreach (@paths) { $self->load($_) }
 	}
+    }
+
+    #
+    # Add the escape flags (including defaults)
+    #
+    foreach ( [ h => \&HTML::Mason::Escapes::html_entities_escape ],
+              [ u => \&HTML::Mason::Escapes::url_escape ],
+            )
+    {
+        $self->set_escape(@$_);
+    }
+
+    if ( my $e = delete $self->{escape_flags} )
+    {
+        while ( my ($flag, $code) = each %$e )
+        {
+            $self->set_escape( $flag => $code );
+        }
     }
 }
 
@@ -250,32 +274,28 @@ sub load {
 	# We are using object files.  Update object file if necessary
 	# and load component from there.
 	#
-	my $object_code;
 	do
 	{
 	    if ($objfilemod < $srcmod) {
-		$object_code = $source->object_code( compiler => $self->compiler );
-		$self->write_object_file( object_code => $object_code, object_file => $objfile );
+		my $object_code = $source->object_code( compiler => $self->compiler );
+		$self->write_object_file( object_code => \$object_code, object_file => $objfile );
 	    }
-	    # read the existing object file
-	    $object_code ||= read_file($objfile);
-	    $comp = eval { $self->eval_object_code( object_code => $object_code ) };
+	    $comp = eval { $self->eval_object_code( object_file => $objfile ) };
 
 	    if ($@) {
 		if (isa_mason_exception($@, 'Compilation::IncompatibleCompiler')) {
 		    $objfilemod = 0;
-		    undef $object_code;
 		} else {
 		    $self->_compilation_error( $source->friendly_name, $@ );
 		}
 	    }
-	} until ($object_code);
+	} until ($comp);
     } else {
 	#
-	# No object files. Load component directly into memory.
+	# Not using object files. Load component directly into memory.
 	#
 	my $object_code = $source->object_code( compiler => $self->compiler );
-	$comp = eval { $self->eval_object_code( object_code => $object_code ) };
+	$comp = eval { $self->eval_object_code( object_code => \$object_code ) };
 	$self->_compilation_error( $source->friendly_name, $@ ) if $@;
     }
     $comp->assign_runtime_properties($self, $source);
@@ -367,7 +387,7 @@ sub make_component {
 
     my $object_code = $source->object_code( compiler => $self->compiler);
 
-    my $comp = eval { $self->eval_object_code( object_code => $object_code ) };
+    my $comp = eval { $self->eval_object_code( object_code => \$object_code ) };
     $self->_compilation_error( $p{name}, $@ ) if $@;
 
     $comp->assign_runtime_properties($self, $source);
@@ -440,7 +460,7 @@ sub code_cache_decay_factor { 0.75 }
 # The eval_object_code & write_object_file methods used to be in
 # Parser.pm.  This is a temporary home only.  They need to be moved
 # again at some point in the future (during some sort of interp
-# re-architecting.
+# re-architecting).
 ###################################################################
 
 #
@@ -454,18 +474,9 @@ sub code_cache_decay_factor { 0.75 }
 sub eval_object_code
 {
     my ($self, %p) = @_;
-    my $object_code = $p{object_code};
+    my $code = ref($p{object_code}) ? $p{object_code} : \($p{object_code} || '');
 
-    if ( $object_code =~ /\n# MASON COMPILER ID: (\S+)$/ )
-    {
-	my $comp_version = $1;
-
-	wrong_compiler_error 'This object file was created by an incompatible Compiler or Lexer.  Please remove the component files in your object directory.'
-	    if $comp_version ne $self->compiler->object_id;
-    }
-
-    # If in taint mode, untaint the object text
-    ($object_code) = ($object_code =~ /^(.*)/s) if taint_is_on;
+    $self->compiler->assert_creatorship(\%p);
 
     #
     # Evaluate object file or text with warnings on
@@ -494,12 +505,14 @@ sub eval_object_code
 	{
            local $SIG{ALRM} = sub { die $warnstr };
            alarm 5;
-           $comp = eval $object_code;
+
+           $comp = $self->_do_or_eval(\%p);
+
            alarm 0;
 	}
 	else
 	{
-	    $comp = eval $object_code;
+           $comp = $self->_do_or_eval(\%p);
 	}
     }
 
@@ -522,13 +535,24 @@ sub eval_object_code
     #
     if ($err) {
 	# attempt to stem very long eval errors
-	if ($err =~ /has too many errors\./) {
-	    $err =~ s/has too many errors\..*/has too many errors./s;
-	}
-
+	$err =~ s/has too many errors\..+/has too many errors./s;
 	compilation_error $err;
     } else {
 	return $comp;
+    }
+}
+
+sub _do_or_eval
+{
+    my ($self, $p) = @_;
+
+    if ($p->{object_file}) {
+	return do $p->{object_file};
+    } else {
+	# If in taint mode, untaint the object text
+	(${$p->{object_code}}) = ${$p->{object_code}} =~ /^(.*)/s if taint_is_on;
+
+	return eval ${$p->{object_code}};
     }
 }
 
@@ -549,7 +573,7 @@ sub write_object_file
 {
     my $self = shift;
 
-    my %p = validate( @_, { object_code => { type => SCALAR },
+    my %p = validate( @_, { object_code => { type => SCALARREF },
 			    object_file => { type => SCALAR },
 			    files_written => { type => ARRAYREF, optional => 1 } },
 		    );
@@ -575,7 +599,7 @@ sub write_object_file
     my $fh = make_fh();
     open $fh, ">$object_file"
 	or system_error "Couldn't write object file $object_file: $!";
-    print $fh $object_code
+    print $fh $$object_code
 	or system_error "Couldn't write object file $object_file: $!";
     close $fh 
 	or system_error "Couldn't close object file $object_file: $!";
@@ -692,6 +716,80 @@ EOF
     return $out;
 }
 
+sub set_escape
+{
+    my $self = shift;
+    my %p = @_;
+
+    while ( my ($name, $sub) = each %p )
+    {
+        param_error "Invalid escape name ($name)"
+            if $name !~ /^[\w-]+$/ || $name =~ /^n$/;
+
+        my $coderef;
+        if ( ref $sub )
+        {
+            $coderef = $sub;
+        }
+        else
+        {
+            if ( $sub =~ /^\w+$/ )
+            {
+                no strict 'refs';
+                unless ( defined &{"HTML::Mason::Escapes::$sub"} )
+                {
+                    param_error "Invalid escape: $sub (no matching subroutine in HTML::Mason::Escapes";
+                }
+
+                $coderef = \&{"HTML::Mason::Escapes::$sub"};
+            }
+            else
+            {
+                $coderef = eval $sub;
+                param_error "Invalid escape: $sub ($@)" if $@;
+            }
+        }
+
+        $self->{escapes}{$name} = $coderef;
+    }
+}
+
+sub remove_escape
+{
+    my $self = shift;
+
+    delete $self->{escapes}{ shift() };
+}
+
+sub apply_escapes
+{
+    my $self = shift;
+    my $text = shift;
+
+    foreach my $flag (@_)
+    {
+        param_error "Invalid escape flag: $flag"
+            unless exists $self->{escapes}{$flag};
+
+        $self->{escapes}{$flag}->(\$text);
+    }
+
+    return $text;
+}
+
+#
+# Set or fetch the current time value (deprecated in 1.1x).
+#
+sub current_time {
+    my $self = shift;
+    if (@_) {
+	my $newtime = shift;
+	die "Interp::current_time: invalid value '$newtime' - must be 'real' or a numeric time value" if $newtime ne 'real' && $newtime !~ /^[0-9]+$/;
+	return $self->{current_time} = $newtime;
+    } else {
+	return $self->{current_time};
+    }
+}
 
 1;
 
@@ -715,75 +813,56 @@ Interp objects are handed off immediately to an ApacheHandler object
 which internally calls the Interp implementation methods. In that case
 the only user method is the new() constructor.
 
-=head1 PARAMETERS FOR new() CONSTRUCTOR
+=head1 PARAMETERS TO THE new() CONSTRUCTOR
 
 =over
 
 =item autohandler_name
 
-File name used for autohandlers. Default is "autohandler".
-
-=item autoflush
-
-This parameter indicates whether or not requests created by this
-interpreter should have autoflush turned on or off by default.
+File name used for L<autohandlers|HTML::Mason::Devel/autohandlers>. Default is "autohandler".
 
 =item code_cache_max_size
 
 Specifies the maximum size, in bytes, of the in-memory code cache
-where components are stored. e.g.
-
-    code_cache_max_size => 20*1024*1024
-    code_cache_max_size => 20_000_000
-
-Default is 10 MB. See the L<Code Cache section in the I<Admin
-Guide>|HTML::Mason::Admin/"Code Cache"> for further details.
+where components are stored. Default is 10 MB. See the ADMIN<code
+cache> section of the administrator's manual for further details.
 
 =item compiler
 
-The Compiler object to associate with this Interpreter.  If none is
-provided a default compiler using the
-C<HTML::Mason::Compiler::ToObject> and C<HTML::Mason::Lexer> classes
-will be created.
+The Compiler object to associate with this Interpreter.  By default a
+new object of class L<compiler_class|HTML::Mason::Params/compiler_class> will be created.
+
+=item compiler_class
+
+The class to use when creating a compiler. Defaults to
+L<HTML::Mason::Compiler|HTML::Mason::Compiler>.
+
+=item current_time
+
+Interpreter's notion of the current time (deprecated).
 
 =item data_dir
 
-The Mason data directory. Mason's various data directories (obj,
-cache, etc), live within the data_dir.
+The data directory is a writable directory that Mason uses for various
+features and optimizations: for example, component object files and
+data cache files. Mason will create the directory on startup, if necessary, and set its
+permissions according to the web server User/Group.
 
-If this parameter is not given then there are several results.  First,
-Mason will not use object files, since it has no place to put them.
-Second, the default caching class for the request object will be
-Cache::MemoryCache instead of Cache::FileCache.
+Under L<Apache|HTML::Mason::ApacheHandler>, data_dir defaults to a
+directory called "mason" under the Apache server root. You will
+need to change this on certain systems that assign a high-level
+server root such as F</usr>!
 
-=item data_cache_defaults
+In non-Apache environments, data_dir has no default. If it is left
+unspecified, Mason will not use the L<object files|HTML::Mason::Admin/object files> section of the administrator's manual, and the default
+L<data cache class|HTML::Mason::Request/item_cache> will be
+C<MemoryCache> instead of C<FileCache>.
 
-A hash reference of default options to use for the C<$m-E<gt>cache>
-command. For example, to use the Cache::MemoryCache implementation
-by default,
+=item escape_flags
 
-    data_cache_defaults => {cache_class => 'MemoryCache'}
-
-These settings are overriden by options given to particular
-C<$m-E<gt>cache> calls.
-
-=item static_source
-
-True or false, default is false. When false, Mason checks the
-timestamp of the component source file each time the component is used
-to see if it has changed. This provides the instant feedback for
-source changes that is expected for development.  However it does
-entail a file stat for each component executed.
-
-When true, Mason assumes that the component source tree is unchanging:
-it will not check component source files to determine if the memory
-cache or object file has expired.  This can save many file stats per
-request. However, in order to get Mason to recognize a component
-source change, you must remove object files and restart the server (so
-as to clear the memory cache).
-
-Use this feature for live sites where performance is crucial and
-where updates are infrequent and well-controlled.
+A hash reference of escape flags to set for this object.  See the
+section on the L<C<set_escape()>
+method|HTML::Mason::Interp/set_escape> for more details.
 
 =item ignore_warnings_expr
 
@@ -809,19 +888,47 @@ when the interpreter initializes. e.g.
 
 Default is the empty list.  For maximum performance, this should only
 be used for components that are frequently viewed and rarely updated.
-See the L<preloading section in the I<Admin
-Guide>|HTML::Mason::Admin/preloading> for further details.
+See the the L<preloading|HTML::Mason::Admin/preloading> section of the administrator's manual section of the administrator's manual for
+further details.
 
-As mentioned in the developer's guide, a component's C<< <%once> >>
+As mentioned in the developer's manual, a component's C<< <%once> >>
 section is executed when it is loaded.  For preloaded components, this
 means that this section will be executed before a Mason or Apache
 request exist, so preloading a component that uses C<$m> or C<$r> in a
 C<< <%once> >> section will fail.
 
+=item request_class
+
+The class to use when creating requests. Defaults to
+L<HTML::Mason::Request|HTML::Mason::Request>.
+
 =item resolver
 
-The Resolver object to associate with this Interpreter.  If none is
-provided, a default Resolver will be created.
+The Resolver object to associate with this Compiler. By default a new
+object of class L<resolver_class|HTML::Mason::Params/resolver_class> will be created.
+
+=item resolver_class
+
+The class to use when creating a resolver. Defaults to
+L<HTML::Mason::Resolver::File|HTML::Mason::Resolver::File>.
+
+=item static_source
+
+True or false, default is false. When false, Mason checks the
+timestamp of the component source file each time the component is used
+to see if it has changed. This provides the instant feedback for
+source changes that is expected for development.  However it does
+entail a file stat for each component executed.
+
+When true, Mason assumes that the component source tree is unchanging:
+it will not check component source files to determine if the memory
+cache or object file has expired.  This can save many file stats per
+request. However, in order to get Mason to recognize a component
+source change, you must remove object files and restart the server (so
+as to clear the memory cache).
+
+Use this feature for live sites where performance is crucial and
+where updates are infrequent and well-controlled.
 
 =item use_object_files
 
@@ -840,7 +947,7 @@ sets and returns the value.  For example:
 
     my $interp = new HTML::Mason::Interp (...);
     my $c = $interp->compiler;
-    $interp->dhandler_name("da-handler");
+    $interp->code_cache_max_size(20 * 1024 * 1024);
 
 The following properties can be queried but not modified: data_dir,
 preloads.
@@ -864,6 +971,43 @@ for examples.
 This method isn't generally useful in a mod_perl environment; see
 L<subrequests|HTML::Mason::Devel/Subrequests> instead.
 
+=for html <a name="item_set_escape"></a>
+
+=item set_escape ($name => see below])
+
+This method is called to add an escape flag to the list of known
+escapes for the interpreter.  The flag may only consist of the
+characters matching C<\w> and the dash (-).
+
+The right hand side may be one of several things.  It can be a
+subroutine reference.  It can also be a string match C</^\w+$/>, in
+which case it is assumed to be the name of a subroutine in the
+C<HTML::Mason::Escapes> module.  Finally, if it is a string that does
+not match the above regex, then it is assumed to be C<eval>able code,
+which will return a subroutine reference.
+
+When setting these with C<PerlSetVar> directives in an Apache
+configuration file, you can set them like this:
+
+  PerlSetVar  MasonEscapeFlags  "flag  => \&subroutine"
+  PerlSetVar  MasonEscapeFlags  "uc    => sub { ${$_[0]} = uc ${$_[0]}; }"
+  PerlAddVar  MasonEscapeFlags  "thing => other_thing"
+
+=for html <a name="item_remove_escape"></a>
+
+=item remove_escape ($name)
+
+Given an escape name, this removes that escape from the interpreter's
+known escapes.  If the name is not recognized, it is simply ignored.
+
+=for apply_escapes <a name="item_apply_escapes"></a>
+
+=item apply_escapes ($text, $flags, [more flags...])
+
+This method applies a one or more escapes to a piece of text.  The
+escapes are specified by giving their flag.  Each escape is applied to
+the text in turn, after which the now-modified text is returned.
+
 =for html <a name="item_set_global"></a>
 
 =item set_global ($varname, [values...])
@@ -882,17 +1026,17 @@ in the case of a list or hash.  For example:
 
 The global is set in the package that components run in: usually
 C<HTML::Mason::Commands>, although this can be overridden via the
-L<Compiler's in_package|HTML::Mason::Compiler/in_package> parameter.
+L<in_package|HTML::Mason::Params/in_package> parameter.
 The lines above, for example, are equivalent to:
 
     $HTML::Mason::Commands::dbh = DBI->connect(...);
     %HTML::Mason::Commands::session = %s;
 
-assuming that C<in_package> has not been changed.
+assuming that L<in_package|HTML::Mason::Params/in_package> has not been changed.
 
 Any global that you set should also be registered with the
-L<Compiler's allow_globals|HTML::Mason::Compiler/allow_globals>
-parameter; otherwise you'll get warnings from C<strict>.
+L<allow_globals|HTML::Mason::Params/allow_globals> parameter; otherwise you'll get warnings from
+C<strict>.
 
 =for html <a name="item_comp_exists"></a>
 

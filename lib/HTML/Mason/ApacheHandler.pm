@@ -178,14 +178,14 @@ sub _handle_error
 
 sub redirect
 {
-    my ($self, $url) = @_;
+    my ($self, $url, $status) = @_;
     my $r = $self->apache_req;
-    
+
     $self->clear_buffer;
     $r->method('GET');
     $r->headers_in->unset('Content-length');
     $r->err_header_out( Location => $url );
-    $self->abort(REDIRECT);
+    $self->abort($status || REDIRECT);
 }
 
 #----------------------------------------------------------------------
@@ -241,13 +241,13 @@ use File::Path;
 use File::Spec;
 use HTML::Mason::Exceptions( abbr => [qw(param_error system_error error)] );
 use HTML::Mason::Interp;
+use HTML::Mason::Tools qw( load_pkg );
 use HTML::Mason::Utils;
 use Params::Validate qw(:all);
 Params::Validate::validation_options( on_fail => sub { param_error( join '', @_ ) } );
 
 use Apache;
 use Apache::Constants qw( OK DECLINED NOT_FOUND );
-use Apache::Status;
 
 # Require a reasonably modern mod_perl - should probably be later
 use mod_perl 1.22;
@@ -371,14 +371,33 @@ sub make_ah
 	if (@{$p{comp_root}} == 1 && $p{comp_root}->[0] !~ /=>/) {
 	    $p{comp_root} = $p{comp_root}[0];  # Convert to a simple string
 	} else {
+            my @roots;
 	    foreach my $root (@{$p{comp_root}}) {
 		$root = [ split /\s*=>\s*/, $root, 2 ];
 		param_error "Configuration parameter MasonCompRoot must be either ".
                             "a single string value or multiple key/value pairs ".
-                            "like 'foo => /home/mason/foo'"
+                            "like 'foo => /home/mason/foo'.  Invalid parameter:\n$root"
 		    unless defined $root->[1];
+
+                push @roots, $root;
 	    }
+
+            $p{comp_root} = \@roots;
 	}
+    }
+
+    if (exists $p{escape_flags}) {
+        my %escapes;
+        foreach my $pair (@{$p{escape_flags}}) {
+            my ($key, $val) = split /\s*=>\s*/, $pair, 2;
+            param_error "Configuration parameter MasonEscapeFlags must be a key/value pair ".
+                        "like 'foo => \&foo_escape'.  Invalid parameter:\n$pair"
+                unless defined $key && defined $val;
+
+            $escapes{$key} = $val;
+        }
+
+        $p{escape_flags} = \%escapes;
     }
 
     my $ah = $package->new(%p, $r);
@@ -532,14 +551,21 @@ sub new
 	$defaults{comp_root} = $req->document_root;
     }
 
-    if (exists $allowed_params->{data_dir})
+    my %params = @_;
+
+    if (exists $allowed_params->{data_dir} and not exists $params{data_dir})
     {
 	# constructs path to <server root>/mason
-	$defaults{data_dir} = Apache->server_root_relative('mason');
+	my $def = $defaults{data_dir} = Apache->server_root_relative('mason');
+	die "Default data_dir (MasonDataDir) '$def' must be an absolute path"
+	    unless File::Spec->file_name_is_absolute($def);
+	  
+	my @levels = File::Spec->splitdir($def);
+	die "Default data_dir (MasonDataDir) '$def' must be more than two levels deep (or must be set explicitly)"
+	    if @levels <= 3;
     }
 
     # Set default error_format based on error_mode
-    my %params = @_;
     if (exists($params{error_mode}) and $params{error_mode} eq 'fatal') {
 	$defaults{error_format} = 'line';
     } else {
@@ -589,13 +615,12 @@ sub new
 
 # Register with Apache::Status at module startup.  Will get replaced
 # with a more informative status once an interpreter has been created.
-
 my $status_name = 'mason0001';
-
+if ( load_pkg('Apache::Status') )
 {
     Apache::Status->menu_item
-	    ($status_name => __PACKAGE__->allowed_params->{apache_status_title}{default},
-	     sub { ["<b>(no interpreters created in this child yet)</b>"] });
+	($status_name => __PACKAGE__->allowed_params->{apache_status_title}{default},
+         sub { ["<b>(no interpreters created in this child yet)</b>"] });
 }
 
 
@@ -956,7 +981,7 @@ parameters to the new() constructor.
 handle_request() is not a user method, but rather is called from the
 HTML::Mason::handler() routine in handler.pl.
 
-=head1 PARAMETERS TO THE new() CONTRUCTOR
+=head1 PARAMETERS TO THE new() CONSTRUCTOR
 
 =over
 
@@ -970,40 +995,42 @@ visible via Apache::Status.
 =item args_method
 
 Method to use for unpacking GET and POST arguments. The valid options
-are 'CGI' and 'mod_perl'; these indicate that a CGI.pm or
-Apache::Request object (respectively) will be created for the purposes
+are 'CGI' and 'mod_perl'; these indicate that a C<CGI.pm> or
+C<Apache::Request> object (respectively) will be created for the purposes
 of argument handling.
 
-Apache::Request is the default and requires that you have installed
-this package.
+'mod_perl' is the default and requires that you have installed the
+C<Apache::Request> package.
 
-If the args_method is 'CGI', the Mason request object ($m) will have a
+If the args_method is 'CGI', the Mason request object (C<$m>) will have a
 method called C<cgi_object> available.  This method returns the CGI
-object used in the ApacheHandler code.
+object used for argument processing.
 
-If args_method is 'mod_perl', the $r global is upgraded to an
+If args_method is 'mod_perl', the C<$r> global is upgraded to an
 Apache::Request object. This object inherits all Apache methods and
 adds a few of its own, dealing with parameters and file uploads.  See
 L<Apache::Request|Apache::Request> for more information.
 
-While Mason will load Apache::Request or CGI as needed at runtime, it
+While Mason will load C<Apache::Request> or C<CGI> as needed at runtime, it
 is recommended that you preload the relevant module either in your
-httpd.conf or handler.pl file, as this will save some memory.
+F<httpd.conf> or F<handler.pl> file, as this will save some memory.
 
 =item decline_dirs
 
-Indicates whether Mason should decline directory requests, leaving
-Apache to serve up a directory index or a FORBIDDEN error as
-appropriate. Default is 1. See L<Allowing directory requests in the
-Admin manual|HTML::Mason::Admin/"Allowing directory requests"> for
-more information about handling directories with Mason.
+True or false, default is true. Indicates whether Mason should decline
+directory requests, leaving Apache to serve up a directory index or a
+C<FORBIDDEN> error as appropriate. See the L<allowing directory requests|HTML::Mason::Admin/allowing directory requests> section of the administrator's manual
+for more information about handling directories with Mason.
 
 =item interp
 
-Specifies a Mason interpreter to use for handling requests.  An
-C<HTML::Mason::Interp> object will be created if you don't specify one
-yourself.  The interpreter should be an instance of the
-C<HTML::Mason::Interp> class, or a subclass thereof.
+The interpreter object to associate with this compiler. By default a
+new object of class L<interp_class|HTML::Mason::Params/interp_class> will be created.
+
+=item interp_class
+
+The class to use when creating a interpreter. Defaults to
+L<HTML::Mason::Interp|HTML::Mason::Interp>.
 
 =back
 
@@ -1064,7 +1091,7 @@ The second is an Apache request object, possibly the one originally
 passed to the method.
 
 The third item may be a CGI.pm object or C<undef>, depending on the
-value of the "args_method" parameter for the ApacheHandler object.
+value of the L<args_method|HTML::Mason::Params/args_method> parameter.
 
 =back
 

@@ -1,91 +1,109 @@
-<HTML>
-<HEAD>
-<TITLE>HTML::Mason::Lexer - Generates events based on component source lexing</TITLE>
-<LINK REV="made" HREF="mailto:perl@packages.debian.org">
-</HEAD>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>HTML::Mason::Lexer - Generates events based on component source lexing</title>
+<link rev="made" href="mailto:root@localhost" />
+</head>
 
-<BODY>
+<body style="background-color: white">
 
-<A NAME="__index__"></A>
+<p><a name="__index__"></a></p>
 <!-- INDEX BEGIN -->
 
-<UL>
+<ul>
 
-	<LI><A HREF="#name">NAME</A></LI>
-	<LI><A HREF="#synopsis">SYNOPSIS</A></LI>
-	<LI><A HREF="#description">DESCRIPTION</A></LI>
-	<LI><A HREF="#methods">METHODS</A></LI>
-	<LI><A HREF="#subclassing">SUBCLASSING</A></LI>
-</UL>
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#methods">METHODS</a></li>
+	<li><a href="#subclassing">SUBCLASSING</a></li>
+</ul>
 <!-- INDEX END -->
 
-<HR>
-<P>
-<H1><A NAME="name">NAME</A></H1>
-<P>HTML::Mason::Lexer - Generates events based on component source lexing</P>
-<P>
-<HR>
-<H1><A NAME="synopsis">SYNOPSIS</A></H1>
-<PRE>
-  my $lexer = HTML::Mason::Lexer-&gt;new;</PRE>
-<PRE>
-  $lexer-&gt;lex( comp_source =&gt; $source, name =&gt; $comp_name, compiler =&gt; $compiler );</PRE>
-<P>
-<HR>
-<H1><A NAME="description">DESCRIPTION</A></H1>
-<P>The Lexer works in tandem with the Compiler to turn Mason component
-source into something else, generally Perl code.</P>
-<P>As the lexer finds component elements, like a tag or block, it calls
-the appropriate event methods in the compiler object it was given.</P>
-<P>It has only a few public methods.</P>
-<P>You can replace this lexer with one of your own simply by telling the
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>HTML::Mason::Lexer - Generates events based on component source lexing</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  my $lexer = HTML::Mason::Lexer-&gt;new;</pre>
+<pre>
+  $lexer-&gt;lex( comp_source =&gt; $source, name =&gt; $comp_name, compiler =&gt; $compiler );</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>The Lexer works in tandem with the Compiler to turn Mason component
+source into something else, generally Perl code.</p>
+<p>As the lexer finds component elements, like a tag or block, it calls
+the appropriate event methods in the compiler object it was given.</p>
+<p>It has only a few public methods.</p>
+<p>You can replace this lexer with one of your own simply by telling the
 Compiler to use a different lexer class.  Your lexer class simply
 needs to call the appropriate methods in the Component Class's API as
-it scans the source.</P>
-<P>
-<HR>
-<H1><A NAME="methods">METHODS</A></H1>
-<P>The lexer has very few public methods.</P>
-<DL>
-<DT><STRONG><A NAME="item_new">new</A></STRONG><BR>
-<DD>
+it scans the source.</p>
+<p>
+</p>
+<hr />
+<h1><a name="methods">METHODS</a></h1>
+<p>The lexer has very few public methods.</p>
+<dl>
+<dt><strong><a name="item_new">new</a></strong><br />
+</dt>
+<dd>
 This method creates a new Lexer object.  This methods takes no
 parameters.
-<P></P>
-<DT><STRONG><A NAME="item_lex">lex ( comp_source =&gt; ..., name =&gt; ..., compiler =&gt; ... )</A></STRONG><BR>
-<DD>
+</dd>
+<p></p>
+<dt><strong><a name="item_lex">lex ( comp_source =&gt; ..., name =&gt; ..., compiler =&gt; ... )</a></strong><br />
+</dt>
+<dd>
 This method tells the lexer to start scanning the given component
-source.  All of these parameters are required.  The <A HREF="#item_name"><CODE>name</CODE></A> parameter
+source.  All of these parameters are required.  The <a href="#item_name"><code>name</code></a> parameter
 will be used in any error messages generated during lexing.  The
-<CODE>compiler</CODE> object must be an object that implements the Mason
+<code>compiler</code> object must be an object that implements the Mason
 Component API.
-<P></P>
-<DT><STRONG><A NAME="item_line_number">line_number</A></STRONG><BR>
-<DD>
+</dd>
+<p></p>
+<dt><strong><a name="item_line_number">line_number</a></strong><br />
+</dt>
+<dd>
 The current line number that the lexer has reached.
-<P></P>
-<DT><STRONG><A NAME="item_name">name</A></STRONG><BR>
-<DD>
+</dd>
+<p></p>
+<dt><strong><a name="item_name">name</a></strong><br />
+</dt>
+<dd>
 The name of the component currently being lexed.
-<P></P>
-<DT><STRONG><A NAME="item_throw_syntax_error">throw_syntax_error ($error)</A></STRONG><BR>
-<DD>
-This throws an <CODE>HTML::Mason::Exception::Syntax</CODE> error with the given
+</dd>
+<p></p>
+<dt><strong><a name="item_throw_syntax_error">throw_syntax_error ($error)</a></strong><br />
+</dt>
+<dd>
+This throws an <code>HTML::Mason::Exception::Syntax</code> error with the given
 error message as well as additional information about the component
 source.
-<P>This method is used by both the Lexer and the Compiler.</P>
-<P></P></DL>
-<P>
-<HR>
-<H1><A NAME="subclassing">SUBCLASSING</A></H1>
-<P>Any subclass of the lexer should declare itself to be a subclass of
-<CODE>HTML::Mason::Lexer</CODE>, even if it plans to override all of its public
-methods.</P>
-<P>If you want your subclass to work with the existing Compiler classes
+</dd>
+<dd>
+<p>This method is used by both the Lexer and the Compiler.</p>
+</dd>
+<p></p></dl>
+<p>
+</p>
+<hr />
+<h1><a name="subclassing">SUBCLASSING</a></h1>
+<p>Any subclass of the lexer should declare itself to be a subclass of
+<code>HTML::Mason::Lexer</code>, even if it plans to override all of its public
+methods.</p>
+<p>If you want your subclass to work with the existing Compiler classes
 in Mason, you must implement the methods listed above.  If you plan to
 use a custom Compiler class that you're writing, you can do whatever
-you want.</P>
+you want.</p>
 
-</BODY>
+</body>
 
-</HTML>
+</html>

@@ -68,12 +68,8 @@ I have 1 subcomponent(s).
 Including one called .subcomp.
 My title is /component/comp_obj_test/comp_obj.
 
-My object file is /.../obj/component/comp_obj_test/comp_obj
 My path is /component/comp_obj_test/comp_obj.
 My comp_id is /component/comp_obj_test/comp_obj.
-My source file is /.../comps/component/comp_obj_test/comp_obj
-My source dir is /.../comps/component/comp_obj_test
-
 
 
 ------------------------------------------------------------
@@ -91,10 +87,8 @@ My directory is /component/comp_obj_test.
 I have 0 subcomponent(s).
 My title is /component/comp_obj_test/comp_obj:.subcomp.
 
-My object file is /.../obj/component/comp_obj_test/comp_obj
 My path is /component/comp_obj_test/comp_obj:.subcomp.
 My comp_id is [subcomponent '.subcomp' of /component/comp_obj_test/comp_obj].
-
 
 
 ------------------------------------------------------------
@@ -306,6 +300,34 @@ before
 after
 EOF
 		    );
+
+#------------------------------------------------------------
+
+
+    $group->add_support( path => 'clear_filter_comp',
+			 component => <<'EOF',
+Bar
+% $m->clear_buffer;
+Baz
+EOF
+		       );
+
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'clear_in_comp_called_with_filter',
+                      description => 'Test that clear_buffer clears _all_ buffers, even inside a filter',
+                      component => <<'EOF',
+Foo
+<& clear_filter_comp &>\
+<%filter>
+s/^/-/gm;
+</%filter>
+EOF
+                      expect => <<'EOF',
+-Baz
+EOF
+                    );
 
 #------------------------------------------------------------
 

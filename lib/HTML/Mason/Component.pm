@@ -118,7 +118,8 @@ sub run {
 
     my $req = HTML::Mason::Request->instance;
 
-    $req->push_filter_buffer( filter => $self->{filter} );
+    $req->push_filter_buffer( filter => $self->{filter},
+                              filter_args => \@_ );
 
     my @r;
 
@@ -131,7 +132,7 @@ sub run {
         } elsif (defined $wantarray) {
             $result[0] = $self->{code}->(@_);;
         } else {
-            $self->{code}->(@_);;
+            $self->{code}->(@_);
         }
     };
 
@@ -140,7 +141,7 @@ sub run {
 
     die $@ if $@;
 
-    return $wantarray ? @result : $result[0];
+    return $wantarray ? @result : defined $wantarray ? $result[0] : undef;
 }
 
 sub dynamic_subs_init {
@@ -172,6 +173,8 @@ sub persistent { 0 }
 # Only true in Subcomponent subclass.
 #
 sub is_subcomp { 0 }
+
+sub is_method { 0 }
 
 #
 # Only true in FileBased subclass.
@@ -332,6 +335,12 @@ sub object_file {
     return $self->interp->object_file($self);
 }
 
+# For backwards compatibility with 1.0x
+sub create_time {
+    my $self = shift;
+    return $self->load_time(@_);
+}
+
 1;
 
 __END__
@@ -418,10 +427,15 @@ attribute does not exist.
 Returns true if the specified attribute exists in this component or
 one of its parents, undef otherwise.
 
-=item load_time
+=item call_method (name, args...)
 
-Returns the time (in Perl time() format) when this component object
-was created.
+Looks for the specified user-defined method in this component and its
+parents, calling the first one found. Dies with an error if not found.
+Methods are declared in the C<E<lt>%methodE<gt>> section.
+
+=item create_time
+
+A synonym for L<load_time|HTML::Mason::Component/item_load_time> (deprecated).
 
 =item declared_args
 
@@ -465,23 +479,38 @@ Unlike attributes, flags values do not get inherited from parent components.
 
 =item is_subcomp
 
-Returns true if this is a subcomponent of another component.
+Returns true if this is a subcomponent of another component.  For
+historical reasons, this returns true for both methods and
+subcomponents.
+
+=item is_method
+
+Returns true if this is a method.
 
 =item is_file_based
 
 Returns true if this component was loaded from a source or object
 file.
 
-=item call_method (name, args...)
+=for html <a name="item_load_time"></a>
 
-Looks for the specified user-defined method in this component and its
-parents, calling the first one found. Dies with an error if not found.
-Methods are declared in the C<E<lt>%methodE<gt>> section.
+=item load_time
+
+Returns the time (in Perl time() format) when this component object
+was created.
 
 =item method_exists (name)
 
 Returns true if the specified user-defined method exists in this
 component or one of its parents, undef otherwise.
+
+=item methods
+
+This method works exactly like the
+L<subcomps|HTML::Mason::Component/item_subcomps> method, but it
+returns methods, not subcomponents.
+
+Methods are declared in C<E<lt>%methodE<gt>> sections.
 
 =item name
 
@@ -515,6 +544,8 @@ args...)>, but returns the method output as a string instead of
 printing it. (Think sprintf versus printf.) The method's return value,
 if any, is discarded.
 
+=for html <a name="item_subcomps"></a>
+
 =item subcomps
 
 With no arguments, returns a hashref containing the subcomponents defined
@@ -527,13 +558,6 @@ or undef if no such subcomponent exists. e.g.
     }
 
 Subcomponents are declared in C<E<lt>%defE<gt>> sections.
-
-=item methods
-
-This method works exactly like the subcomps method, but it returns
-methods, not subcomponents.
-
-Methods are declared in C<E<lt>%methodE<gt>> sections.
 
 =item title
 

@@ -2,6 +2,7 @@
 
 use strict;
 
+use File::Spec;
 use HTML::Mason::Tests;
 
 my $tests = make_tests();
@@ -35,7 +36,7 @@ EOF
 
     $group->add_support( path => '/support/error2',
 			 component => <<'EOF',
-% die "horrible error";			 
+% die "horrible error";
 EOF
 		       );
 
@@ -65,5 +66,106 @@ EOF
 
 #------------------------------------------------------------
 
+    $group->add_support( path => '/support/unreadable',
+			 component => <<'EOF',
+unreadable
+EOF
+		       );
+
+    my $file = File::Spec->catfile( $group->comp_root, 'errors', 'support', 'unreadable' );
+
+    $group->add_test( name => 'cannot_read_source',
+		      description => 'Make sure that Mason throws a useful error when it cannot read a source file',
+		      component => <<"EOF",
+<%init>
+chmod 0222, '$file'
+    or die "Cannot chmod $file to 0222: \$!";
+\$m->comp('support/unreadable');
+</%init>
+EOF
+		      expect_error => q|Permission denied|
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_support( path => '/support/zero_size',
+			 component => '',
+		       );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'read_zero_size',
+		      description => 'Make sure that Mason handles a zero length source file correctly',
+		      component => <<'EOF',
+zero[<& support/zero_size &>]zero
+EOF
+		      expect => <<'EOF'
+zero[]zero
+EOF
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'bad_source_callback',
+		      description => 'Make sure that a bad source_callback for a ComponentSource object reports a useful error',
+                      interp_params => { resolver_class => 'My::Resolver' },
+		      component => <<'EOF',
+does not matter
+EOF
+		      expect_error => qr/Undefined subroutine.*will_explode/,
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'bad_escape_flag',
+		      description => 'Make sure that an invalid escape flag is reported properly',
+		      component => <<'EOF',
+<% 1234 | abc %>
+EOF
+		      expect_error => qr/Invalid escape flag: abc/,
+		    );
+
+#------------------------------------------------------------
+
+    # this is easy to check for as an exact string
+    sub HTML::Mason::Exception::as_munged
+    {
+        my $err = shift->error;
+
+        return $err =~ /^(.+?) at/ ? $1 : $err;
+    }
+
+    $group->add_test( name => 'error_in_subrequest',
+		      description => 'Make sure that an error in a subrequest is propogated back to the main request',
+                      interp_params => { error_format => 'munged',
+                                         error_mode => 'output',
+                                       },
+		      component => <<'EOF',
+Should not appear in output!
+% $m->subexec( '/errors/support/error1' );
+EOF
+                      expect => <<'EOF',
+terrible error
+EOF
+		    );
+
+#------------------------------------------------------------
+
     return $group;
+}
+
+package My::Resolver;
+
+use base 'HTML::Mason::Resolver::File';
+
+sub get_info
+{
+    my $self = shift;
+
+    if ( my $source = $self->SUPER::get_info(@_) )
+    {
+        $source->{source_callback} = sub { will_explode() };
+
+        return $source;
+    }
 }

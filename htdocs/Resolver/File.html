@@ -1,79 +1,101 @@
-<HTML>
-<HEAD>
-<TITLE>HTML::Mason::Resolver::File - translates component paths into filesystem paths</TITLE>
-<LINK REV="made" HREF="mailto:perl@packages.debian.org">
-</HEAD>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>HTML::Mason::Resolver::File - Component path resolver for file-based components</title>
+<link rev="made" href="mailto:root@localhost" />
+</head>
 
-<BODY>
+<body style="background-color: white">
 
-<A NAME="__index__"></A>
+<p><a name="__index__"></a></p>
 <!-- INDEX BEGIN -->
 
-<UL>
+<ul>
 
-	<LI><A HREF="#name">NAME</A></LI>
-	<LI><A HREF="#synopsis">SYNOPSIS</A></LI>
-	<LI><A HREF="#description">DESCRIPTION</A></LI>
-	<LI><A HREF="#constructor">CONSTRUCTOR</A></LI>
-	<LI><A HREF="#additional_methods">ADDITIONAL METHODS</A></LI>
-	<LI><A HREF="#see_also">SEE ALSO</A></LI>
-</UL>
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#parameters_to_the_new()_constructor">PARAMETERS TO THE <code>new()</code> CONSTRUCTOR</a></li>
+	<li><a href="#additional_methods">ADDITIONAL METHODS</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
 <!-- INDEX END -->
 
-<HR>
-<P>
-<H1><A NAME="name">NAME</A></H1>
-<P>HTML::Mason::Resolver::File - translates component paths into filesystem paths</P>
-<P>
-<HR>
-<H1><A NAME="synopsis">SYNOPSIS</A></H1>
-<PRE>
-  my $resolver = HTML::Mason::Resolver::File-&gt;new( comp_root =&gt; '/var/www/mason' );</PRE>
-<PRE>
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>HTML::Mason::Resolver::File - Component path resolver for file-based components</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  my $resolver = HTML::Mason::Resolver::File-&gt;new( comp_root =&gt; '/var/www/mason' );</pre>
+<pre>
   my $info = $resolver-&gt;get_info('/some/comp.html');
-  my $comp_root = $resolver-&gt;comp_root;</PRE>
-<P>
-<HR>
-<H1><A NAME="description">DESCRIPTION</A></H1>
-<P>This HTML::Mason::Resolver subclass is used when components are stored
-on the filesystem, which is the norm for most Mason-based applications.</P>
-<P>
-<HR>
-<H1><A NAME="constructor">CONSTRUCTOR</A></H1>
-<DL>
-<DT><STRONG><A NAME="item_comp_root">comp_root</A></STRONG><BR>
-<DD>
-The <CODE>new</CODE> method takes a single mandatory parameter, <A HREF="#item_comp_root"><CODE>comp_root</CODE></A>.
-This parameter may be either a scalar or an array reference.  If it is
+  my $comp_root = $resolver-&gt;comp_root;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This HTML::Mason::Resolver subclass is used when components are stored
+on the filesystem, which is the norm for most Mason-based applications.</p>
+<p>
+</p>
+<hr />
+<h1><a name="parameters_to_the_new()_constructor">PARAMETERS TO THE <code>new()</code> CONSTRUCTOR</a></h1>
+<p>The <code>new</code> method takes a single mandatory parameter, <a href="#item_comp_root"><code>comp_root</code></a>.</p>
+<dl>
+<dt><strong><a name="item_comp_root">comp_root</a></strong><br />
+</dt>
+<dd>
+The component root marks the top of your component hierarchy and
+defines how component paths are translated into real file paths. For
+example, if your component root is <em>/usr/local/httpd/docs</em>, a component
+path of <em>/products/index.html</em> translates to the file
+<em>/usr/local/httpd/docs/products/index.html</em>.
+</dd>
+<dd>
+<p>Under <a href="/HTML/Mason/ApacheHandler.html">Apache</a> and
+<a href="/HTML/Mason/CGIHandler.html">CGI</a>, comp_root defaults to the server's
+document root. In standalone mode comp_root defaults to the current
+working directory.</p>
+</dd>
+<dd>
+<p>This parameter may be either a scalar or an array reference.  If it is
 a scalar, it should be a filesystem path indicating the component
-root.
-<P>If it is an array reference, it should be of the following form:</P>
-<PRE>
+root. If it is an array reference, it should be of the following form:</p>
+</dd>
+<dd>
+<pre>
  [ [ key1 =&gt; '/path/to/root' ],
-   [ key2 =&gt; '/path/to/other/root' ] ]</PRE>
-<P>The ``keys'' for each path must be unique names and their ``values'' must
+   [ key2 =&gt; '/path/to/other/root' ] ]</pre>
+</dd>
+<dd>
+<p>The ``keys'' for each path must be unique names and their ``values'' must
 be filesystem paths.  These paths will be searched in the provided
-order whenever a component path must be resolved to a filesystem path.</P>
-<P>This parameter defaults to the current working directory.  The
-ApacheHandler and CGIHandler modules default this parameter to the web
-server's document root.</P>
-<P></P></DL>
-<P>
-<HR>
-<H1><A NAME="additional_methods">ADDITIONAL METHODS</A></H1>
-<P>Besides, the methods documented in the HTML::Mason::Resolver method,
-this class provides one additional method.</P>
-<DL>
-<DT><STRONG>comp_root</STRONG><BR>
-<DD>
+order whenever a component path must be resolved to a filesystem path.</p>
+</dd>
+<p></p></dl>
+<p>
+</p>
+<hr />
+<h1><a name="additional_methods">ADDITIONAL METHODS</a></h1>
+<dl>
+<dt><strong>comp_root</strong><br />
+</dt>
+<dd>
 This method returns the component root, which will either be a scalar
-or an array reference, as documented in <A HREF="#constructor">CONSTRUCTOR</A>.
-<P></P></DL>
-<P>
-<HR>
-<H1><A NAME="see_also">SEE ALSO</A></H1>
-<P><A HREF="Mason.html">HTML::Mason</A></P>
+or an array reference, as documented in <a href="#constructor">CONSTRUCTOR</a>.
+</dd>
+<p></p></dl>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/HTML/Mason.html">HTML::Mason</a></p>
 
-</BODY>
+</body>
 
-</HTML>
+</html>

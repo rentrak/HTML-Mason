@@ -28,7 +28,7 @@ EOF
 
 #------------------------------------------------------------
 
-    $group->add_test( name => 'allowed_globals',
+    $group->add_test( name => 'allowed_globals2',
 		      description => 'test that undeclared globals cause an error',
 		      pretest_code => sub { undef *HTML::Mason::Commands::global; undef *HTML::Mason::Commands::global },  # repeated to squash a var used only once warning
 		      interp_params => { use_object_files => 0 },
@@ -41,7 +41,7 @@ EOF
 
 #------------------------------------------------------------
 
-    $group->add_test( name => 'allowed_globals',
+    $group->add_test( name => 'allowed_globals3',
 		      description => 'test that declared globals are allowed',
 		      interp_params => { use_object_files => 0, allow_globals => ['$global'] },
 		      component => <<'EOF',
@@ -67,6 +67,36 @@ Explicitly URL-escaped: <% $expr |u
 No flags: <% $expr %><p>
 No flags again: <% $expr | %><p>
 Explicitly not escaped: <% $expr | n%><p>
+<%init>
+my $expr = "<b><i>Hello there</i></b>.";
+</%init>
+EOF
+                          expect => <<'EOF',
+Explicitly HTML-escaped: &lt;b&gt;&lt;i&gt;Hello there&lt;/i&gt;&lt;/b&gt;.<p>
+Explicitly HTML-escaped redundantly: &lt;b&gt;&lt;i&gt;Hello there&lt;/i&gt;&lt;/b&gt;.<p>
+Explicitly URL-escaped: %3Cb%3E%3Ci%3EHello%20there%3C%2Fi%3E%3C%2Fb%3E.<p>
+No flags: <b><i>Hello there</i></b>.<p>
+No flags again: <b><i>Hello there</i></b>.<p>
+Explicitly not escaped: <b><i>Hello there</i></b>.<p>
+EOF
+                        );
+    }
+
+#------------------------------------------------------------
+
+    if ( load_pkg('HTML::Entities') )
+    {
+        $group->add_test( name => 'default_escape_flags_new',
+                          description => 'test new escape flags',
+                          interp_params => { use_object_files => 0 },
+                          component => <<'EOF',
+Explicitly HTML-escaped: <% $expr | h %><p>
+Explicitly HTML-escaped redundantly: <% $expr | h,h %><p>
+Explicitly URL-escaped: <% $expr |u
+%><p>
+No flags: <% $expr %><p>
+No flags again: <% $expr | %><p>
+Explicitly not escaped: <% $expr | n %><p>
 <%init>
 my $expr = "<b><i>Hello there</i></b>.";
 </%init>
@@ -112,12 +142,66 @@ EOF
                         );
     }
 
+#------------------------------------------------------------
+
+    if ( load_pkg('HTML::Entities') )
+    {
+        $group->add_test( name => 'default_escape_flags_2_new',
+                          description => 'test that turning on default escaping works with new flags',
+                          interp_params => { use_object_files => 0,
+                                             default_escape_flags => [ 'h' ] },
+                          component => <<'EOF',
+Explicitly HTML-escaped: <% $expr | h %><p>
+Explicitly HTML-escaped redundantly: <% $expr | h , h %><p>
+Explicitly URL-escaped: <% $expr | u, n
+%><p>
+No flags: <% $expr %><p>
+No flags again: <% $expr | %><p>
+Explicitly not escaped: <% $expr | n %><p>
+<%init>
+my $expr = "<b><i>Hello there</i></b>.";
+</%init>
+EOF
+                          expect => <<'EOF',
+Explicitly HTML-escaped: &lt;b&gt;&lt;i&gt;Hello there&lt;/i&gt;&lt;/b&gt;.<p>
+Explicitly HTML-escaped redundantly: &lt;b&gt;&lt;i&gt;Hello there&lt;/i&gt;&lt;/b&gt;.<p>
+Explicitly URL-escaped: %3Cb%3E%3Ci%3EHello%20there%3C%2Fi%3E%3C%2Fb%3E.<p>
+No flags: &lt;b&gt;&lt;i&gt;Hello there&lt;/i&gt;&lt;/b&gt;.<p>
+No flags again: &lt;b&gt;&lt;i&gt;Hello there&lt;/i&gt;&lt;/b&gt;.<p>
+Explicitly not escaped: <b><i>Hello there</i></b>.<p>
+EOF
+                        );
+    }
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'setting_escapes',
+                      description => 'test setting escapes',
+                      component => <<'EOF',
+% $m->interp->set_escape( uc => sub { ${$_[0]} = uc ${$_[0]} } );
+This will be in <% 'upper case' | uc %>
+EOF
+                      expect => <<'EOF',
+This will be in UPPER CASE
+EOF
+                    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'invalid_escape_name',
+                      description => 'test setting an escape with an invalid name',
+                      component => <<'EOF',
+% $m->interp->set_escape( 'u c' => sub { uc $_[0] } );
+EOF
+                      expect_error => qr/Invalid escape name/,
+                    );
 
 #------------------------------------------------------------
 
     $group->add_test( name => 'globals_in_default_package',
 		      description => 'tests that components are executed in HTML::Mason::Commands package by default',
-		      interp_params => { use_object_files => 0, allow_globals => ['$packvar'] },
+		      interp_params => { use_object_files => 0,
+                                         allow_globals => ['$packvar'] },
 		      component => <<'EOF',
 <% $packvar %>
 <%init>
@@ -135,7 +219,8 @@ EOF
 
     $group->add_test( name => 'globals_in_different_package',
 		      description => 'tests in_package compiler parameter',
-		      interp_params => { use_object_files => 0, allow_globals => ['$packvar'],
+		      interp_params => { use_object_files => 0,
+                                         allow_globals => ['$packvar'],
 					 in_package => 'HTML::Mason::NewPackage' },
 		      component => <<'EOF',
 <% $packvar %>
@@ -397,7 +482,7 @@ EOF
 #------------------------------------------------------------
 
     my $error =
-	$] >= 5.006 ? qr/Unterminated <>/ : qr/Might be a runaway multi-line <> string/;
+	$] >= 5.006 ? qr/Unterminated <>/ : qr/Bareword "subcomp" not allowed/;
 
     $group->add_test( name => 'subcomp_parse_error',
 		      description => 'A misnamed block at the beginning of a component was throwing the lexer into an infinite loop.  Now it should be compiled into a component with a syntax error.',
@@ -536,6 +621,111 @@ EOF
                           expect => <<'EOF',
 calling SELF:foo - bar
 EOF
+                        );
+
+#------------------------------------------------------------
+
+	$group->add_test( name => 'no_strict',
+			  description => 'test turning off strict in a component',
+                          interp_params => { use_strict => 0 },
+			  component => <<'EOF',
+no errors
+<%init>
+$x = 1;
+</%init>
+EOF
+                          expect => <<'EOF',
+no errors
+EOF
+                        );
+
+#------------------------------------------------------------
+
+	$group->add_test( name => 'no_strict_no_object_files',
+			  description =>
+                          'test turning off strict in a component when not using object files',
+                          interp_params => { use_strict => 0, use_object_files => 0 },
+			  component => <<'EOF',
+no errors
+<%init>
+$x = 1;
+</%init>
+EOF
+                          expect => <<'EOF',
+no errors
+EOF
+                        );
+
+#------------------------------------------------------------
+
+	$group->add_test( name => 'weird_case',
+			  description => 'test weird parsing case',
+			  component => <<'EOF',
+<%init()%>
+<%args()%>
+<%once>
+sub init { 'init' }
+sub args { 'args' }
+</%once>
+EOF
+                          expect => <<'EOF',
+init
+args
+EOF
+                        );
+
+
+#------------------------------------------------------------
+
+	$group->add_test( name => 'stale_object_file',
+			  description => 'Make sure object files always contain compiler ID',
+			  component => <<'EOF',
+<% $m->interp->compiler->assert_creatorship({object_file => $m->current_comp->object_file}) %>
+EOF
+                          expect => 1,
+                        );
+
+
+#------------------------------------------------------------
+
+	$group->add_test( name => 'subst_tag_comments',
+			  description => 'Make sure comments parse correctly in substitution tags',
+			  component => <<'EOF',
+<%# Here's a comment
+  5 + 5 %>
+EOF
+                          expect => 10,
+                        );
+
+#------------------------------------------------------------
+
+	$group->add_test( name => 'shared_to_init',
+			  description => 'Make sure <%init> can see lexicals in <%shared>',
+			  component => <<'EOF',
+<%init>
+ $m->out( $x );
+</%init>
+<%shared>
+ my $x = 7;
+</%shared>
+EOF
+                          expect => 7,
+                        );
+
+#------------------------------------------------------------
+
+	$group->add_test( name => 'shared_to_init_global',
+			  description => 'Make sure <%init> can see global variables in <%shared>',
+			  interp_params => { allow_globals => ['$x'] },
+			  component => <<'EOF',
+<%init>
+ $m->out( $x );
+</%init>
+<%shared>
+ $x = 8;
+</%shared>
+EOF
+                          expect => 8,
                         );
 
 #------------------------------------------------------------

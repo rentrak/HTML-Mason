@@ -1,88 +1,107 @@
-<HTML>
-<HEAD>
-<TITLE>HTML::Mason::Compiler::ToObject - A Compiler subclass that generates Mason object code</TITLE>
-<LINK REV="made" HREF="mailto:perl@packages.debian.org">
-</HEAD>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>HTML::Mason::Compiler::ToObject - A Compiler subclass that generates Mason object code</title>
+<link rev="made" href="mailto:root@localhost" />
+</head>
 
-<BODY>
+<body style="background-color: white">
 
-<A NAME="__index__"></A>
+<p><a name="__index__"></a></p>
 <!-- INDEX BEGIN -->
 
-<UL>
+<ul>
 
-	<LI><A HREF="#name">NAME</A></LI>
-	<LI><A HREF="#synopsis">SYNOPSIS</A></LI>
-	<LI><A HREF="#description">DESCRIPTION</A></LI>
-	<LI><A HREF="#parameters_for_new_constructor">PARAMETERS FOR <CODE>new()</CODE> CONSTRUCTOR</A></LI>
-	<LI><A HREF="#methods">METHODS</A></LI>
-</UL>
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#parameters_to_the_new()_constructor">PARAMETERS TO THE <code>new()</code> CONSTRUCTOR</a></li>
+	<li><a href="#methods">METHODS</a></li>
+</ul>
 <!-- INDEX END -->
 
-<HR>
-<P>
-<H1><A NAME="name">NAME</A></H1>
-<P>HTML::Mason::Compiler::ToObject - A Compiler subclass that generates Mason object code</P>
-<P>
-<HR>
-<H1><A NAME="synopsis">SYNOPSIS</A></H1>
-<PRE>
-  my $compiler = HTML::Mason::Compiler::ToObject-&gt;new;</PRE>
-<PRE>
-  my $object_code = $compiler-&gt;compile( comp_source =&gt; $source, name =&gt; $comp_name );</PRE>
-<P>
-<HR>
-<H1><A NAME="description">DESCRIPTION</A></H1>
-<P>This Compiler subclass generates Mason object code (Perl code).  It is
-the default Compiler class used by Mason.</P>
-<P>
-<HR>
-<H1><A NAME="parameters_for_new_constructor">PARAMETERS FOR <CODE>new()</CODE> CONSTRUCTOR</A></H1>
-<P>All of these parameters are optional.</P>
-<DL>
-<DT><STRONG><A NAME="item_comp_class">comp_class</A></STRONG><BR>
-<DD>
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>HTML::Mason::Compiler::ToObject - A Compiler subclass that generates Mason object code</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  my $compiler = HTML::Mason::Compiler::ToObject-&gt;new;</pre>
+<pre>
+  my $object_code = $compiler-&gt;compile( comp_source =&gt; $source, name =&gt; $comp_name );</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This Compiler subclass generates Mason object code (Perl code).  It is
+the default Compiler class used by Mason.</p>
+<p>
+</p>
+<hr />
+<h1><a name="parameters_to_the_new()_constructor">PARAMETERS TO THE <code>new()</code> CONSTRUCTOR</a></h1>
+<p>All of these parameters are optional.</p>
+<dl>
+<dt><strong><a name="item_comp_class">comp_class</a></strong><br />
+</dt>
+<dd>
 The class into which component objects are blessed.  This defaults to
-<A HREF="Component.html"><CODE>HTML::Mason::Component</CODE></A>.
-<P></P>
-<DT><STRONG><A NAME="item_subcomp_class">subcomp_class</A></STRONG><BR>
-<DD>
+<a href="/HTML/Mason/Component.html">HTML::Mason::Component</a>.
+</dd>
+<p></p>
+<dt><strong><a name="item_subcomp_class">subcomp_class</a></strong><br />
+</dt>
+<dd>
 The class into which subcomponent objects are blessed.  This defaults
-to <A HREF="Subcomponent.html"><CODE>HTML::Mason::Subcomponent</CODE></A>.
-<P></P>
-<DT><STRONG><A NAME="item_in_package">in_package</A></STRONG><BR>
-<DD>
+to <a href="/HTML/Mason/Component/Subcomponent.html">HTML::Mason::Component::Subcomponent</a>.
+</dd>
+<p></p>
+<dt><strong><a name="item_in_package">in_package</a></strong><br />
+</dt>
+<dd>
 This is the package in which a component's code is executed.  For
-historical reasons, this defaults to <CODE>HTML::Mason::Commands</CODE>.
-<P></P>
-<DT><STRONG><A NAME="item_preamble">preamble</A></STRONG><BR>
-<DD>
-If this parameter is supplied, then the text given is placed at the
-beginning of each component.
-<P></P>
-<DT><STRONG><A NAME="item_postamble">postamble</A></STRONG><BR>
-<DD>
-Text given for this parameter is placed at the end of each component.
-<P></P>
-<DT><STRONG><A NAME="item_use_strict">use_strict</A></STRONG><BR>
-<DD>
-This indicates whether or not a given component should <A HREF="#item_use_strict"><CODE>use strict</CODE></A>.
-By default, this is true.
-<P></P></DL>
-<P>
-<HR>
-<H1><A NAME="methods">METHODS</A></H1>
-<P>This class is primarily meant to be used by the Interpreter object,
-and as such has a very limited public API.</P>
-<DL>
-<DT><STRONG><A NAME="item_compile">compile (comp_source =&gt; $source, name =&gt; $name, comp_class = $comp_class)</A></STRONG><BR>
-<DD>
+historical reasons, this defaults to <code>HTML::Mason::Commands</code>.
+</dd>
+<p></p>
+<dt><strong><a name="item_preamble">preamble</a></strong><br />
+</dt>
+<dd>
+Text given for this parameter is placed at the beginning of each component. See also <a href="/HTML/Mason/Params.html#postamble">postamble</a>.
+</dd>
+<p></p>
+<dt><strong><a name="item_postamble">postamble</a></strong><br />
+</dt>
+<dd>
+Text given for this parameter is placed at the end of each component. See also <a href="/HTML/Mason/Params.html#preamble">preamble</a>.
+</dd>
+<p></p>
+<dt><strong><a name="item_use_strict">use_strict</a></strong><br />
+</dt>
+<dd>
+True or false, default is true. Indicates whether or not a given
+component should <a href="#item_use_strict"><code>use strict</code></a>.
+</dd>
+<p></p></dl>
+<p>
+</p>
+<hr />
+<h1><a name="methods">METHODS</a></h1>
+<p>This class is primarily meant to be used by the Interpreter object,
+and as such has a very limited public API.</p>
+<dl>
+<dt><strong><a name="item_compile">compile (comp_source =&gt; $source, name =&gt; $name, comp_class = $comp_class)</a></strong><br />
+</dt>
+<dd>
 This method will take component source and return the compiled object
-code for that source.  The <CODE>comp_source</CODE> and <CODE>name</CODE> parameters are
-optional.  The <A HREF="#item_comp_class"><CODE>comp_class</CODE></A> can be used to change the component class
+code for that source.  The <code>comp_source</code> and <code>name</code> parameters are
+optional.  The <a href="#item_comp_class"><code>comp_class</code></a> can be used to change the component class
 for this one comonent.
-<P></P></DL>
+</dd>
+<p></p></dl>
 
-</BODY>
+</body>
 
-</HTML>
+</html>

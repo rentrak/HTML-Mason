@@ -21,7 +21,7 @@ require Exporter;
 use vars qw(@ISA @EXPORT_OK);
 
 @ISA = qw(Exporter);
-@EXPORT_OK = qw(read_file html_escape url_escape paths_eq compress_path mason_canonpath make_fh taint_is_on load_pkg absolute_comp_path);
+@EXPORT_OK = qw(read_file url_escape paths_eq compress_path mason_canonpath make_fh taint_is_on load_pkg pkg_loaded absolute_comp_path);
 
 #
 # Return contents of file. If $binmode is 1, read in binary mode.
@@ -38,18 +38,6 @@ sub read_file
     return do { local $/; scalar <$fh> };
 }
 
-#
-# Escape HTML &, >, <, and " characters. Borrowed from CGI::Base.
-#
-sub html_escape
-{
-    my ($text) = @_;
-    return unless defined $text;
-    my %html_escape = ('&' => '&amp;', '>'=>'&gt;', '<'=>'&lt;', '"'=>'&quot;');
-    my $html_escape = join('', keys %html_escape);
-    $text =~ s/([$html_escape])/$html_escape{$1}/mgoe;
-    return $text;
-}
 
 #
 # Determines whether two paths are equal, taking into account
@@ -173,30 +161,6 @@ sub make_fh
     return do { local *FH; *FH; };  # double *FH avoids a warning
 }
 
-#
-# Process escape flags in <% %> tags
-#   h - html escape
-#   u - url escape
-#
-sub escape_perl_expression
-{
-    my ($expr,@flags) = @_;
-
-    return $expr if grep { $_ eq 'n' } @flags;
-
-    if (defined($expr)) {
-	foreach my $flag (@flags) {
-	    if ($flag eq 'h') {
-		load_pkg('HTML::Entities', 'The |h escape flag requires the HTML::Entities module, available from CPAN.');
-		$expr = HTML::Entities::encode($expr);
-	    } elsif ($flag eq 'u') {
-		$expr =~ s/([^a-zA-Z0-9_.-])/uc sprintf("%%%02x",ord($1))/eg;
-	    }
-	}
-    }
-    return $expr;
-}
-
 sub coerce_to_array
 {
     my ($val, $name) = @_;
@@ -264,13 +228,6 @@ This function takes a file name and an optional argument indicating
 whether or not to open the final in binary mode.  It will return the
 entire contents of the file as a scalar.
 
-=item html_escape
-
-This function takes a string and returns its HTML-escaped version,
-escaping the following characters: '&', '>', '<', and '"'.
-
-The escaped string is this function's return value.
-
 =item paths_eq
 
 Given to paths, this function indicates whether they represent the
@@ -321,28 +278,6 @@ Returns a boolean value indicating whether taint mode is on or not.
 
 This function returns something suitable to be passed to the first
 argument of an C<open> function call.
-
-=item escape_perl_expression
-
-Given a scalar and one or more flags as an array, this method does the
-following.
-
-If any of the flags are "n", then no escaping is done.
-
-If it finds the "h" flag, the text is escaped with
-C<HTML::Entities::encode()>.
-
-If it finds the "u" flag, the text is URL-escaped, meaning that all
-characters not matching C<[a-zA-Z0-9_.-]> are replaced by a percent
-sign (%) followed by their hexadecimal ASCII value.
-
-NOTE: This will break miserably given Unicode characters, producing
-something like "%abc7", which is unabashedly incorrect.
-
-NOTE part deux: The URL RFC (1738) does not specify how to handle
-Unicode.
-
-NOTE part trois: The URI RFC (2396) doesn't provide much help either.
 
 =item coerce_to_array
 

@@ -33,7 +33,7 @@ package HTML::Mason::Request;
 use strict;
 
 use File::Spec;
-use HTML::Mason::Tools qw(read_file compress_path load_pkg absolute_comp_path);
+use HTML::Mason::Tools qw(read_file compress_path load_pkg pkg_loaded absolute_comp_path);
 use HTML::Mason::Utils;
 use HTML::Mason::Buffer;
 
@@ -55,9 +55,13 @@ BEGIN
 		    public => 0 },
 	 autoflush  => { parse => 'boolean', default => 0, type => SCALAR,
 			 descr => "Whether output should be buffered or sent immediately" },
-	 comp  => { type => SCALAR | HASHREF, optional => 0,
+	 comp  => { type => SCALAR | OBJECT, optional => 0,
 		    descr => "Initial component, either an absolute path or a component object",
 		    public => 0 },
+         data_cache_api => { parse => 'string', default => '1.1', type => SCALAR,
+			     callbacks => { "must be one of '1.0' or '1.1'" =>
+				sub { $_[0] eq '1.0' or $_[0] eq '1.1'; } },
+                             descr => "Data cache API to use: 1.0 or 1.1" },
 	 data_cache_defaults => { type => HASHREF|UNDEF, optional => 1,
 				  descr => "A hash of default parameters for Cache::Cache" },
 	 declined_comps => { type => HASHREF, optional=>1,
@@ -69,7 +73,7 @@ BEGIN
 			 descr => "An interpreter for Mason control functions",
 			 public => 0 },
 	 error_format => { parse => 'string', type => SCALAR, default => 'text',
-			   callbacks => { "must be one of 'brief', 'text', 'line', or 'html'" =>
+			   callbacks => { "HTML::Mason::Exception->can( method )'" =>
 					  sub { HTML::Mason::Exception->can("as_$_[0]"); } },
 			   descr => "How error conditions are returned to the caller (brief, text, line or html)" },
 	 error_mode => { parse => 'string', type => SCALAR, default => 'fatal',
@@ -93,6 +97,7 @@ BEGIN
 
 my @read_write_params;
 BEGIN { @read_write_params = qw( autoflush
+				 data_cache_api
 				 data_cache_defaults
 				 dhandler_name
 				 error_format
@@ -343,6 +348,8 @@ sub _handle_error
 {
     my ($self, $err) = @_;
 
+    die $err if $self->is_subrequest;
+
     # Set error format for when error is stringified.
     if (UNIVERSAL::can($err, 'format')) {
 	$err->format($self->error_format);
@@ -418,6 +425,14 @@ sub cache
 {
     my ($self, %options) = @_;
 
+    # If using 1.0x cache API, save off options for end of routine.
+    my %old_cache_options;
+    if ($self->data_cache_api eq '1.0') {
+	%old_cache_options = %options;
+	%options = ();
+    }
+
+    # Combine defaults with options passed in here.
     if ($self->data_cache_defaults) {
 	%options = (%{$self->data_cache_defaults}, %options);
     }
@@ -425,19 +440,118 @@ sub cache
     $options{cache_root}  ||= $self->interp->cache_dir;
     $options{username}      = "mason";
 
+    # Determine cache_class, adding 'Cache::' in front of user's
+    # specification if necessary.
     my $cache_class = $self->interp->cache_dir ? 'Cache::FileCache' : 'Cache::MemoryCache';
     if ($options{cache_class}) {
 	$cache_class = $options{cache_class};
 	$cache_class = "Cache::$cache_class" unless $cache_class =~ /::/;
 	delete($options{cache_class});
     }
-    load_pkg('Cache::Cache', '$m->cache requires the Cache::Cache module, available from CPAN.');
-    load_pkg($cache_class, 'Fix your Cache::Cache installation or choose another cache class.');
 
-    my $cache = $cache_class->new (\%options)
+    # Now prefix cache class with "HTML::Mason::". This will be a
+    # dynamically constructed package that simply inherits from
+    # HTML::Mason::Cache::BaseCache and the chosen cache class.
+    my $mason_cache_class = "HTML::Mason::$cache_class";
+    unless (pkg_loaded($mason_cache_class)) {
+	load_pkg('Cache::Cache', '$m->cache requires the Cache::Cache module, available from CPAN.');
+	load_pkg($cache_class, 'Fix your Cache::Cache installation or choose another cache class.');
+	eval sprintf('package %s; use base qw(HTML::Mason::Cache::BaseCache %s); use vars qw($VERSION); $VERSION = 1.0',
+		     $mason_cache_class, $cache_class);
+	die "Error constructing mason cache class $mason_cache_class: $@" if $@;
+    }
+
+    my $cache = $mason_cache_class->new (\%options)
 	or error "could not create cache object";
 
-    return $cache;
+    # Implement 1.0x cache API or just return cache object.
+    if ($self->data_cache_api eq '1.0') {
+	return $self->_cache_1_x($cache, %old_cache_options);
+    } else {
+	return $cache;
+    }
+}
+
+#
+# Implement 1.0x cache API in terms of Cache::Cache.
+# Supported: action, busy_lock, expire_at, expire_if, expire_in, expire_next, key, value
+# Silently not supported: keep_in_memory, tie_class
+#
+sub _cache_1_x
+{
+    my ($self, $cache, %options) = @_;
+
+    my $action = $options{action} || 'retrieve';
+    my $key = $options{key} || 'main';
+    
+    if ($action eq 'retrieve') {
+	
+	# Validate parameters.
+	if (my @invalids = grep(!/^(expire_if|action|key|busy_lock|keep_in_memory|tie_class)$/, keys(%options))) {
+	    die "cache: invalid parameter '$invalids[0]' for action '$action'\n";
+	}
+
+	# Handle expire_if.
+	if (my $sub = $options{expire_if}) {
+	    if (my $obj = $cache->get_object($key)) {
+		if ($sub->($obj->get_created_at)) {
+		    $cache->expire($key);
+		}
+	    }
+	}
+
+	# Return the value or undef, handling busy_lock.
+	if (my $result = $cache->get($key, ($options{busy_lock} ? (busy_lock=>$options{busy_lock}) : ()))) {
+	    return $result;
+	} else {
+	    return undef;
+	}
+
+    } elsif ($action eq 'store') {
+
+	# Validate parameters	
+	if (my @invalids = grep(!/^(expire_(at|next|in)|action|key|value|keep_in_memory|tie_class)$/, keys(%options))) {
+	    die "cache: invalid parameter '$invalids[0]' for action '$action'\n";
+	}
+	die "cache: no store value provided" unless exists($options{value});
+
+	# Determine $expires_in if expire flag given. For the "next"
+	# options, we're jumping through hoops to find the *top* of
+	# the next hour or day.
+	#
+	my $expires_in;
+	my $time = time;
+	if (exists($options{expire_at})) {
+	    die "cache: invalid expire_at value '$options{expire_at}' - must be a numeric time value\n" if $options{expire_at} !~ /^[0-9]+$/;
+	    $expires_in = $options{expire_at} - $time;
+	} elsif (exists($options{expire_next})) {
+            my $term = $options{expire_next};
+            my ($sec, $min, $hour) = localtime($time);
+            if ($term eq 'hour') {
+		$expires_in = 60*(59-$min)+(60-$sec);
+            } elsif ($term eq 'day') {
+		$expires_in = 3600*(23-$hour)+60*(59-$min)+(60-$sec);
+            } else {
+                die "cache: invalid expire_next value '$term' - must be 'hour' or 'day'\n";
+            }
+	} elsif (exists($options{expire_in})) {
+	    $expires_in = $options{expire_in};
+	}
+
+	# Set and return the value.
+	my $value = $options{value};
+	$cache->set($key, $value, $expires_in);
+	return $value;
+
+    } elsif ($action eq 'expire') {
+	my @keys = (ref($key) eq 'ARRAY') ? @$key : ($key);
+	foreach my $key (@keys) {
+	    $cache->expire($key);
+	}
+
+    } elsif ($action eq 'keys') {
+	return $cache->get_keys;
+    }
 }
 
 sub cache_self {
@@ -445,9 +559,28 @@ sub cache_self {
 
     return if $self->top_stack->{in_cache_self};
 
-    my $expires_in = delete $options{expires_in} || 'never';
-    my $key = delete $options{key} || '__mason_cache_self__';
-    my $cache = $self->cache(%options);
+    my (%store_options, %retrieve_options);
+    my ($expires_in, $key, $cache);
+    if ($self->data_cache_api eq '1.0') {
+	foreach (qw(key expire_if busy_lock)) {
+	    $retrieve_options{$_} = $options{$_} if (exists($options{$_}));
+	}
+	foreach (qw(key expire_at expire_next expire_in)) {
+	    $store_options{$_} = $options{$_} if (exists($options{$_}));
+	}
+    } else {
+	#
+	# key, expires_in/expire_in, expire_if and busy_lock go into
+	# the set and get methods as appropriate. All other options
+	# are passed into $self->cache.
+	#
+	foreach (qw(expire_if busy_lock)) {
+	    $retrieve_options{$_} = delete($options{$_}) if (exists($options{$_}));
+	}
+	$expires_in = delete $options{expires_in} || delete $options{expire_in} || 'never';
+	$key = delete $options{key} || '__mason_cache_self__';
+	$cache = $self->cache(%options);
+    }
 
     # If the top buffer has a filter we need to remove it because
     # either:
@@ -472,7 +605,8 @@ sub cache_self {
     my ($output, $retval);
     eval
     {
-        if (my $cached = $cache->get($key)) {
+	my $cached = ($self->data_cache_api eq '1.0') ? $self->cache(%retrieve_options) : $cache->get($key, %retrieve_options);
+        if ($cached) {
             ($output, $retval) = @$cached;
         } else {
             my $top_stack = $self->top_stack;
@@ -480,7 +614,10 @@ sub cache_self {
             my @args = @{ $top_stack->{args} };
 
             push @{ $self->{buffer_stack} },
-                $self->top_buffer->new_child(sink => \$output, ignore_flush => 1);
+                $self->top_buffer->new_child( sink => \$output,
+                                              ignore_flush => 1,
+                                              ignore_clear => 1,
+                                            );
 
             local $top_stack->{in_cache_self} = 1;
             #
@@ -501,10 +638,6 @@ sub cache_self {
             };
             $retval = \@result;
 
-            # We do this in case the component stuck a filtering buffer
-            # after our caching buffer
-            $self->top_buffer->flush;
-
             #
             # Whether there was an error or not we need to pop the buffer
             # stack.
@@ -515,12 +648,18 @@ sub cache_self {
                 UNIVERSAL::can($@, 'rethrow') ? $@->rethrow : error $@;
             }
 
-            $cache->set($key, [$output, $retval], $expires_in);
+	    my $value = [$output, $retval];
+            if ($self->data_cache_api eq '1.0') {
+		$self->cache(action=>'store', key=>$key, value=>$value, %store_options);
+	    } else {
+		$cache->set($key, $value, $expires_in);
+	    }
         }
     };
 
     if ($@) {
-        push @{ $self->{buffer_stack} }, $filter;
+        push @{ $self->{buffer_stack} }, $filter
+            if $filter;
         UNIVERSAL::can($@, 'rethrow') ? $@->rethrow : error $@;
     }
 
@@ -804,6 +943,7 @@ sub comp {
 
     unless ( $mods{base_comp} ||	# base_comp override
 	     !$path || 		# path is undef if $comp is a reference
+	     ($comp->is_subcomp && ! $comp->is_method) ||
 	     $path =~ m/^(?:SELF|PARENT)(?:\:..*)?$/ ) {
 	$base_comp = ( $path =~ m/(.*):/ ?
 		       $self->fetch_comp($1) :
@@ -823,7 +963,10 @@ sub comp {
 	# The component's main buffer can then be cleared without
 	# affecting previously flushed output.
         push @{ $self->{buffer_stack} },
-            $self->top_buffer->new_child( sink => $mods{store}, ignore_flush => 1 );
+            $self->top_buffer->new_child( sink => $mods{store},
+                                          ignore_flush => 1,
+                                          ignore_clear => 1,
+                                        );
     }
     # more common case optimizations
     push @{ $self->{buffer_stack} },
@@ -885,10 +1028,8 @@ sub scomp {
 sub push_filter_buffer
 {
     my $self = shift;
-    my %p = @_;
 
-    push @{ $self->{buffer_stack} },
-        $self->top_buffer->new_child( filter => $p{filter} );
+    push @{ $self->{buffer_stack} }, $self->top_buffer->new_child(@_);
 }
 
 sub content {
@@ -918,7 +1059,7 @@ sub clear_buffer
 {
     my $self = shift;
     for ($self->buffer_stack) {
-	last if $_->ignore_flush;
+	last if $_->ignore_clear;
 	$_->clear;
     }
 }
@@ -943,6 +1084,15 @@ sub request_args
 }
 *top_args = \&request_args;
 *top_comp = \&request_comp;
+
+# deprecated in 1.1x
+sub time
+{
+    my ($self) = @_;
+    my $time = $self->interp->current_time;
+    $time = time() if $time eq 'real';
+    return $time;
+}
 
 #
 # Subroutine called by every component while in debug mode, convenient
@@ -1098,36 +1248,89 @@ subcomponent takes precedence.
 
 =back
 
-=head1 CONSTRUCTOR PARAMETERS
+=head1 PARAMETERS TO THE new() CONSTRUCTOR
 
 =over 4
 
 =item autoflush
 
-Indicates whether or not to delay sending output until all output has
-been generated.
+True or false, default is false. Indicates whether to flush the output buffer
+after every string is output. Turn on autoflush if you need to send partial
+output to the client, for example in a progress meter.
+
+=item buffer_class
+
+The class to use when creating buffers. Defaults to
+L<HTML::Mason::Buffer|HTML::Mason::Buffer>.
+
+=item data_cache_api
+
+The C<$m-E<gt>cache> API to use. '1.1', the default, indicates the newer
+API L<documented in this manual|HTML::Mason::Request/item_cache>.
+'1.0' indicates the old API documented in 1.0x and earlier. This
+compatibility layer is provided as a convenience for users upgrading
+from older versions of Mason, but will not be supported indefinitely.
 
 =item data_cache_defaults
 
-The default parameters used when $m->cache is called.
+A hash reference of default options to use for the C<$m-E<gt>cache>
+command. For example, to use the C<MemoryCache> implementation
+by default,
+
+    data_cache_defaults => {cache_class => 'MemoryCache'}
+
+These settings are overriden by options given to particular
+C<$m-E<gt>cache> calls.
 
 =item dhandler_name
 
-File name used for dhandlers. Default is "dhandler".
+File name used for L<dhandlers|HTML::Mason::Devel/dhandlers>. Default is "dhandler".
 
 =item error_format
 
-The format used to display errors.  The options are 'brief', 'text',
-'line', and 'html'.  The default is 'text' except when running under
-ApacheHandler, in which case the default is 'html'.
+Indicates how errors are formatted. The built-in choices are
+
+=over
+
+=item *
+
+I<brief> - just the error message with no trace information
+
+=item *
+
+I<text> - a multi-line text format
+
+=item *
+
+I<line> - a single-line text format, with different pieces of information separated by tabs (useful for log files)
+
+=item *
+
+I<html> - a fancy html format
+
+=back
+
+The default format under L<Apache|HTML::Mason::ApacheHandler> and
+L<CGI|HTML::Mason::CGIHandler> is either I<line> or I<html> depending
+on whether the error mode is I<fatal> or I<output>, respectively. The
+default for standalone mode is I<text>.
+
+The formats correspond to C<HTML::Mason::Exception> methods named
+as_I<format>. You can define your own format by creating an
+appropriately named method; for example, to define an "xml" format,
+create a method C<HTML::Mason::Exception::as_xml> patterned after one of
+the built-in methods.
 
 =item error_mode
 
-This can be either 'fatal' or 'output'.  If the mode is 'fatal',
-errors generate an exception.  With 'output' mode, the error is sent
-to the same output as normal component output.  The default is
-'fatal', except when running under ApacheHandler or CGIHandler, in
-which case the output is 'default'.
+Indicates how errors are returned to the caller.  The choices are
+I<fatal>, meaning die with the error, and I<output>, meaning output
+the error just like regular output.
+
+The default under L<Apache|HTML::Mason::ApacheHandler> and
+L<CGI|HTML::Mason::CGIHandler> is I<output>, causing the error to be
+displayed in the browser.  The default for standalone mode is
+I<fatal>.
 
 =item max_recurse
 
@@ -1146,9 +1349,9 @@ string. For example, to send output to a file called "mason.out":
     ...
     out_method => sub { $fh->print($_[0]) }
 
-By default, out_method prints to standard output.  When the
-HTML::Mason::ApacheHandler module is used, the out method uses the C<<
-$r->print >> method to send output.
+By default, out_method prints to standard output. Under
+L<Apache|HTML::Mason::ApacheHandler>, standard output is
+redirected to C<< $r->print >>.
 
 =back
 
@@ -1205,66 +1408,72 @@ first argument, or the call starts with SELF: or PARENT:.
 
 =item cache (cache_class=>'...', [cache_options])
 
-C<$m-E<gt>cache> returns a new cache object with a namespace specific
-to this component.
+C<$m-E<gt>cache> returns a new L<cache
+object|HTML::Mason::Cache::BaseCache> with a namespace specific to
+this component.
 
 I<cache_class> specifies the class of cache object to create. It
-defaults to Cache::FileCache in most cases, or Cache::MemoryCache if
-the interpreter has no data directory, and must be a subclass of
-Cache::Cache.  If I<cache_class> does not contain a "::", the prefix
-"Cache::" is automatically prepended.
-
+defaults to C<FileCache> in most cases, or C<MemoryCache> if the
+interpreter has no data directory, and must be a backend subclass of
+C<Cache::Cache>. The prefix "Cache::" need not be included.  See the
+C<Cache::Cache> package for a full list of backend subclasses.
+ 
 I<cache_options> may include any valid options to the new() method of
-the cache class. e.g. for Cache::FileCache, valid options include
+the cache class. e.g. for C<FileCache>, valid options include
 default_expires_in and cache_depth.
 
-See the L<data caching in the I<Component Developer's
-Guide>|HTML::Mason::Devel/"data caching"> for examples and caching
-strategies. See the Cache::Cache documentation for a complete list of
-options and methods.
+See the L<data caching|HTML::Mason::Devel/data caching> section of the developer's manual for a caching tutorial and examples. See the
+L<HTML::Mason::Cache::BaseCache|HTML::Mason::Cache::BaseCache>
+documentation for a method reference.
+
+Note: users upgrading from 1.0x and earlier can continue to use the
+old C<$m-E<gt>cache> API by setting L<data_cache_api|HTML::Mason::Params/data_cache_api> to '1.0'.  This
+support will be removed at a later date.
 
 =for html <a name="item_cache_self"></a>
 
-=item cache_self (expires_in => '...', key => '...', [cache_options])
+=item cache_self ([expires_in => '...'], [key => '...'], [get_options], [cache_options])
 
 C<$m-E<gt>cache_self> caches the entire output and return result of a
 component.
-
-It takes all of the options which can be passed to the cache method,
-plus two additional options:
-
-=over
-
-=item *
-
-I<expires_in>: Indicates when the cache expires - it is passed as the
-third argument to $cache-E<gt>set.  See the Cache::Cache documentation
-for details on what formats it accepts.
-
-=item *
-
-I<key>: An identifier used to uniquely identify the cache results - it
-is passed as the first argument to $cache-E<gt>get and
-$cache-E<gt>set.  The default key is '__mason_cache_self__'.
-
-=back
 
 C<cache_self> either returns undef, or a list containing the
 return value of the component followed by '1'. You should return
 immediately upon getting the latter result, as this indicates
 that you are inside the second invocation of the component.
 
+C<cache_self> takes any of parameters to C<$m-E<gt>cache>
+(e.g. I<cache_depth>), any of the optional parameters to
+C<$cache-E<gt>get> (I<expire_if>, I<busy_lock>), and two additional
+options:
+
+=over
+
+=item *
+
+I<expire_in> or I<expires_in>: Indicates when the cache expires - it
+is passed as the third argument to C<$cache-E<gt>set>. e.g. '10 sec',
+'5 min', '2 hours'.
+
+=item *
+
+I<key>: An identifier used to uniquely identify the cache results - it
+is passed as the first argument to C<$cache-E<gt>get> and
+C<$cache-E<gt>set>.  The default key is '__mason_cache_self__'.
+
+=back
+
 To cache the component's output:
 
     <%init>
-    return if $m->cache_self(expires_in => '3 hours'[, key => 'fookey']);
+    return if $m->cache_self(expire_in => '10 sec'[, key => 'fookey']);
     ... <rest of init> ...
     </%init>
 
 To cache the component's scalar return value:
 
     <%init>
-    my ($result, $cached) = $m->cache_self(expires_in => '3 hours'[, key => 'fookey']);
+    my ($result, $cached) = $m->cache_self(expire_in => '5 min'[, key => 'fookey']);
 
     return $result if $cached;
     ... <rest of init> ...
@@ -1273,7 +1482,7 @@ To cache the component's scalar return value:
 To cache the component's list return value:
 
     <%init>
-    my (@retval) = $m->cache_self(expires_in => '3 hours'[, key => 'fookey']);
+    my (@retval) = $m->cache_self(expire_in => '3 hours'[, key => 'fookey']);
 
     return @retval if pop @retval;
     ... <rest of init> ...
@@ -1281,6 +1490,10 @@ To cache the component's list return value:
 
 We call C<pop> on C<@retval> to remove the mandatory '1' at the end of
 the list.
+
+Note: users upgrading from 1.0x and earlier can continue to use the
+old C<$m-E<gt>cache_self> API by setting L<data_cache_api|HTML::Mason::Params/data_cache_api> to '1.0'.
+This support will be removed at a later date.
 
 =for html <a name="item_caller_args"></a>
 
@@ -1315,6 +1528,13 @@ the component at the bottom of the stack. e.g.
     $m->callers(1)            # component that called us
     $m->callers(-1)           # first component executed
 
+=for html <a name="item_caller"></a>
+
+=item caller
+
+A synonym for C<< $m->caller(1) >>, i.e. the component that called the
+currently executing component.
+
 =for html <a name="item_call_next"></a>
 
 =item call_next ([args...])
@@ -1324,9 +1544,7 @@ from an autohandler. With no arguments, the original arguments are
 passed to the component.  Any arguments specified here serve to
 augment and override (in case of conflict) the original
 arguments. Works like C<$m-E<gt>comp> in terms of return value and
-scalar/list context.  See the L<autohandlers section in the
-I<Component Developer's Guide>|HTML::Mason::Devel/"autohandlers"> for
-examples.
+scalar/list context.  See the L<autohandlers|HTML::Mason::Devel/autohandlers> section of the developer's manual for examples.
 
 =for html <a name="item_clear_buffer"></a>
 
@@ -1425,54 +1643,6 @@ removed. Otherwise returns undef.
 C<dhandler_arg> may be called from any component in the request, not just
 the dhandler.
 
-=for html <a name="item_error_format"></a>
-
-=item error_format
-
-Indicates how errors are formatted. The built-in choices are
-
-=over
-
-=item *
-
-I<brief> - just the error message with no trace information
-
-=item *
-
-I<text> - a multi-line text format
-
-=item *
-
-I<line> - a single-line text format, with different pieces of information separated by tabs (useful for log files)
-
-=item *
-
-I<html> - a fancy html format
-
-=back
-
-The default format within mod_perl and CGI environments is either I<line> or
-I<html> depending on whether the error mode is I<fatal> or I<output>,
-respectively. The default for standalone mode is I<text>.
-
-The formats correspond to HTML::Mason::Exception methods named
-as_I<format>. You can define your own format by creating an
-appropriately named method; for example, to define an "xml" format,
-create a method HTML::Mason::Exception::as_xml patterned after one of
-the built-in methods.
-
-=for html <a name="item_error_mode"></a>
-
-=item error_mode
-
-Indicates how errors are returned to the caller.  The choices are
-I<fatal>, meaning die with the error, and I<output>, meaning output
-the error just like regular output.
-
-The default mode within mod_perl and CGI environments is I<output>,
-causing the error will be displayed in HTML form in the browser.
-The default for standalone mode is I<fatal>.
-
 =for html <a name="item_exec"></a>
 
 =item exec (comp, args...)
@@ -1497,17 +1667,15 @@ undef if no such component exists.
 
 Returns the next component in the content wrapping chain, or undef if
 there is no next component. Usually called from an autohandler.  See
-the L<autohandlers section in the I<Component Developer's
-Guide>|HTML::Mason::Devel/"autohandlers"> for usage and examples.
+the L<autohandlers|HTML::Mason::Devel/autohandlers> section of the developer's manual for usage and examples.
 
 =for html <a name="item_fetch_next_all"></a>
 
 =item fetch_next_all
 
 Returns a list of the remaining components in the content wrapping
-chain. Usually called from an autohandler.  See the L<autohandlers
-section in the I<Component Developer's
-Guide>|HTML::Mason::Devel/"autohandlers"> for usage and examples.
+chain. Usually called from an autohandler.  See the L<autohandlers|HTML::Mason::Devel/autohandlers> section of the developer's manual
+for usage and examples.
 
 =for html <a name="item_file"></a>
 
@@ -1556,15 +1724,13 @@ Returns the Interp object associated with this request.
 =item make_subrequest (comp => path, args => arrayref, other parameters)
 
 This method creates a new Request object which inherits its parent's
-settable properties, such as C<autoflush> and C<out_method>.  These
+settable properties, such as L<autoflush|HTML::Mason::Params/autoflush> and L<out_method|HTML::Mason::Params/out_method>.  These
 values may be overridden by passing parameters to this method.
 
 The "comp" parameter is required, while all other parameters are
 optional.
 
-See the L<Subrequests section in the I<Component Developer's
-Guide>|HTML::Mason::Devel/"Subrequests"> for more details about the
-subrequest feature.
+See the L<subrequests|HTML::Mason::Devel/subrequests> section of the developer's manual for more information about subrequests.
 
 =for html <a name="item_out"></a>
 
@@ -1584,23 +1750,6 @@ In 1.1 and on, C<print> and C<$r-E<gt>print> are remapped to C<$m-E<gt>print>,
 so they may be used interchangeably. Before 1.1, one should only use
 C<$m-E<gt>print>.
 
-=for html <a name="item_scomp"></a>
-
-=item scomp (comp, args...)
-
-Like C<$m-E<gt>comp>, but returns the component output as a string
-instead of printing it. (Think sprintf versus printf.) The
-component's return value is discarded.
-
-=for html <a name="item_subexec"></a>
-
-=item subexec (comp, args...)
-
-This method creates a new subrequest with the specified top-level
-component and arguments, and executes it. This is most often used
-to perform an "internal redirect" to a new component such that
-autohandlers and dhandlers take effect.
-
 =for html <a name="item_request_args"></a>
 
 =item request_args
@@ -1619,6 +1768,27 @@ Returns the component originally called in the request. Without
 autohandlers, this is the same as the first component executed.  With
 autohandlers, this is the component at the end of the
 C<$m-E<gt>call_next> chain.
+
+=for html <a name="item_scomp"></a>
+
+=item scomp (comp, args...)
+
+Like C<$m-E<gt>comp>, but returns the component output as a string
+instead of printing it. (Think sprintf versus printf.) The
+component's return value is discarded.
+
+=for html <a name="item_subexec"></a>
+
+=item subexec (comp, args...)
+
+This method creates a new subrequest with the specified top-level
+component and arguments, and executes it. This is most often used
+to perform an "internal redirect" to a new component such that
+autohandlers and dhandlers take effect.
+
+=item time
+
+Returns the interpreter's notion of the current time (deprecated).
 
 =back
 
@@ -1640,20 +1810,19 @@ Returns the ApacheHandler object associated with this request.
 =item apache_req
 
 Returns the Apache request object.  This is also available in the
-global $r.
+global C<$r>.
 
 =for html <a name="item_auto_send_headers"></a>
 
 =item auto_send_headers
 
-True or undef; default true.  Indicates whether Mason should
+True or false, default is true.  Indicates whether Mason should
 automatically send HTTP headers before sending content back to the
-client. If you set to false, you should call $r->send_http_header
+client. If you set to false, you should call C<$r-E<gt>send_http_header>
 manually.
 
-See the L<Sending HTTP Headers section of the I<Component Developer's
-Guide>|HTML::Mason::Devel/"Sending HTTP Headers> for details about the
-automatic header feature.
+See the L<sending HTTP headers|HTML::Mason::Devel/sending HTTP headers> section of the developer's manual for more details about the automatic
+header feature.
 
 =back
 
@@ -1670,18 +1839,19 @@ ApacheHandler or CGIHandler modules.
 
 Returns the CGI object used to parse any CGI parameters submitted to
 the component, assuming that you have not changed the default value of
-the ApacheHandler C<args_method> parameter.  If you are using the
+the ApacheHandler L<args_method|HTML::Mason::Params/args_method> parameter.  If you are using the
 'mod_perl' args method, then calling this method is a fatal error.
 See the L<ApacheHandler|HTML::Mason::ApacheHandler> and
 L<CGIHandler|HTML::Mason::CGIHandler> documentation for more details.
 
 =for html <a name="item_redirect"></a>
 
-=item redirect ($url)
+=item redirect ($url, [$status])
 
 Given a url, this generates a proper HTTP redirect for that URL. It
-uses C<< $m->clear_buffer >> to clear out any previous output, and
-C<< $m->abort >> to abort the request with an appropriate status code.
+uses C<< $m->clear_buffer >> to clear out any previous output, and C<<
+$m->abort >> to abort the request.  By default, the status code used
+is 302, but this can be overridden by the user.
 
 Since this is implemented using C<< $m->abort >>, it will be trapped
 by an C< eval {} > block.  If you are using an C< eval {} > block in

@@ -15,46 +15,38 @@ use HTML::Mason::MethodMaker
     ( read_only => [ qw( sink
 			 parent
                          filter
+                         filter_args
 			 ignore_flush
+			 ignore_clear
 		       ) ],
     );
 
-=pod
-
-=begin for later reference
-
-__PACKAGE__->valid_params
-    (
-     sink         => { parse => 'code', type => SCALARREF | CODEREF, optional => 1,
-		       descr => "A subroutine or scalar reference that will receive the output stream",
-		       public => 0 },
-     parent       => { isa => 'HTML::Mason::Buffer', optional => 1,
-		       descr => "A parent buffer of the current buffer",
-		       public => 0 },
-     ignore_flush => { parse => 'boolean', type => SCALAR, default => 0,
-		       descr => "Whether the flush() method is a no-op or actually flushes content",
-		       public => 0 },
-     filter       => { type => CODEREF, optional => 1,
-		       descr => "A subroutine through which all output should pass",
-		       public => 0 },
-    );
-
-=end
-
-=cut
+# for later reference
+# 
+# __PACKAGE__->valid_params
+#     (
+#      sink         => { parse => 'code', type => SCALARREF | CODEREF, optional => 1,
+# 		       descr => "A subroutine or scalar reference that will receive the output stream",
+# 		       public => 0 },
+#      parent       => { isa => 'HTML::Mason::Buffer', optional => 1,
+# 		       descr => "A parent buffer of the current buffer",
+# 		       public => 0 },
+#      ignore_flush => { parse => 'boolean', type => SCALAR, default => 0,
+# 		       descr => "Whether the flush() method is a no-op or actually flushes content",
+# 		       public => 0 },
+#      filter       => { type => CODEREF, optional => 1,
+# 		       descr => "A subroutine through which all output should pass",
+# 		       public => 0 },
+#     );
 
 sub new
 {
     my $class = shift;
-    my $self = bless { ignore_flush => 0, @_ }, $class;
+    my $self = bless { ignore_flush => 0, ignore_clear => 0, @_ }, $class;
     $self->_initialize;
     return $self;
 }
 
-# we set the {sink_is_scalar} flag as an optimization for sinks which
-# are scalarrefs, the commonest case.  This lets us optimize the
-# receive() method to simply concatenate onto the string rather than
-# always calling a sub reference.
 sub _initialize
 {
     my $self = shift;
@@ -64,7 +56,6 @@ sub _initialize
 	if ( UNIVERSAL::isa( $self->{sink}, 'SCALAR' ) )
 	{
             $self->{buffer} = delete $self->{sink};
-	    $self->{sink_is_scalar} = 1;
 	}
     }
     else
@@ -72,7 +63,13 @@ sub _initialize
 	# create an empty string to use as buffer
 	my $buf = '';
 	$self->{buffer} = \$buf;
-        $self->{sink_is_scalar} = 1;
+    }
+
+    if ( $self->{filter} &&
+         ! ( $self->{filter_args} && @{ $self->{filter_args} } )
+       )
+    {
+        $self->{filter_args} = [];
     }
 
     $self->{ignore_flush} = 1 unless $self->{parent};
@@ -90,7 +87,7 @@ sub receive
 
     return unless @_;
 
-    if ( $self->{sink_is_scalar} )
+    if ( $self->{buffer} )
     {
         # grep { defined } is marginally faster than local $^W;
         ${ $self->{buffer} } .= join '', grep { defined } @_;
@@ -116,6 +113,8 @@ sub flush
 sub clear
 {
     my $self = shift;
+    return if $self->ignore_clear;
+
     return unless exists $self->{buffer};
     ${$self->{buffer}} = '';
 }
@@ -125,15 +124,8 @@ sub output
     my $self = shift;
     return unless exists $self->{buffer};
     my $output = ${$self->{buffer}};
-    return $self->{filter}->( $output ) if $self->{filter};
+    return $self->{filter}->( $output, @{ $self->{filter_args} } ) if $self->{filter};
     return $output;
-}
-
-sub buffer
-{
-    my $self = shift;
-
-    return $self->{buffer} if $self->{sink_is_scalar};
 }
 
 1;

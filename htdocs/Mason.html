@@ -1,174 +1,183 @@
-<HTML>
-<HEAD>
-<TITLE>Mason - High-performance, dynamic web site authoring system</TITLE>
-<LINK REV="made" HREF="mailto:perl@packages.debian.org">
-</HEAD>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Mason - High-performance, dynamic web site authoring system</title>
+<link rev="made" href="mailto:root@localhost" />
+</head>
 
-<BODY>
+<body style="background-color: white">
 
-<A NAME="__index__"></A>
+<p><a name="__index__"></a></p>
 <!-- INDEX BEGIN -->
 
-<UL>
+<ul>
 
-	<LI><A HREF="#name">NAME</A></LI>
-	<LI><A HREF="#synopsis">SYNOPSIS</A></LI>
-	<LI><A HREF="#description">DESCRIPTION</A></LI>
-	<LI><A HREF="#installation">INSTALLATION</A></LI>
-	<LI><A HREF="#configuring_mason">CONFIGURING MASON</A></LI>
-	<LI><A HREF="#documentation_roadmap">DOCUMENTATION ROADMAP</A></LI>
-	<LI><A HREF="#authors">AUTHORS</A></LI>
-	<LI><A HREF="#see_also">SEE ALSO</A></LI>
-</UL>
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#installation">INSTALLATION</a></li>
+	<li><a href="#configuring_mason">CONFIGURING MASON</a></li>
+	<li><a href="#documentation_roadmap">DOCUMENTATION ROADMAP</a></li>
+	<li><a href="#authors">AUTHORS</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
 <!-- INDEX END -->
 
-<HR>
-<P>
-<H1><A NAME="name">NAME</A></H1>
-<P>Mason - High-performance, dynamic web site authoring system</P>
-<P>
-<HR>
-<H1><A NAME="synopsis">SYNOPSIS</A></H1>
-<PRE>
-    PerlModule HTML::Mason::ApacheHandler</PRE>
-<PRE>
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Mason - High-performance, dynamic web site authoring system</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    PerlModule HTML::Mason::ApacheHandler</pre>
+<pre>
     &lt;FilesMatch &quot;\.html$&quot;&gt;
         SetHandler perl-script
         PerlHandler HTML::Mason::ApacheHandler
-    &lt;/FilesMatch&gt;</PRE>
-<P>
-<HR>
-<H1><A NAME="description">DESCRIPTION</A></H1>
-<P>Mason is a tool for building, serving and managing large web
+    &lt;/FilesMatch&gt;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Mason is a tool for building, serving and managing large web
 sites. Its features make it an ideal backend for high load sites
 serving dynamic content, such as online newspapers or database driven
-e-commerce sites.</P>
-<P>Actually, Mason can be used to generate any sort of text, whether for
+e-commerce sites.</p>
+<p>Actually, Mason can be used to generate any sort of text, whether for
 a web site or not.  But it was originally built for web sites and
 since that's why most people are interested in it, that is the focus
-of this documentation.</P>
-<P>Mason's various pieces revolve around the notion of ``components''. A
+of this documentation.</p>
+<p>Mason's various pieces revolve around the notion of ``components''. A
 component is a mix of HTML, Perl, and special Mason commands, one
 component per file. So-called ''top-level`` components represent entire
 web-pages, while smaller components typically return HTML snippets for
 embedding in top-level components. This object-like architecture
 greatly simplifies site maintenance: change a shared component, and
 you instantly changed all dependant pages that refer to it across a
-site (or across many virtual sites).</P>
-<P>Mason's component syntax lets designers separate a web page into
+site (or across many virtual sites).</p>
+<p>Mason's component syntax lets designers separate a web page into
 programmatic and design elements. This means the esoteric Perl bits
 can be hidden near the bottom of a component, preloading simple
 variables for use above in the HTML. In our own experience, this frees
 content managers (i.e., non-programmers) to work on the layout without
 getting mired in programming details. Techies, however, still enjoy
-the full power of Perl.</P>
-<P>Mason works by intercepting innocent-looking requests (say,
-<A HREF="http://www.yoursite.com/index.html)">http://www.yoursite.com/index.html)</A> and mapping them to requests for
+the full power of Perl.</p>
+<p>Mason works by intercepting innocent-looking requests (say,
+<a href="http://www.yoursite.com/index.html)">http://www.yoursite.com/index.html)</a> and mapping them to requests for
 Mason components.  Mason then compiles the component, runs it, and
-feeds the output back to the client.</P>
-<P>Consider this simple Mason component:</P>
-<PRE>
+feeds the output back to the client.</p>
+<p>Consider this simple Mason component:</p>
+<pre>
     % my $noun = 'World';
     Hello &lt;% $noun %&gt;!
-    How are ya?</PRE>
-<P>The output of this component is:</P>
-<PRE>
+    How are ya?</pre>
+<p>The output of this component is:</p>
+<pre>
     Hello World!
-    How are ya?</PRE>
-<P>In this component you see a mix of standard HTML and Mason
+    How are ya?</pre>
+<p>In this component you see a mix of standard HTML and Mason
 elements. The bare '%' prefixing the first line tells Mason that this
 is a line of Perl code. One line below, the embedded &lt;%
 ...&nbsp;%&gt; tag gets replaced with the return value of its contents,
-evaluated as a Perl expression.</P>
-<P>Beyond this trivial example, components can also embed serious chunks
+evaluated as a Perl expression.</p>
+<p>Beyond this trivial example, components can also embed serious chunks
 of Perl code (say, to pull records from a database). They can also
 call other components, cache results for later reuse, and perform all
-the tricks you expect from a regular Perl program.</P>
-<P>
-<HR>
-<H1><A NAME="installation">INSTALLATION</A></H1>
-<P>Mason has been tested under Linux, FreeBSD, Solaris, HPUX, and
+the tricks you expect from a regular Perl program.</p>
+<p>
+</p>
+<hr />
+<h1><a name="installation">INSTALLATION</a></h1>
+<p>Mason has been tested under Linux, FreeBSD, Solaris, HPUX, and
 Win32. As an all-Perl solution, it should work on any machine that has
 working versions of Perl 5.00503+, mod_perl, and the required CPAN
-modules.</P>
-<P>Mason has a standard MakeMaker-driven installation. See the README
-file for details.</P>
-<P>
-<HR>
-<H1><A NAME="configuring_mason">CONFIGURING MASON</A></H1>
-<P>This section assumes that you are able to install and configure a
+modules.</p>
+<p>Mason has a standard MakeMaker-driven installation. See the README
+file for details.</p>
+<p>
+</p>
+<hr />
+<h1><a name="configuring_mason">CONFIGURING MASON</a></h1>
+<p>This section assumes that you are able to install and configure a
 mod_perl server. Relevant documentation is available at
-<A HREF="http://www.apache.org">http://www.apache.org</A> (Apache) and <A HREF="http://perl.apache.org">http://perl.apache.org</A>
+<a href="http://www.apache.org">http://www.apache.org</a> (Apache) and <a href="http://perl.apache.org">http://perl.apache.org</a>
 (mod_perl). The mod_perl mailing list, archive, and guide are also
-great resources.</P>
-<P>The simplest configuration of Mason requires a few lines in your
+great resources.</p>
+<p>The simplest configuration of Mason requires a few lines in your
 httpd.conf. You can find an annotated version of these lines in
-<CODE>eg/httpd.conf</CODE> in your distribution.</P>
-<PRE>
-    PerlModule HTML::Mason::ApacheHandler</PRE>
-<PRE>
+<code>eg/httpd.conf</code> in your distribution.</p>
+<pre>
+    PerlModule HTML::Mason::ApacheHandler</pre>
+<pre>
     &lt;FilesMatch &quot;\.html$&quot;&gt;
         SetHandler perl-script
         PerlHandler HTML::Mason::ApacheHandler
-    &lt;/FilesMatch&gt;</PRE>
-<P>The PerlModule directive simply ensures that the Mason code is loaded
+    &lt;/FilesMatch&gt;</pre>
+<p>The PerlModule directive simply ensures that the Mason code is loaded
 in the parent process before forking, which can save some memory when
-running mod_perl.</P>
-<P>The &lt;FilesMatch&gt; section routes all ``\.html$'' requests to the Mason
+running mod_perl.</p>
+<p>The &lt;FilesMatch&gt; section routes all ``\.html$'' requests to the Mason
 handler. If you want all Mason pages to have a distinct extension like
 ``.mcomp'', use that instead. If you wish to restrict Mason to one
-subdirectory at first, do this:</P>
-<PRE>
+subdirectory at first, do this:</p>
+<pre>
     &lt;Directory /path/to/subdirectory&gt;
         &lt;FilesMatch &quot;\.html$&quot;&gt;
             SetHandler perl-script
             PerlHandler HTML::Mason::ApacheHandler
         &lt;/FilesMatch&gt;
-    &lt;/Directory&gt;</PRE>
-<P>Once you have added the configuration directives, restart the
+    &lt;/Directory&gt;</pre>
+<p>Once you have added the configuration directives, restart the
 server. First, go to a standard URL on your site to make sure you
 haven't broken anything. If all goes well you should see the same page
 as before. If not, recheck your Apache config files and also tail your
-server's error log.</P>
-<P>If you are getting ``404 Not Found'' errors even when the files clearly
+server's error log.</p>
+<p>If you are getting ``404 Not Found'' errors even when the files clearly
 exist, Mason may be having trouble with your document root. One
 situation that will unfortunately confuse Mason is if your document
 root goes through a symbolic link. Try expressing your document root
-in terms of the true filesystem path.</P>
-<P>Next, try adding the tag &lt;% 2+2 %&gt; at the top of some HTML file. If you
-reload this page and see a ``4'', Mason is working!</P>
-<P>
-<HR>
-<H1><A NAME="documentation_roadmap">DOCUMENTATION ROADMAP</A></H1>
-<P>Once Mason is on its feet, the next step is to write a component or
-two. The <EM>Mason Developer's Manual</EM>
-(<A HREF="Devel.html">HTML::Mason::Devel</A>) is a complete tutorial for
+in terms of the true filesystem path.</p>
+<p>Next, try adding the tag &lt;% 2+2 %&gt; at the top of some HTML file. If you
+reload this page and see a ``4'', Mason is working!</p>
+<p>
+</p>
+<hr />
+<h1><a name="documentation_roadmap">DOCUMENTATION ROADMAP</a></h1>
+<p>Once Mason is on its feet, the next step is to write a component or
+two. The <em>Mason Developer's Manual</em>
+(<a href="/HTML/Mason/Devel.html">HTML::Mason::Devel</a>) is a complete tutorial for
 writing, using, and debugging components. A reference companion to the
 Developer's Manual is the Request API documentation,
-<A HREF="Request.html">HTML::Mason::Request</A>.</P>
-<P>Whoever is responsible for setting up and tuning Mason should read the
-<EM>Administrator's Manual</EM> (<A HREF="Admin.html">HTML::Mason::Admin</A>),
+<a href="/HTML/Mason/Request.html">HTML::Mason::Request</a>.</p>
+<p>Whoever is responsible for setting up and tuning Mason should read the
+<em>Administrator's Manual</em> (<a href="/HTML/Mason/Admin.html">HTML::Mason::Admin</a>),
 though developers might also benefit from reading it as well. This
 document covers more advanced configuration scenarios and performance
 optimization. The reference companion to the Administrator's manual
-is the <EM>Parameters Reference</EM>, which describes all the parameters you
-can use to configure Mason.</P>
-<P>Most of this documentation assumes that you're running Mason on top of
+is the <em>Parameters Reference</em>, which describes all the parameters you
+can use to configure Mason.</p>
+<p>Most of this documentation assumes that you're running Mason on top of
 mod_perl, since that is the most common configuration.  If you would
 like to run Mason via a CGI script, refer to the
-<A HREF="CGIHandler.html">HTML::Mason::CGIHandler</A> documentation.
+<a href="/HTML/Mason/CGIHandler.html">HTML::Mason::CGIHandler</a> documentation.
 If you are using Mason from a standalone program, refer to the
-STANDALONE MODE in <A HREF="Interp.html">HTML::Mason::Interp</A>.</P>
-<P>
-<HR>
-<H1><A NAME="authors">AUTHORS</A></H1>
-<P>Jonathan Swartz &lt;<A HREF="mailto:swartz@pobox.com">swartz@pobox.com</A>&gt;, Dave Rolsky &lt;<A HREF="mailto:autarch@urth.org">autarch@urth.org</A>&gt;, Ken Williams &lt;<A HREF="mailto:ken@mathforum.org">ken@mathforum.org</A>&gt;</P>
-<P>
-<HR>
-<H1><A NAME="see_also">SEE ALSO</A></H1>
-<P><A HREF="Devel.html">HTML::Mason::Devel</A>,
-<A HREF="Admin.html">HTML::Mason::Admin</A></P>
+STANDALONE MODE in <a href="/HTML/Mason/Interp.html">HTML::Mason::Interp</a>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="authors">AUTHORS</a></h1>
+<p>Jonathan Swartz &lt;<a href="mailto:swartz@pobox.com">swartz@pobox.com</a>&gt;, Dave Rolsky &lt;<a href="mailto:autarch@urth.org">autarch@urth.org</a>&gt;, Ken Williams &lt;<a href="mailto:ken@mathforum.org">ken@mathforum.org</a>&gt;</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="/HTML/Mason/Devel.html">HTML::Mason::Devel</a>,
+<a href="/HTML/Mason/Admin.html">HTML::Mason::Admin</a></p>
 
-</BODY>
+</body>
 
-</HTML>
+</html>

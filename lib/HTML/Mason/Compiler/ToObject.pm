@@ -7,9 +7,12 @@ package HTML::Mason::Compiler::ToObject;
 use strict;
 
 use Params::Validate qw(SCALAR);
+use HTML::Mason::Tools qw(make_fh);
 
 use HTML::Mason::Compiler;
 use base qw( HTML::Mason::Compiler );
+
+use HTML::Mason::Exceptions( abbr => [qw(wrong_compiler_error)] );
 
 BEGIN
 {
@@ -99,30 +102,62 @@ sub compiled_component
 	$subs{main} = $params->{code};
 	$params->{code} = "sub {\n\$m->call_dynamic( 'main', \@_ )\n}";
 
+        if ( exists $params->{filter} )
+        {
+            $subs{filter} = $params->{filter};
+            $params->{filter} = "sub {\n\$m->call_dynamic( 'filter', \@_ )\n}";
+        }
+
 	$params->{dynamic_subs_init} =
 	    join '', ( "sub {\n",
 		       $self->_blocks('shared'),
 		       "return {\n",
-		       join( ",\n", map { "'$_' => $subs{$_}" } sort keys %subs ),
+		       map( "'$_' => $subs{$_},\n", sort keys %subs ),
 		       "\n}\n}"
 		     );
     }
 
-    $params->{object_size} = (length $header) + (length join '', values %$params, keys %$params);
+    $params->{object_size} = 0;
+    $params->{object_size} += length for ($header, %$params);
 
-    my $object = join '', ( $header,
-			    $self->_subcomponents_footer,
-			    $self->_methods_footer,
-			    $self->_constructor( $self->comp_class,
-						 $params ),
-			    ';',
-			  );
+    # This funky list subscript is just so that we can avoid making a
+    # copy of the returned string.  Otherwise we'd have to save it,
+    # then delete $self->{current_comp}, then return the string.
+    
+    return +(join('',
+		  "# MASON COMPILER ID: $id\n",
+		  $header,
+		  $self->_subcomponents_footer,
+		  $self->_methods_footer,
+		  $self->_constructor( $self->comp_class,
+				       $params ),
+		  ';',
+		 ),
+	     $self->{current_comp} = undef,
+	    )[0];
+}
 
-    $object .= "\n\n# MASON COMPILER ID: $id\n";
+sub assert_creatorship
+{
+    my ($self, $p) = @_;
+    my $id;
+    if ($p->{object_code}) {
+	# Read the object code as a string
 
-    $self->{current_comp} = undef;
+	($id) = ${$p->{object_code}} =~ /\A# MASON COMPILER ID: (\S+)$/m
+	    or wrong_compiler_error "Couldn't find a Compiler ID in compiled code.";
+    } else {
+	# Open the object file and read its first line
 
-    return $object;
+	my $fh = make_fh();
+	open $fh, $p->{object_file} or die "Can't read $p->{object_file}: $!";
+	($id) = <$fh> =~ /\A# MASON COMPILER ID: (\S+)$/m
+	    or wrong_compiler_error "Couldn't find a Compiler ID in $p->{object_file}.";
+	close $fh;
+    }
+    
+    wrong_compiler_error 'This object file was created by an incompatible Compiler or Lexer.  Please remove the component files in your object directory.'
+	unless $id eq $self->object_id;
 }
 
 sub _compile_subcomponents
@@ -160,10 +195,9 @@ sub _make_main_header
 
     my $pkg = $self->in_package;
     return join '', ( "package $pkg;\n",
-		      $self->use_strict ? "use strict;\n" : '',
+		      $self->use_strict ? "use strict;\n" : "no strict;\n",
 		      sprintf( "use vars qw(\%s);\n",
 			       join ' ', '$m', $self->allow_globals ),
-		      "my \$_escape = \\&HTML::Mason::Tools::escape_perl_expression;\n",
 		      $self->_blocks('once'),
 		    );
 }
@@ -189,28 +223,24 @@ sub _subcomponent_or_method_footer
 
     return '' unless %{ $self->{current_comp}{$type} };
 
-    return join '', ( "my %_$type =\n(\n",
-		      join ( ",\n",
-			     map { "'$_' => " .
-				   $self->_constructor( $self->{subcomp_class},
-							$self->{"compiled_$type"}{$_} ) }
-			     keys %{ $self->{"compiled_$type"} }
-			   ),
-		      "\n);\n"
-		    );
+    return join('',
+		"my %_$type =\n(\n",
+		map( {("'$_' => " ,
+		       $self->_constructor( $self->{subcomp_class},
+					    $self->{"compiled_$type"}{$_} ) ,
+		       ",\n")} keys %{ $self->{"compiled_$type"} } ) ,
+		"\n);\n"
+	       );
 }
 
 sub _constructor
 {
-    my $self = shift;
-    my $class = shift;
-    my $params = shift;
+    my ($self, $class, $params) = @_;
 
-    return join '', ( "$class\->new\n(\n",
-		      join ( ",\n",
-			     map {"'$_' => $params->{$_}" } sort keys %$params ),
-		      "\n)\n",
-		    );
+    return ("${class}->new(\n",
+	    map( {("'$_' => ", $params->{$_}, ",\n")} sort keys %$params ),
+	    "\n)\n",
+	   );
 }
 
 sub _component_params
@@ -234,6 +264,7 @@ sub _component_params
         $params{filter} =
             ( join '',
               "sub { local \$_ = shift;\n",
+              "my %ARGS; { local \$^W; %ARGS = \@_ unless \@_ % 2; }\n",
               ( join ";\n", @filter ),
               ";\n",
               "return \$_;\n",
@@ -320,9 +351,12 @@ sub _arg_declarations
 	}
     }
 
-    # just to be sure
-    local $" = ' ';
-    my @req_check = <<"EOF";
+    my @req_check;
+    if (@required)
+    {
+        # just to be sure
+        local $" = ' ';
+        @req_check = <<"EOF";
 
 foreach my \$arg ( qw( @required ) )
 {
@@ -331,6 +365,7 @@ foreach my \$arg ( qw( @required ) )
         unless exists \$ARGS{\$arg};
 }
 EOF
+    }
 
     my $decl = 'my ( ';
     $decl .= join ', ', @decl;
@@ -400,7 +435,7 @@ HTML::Mason::Compiler::ToObject - A Compiler subclass that generates Mason objec
 This Compiler subclass generates Mason object code (Perl code).  It is
 the default Compiler class used by Mason.
 
-=head1 PARAMETERS FOR new() CONSTRUCTOR
+=head1 PARAMETERS TO THE new() CONSTRUCTOR
 
 All of these parameters are optional.
 
@@ -409,12 +444,12 @@ All of these parameters are optional.
 =item comp_class
 
 The class into which component objects are blessed.  This defaults to
-L<C<HTML::Mason::Component>|HTML::Mason::Component>.
+L<HTML::Mason::Component|HTML::Mason::Component>.
 
 =item subcomp_class
 
 The class into which subcomponent objects are blessed.  This defaults
-to L<C<HTML::Mason::Subcomponent>|HTML::Mason::Subcomponent>.
+to L<HTML::Mason::Component::Subcomponent|HTML::Mason::Component::Subcomponent>.
 
 =item in_package
 
@@ -423,17 +458,16 @@ historical reasons, this defaults to C<HTML::Mason::Commands>.
 
 =item preamble
 
-If this parameter is supplied, then the text given is placed at the
-beginning of each component.
+Text given for this parameter is placed at the beginning of each component. See also L<postamble|HTML::Mason::Params/postamble>.
 
 =item postamble
 
-Text given for this parameter is placed at the end of each component.
+Text given for this parameter is placed at the end of each component. See also L<preamble|HTML::Mason::Params/preamble>.
 
 =item use_strict
 
-This indicates whether or not a given component should C<use strict>.
-By default, this is true.
+True or false, default is true. Indicates whether or not a given
+component should C<use strict>.
 
 =back
 
