@@ -359,6 +359,9 @@ The "keys" for each path must be unique names and their "values" must
 be filesystem paths.  These paths will be searched in the provided
 order whenever a component path must be resolved to a filesystem path.
 
+If no component root is specified, the current working directory is
+used.
+
 
 =head2 compiler_class
 

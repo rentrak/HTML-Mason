@@ -45,7 +45,7 @@ on the filesystem, which is the norm for most Mason-based applications.</p>
 </p>
 <hr />
 <h1><A NAME="parameters_to_the_new___construc">PARAMETERS TO THE <code>new()</code> CONSTRUCTOR</a></h1>
-<p>The <code>new</code> method takes a single mandatory parameter, <A HREF="#item_comp_root"><code>comp_root</code></a>.</p>
+<p>The <code>new</code> method takes a single parameter, <A HREF="#item_comp_root"><code>comp_root</code></a>.</p>
 <dl>
 <dt><strong><A NAME="item_comp_root">comp_root</a></strong><br />
 </dt>
@@ -76,6 +76,10 @@ root. If it is an array reference, it should be of the following form:</p>
 <p>The ``keys'' for each path must be unique names and their ``values'' must
 be filesystem paths.  These paths will be searched in the provided
 order whenever a component path must be resolved to a filesystem path.</p>
+</dd>
+<dd>
+<p>If no component root is specified, the current working directory is
+used.</p>
 </dd>
 <p></p></dl>
 <p>

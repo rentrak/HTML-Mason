@@ -70,7 +70,7 @@ sub request_time { time }
 sub uri {
     my $self = shift;
 
-    $self->{uri} ||= $self->script_name . $self->path_info || '';
+    $self->{uri} ||= $self->{query}->script_name . $self->path_info || '';
 }
 
 # Is this available in CGI?
@@ -81,7 +81,7 @@ sub uri {
 # is being called." This is irrelevant, I think.
 # sub location {}
 
-sub path_info { $_[0]->path_info }
+sub path_info { $_[0]->{query}->path_info }
 
 sub args {
     my $self = shift;
@@ -159,8 +159,14 @@ sub http_header {
 }
 
 sub send_http_header {
-    print shift->http_header;
+    my $self = shift;
+
+    print STDOUT $self->http_header;
+
+    $self->{http_header_sent} = 1;
 }
+
+sub http_header_sent { shift->{http_header_sent} }
 
 # How do we know this under CGI?
 # sub get_basic_auth_pw {}
@@ -259,14 +265,14 @@ sub no_cache {
 }
 
 sub print {
-    shift->query->print(@_);
+    print @_;
 }
 
 sub send_fd {
     my ($self, $fd) = @_;
     local $_;
-    my $p = $self->query->can('print');
-    $p->($_) while defined ($_ = <$fd>);
+
+    print STDOUT while defined ($_ = <$fd>);
 }
 
 # Should this perhaps throw an exception?

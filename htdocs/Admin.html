@@ -1073,9 +1073,11 @@ the result to standard output:</p>
     use strict;</pre>
 <pre>
     my $interp = HTML::Mason::Interp-&gt;new ();
-    $interp-&gt;exec(&lt;relative path to file&gt;, &lt;args&gt;...);</pre>
+    $interp-&gt;exec(&lt;path-to-file-from-cwd&gt;, &lt;args&gt;...);</pre>
 <p>Because no component root was specified, the root is set to your
-current working directory.  If you have a well defined and contained
+current working directory. (The path supplied to <code>exec</code> still needs
+to start with a slash, even though it is effectively a relative path
+from the current directory.) If you have a well defined and contained
 component tree, you'll probably want to specify a component root.</p>
 <p>Because no data directory was specified, object files will not be
 created and data caching will not work in the default manner. If

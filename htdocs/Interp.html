@@ -290,9 +290,13 @@ value indicating whether or not a component exists for that path.
 </dt>
 <dd>
 This is a convenience method which simply calls the <A HREF="#item_comp_root"><code>comp_root</code></a>
-method in the resolver object.  Obviously, if you are using a custom
-resolver class which does not have a <A HREF="#item_comp_root"><code>comp_root</code></a> method, then this
-convenience method will not work.
+method in the resolver object, which by default is in the
+HTML::Mason::Resolver::File class.
+</dd>
+<dd>
+<p>Obviously, if you are using a custom resolver class which does not
+have a <A HREF="#item_comp_root"><code>comp_root</code></a> method, then this convenience method will not
+work.</p>
 </dd>
 <A NAME="item_exec"></a><p></p>
 <dt><strong><A NAME="item_exec">exec (comp, args...)</a></strong><br />
