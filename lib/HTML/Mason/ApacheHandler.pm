@@ -83,7 +83,7 @@ use HTML::Mason;
 use HTML::Mason::Commands;
 use HTML::Mason::FakeApache;
 use HTML::Mason::Tools qw(dumper_method html_escape make_fh pkg_installed);
-use HTML::Mason::Utils;
+use HTML::Mason::Utils qw(cgi_request_args);
 use Params::Validate qw(:all);
 use Apache;
 use Apache::Status;
@@ -108,7 +108,7 @@ use HTML::Mason::MethodMaker
 # use() params. Assign defaults, in case ApacheHandler is only require'd.
 use vars qw($ARGS_METHOD $AH $VERSION);
 
-$VERSION = sprintf '%2d.%02d', q$Revision: 1.68.4.11.2.25 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf '%2d.%02d', q$Revision: 1.68.4.11.2.26 $ =~ /(\d+)\.(\d+)/;
 
 my @used = ($HTML::Mason::IN_DEBUG_FILE);
 
@@ -941,26 +941,8 @@ sub _cgi_args
     return if $r->method eq 'GET' && !scalar($r->args);
 
     my $q = CGI->new;
+    my %args = cgi_request_args($q, $r->method);
     $request->cgi_object($q);
-
-    my %args;
-    my $methods = $r->method eq 'GET' ? [ 'param' ] : [ 'param', 'url_param' ];
-    foreach my $method (@$methods) {
-	foreach my $key ( $q->$method() ) {
-	    foreach my $value ( $q->$method($key) ) {
-		if (exists($args{$key})) {
-		    if (ref($args{$key}) eq 'ARRAY') {
-			push @{ $args{$key} }, $value;
-		    } else {
-			$args{$key} = [$args{$key}, $value];
-		    }
-		} else {
-		    $args{$key} = $value;
-		}
-	    }
-	}
-    }
-
     return %args;
 }
 

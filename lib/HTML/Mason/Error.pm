@@ -49,9 +49,8 @@ sub error_process {
     my @error = split(/\n/, $error);
     foreach my $line (@error) {
 	# Handle the call stack lines.
-	if ($line =~ /called at/) {
-	    my ($func, $file, $linenum) =
-		($line =~ /\t(.*) called at (\S*) line (\d*)/);
+	if ($line =~ /\t(.*) called at (\S*) line (\d+)/) {
+	    my ($func, $file, $linenum) = ($1, $2, $3);
 
 	    # Ignore superfluous call stack entries.
 	    next if $file =~ m#/dev/null#;
@@ -81,9 +80,8 @@ sub error_process {
 	# This error is redundant and we do not actually use the information,
 	# but we need to handle the case so it doesn't get pushed into the
 	# unparsable information structure.
-	elsif($line =~ /loading/) {
-	    my ($document) =
-		($line =~ /loading '(\S*)' at/);
+	elsif($line =~ /loading '(\S*)' at/) {
+	    my ($document) = ($1);
 	    $error_info{'err_type'} = $conf{'runtime_error'};
 	    $error_info{'err_descr'} = "while loading $document";
 	}
@@ -95,18 +93,16 @@ sub error_process {
 	}
 	
 	# Handle perl's errors and 'die' statements.
-	elsif($line =~ /at (\S*) line (\d*)/) {
-	    my ($message, $file, $linenum) =
-		($line =~ /(.*) at (\S*) line (\d*)/);
+	elsif($line =~ /(.*) at (\S*) line (\d*)/) {
+	    my ($message, $file, $linenum) = ($1, $2, $3);
 	    $message =~ s/,/ /g;  # hack for sake of error_parse
 	    push @errors, { "message" => $message, "line" => $linenum };
 	    $error_info{'err_file'} = $file;
 	}
 
 	# Handle undefined components.
-	elsif($line =~ /^could not find component/) {
-	    my ($component) = 
-		($line =~ /^could not find component for path '(\S*)'/);
+	elsif($line =~ /^could not find component for path '(\S*)'/) {
+	    my ($component) = ($1);
 	    $error_info{'undef_component'} = $component;
 	    $error_info{'err_type'} = $conf{'component_error'};
 	}
@@ -115,9 +111,8 @@ sub error_process {
 	# Mason compile errors don't follow the same format as other errors, and the
 	# format of the different errors are not necessarily the same, so we have to
 	# handle them by checking if the error type is a compilation error.
-	elsif($line =~ /during compilation/) {
-	    my ($file) =
-		($line =~ /compilation of (\S*):/);
+	elsif($line =~ /during compilation of (\S*):/) {
+	    my ($file) = ($1);
 	    $error_info{'err_file'} = $file;
 	    $error_info{'err_type'} = $conf{'compile_error'};
 	    $error_info{'err_descr'} = "during compilation of $file";
@@ -222,7 +217,6 @@ sub error_display_html {
     my $title = "Mason error";
     my $error_info = error_parse($error);
 
-    $raw_error =~ s/\n/<br>\n/g;
     $error_info->{raw_error} = $raw_error if $raw_error;
 
     $out .= qq{<html><body>\n<p align="center"><font face="$conf->{'font_face'}"><b>$title</b></font></p>\n};
@@ -255,7 +249,10 @@ sub error_table_html {
 		);
     $show{misc_info} = $error_info->{misc_info} if $error_info->{misc_info};
     $show{debug_info} = $error_info->{debug_info} if $error_info->{debug_info};
-    $show{raw_error} = "<br>" x 30 . "<a name=\"raw_error\">\n" . $error_info->{raw_error} if $error_info->{raw_error};
+    if ($error_info->{raw_error}) {
+	($show{raw_error} = $error_info->{raw_error}) =~ s/\t//g;
+	$show{raw_error} = "<br>" x 30 . "<a name=\"raw_error\">\n" . "<pre>" . $show{raw_error} . "</pre>";
+    }
 
     $out .= qq{<table border="0" cellspacing="0" cellpadding="1">};
     foreach my $item (@{$conf->{'show'}}) {
@@ -321,7 +318,7 @@ sub error_conf {
 		    component_stack => "component stack: ", 
 		    call_trace      => "code stack: ",
 		    debug_info      => "debug info: ",
-		    raw_error       => "<br><a href=\"#raw_error\">raw_error</a>" . "<br>" x 30 . "raw error: ",
+		    raw_error       => "<br><a href=\"#raw_error\">raw_error</a>" . "<br>" x 29 . "raw error: ",
 		},
 
 		show             => [ 
@@ -338,7 +335,7 @@ sub error_conf {
 
     $conf->{table_entry} = sub {
 	my($t, $d) = @_;
-	qq(<tr>\n\t<td nowrap align="left" valign="top"><font face="$conf->{'font_face'}" size="$conf->{'font_size'}"><b>$t</b>&nbsp;</font></td>\n\t<td align="left" valign="top"><font face="$conf->{'font_face'}" size="$conf->{'font_size'}">$d</font></td>\n</tr>\n);
+	qq(<tr>\n\t<td nowrap align="left" valign="top"><font face="$conf->{'font_face'}" size="$conf->{'font_size'}"><b>$t</b>&nbsp;</font></td>\n\t<td align="left" valign="top" nowrap><font face="$conf->{'font_face'}" size="$conf->{'font_size'}">$d</font></td>\n</tr>\n);
     };
 
     return $conf;
@@ -393,8 +390,9 @@ sub create_context_html {
 	}
 	$context .= $conf->{table_entry}->("...", "");
 	$context .= qq(</table>);
+	
+	close $fh or die "can't close file: $file: $!";
     }
-    close $fh or die "can't close file: $file: $!";
 
     return $context;
 }
@@ -476,13 +474,7 @@ sub error_parse {
 	    my ($backtrace) = ($line =~ /^Component stack: (.*)/);
 	    my @entries = split(/, /, $backtrace);
 	    foreach my $entry (@entries) {
-		my ($project, $component);
-		if ($entry =~ /:/) {
-		    ($project, $component) = ($entry =~ /\[(\S+):(\S+)\]/);
-		} else {
-		    ($project, $component) = (undef,$entry);
-		}
-		push @{$error_info->{'backtrace'}}, { project => $project, component => $component };
+		push @{$error_info->{'backtrace'}}, { component => $entry };
 	    }
 	    
 	} elsif($line =~ /^Code stack:/) {		

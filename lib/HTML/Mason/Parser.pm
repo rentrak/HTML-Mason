@@ -51,7 +51,7 @@ my %valid_escape_flags = map(($_,1),qw(h n u));
 #
 sub version
 {
-    return "0.8";
+    return "8";
 }
 
 sub new
@@ -1144,6 +1144,7 @@ sub write_object_file
     }
     
     my $fh = make_fh();
+    ($object_file) = $object_file =~ /^(.*)/s if $self->taint_check;
     open $fh, ">$object_file" or die "Couldn't write object file $object_file: $!";
     print $fh $object_text;
     close $fh or die "Couldn't close object file $object_file: $!";
@@ -1172,10 +1173,10 @@ sub eval_object_text
 	local $^W = 1;
 	local $SIG{__WARN__} = $ignore_expr ? sub { $warnstr .= $_[0] if $_[0] !~ /$ignore_expr/ } : sub { $warnstr .= $_[0] };
 	if ($object_file) {
-	    ($object_file) = ($object_file =~ /^(.*)$/s) if $self->taint_check;
+	    ($object_file) = ($object_file =~ /^(.*)/s) if $self->taint_check;
 	    $comp = do($object_file);
 	} else {
-	    ($object_text) = ($object_text =~ /^(.*)$/s) if $self->taint_check;
+	    ($object_text) = ($object_text =~ /^(.*)/s) if $self->taint_check;
 	    $comp = eval($object_text);
 	}
 	$err = $warnstr . $@;
@@ -1194,7 +1195,6 @@ sub eval_object_text
     # Detect various forms of older, incompatible object files:
     #  -- zero-sized files (previously signifying pure text components)
     #  -- pre-0.7 files that return code refs
-    #  -- valid components but with an earlier parser_version
     #
     if ($object_file) {
 	my $parser_version = version();
@@ -1204,8 +1204,6 @@ sub eval_object_text
 	} elsif ($comp) {
 	    if (ref($comp) eq 'CODE') {
 		$err = sprintf($incompat,"a pre-0.7 parser");
-	    } elsif ($comp->parser_version != $parser_version) {
-		$err = sprintf($incompat,"parser version ".$comp->parser_version);
 	    }
 	}
     }
@@ -1248,9 +1246,9 @@ sub make_dirs
 	$|++;
 	select $oldfh;
     }
-    
+
     my $compilesub = sub {
-	my ($srcfile) = @_;
+	my $srcfile = $File::Find::name;
 	return if (!-f $srcfile);
 	return if defined($predicate) && !($predicate->($srcfile));
 	my $compPath = substr($srcfile,length($source_dir));
@@ -1307,7 +1305,7 @@ sub make_dirs
 	    }
 	}
     };
-    close $relfh;
+    close $relfh if defined($reload_file);
     die $@ if $@;
 }
 

@@ -29,6 +29,7 @@
 	<LI><A HREF="#configuring_via_a_handler_script">CONFIGURING VIA A HANDLER SCRIPT</A>
 	<UL>
 
+		<LI><A HREF="#declaring_your_handler_pl">Declaring your handler.pl</A>
 		<LI><A HREF="#creating_the_mason_objects">Creating the Mason objects</A>
 		<LI><A HREF="#multiple_component_roots">Multiple component roots</A>
 		<LI><A HREF="#external_modules">External modules</A>
@@ -744,6 +745,33 @@ important junctures: the server initialization, the beginning of a request,
 and the end of a request. A wide set of behaviors can be implemented with a
 mere few lines of well-placed Perl in your <CODE>handler.pl</CODE>. In this section we present the basics of setting up <CODE>handler.pl</CODE> as well as some ideas for more advanced applications.
 
+
+<P>
+
+<P>
+<HR>
+<H2><A NAME="declaring_your_handler_pl">Declaring your handler.pl
+
+</A></H2>
+This method requires only a bit of Apache configuration. First, use a
+PerlRequire directive to declare your handler.pl location (this can be
+anywhere, though the Apache conf/ subdirectory is a good place as any).
+Second, set your PerlHandler simply to HTML::Mason rather than
+HTML::Mason::ApacheHandler.
+
+
+<P>
+
+<PRE>    PerlRequire /path/to/handler.pl
+</PRE>
+
+<P>
+
+<PRE>    &lt;FilesMatch &quot;*.html&quot;&gt;
+        SetHandler perl-script
+        PerlHandler HTML::Mason   # notice - no ::ApacheHandler!
+    &lt;/FilesMatch&gt;
+</PRE>
 
 <P>
 

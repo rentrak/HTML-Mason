@@ -15,17 +15,34 @@ Other Mason features include powerful filtering and templating
 facilities, an HTML/data caching model, and a web-based site
 previewing utility.  See http://www.masonhq.com/ for more information.
 
+PREREQUISITES
+
+Mason requires Perl 5.004 or greater plus the following CPAN modules:
+
+    MLDBM
+    Data::Dumper (comes installed with Perl 5.005 and on)
+    Params::Validate
+
+The following CPAN modules are optional for certain features, but not required:
+
+    Time::HiRes
+
 INSTALLATION
 
 To install Mason, run the standard sequence:
 
-	perl Makefile.PL
-	make
-	make install
+    perl Makefile.PL
+    make
+    make install
+
+By default, Mason will prompt you for information about where Apache
+is installed so that it can do tests with a live Apache server.  If
+you would like to skip this, invoke the Makefile.PL like this:
+
+        perl Makefile.PL --no-prompts
 
 After Mason is installed, you will need to activate it by adding some
-directives to your Apache configuration files, and customizing Mason's
-Config.pm and eg/handler.pl files to match your system.
+directives to your Apache configuration files.
 
 The included pod docs have been pre-converted to HTML for you and
 placed in the htdocs/ directory. The Mason overview (a good place to
@@ -78,6 +95,13 @@ For all bug reports indicate your architecture, Apache/Perl/module
 versions, etc. For installation problems send your handler.pl and
 httpd.conf. For component problems try to isolate the bug in a single
 small component or set of components, and send those.
+
+If you are experiencing test failures, please run the tests like this:
+
+  make test TEST_VERBOSE=1
+
+and send the output along with the bug report.  Otherwise we'll just
+ask you to do this before we can do anything.
 
 CONTENT MANAGEMENT
 

@@ -273,12 +273,12 @@ subdirectory at first, do this:
 
 <P>
 
-<PRE>    &lt;Location /mason&gt;
+<PRE>    &lt;Directory /path/to/subdirectory&gt;
         &lt;FilesMatch &quot;*.html&quot;&gt;
             SetHandler perl-script
             PerlHandler HTML::Mason::ApacheHandler
         &lt;/FilesMatch&gt;
-    &lt;/Location&gt;
+    &lt;/Directory&gt;
 </PRE>
 
 <P>

@@ -18,6 +18,12 @@
 	<LI><A HREF="#accessor_methods">ACCESSOR METHODS</A>
 	<LI><A HREF="#other_methods">OTHER METHODS</A>
 	<LI><A HREF="#standalone_mode">STANDALONE MODE</A>
+	<UL>
+
+		<LI><A HREF="#using_mason_from_a_cgi_script">Using Mason from a CGI script</A>
+		<LI><A HREF="#using_mason_from_a_standalone_sc">Using Mason from a standalone script</A>
+	</UL>
+
 	<LI><A HREF="#author">AUTHOR</A>
 	<LI><A HREF="#see_also">SEE ALSO</A>
 </UL>
@@ -476,18 +482,16 @@ Any global that you set should also be registered with the Parser parameter <A H
 </A></H1>
 Although Mason is most commonly used in conjunction with mod_perl, there is
 also a functional API that allows you to use Mason from CGI programs or
-from stand-alone Perl scripts. In the latter case Mason can be used as a
-glorified Text::Template, producing a set of files from components, or used
-to generate a flat version of a componentized site.
+from stand-alone Perl scripts. 
 
 
 <P>
 
-When using Mason outside of mod_perl, just create a Parser and Interp
-object; you do not need the ApacheHandler object. Once you've created an
-interpreter, the main thing you'll want to do with it is call a component
-and do something with the output. To call a component, use Interp's
-<CODE>exec()</CODE> method:
+When using Mason outside of mod_perl, just create an Interp object; you do
+not need the ApacheHandler object. Once you've created an interpreter, the
+main thing you'll want to do with it is call a component and do something
+with the output. To call a component, use Interp's <CODE>exec()</CODE>
+method:
 
 
 <P>
@@ -509,6 +513,155 @@ to standard output by default, but you can change this by specifying <A HREF="./
 
 <P>
 
+<P>
+<HR>
+<H2><A NAME="using_mason_from_a_cgi_script">Using Mason from a CGI script
+
+</A></H2>
+Here is a skeleton CGI script that calls a component and sends the output
+to the browser.
+
+
+<P>
+
+<PRE>    #!/usr/bin/perl -w
+    use CGI;
+    use HTML::Mason;
+    use HTML::Mason::Utils qw(cgi_request_args);
+</PRE>
+
+<P>
+
+<PRE>    my $interp = new HTML::Mason::Interp (comp_root=&gt;'...',
+                                          data_dir=&gt;'...');
+</PRE>
+
+<P>
+
+<PRE>    my $q = new CGI;
+    my $comp = $ENV{'PATH_TRANSLATED'};
+    my $root = $interp-&gt;comp_root;
+    $comp =~ s/^$root//
+        or die &quot;Requested file '$comp' is outside component root '$root'&quot;;
+    my %args = cgi_request_args($q, $q-&gt;request_method);
+    print $q-&gt;header;
+</PRE>
+
+<P>
+
+<PRE>    $interp-&gt;exec($comp, %args);
+</PRE>
+
+<P>
+
+The relevant portions of the httpd.conf file look like:
+
+
+<P>
+
+<PRE>    DocumentRoot /path/to/comp/root
+    ScriptAlias /cgi-bin/ /path/to/cgi-bin/
+    Action html-mason /cgi-bin/handler.cgi
+</PRE>
+
+<P>
+
+<PRE>    &lt;Directory /path/to/comp/root&gt;
+    SetHandler html-mason
+    &lt;/Directory&gt;
+</PRE>
+
+<P>
+
+This simply causes Apache to call handler.cgi every time a file under the
+component root is requested.
+
+
+<P>
+
+It should be noted that because this script simply prints standard HTTP
+headers and then executes a component, there would be no way of sending
+non-OK responses to the browser from your components.
+
+
+<P>
+
+A more complex handler.cgi script might look like this:
+
+
+<P>
+
+<PRE>    #!/usr/bin/perl -w
+    use CGI;
+    use HTML::Mason;
+    use HTML::Mason::Compiler::ToObject;
+    use HTML::Mason::Utils qw(cgi_request_args);
+    use HTTP::Headers;
+</PRE>
+
+<P>
+
+<PRE>    my $parser = new HTML::Mason::Parser (allow_globals='$H');
+    my $interp = new HTML::Mason::Interp (comp_root=&gt;'...',
+                                          data_dir=&gt;'...',
+                                          parser=&gt;$parser);
+</PRE>
+
+<P>
+
+<PRE>    my $q = new CGI;
+    my $comp = $ENV{'PATH_TRANSLATED'};
+    my $root = $interp-&gt;comp_root;
+    $comp =~ s/^$root//
+        or die &quot;Requested file '$comp' is outside component root '$root'&quot;;
+    my %args = cgi_request_args($q, $q-&gt;request_method);
+</PRE>
+
+<P>
+
+<PRE>    # Gather all component output into a buffer.
+    my $buffer;
+    $interp-&gt;out_method(\$buffer);
+</PRE>
+
+<P>
+
+<PRE>    my $H = new HTTP::Headers;
+    $interp-&gt;set_global('$H'=&gt;$H);
+</PRE>
+
+<P>
+
+<PRE>    eval { $interp-&gt;exec($comp, %args) };
+</PRE>
+
+<P>
+
+<PRE>    if ($@) {
+        handle_error($@);
+    } else {
+        unless ($H-&gt;header('content-type')) {
+            $H-&gt;header('content-type' =&gt; 'text/html');
+        }
+        print $H-&gt;as_string;
+        print $buffer;
+    }
+</PRE>
+
+<P>
+
+This script offers components the use of a global named <CODE>$h</CODE> which can be used to set headers (for example, for a redirect). It also
+catches errors in the execution of the script and has a routine to handle
+them.
+
+
+<P>
+
+<P>
+<HR>
+<H2><A NAME="using_mason_from_a_standalone_sc">Using Mason from a standalone script
+
+</A></H2>
 Here is a skeleton script that calls a component and places the output in a
 file:
 
@@ -516,17 +669,22 @@ file:
 <P>
 
 <PRE>    my $outbuf;
-    my $parser = new HTML::Mason::Parser;
-    my $interp = new HTML::Mason::Interp (parser=&gt;$parser,
-                                          comp_root=&gt;'&lt;component root&gt;',
+    my $interp = new HTML::Mason::Interp (comp_root=&gt;'&lt;component root&gt;',
                                           data_dir=&gt;'&lt;data directory&gt;',
                                           out_method=&gt;\$outbuf);
-    my $retval = $interp-&gt;exec('&lt;component path&gt;',&lt;args&gt;...);
+    my $retval = $interp-&gt;exec('&lt;component path&gt;', &lt;args&gt;...);
     open(F,&quot;&gt;mason.out&quot;);
     print F $outbuf;
     close(F);
     print &quot;return value of component was: $retval\n&quot;;
 </PRE>
+
+<P>
+
+This allows you to use Mason as a pure text templating solution -- like
+Text::Template and its brethren, but with more power (and of course more
+complexity).
+
 
 <P>
 
