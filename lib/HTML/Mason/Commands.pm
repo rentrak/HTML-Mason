@@ -18,6 +18,8 @@ require Exporter;
 @ISA=qw(Exporter);
 @EXPORT=qw(
 	mc_abort
+        mc_auto_comp
+	mc_auto_next
 	mc_cache
 	mc_cache_self
 	mc_caller 
@@ -28,8 +30,8 @@ require Exporter;
 	mc_date 
 	mc_file 
 	mc_file_root 
+	mc_filter_self
 	mc_out 
-	mc_suppress_hooks
 	mc_time
 );
 
@@ -37,9 +39,13 @@ require Exporter;
 
 #
 # Convert relative paths to absolute, handle . and ..
+# Empty string resolves to current component path.
 #
 my $process_comp_path = sub {
     my ($compPath) = @_;
+    if ($compPath !~ /\S/) {
+	return $INTERP->locals->{callPath};
+    }
     if ($compPath !~ m@^/@) {
 	$compPath = chop_slash($INTERP->locals->{parentPath}) . "/" . $compPath;
     }
@@ -48,15 +54,45 @@ my $process_comp_path = sub {
     return $compPath;
 };
 
+my $no_interp_error = "called outside of Interp::exec environment";
+my $no_auto_error = "called when no autohandler invoked";
+
 sub mc_abort
 {
-    $INTERP->{exec_state}->{abort_flag} = 1;
-    $INTERP->{exec_state}->{abort_retval} = $_[0];
-    die "aborted";
+    die "mc_abort $no_interp_error" if !$INTERP;
+    $INTERP->abort(@_);
+}
+
+sub mc_auto_comp
+{
+    die "mc_auto_comp $no_interp_error" if !$INTERP;
+    my $aref = $INTERP->{exec_state}->{autohandler_next} or die "mc_auto_comp $no_auto_error";
+    my $path = $aref->[0];
+    
+    # return relative path if possible
+    my $curdir = $INTERP->locals->{parentPath};
+    $path =~ s{^$curdir}{};
+}
+
+sub mc_auto_next
+{
+    die "mc_auto_next $no_interp_error" if !$INTERP;
+    my $aref = $INTERP->{exec_state}->{autohandler_next} or die "mc_auto_next $no_auto_error";
+    my ($compPath, $argsref) = @$aref;
+    my %args = (%$argsref,@_);
+    undef $INTERP->{exec_state}->{autohandler_next};
+    my ($result,@result);
+    if (wantarray) {
+	@result = mc_comp($compPath, %args);
+    } else {
+	$result = mc_comp($compPath, %args);
+    }
+    return wantarray ? @result : $result;
 }
 
 sub mc_cache
 {
+    die "mc_cache $no_interp_error" if !$INTERP;
     my (%options) = @_;
     return undef if !$INTERP->use_data_cache;
     $options{cache_file} = $INTERP->data_cache_filename($INTERP->locals->{truePath});
@@ -79,6 +115,7 @@ sub mc_cache
 
 sub mc_cache_self
 {
+    die "mc_cache_self $no_interp_error" if !$INTERP;
     my (%options) = @_;
     
     return 0 if !$INTERP->use_data_cache;
@@ -110,11 +147,8 @@ sub mc_cache_self
 	$INTERP->{stack}->[0] = {%saveLocals};
 	mc_cache(action=>'store',value=>$result,%storeOptions);
     } else {
-	#
-	# Hack! http header is technically a side-effect, so we must
-	# call it explicitly.
-	#
-	$INTERP->call_hooks(name=>'http_header');
+	$INTERP->call_hooks('start_primary');
+	$INTERP->call_hooks('end_primary');
     }
     mc_out($result);
     return 1;
@@ -122,6 +156,7 @@ sub mc_cache_self
 
 sub mc_caller ()
 {
+    die "mc_caller $no_interp_error" if !$INTERP;
     if ($INTERP->depth <= 1) {
 	return undef;
     } else {
@@ -129,13 +164,45 @@ sub mc_caller ()
     }
 }
 
+sub mc_call_self
+{
+    die "mc_call_self $no_interp_error" if !$INTERP;
+    my ($cref,$rref) = @_;
+    return 0 if $INTERP->locals->{inCallSelfFlag};
+    
+    #
+    # Reinvoke the component with inCallSelfFlag=1. Collect
+    # output and return value in references provided.
+    #
+    my $content;
+    my $lref = $INTERP->{stack}->[0];
+    my %saveLocals = %$lref;
+    $lref->{sink} = sub { $content .= $_[0] };
+    $lref->{inCallSelfFlag} = 1;
+    my $sub = $lref->{callFunc};
+    my %args = %{$lref->{callArgs}};
+    if (ref($rref) eq 'SCALAR') {
+	$$rref = &$sub(%args);
+    } elsif (ref($rref) eq 'ARRAY') {
+	@$rref = &$sub(%args);
+    } else {
+	&$sub(%args);
+    }
+    $INTERP->{stack}->[0] = {%saveLocals};
+    $$cref = $content if ref($cref) eq 'SCALAR';
+
+    return 1;
+}
+
 sub mc_call_stack ()
 {
+    die "mc_call_stack $no_interp_error" if !$INTERP;
     return map($_->{truePath},@{$INTERP->{stack}});
 }
 
 sub mc_comp
 {
+    die "mc_comp $no_interp_error" if !$INTERP;
     my ($compPath, %args) = @_;
 
     $compPath = &$process_comp_path($compPath);
@@ -150,6 +217,7 @@ sub mc_comp
 
 sub mc_comp_exists
 {
+    die "mc_comp_exists $no_interp_error" if !$INTERP;
     my ($compPath, %args) = @_;
 
     $compPath = &$process_comp_path($compPath);
@@ -172,6 +240,7 @@ sub mc_comp_exists
 
 sub mc_comp_source
 {
+    die "mc_comp_source $no_interp_error" if !$INTERP;
     my ($compPath) = @_;
     
     $compPath = &$process_comp_path($compPath);
@@ -180,6 +249,7 @@ sub mc_comp_source
 
 sub mc_comp_stack ()
 {
+    die "mc_comp_stack $no_interp_error" if !$INTERP;
     return map($_->{truePath},@{$INTERP->{stack}});
 }
 
@@ -189,6 +259,7 @@ sub mc_comp_stack ()
 #
 sub mc_date ($)
 {
+    die "mc_date $no_interp_error" if !$INTERP;
     my ($format) = @_;
 
     my $time = $INTERP->current_time();
@@ -219,36 +290,37 @@ sub mc_date ($)
 
 sub mc_file ($)
 {
+    die "mc_file $no_interp_error" if !$INTERP;
     my ($file) = @_;
     # filenames beginning with / or a drive letter (e.g. C:/) are absolute
     unless ($file =~ /^([A-Za-z]:)?\//) {
-	$file = $INTERP->static_file_root . "/" . $file;
+	if ($INTERP->static_file_root) {
+	    $file = $INTERP->static_file_root . "/" . $file;
+	} else {
+	    $file = $INTERP->comp_root . (chop_slash($INTERP->locals->{parentPath})) . "/" . $file;
+	}
     }
-    $INTERP->call_hooks(type=>'start_file',params=>[$file]);
+    $INTERP->call_hooks('start_file',$file);
     my $content = read_file($file);
-    $INTERP->call_hooks(type=>'end_file',params=>[$file]);
+    $INTERP->call_hooks('end_file',$file);
     return $content;
 }
 
 sub mc_file_root ()
 {
+    die "mc_file_root $no_interp_error" if !$INTERP;
     return $INTERP->static_file_root;
 }
 
 sub mc_out ($)
 {
+    die "mc_out $no_interp_error" if !$INTERP;
     $INTERP->locals->{sink}->($_[0]);
-}
-
-sub mc_suppress_hooks ($)
-{
-    foreach my $hookname (@_) {
-	$INTERP->suppress_hooks(name=>$hookname);
-    }
 }
 
 sub mc_time
 {
+    die "mc_time $no_interp_error" if !$INTERP;
     my $time = $INTERP->current_time;
     $time = time() if $time eq 'real';
     return $time;
@@ -256,6 +328,7 @@ sub mc_time
 
 sub mc_var ($)
 {
+    die "mc_var $no_interp_error" if !$INTERP;
     my ($field) = @_;
     return $INTERP->{vars}->{$field};
 }

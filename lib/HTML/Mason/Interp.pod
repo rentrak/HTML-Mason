@@ -17,11 +17,18 @@ which internally calls the Interp implementation methods. In that case
 the only user method is the new() constructor.
 
 If you want to call components outside of mod_perl (e.g. from CGI or a
-stand-alone Perl script), see the L<STANDALONE MODE> section below.
+stand-alone Perl script), see the STANDALONE MODE section below.
 
 =head1 PARAMETERS FOR new() CONSTRUCTOR
 
 =over
+
+=item allow_recursive_autohandlers
+
+True or undef, default is undef. If true, autohandlers apply both to
+their own directories and all subdirectories; if undef, only to their
+own directories. See the Components/autohandlers section of the
+Component Developer's Guide for a discussion of the pros and cons.
 
 =item code_cache_mode
 
@@ -86,7 +93,7 @@ a parser with default parameters.
 
 A set of component paths and/or component directories to load when the
 interpreter initializes. This should only be used for components that
-are frequently viewed and rarely updated.  See the L<Admin/preloading>
+are frequently viewed and rarely updated.  See the Admin/preloading
 section of the I<Admin Guide> for further details.
 
 =item static_file_root
@@ -94,7 +101,9 @@ section of the I<Admin Guide> for further details.
 Absolute path to prepend to relative filenames passed to C<mc_file()>. Does
 not require a trailing slash. For example, if the file root is
 '/foo/bar', then C<mc_file('baz/bap')> will read the file
-'/foo/bar/baz/bap'.
+'/foo/bar/baz/bap'. Undefined by default; if left undefined,
+relative path names to C<mc_file()> are prepended with the
+current component directory.
 
 =item system_log_file
 
@@ -127,7 +136,7 @@ should be left alone.
 
 True or undef, default is undef. If true, disables Mason's automatic
 timestamp checking on component source files, relying instead on an
-explicitly updated L<Admin/reload file>.
+explicitly updated Admin/reload file.
 
 =item verbose_compile_error
 
@@ -181,7 +190,7 @@ in the case of a list or hash.  For example:
 
 The global is set in the package that components run in: usually
 C<HTML::Mason::Commands>, although this can be overridden via the
-Parser parameter L<Parser/in_package>.  The lines above, for example,
+Parser parameter Parser/in_package.  The lines above, for example,
 are equivalent to:
 
     $HTML::Mason::Commands::dbh = DBI->connect(...);
@@ -190,7 +199,7 @@ are equivalent to:
 assuming that C<in_package> has not been changed.
 
 Any global that you set should also be registered with the Parser
-parameter L<Parser/allow_globals>; otherwise you'll get warnings from
+parameter Parser/allow_globals; otherwise you'll get warnings from
 C<strict>.
 
 =back
@@ -235,9 +244,9 @@ Jonathan Swartz, swartz@transbay.net
 
 =head1 SEE ALSO
 
-L<HTML::Mason>,
-L<HTML::Mason::Parser>,
-L<HTML::Mason::ApacheHandler>,
-L<HTML::Mason::Admin>
+HTML::Mason,
+HTML::Mason::Parser,
+HTML::Mason::ApacheHandler,
+HTML::Mason::Admin
 
 =cut

@@ -29,15 +29,18 @@ added to this list.
 
 =item ignore_warnings_expr
 
-Regular expression indicating which warnings to
-ignore when compiling subroutines. Any warning that is not ignored
-will prevent the component from being compiled and executed. For
-example:
+Regular expression indicating which warnings to ignore when compiling
+subroutines. Any warning that is not ignored will prevent the
+component from being compiled and executed. For example:
 
     ignore_warnings_expr =>
         'Global symbol.*requires explicit package'
 
-Undefined by default, meaning that all warnings are fatal. 
+If undef, all warnings are heeded; if '.', all warnings are ignored.
+
+By default, this is set to 'Subroutine .* redefined'.  This allows you
+to declare global subroutines inside <%once> sections and not receive
+an error when the component is reloaded.
 
 =item in_package
 
@@ -60,7 +63,7 @@ space on imported symbols, specify just the commands you want:
 =item postamble
 
 A piece of Perl code to insert at the end of every
-compiled subroutine. Blank by default. See L<Parser/preamble>.
+compiled subroutine. Blank by default. See Parser/preamble.
 
 =item postprocess
 
@@ -74,7 +77,7 @@ multiple times, once for each piece of code and text.
 
 This is the ideal place to translate accents into HTML entities.  It
 could also be used to strip out comments that you have in your HTML
-files that you don't want the end user to see. See L<Parser/preprocess>.
+files that you don't want the end user to see. See Parser/preprocess.
 
 =item preamble
 
@@ -85,19 +88,19 @@ adds the line
     use vars qw($r);
 
 to suppress strict warnings about uses of global $r (the Apache
-request object). See L<Parser/postamble>.
+request object). See Parser/postamble.
 
 =item preprocess
 
 Sub reference that is called to preprocess each component before Parser does
 it's magic.  The sub is called with a single parameter, a scalar reference
 to the script.  The sub is expected to process the script in-place.   This is
-one way to extend the HTML::Mason syntax with new tags, etc. See L<Parser/postprocess>.
+one way to extend the HTML::Mason syntax with new tags, etc. See Parser/postprocess.
 
 =item source_refer_predicate
 
 Reference to a subroutine that decides whether a given component
-should be compiled with L<Admin/source references>. The subroutine
+should be compiled with Admin/source references. The subroutine
 takes two arguments: first, the total number of characters in the
 component source; second, the number of characters devoted to plain
 text. For example, this component:
@@ -146,7 +149,7 @@ For example:
     my $strictmode = $parser->use_strict;
     $parser->use_strict(1);
 
-The only exception is L<Parser/allow_globals>, which works a bit differently.
+The only exception is Parser/allow_globals, which works a bit differently.
 
 =head1 OTHER METHODS
 
@@ -157,6 +160,49 @@ The only exception is L<Parser/allow_globals>, which works a bit differently.
 Called with no arguments, this returns the value of allow_globals as a
 list.  Called with one or more variable names, it appends the names to
 the existing list, removing duplicates if any.
+
+=for html <a name="item_make">
+
+=item make ($comp_root, $data_dir, [@paths, $verbose, $predicate,
+$dir_create_mode, $update_reload_file])
+
+make traverses a tree of components, compiles any out-of-date
+components into object files, and reports errors. All parameters
+listed above are passed as name/value pairs; the first two are
+required.
+
+I<$comp_root> and I<$data_dir> contain the Mason component root and data
+directory respectively.
+
+I<@paths> is a reference to a list of component paths to make
+recursively. By default, makes '/' (the entire component tree).
+
+I<$verbose> is a flag indicating whether to report components compiled
+and directories created. True by default.
+
+I<$predicate> is a subroutine that takes one argument, the component
+source file, and returns true or false indicating whether or not to
+try to compile it.  By default I<$predicate> ignores all filenames
+ending with "~".
+
+I<$dir_create_mode> contains the permissions mode for creating new
+directories, by default 0775.
+
+I<$update_reload_file> is a flag indicating whether to update a reload
+file in the data directory as components are recompiled. False by
+default.
+
+Example of usage:
+
+    #!/usr/bin/perl
+    use HTML::Mason;
+    use HTML::Mason::ApacheHandler;  # load explicitly to bring in special mc_ commands
+    
+    my $p = new HTML::Mason::Parser;
+    $p->allow_globals(qw($r));       # allow Apache $r global
+    $p->make (comp_root=>'/usr/home/swartz/web/comps',
+              data_dir=>'/usr/home/swartz/web/mason');
+
 
 =for html <a name="item_parse">
 
@@ -201,9 +247,9 @@ Jonathan Swartz, swartz@transbay.net
 
 =head1 SEE ALSO
 
-L<HTML::Mason>,
-L<HTML::Mason::Interp>,
-L<HTML::Mason::ApacheHandler>,
-L<HTML::Mason::Admin>
+HTML::Mason,
+HTML::Mason::Interp,
+HTML::Mason::ApacheHandler,
+HTML::Mason::Admin
 
 =cut

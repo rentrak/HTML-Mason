@@ -29,8 +29,8 @@
 		<LI><A HREF="#data_directory">Data directory</A>
 		<LI><A HREF="#external_modules">External modules</A>
 		<LI><A HREF="#file_ownership">File ownership</A>
-		<LI><A HREF="#persistent_user_sessions_new_in">Persistent user sessions (new in 0.5)</A>
-		<LI><A HREF="#using_global_variables_new_in_0">Using global variables (new in 0.5)</A>
+		<LI><A HREF="#persistent_user_sessions">Persistent user sessions</A>
+		<LI><A HREF="#using_global_variables">Using global variables</A>
 	</UL>
 
 	<LI><A HREF="#standard_features">STANDARD FEATURES</A>
@@ -39,7 +39,7 @@
 		<LI><A HREF="#data_caching">Data caching</A>
 		<LI><A HREF="#debugging">Debugging</A>
 		<LI><A HREF="#previewer">Previewer</A>
-		<LI><A HREF="#system_logs_new_in_0_3_">System logs (new in 0.3)</A>
+		<LI><A HREF="#system_logs">System logs</A>
 	</UL>
 
 	<LI><A HREF="#performance_tuning">PERFORMANCE TUNING</A>
@@ -309,10 +309,10 @@ manual.
 
 </A></H2>
 Components will often need access to external Perl modules. Any such
-modules that export symbols should by listed in handler.pl, rather than the
+modules that export symbols should be listed in handler.pl, rather than the
 standard practice of using a PerlModule configuration directive. This is
 because components are executed inside the
-<STRONG><A HREF="././Commands.html#">HTML::Mason::Commands</A></STRONG> package, and can only access symbols exported to that package. Here's
+<STRONG>HTML::Mason::Commands</STRONG> package, and can only access symbols exported to that package. Here's
 sample module list:
 
 
@@ -363,7 +363,7 @@ code in <CODE>handler.pl</CODE>:
 
 <P>
 <HR>
-<H2><A NAME="persistent_user_sessions_new_in">Persistent user sessions (new in 0.5)
+<H2><A NAME="persistent_user_sessions">Persistent user sessions
 
 </A></H2>
 With just a few lines in handler.pl you can make a global hash (e.g. <EM>%session</EM>) available to all components containing persistent user session data. If
@@ -394,7 +394,7 @@ and the name of the global hash.
 
 <P>
 <HR>
-<H2><A NAME="using_global_variables_new_in_0">Using global variables (new in 0.5)
+<H2><A NAME="using_global_variables">Using global variables
 
 </A></H2>
 Global variables generally make programs harder to read, maintain, and
@@ -515,13 +515,14 @@ Cache files are implemented using <STRONG>MLDBM</STRONG>, an interface for stori
 The most important task is selecting a good DBM package. Most standard DBM
 packages (<STRONG>SDBM</STRONG>, <STRONG>ODBM</STRONG>, <STRONG>NDBM</STRONG>) are unsuitable for data caching due to significant limitations on the
 size of keys and values. Perl only comes with <STRONG>SDBM</STRONG>, so you'll need to obtain a good-quality package if you haven't already.
-At this time the best options are Berkeley DB (<STRONG>DB_File</STRONG>), available at www.sleepycat.com, and GNU's gdbm (<STRONG>GDBM</STRONG>), available at GNU mirror sites everywhere.
+At this time the best options are Berkeley DB (<STRONG>DB_File</STRONG>) version 2.x, available at www.sleepycat.com, and GNU's gdbm (<STRONG>GDBM</STRONG>), available at GNU mirror sites everywhere. Stay away from Berkeley DB
+version 1.x on Linux which has a serious memory leak (and is unfortunately
+pre-installed on many distributions).
 
 
 <P>
 
-As far as the serialization methods, all of them should work fine.
-<STRONG>Data::Dumper</STRONG> is probably simplest: it comes with the latest versions of Perl, is
+As far as the serialization methods, all of them should work fine. <STRONG>Data::Dumper</STRONG> is probably simplest: it comes with the latest versions of Perl, is
 required by Mason anyway, and produces readable output (possibly useful for
 debugging cache files). On the other hand
 <STRONG>Storable</STRONG> is significantly faster than the other options according to the MLDBM
@@ -804,7 +805,7 @@ page.
 
 <P>
 <HR>
-<H2><A NAME="system_logs_new_in_0_3_">System logs (new in 0.3)
+<H2><A NAME="system_logs">System logs
 
 </A></H2>
 Mason will log various events to a system log file if you so desire. This
@@ -834,10 +835,10 @@ The events are:
 <P>
 
 <PRE> REQ_START      start of HTTP request           request number, URL + query string
- REQ_END        end of HTTP request             request number, error flag (1 if error occurred,
-                                                0 otherwise)
- CACHE_READ     attempt to read from            component path, cache key, success flag
-                data cache (mc_cache)           (1 if item was found, 0 otherwise)
+ REQ_END        end of HTTP request             request number, error flag (1 if
+                                                error occurred, 0 otherwise)
+ CACHE_READ     attempt to read from            component path, cache key, success
+                data cache (mc_cache)           flag (1 if item found, 0 otherwise)
  CACHE_STORE    store to data cache             component path, cache key
  COMP_LOAD      component loaded into memory    component path
                 for first time  
@@ -1085,9 +1086,9 @@ from the source file at runtime. For example, the following component:
 
 <P>
 
-<PRE>    &lt;%mc_comp(' top')%&gt;
+<PRE>    &lt;&amp; top &amp;&gt;
     ... 20K of HTML ...
-    &lt;%mc_comp('center')%&gt;
+    &lt;&amp; center &amp;&gt;
     ... 30K of HTML ...
 </PRE>
 
@@ -1099,9 +1100,9 @@ translates to something like:
 <P>
 
 <PRE>    my $_srctext = mc_file('/usr/local/www/htdocs/foo/bar');
-    print(mc_comp('top'));
+    mc_comp('top');
     print(substr($_srctext,18,20498));
-    print(mc_comp('center'));
+    mc_comp('center');
     print(substr($_srctext,20520,30720));
 </PRE>
 

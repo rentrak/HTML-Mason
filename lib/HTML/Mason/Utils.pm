@@ -47,7 +47,7 @@ sub access_data_cache
     #
     # Store
     #
-    if ($action eq 'store' || $action eq 'expire') {
+    if ($action eq 'store') {
 	my ($expireTime,%out);
 	die "no store value provided" if ($action eq 'store' && !exists($options{value}));
 
@@ -224,7 +224,7 @@ sub access_data_cache
 			$entryLastModified > $mem->{lastUpdated}) {
 		$mem->{contents} = $in{"$key.contents"};
 		$mem->{expires} = $in{"$key.expires"};
-		$mem->{lastModified} = $in{"$key.lastmod"};
+		$mem->{lastModified} = $entryLastModified;
 		$mem->{busyLock} = $in{"$key.busylock"} if $options{busy_lock};
 		$mem->{lastUpdated} = $time;
 	    }

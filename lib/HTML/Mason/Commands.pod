@@ -18,20 +18,30 @@ Ends the current execution, finishing the page without returning
 through components. In a web environment, the optional return value is
 used as the HTTP status code.
 
-=item mc_cache ([action=>'retrieve'], [key=>name],
-B<[keep_in_memory=E<gt>0|1], [expire_if=E<gt>sub])>
+=item mc_auto_next ([args...])
 
-=item mc_cache (action=>'store', [key=>name], value=>data,
-[keep_in_memory=>0|1],
-B<[expire_at=E<gt>time | expire_next=E<gt>'hour'|'day' |
-expire_in=E<gt>delta])>
+Calls the component interrupted by an autohandler.  With no arguments,
+the original arguments are passed to the component.  Any arguments
+specified here serve to augment and override (in case of conflict) the
+original arguments. Works like mc_comp in terms of return value and
+scalar/list context.  See the Components/autohandlers section of the
+I<Component Developer's Guide> for examples.
 
-=item mc_cache (action=>'expire', [key=>name])
+=item mc_auto_comp
+
+Returns the path of the component interrupted by an autohandler.  This
+is generally a relative path; it is only absolute if you call
+C<mc_auto_comp> from a component other than the autohandler and a
+forward relative path cannot be generated. See the Components/autohandlers
+section of the I<Component Developer's Guide> for usage and examples.
+
+=item mc_cache ([action=>'retrieve|store|expire|keys'], [key=>name],
+[value=>data], [keep_in_memory=>0|1], [expire options...])
 
 mc_cache() lets you store and retrieve the results
 of computation for improved performance. Each component has its own
 data cache for storing one or more key/value pairs. The cache is
-implemented as a DBM database. See the L<Components/data caching>
+implemented as a DBM database. See the Components/data caching
 section of the I<Component Developer's Guide> for examples
 and caching strategies.
 
@@ -75,17 +85,15 @@ o I<expire_if>: calls a given anonymous subroutine and expires if the
 subroutine returns a non-zero value. The subroutine is called with one
 parameter, the time when the cache value was last written.
 
-=item mc_cache_self ([key=>name], [keep_in_memory=>0|1],
-B<[expire_if=E<gt>sub | expire_at=E<gt>time |
-expire_next=E<gt>'hour'|'day' | expire_in=E<gt>delta])>
+=item mc_cache_self (... same as mc_cache options...)
 
 Uses mc_cache to cache the entire output of the current component.  It is typically
-used right at the top of a C<E<lt>%perl_init%E<gt>> section:
+used right at the top of an C<E<lt>%init%E<gt>> section:
 
-    <%perl_init>
+    <%init>
         return if mc_cache_self(expire_in=>'3 hours'[, key=>'fookey']);
-        ... <rest of perl_init> ...
-    </%perl_init%>
+        ... <rest of init> ...
+    </%init>
 
 The "return if" is necessary. mc_cache_self handles both the retrieve
 and store, so you can pass both kinds of options to it. See
@@ -115,6 +123,22 @@ Returns the full path of the component that called this component, or
 undef if this is the top-level component. This is the second element
 of mc_comp_stack.
 
+=item mc_call_self ([output_ref], [retval_ref])
+
+This command allows you to filter both the output and the return value
+of the current component. It is typically called at the top of an
+<%init> section:
+
+    <%init>
+        if mc_call_self(my \$output, my \$retval) {
+            ... < perform filter and return > ...
+        }
+        ... <rest of init> ...
+    </%init>
+
+See the Components/filtering section of the I<Component Developer's Guide>
+for usage and examples.
+
 =item mc_comp (compPath, option=>value, ...[, STORE=>ref])
 
 Calls the component designated by I<compPath> with the specified
@@ -131,9 +155,20 @@ If you want to capture the output of a component in a string, send a
 scalar reference with the STORE option. The output will be placed in
 the scalar instead of being sent to the default output stream.
 
+The <& &> tag provides a convenient shortcut for mc_comp.
+
 =item mc_comp_exists (compPath)
 
-Returns 1 if compPath is a valid component path, 0 otherwise. 
+Returns 1 if I<compPath> is a valid component path, 0 otherwise. 
+
+=item mc_comp_source ([compPath])
+
+Returns the full source filename for I<compPath>, which may be
+absolute or relative. With no arguments, defaults to the current
+component. For example, to get the last modified time of this
+component:
+
+    my $lastmod = (stat(mc_comp_source))[9];
 
 =item mc_comp_stack ()
 
@@ -161,11 +196,12 @@ mc_date() works faster than UnixDate for some formats by caching results.
 =item mc_file (filename)
 
 Returns the contents of filename as a string. I<filename> may be an
-absolute filesystem path (starting with a '/') or relative (no
-leading '/'); if relative, the static file root is prepended.
+absolute filesystem path (starting with a '/') or relative (no leading
+'/'). If relative, Mason prepends the static file root, or the current
+component directory if no static file root is defined.
 
 Developers are encouraged to use relative paths whenever possible.
-This eliminates the need for component updates when data files are
+This eliminates the need for component updates when content files are
 moved (the administrator just updates the static file root).
 
 =item mc_file_root ()
@@ -179,8 +215,8 @@ Print the given string. Rarely needed, since normally all HTML is just
 placed in the component body and output implicitly. mc_out is useful
 if you need to output something in the middle of a Perl block.
 
-mc_out() should be favored over the lower-level C<$r-E<gt>print>,
-since mc_out() may be redirected or buffered, depending on the
+mc_out() should be favored over C<print> or C<$r-E<gt>print>,
+since mc_out() may be redirected or buffered depending on the
 current state of the interpreter.
 
 =item mc_time ()
@@ -209,7 +245,7 @@ its leading slash.
 
 Mason normally emits any pending HTTP headers just before entering
 the primary section of a component. To prevent this, call
-mc_suppress_http_header(1) somewhere in the C<E<lt>%perl_init%E<gt>>
+mc_suppress_http_header(1) somewhere in the C<E<lt>%init%E<gt>>
 block. You can call mc_suppress_http_header(0) to cancel.
 
 =back
@@ -221,7 +257,7 @@ Jonathan Swartz, swartz@transbay.net
 
 =head1 SEE ALSO
 
-L<HTML::Mason>,
-L<HTML::Mason::Components>
+HTML::Mason,
+HTML::Mason::Components
 
 =cut

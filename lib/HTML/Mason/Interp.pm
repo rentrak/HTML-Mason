@@ -23,9 +23,11 @@ use HTML::Mason::Config;
 require Time::HiRes if $HTML::Mason::Config{use_time_hires};
 
 use vars qw($AUTOLOAD $_SUB %_ARGS);
+my @_used = ($HTML::Mason::CODEREF_NAME,$::opt_P);
 
 my %fields =
     (alternate_sources => undef,
+     allow_recursive_autohandlers => 0,
      comp_root => undef,
      code_cache_mode => 'all',
      current_time => 'real',
@@ -35,7 +37,7 @@ my %fields =
      max_recurse => 16,
      parser => undef,
      preloads => [],
-     static_file_root => '',
+     static_file_root => undef,
      use_data_cache => 1,
      use_object_files => 1,
      use_reload_file => 0,
@@ -58,8 +60,7 @@ sub new
 	data_cache_store => {},
         code_cache => {},
 	files_written => [],
-	hooks => [],
-	hook_index => {},
+	hooks => {},
 	last_reload_time => 0,
 	last_reload_file_pos => 0,
 	out_method => sub { print $_[0] },
@@ -79,9 +80,9 @@ sub new
 	    die "HTML::Mason::Interp::new: invalid option '$key'\n";
 	}
     }
-    $self->{data_cache_dir} ||= ($self->{data_dir} . "/cache");
     die "HTML::Mason::Interp::new: must specify value for comp_root\n" if !$self->{comp_root};
     die "HTML::Mason::Interp::new: must specify value for data_dir\n" if !$self->{data_dir};
+    $self->{data_cache_dir} ||= ($self->{data_dir} . "/cache");
     bless $self, $class;
     $self->out_method($outMethod) if ($outMethod);
     $self->system_log_events($systemLogEvents) if ($systemLogEvents);
@@ -192,13 +193,17 @@ sub exec {
 
     $self->{stack} = [];
     $self->{exec_state} = {
-	suppressed_hooks => {},
 	abort_flag => 0,
 	abort_retval => undef,
+	autohandler_next => undef,
 	error_flag => 0,
 	request_code_cache => {}
     };
+    while (my ($type,$href) = each(%{$self->{hooks}})) {
+	$self->{exec_state}->{"hooks_$type"} = [values(%$href)] if (%$href);
+    }
     $self->check_reload_file if ($self->use_reload_file);
+
     return $self->exec_next($callPath,%args);
 }
 
@@ -230,57 +235,48 @@ sub check_reload_file {
 
 sub exec_next {
     my ($self, $callPath, %args) = @_;
-    my ($err);
+    my (@info);
 
-    $callPath =~ s@/$@@ if ($callPath ne '/');
-    my $allowHandlers = $args{ALLOW_HANDLERS};
+    # Process and remove special arguments.
     my $store = $args{STORE};
-    delete($args{ALLOW_HANDLERS});
     delete($args{STORE});
 
+    # Check for autohandler.
+    if (!@{$self->{stack}}) {
+	(my $callDir = $callPath) =~ s|/[^/]*$||;
+	if (!$self->{allow_recursive_autohandlers}) {
+	    @info = $self->load("$callDir/autohandler");
+	} else {
+	    while ($callDir && !(@info = $self->load("$callDir/autohandler"))) {
+		my ($basename,$dirname) = fileparse($callDir);
+		$dirname =~ s/^\.//;    # certain versions leave ./ in $dirname
+		$callDir = substr($dirname,0,-1);
+	    }
+	}
+	if (@info) {
+	    $self->{exec_state}->{autohandler_next} = [$callPath,\%args];
+	    $callPath = "$callDir/autohandler";
+	}
+    }
+					   
     #
     # Load the component into a subroutine. If code caching is
     # per-request, then check and modify the per-request cache as
     # necessary.
     #
-    my (@info);
-    if ($self->{code_cache_mode} eq 'request') {
-	if (my $inforef = $self->{exec_state}->{request_code_cache}->{$callPath}) {
-	    @info = @$inforef;
+    if (!@info) {
+	if ($self->{code_cache_mode} eq 'request') {
+	    if (my $inforef = $self->{exec_state}->{request_code_cache}->{$callPath}) {
+		@info = @$inforef;
+	    } else {
+		(@info) = $self->load($callPath);
+		$self->{exec_state}->{request_code_cache}->{$callPath} = [@info];
+	    }
 	} else {
 	    (@info) = $self->load($callPath);
-	    $self->{exec_state}->{request_code_cache}->{$callPath} = [@info];
-	}
-    } else {
-	(@info) = $self->load($callPath);
-    }
-    if (!@info) {
-	if (!$allowHandlers) {
-	    die "could not find component for path '$callPath'\n";
-	} else {
-	    #
-	    # This hack implements the ALLOW_HANDLERS flag for
-	    # backward compatibility with Scribe.  Looks for home and
-	    # dhandler files when component not found.  Hopefully can
-	    # remove someday soon.
-	    #
-	    my $pathInfo = '';
-	    my $p = $callPath;
-	    if (!(@info = $self->load("$p/home"))) {
-		while (!(@info = $self->load("$p/dhandler"))) {
-		    my ($basename,$dirname) = fileparse($p);
-		    $pathInfo = "/$basename$pathInfo";
-		    $p = substr($dirname,0,-1);
-		    die "could not find component for path '$callPath'\n" if $p !~ /\S/;
-		}
-		$callPath = "$p/dhandler";
-		my $r = $self->vars('server') or die "No ALLOW_HANDLERS outside of Apache";
-		$r->path_info($pathInfo);
-	    } else {
-		$callPath = "$p/home";
-	    }
 	}
     }
+    die "could not find component for path '$callPath'\n" if (!@info);
     my ($sub,$sourceFile) = @info;
 
     #
@@ -315,8 +311,6 @@ sub exec_next {
     $locals->{sourceFile} = $sourceFile;
     ($locals->{parentPath}) = ($callPath =~ m@^(.*)/([^/]*)$@);
     $locals->{parentPath} = '/' if ($locals->{parentPath} !~ /\S/);
-    $locals->{callFunc} = $sub;
-    $locals->{callArgs} = \%args;
     if ($store) {
 	die "exec_next: STORE is not a scalar reference" if ref($store) ne 'SCALAR';
 	$$store = '';
@@ -326,12 +320,14 @@ sub exec_next {
     } else {
 	$locals->{sink} = $self->{stack}->[1]->{sink};
     }
+    $locals->{callFunc} = $sub;
+    $locals->{callArgs} = \%args;
     $self->{stack}->[0] = $locals;
 
     #
     # Call start_comp hooks.
     #
-    $self->call_hooks(type=>'start_comp');
+    $self->call_hooks('start_comp');
 
     #
     # CODEREF_NAME maps component coderefs to component names (for profiling)
@@ -356,7 +352,7 @@ sub exec_next {
     #
     # If an error occurred...
     #
-    $err = $@;
+    my $err = $@;
     if ($err) {
 	
 	#
@@ -398,13 +394,24 @@ sub exec_next {
     #
     # Call end_comp hooks.
     #
-    $self->call_hooks(type=>'end_comp');
+    $self->call_hooks('end_comp');
 
     #
     # Pop stack and return.
     #
     shift(@{$self->{stack}});
     return wantarray ? @result : $result;
+}
+
+#
+# Abort out of current execution.
+#
+sub abort
+{
+    my ($self) = @_;
+    $self->{exec_state}->{abort_flag} = 1;
+    $self->{exec_state}->{abort_retval} = $_[1];
+    die "aborted";
 }
 
 sub debug_hook
@@ -418,11 +425,11 @@ sub debug_hook
 sub pure_text_handler
 {
     my $interp = $HTML::Mason::Commands::INTERP;
-    $interp->call_hooks(type=>'start_primary');
+    $interp->call_hooks('start_primary');
     my $srcfile = $interp->locals->{sourceFile};
     my $srctext = read_file($srcfile);
     $interp->locals->{sink}->($srctext);
-    $interp->call_hooks(type=>'end_primary');
+    $interp->call_hooks('end_primary');
     return undef;
 }
 
@@ -436,7 +443,7 @@ sub load {
     my ($self,$path) = @_;
     my ($sub,$err,$maxfilemod,$srcfile,$objfile,$objfilemod,$srcfilemod) =
        (undef);  # kludge to load $sub, prevent "use of uninit .." error
-    my (@srcstat, $srcisfile, @objstat, $objisfile);
+    my (@srcstat, @objstat, $objisfile);
     my $codeCache = $self->{code_cache};
     my $compRoot = $self->comp_root;
     $srcfile = $compRoot . $path;
@@ -482,9 +489,8 @@ sub load {
 	}
     }
     @srcstat = stat $srcfile unless @srcstat;
+    return () unless (-f _);
     $srcfilemod = $srcstat[9];
-    $srcisfile = -f _;
-    return () unless ($srcisfile);
     
     if ($self->use_object_files) {
 	$objfile = $self->object_dir . substr($srcfile,length($compRoot));
@@ -681,7 +687,7 @@ sub out_method
     my ($self, $value) = @_;
     if (defined($value)) {
 	if (ref($value) eq 'SCALAR') {
-	    $self->{out_method} = sub { $$value .= $_[0] };
+	    $self->{out_method} = sub { $$value .= $_[0] if defined($_[0]) };
 	} elsif (ref($value) eq 'CODE') {
 	    $self->{out_method} = $value;
 	} else {
@@ -710,80 +716,41 @@ sub push_files_written
 #
 # Hook functions.
 #
+my @hookTypes = qw(start_comp start_primary end_primary end_comp start_file end_file);
+my %hookTypeMap = map(($_,1),@hookTypes);
+
 sub add_hook {
     my ($self, %args) = @_;
-    my @validTypes = qw(start_comp start_primary end_primary end_comp start_file end_file);
     foreach (qw(name type code)) {
 	die "add_hook: must specify $_\n" if !exists($args{$_});
     }
-    die "add_hook: type must be one of ".join(",",@validTypes)."\n" if !grep($_ eq $args{type},@validTypes);
+    die "add_hook: type must be one of ".join(",",@hookTypes)."\n" if !$hookTypeMap{$args{type}};
     die "add_hook: code must be a code reference\n" if ref($args{code}) ne 'CODE';
-    $args{order} = 50 if !exists($args{order});
-    push(@{$self->{hooks}},{%args});
-    $self->index_hooks();
+    $self->{hooks}->{$args{type}}->{$args{name}} = $args{code};
 }
 
-sub index_hooks {
-    my ($self) = @_;
-    my %hookindex;
-    foreach my $hook (@{$self->{hooks}}) {
-	my $name = $hook->{name};
-	my $type = $hook->{type};
-	push(@{$hookindex{"$name\cA$type"}},$hook);
-	push(@{$hookindex{"*\cA$type"}},$hook);
-	push(@{$hookindex{"$name\cA*"}},$hook);
-    }
-    my @keys = keys(%hookindex);
-    foreach my $key (@keys) {
-	my @hooklst = sort {$a->{order} <=> $b->{order}} @{$hookindex{$key}};
-	$hookindex{$key} = [@hooklst];
-    }
-    $self->{hook_index} = {%hookindex};
-}
-
-sub find_hooks {
+sub remove_hook {
     my ($self, %args) = @_;
-    my $name = $args{name} || '*';
-    my $type = $args{type} || '*';
-    my $lref = $self->{hook_index}->{"$name\cA$type"};
-    return $lref ? @$lref : ();
-}
-
-sub remove_hooks {
-    my ($self, %args) = @_;
-    my @matchhooks = $self->find_hooks(%args);
-    my %remhash;
-    foreach (@matchhooks) { $remhash{$_}=1 }
-    my @keephooks = grep(!$remhash{$_},@{$self->{hooks}});
-    $self->{hooks} = [@keephooks];
-    $self->index_hooks();
-}
-
-sub suppress_hooks {
-    my ($self, %args) = @_;
-    my @matchhooks = $self->find_hooks(%args);
-    foreach my $hook (@matchhooks) {
-	$self->{exec_state}->{suppressed_hooks}->{$hook} = 1;
+    foreach (qw(name type)) {
+	die "remove_hook: must specify $_\n" if !exists($args{$_});
     }
+    delete($self->{hooks}->{$args{type}}->{$args{name}});
 }
 
-sub unsuppress_hooks {
+sub suppress_hook {
     my ($self, %args) = @_;
-    my @matchhooks = $self->find_hooks(%args);
-    foreach my $hook (@matchhooks) {
-	delete($self->{exec_state}->{suppressed_hooks}->{$hook});
+    foreach (qw(name type)) {
+	die "suppress_hook: must specify $_\n" if !exists($args{$_});
     }
+    my $code = $self->{hooks}->{$args{type}}->{$args{name}};
+    $self->{exec_state}->{"hooks_$args{type}"} = [grep($_ ne $code,@{$self->{"hooks_$args{type}"}})];
 }
 
 sub call_hooks {
-    my ($self, %args) = @_;
-    my @matchhooks = $self->find_hooks(%args);
-    my @params;
-    @params = @{$args{params}} if (defined($args{params}));
-
-    foreach my $hook (@matchhooks) {
-	if (!$self->{exec_state}->{suppressed_hooks}->{$hook}) {
-	    $hook->{code}->($self,@params);
+    my ($self, $type, @params) = @_;
+    if ($self->{exec_state}->{"hooks_$type"}) {
+	foreach my $code (@{$self->{exec_state}->{"hooks_$type"}}) {
+	    $code->($self, @params);
 	}
     }
 }

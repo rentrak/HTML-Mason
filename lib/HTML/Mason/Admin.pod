@@ -37,7 +37,7 @@ package is a good-quality one (B<DB_File> or B<GDBM_File>).
 
 Directives must be added to Apache's configuration files to specify
 which requests should be handled through Mason, and the handler
-used for those requests. As described in B<L<HTML::Mason>>, a simple
+used for those requests. As described in B<HTML::Mason>, a simple
 configuration looks like:
 
     DocumentRoot /usr/local/www/htdocs
@@ -52,7 +52,7 @@ configuration looks like:
 
 This file contains startup code that initializes the parent Apache
 process. It also defines the handler used by each child process to
-field Mason requests. See the synopsis in B<L<HTML::Mason>> for a
+field Mason requests. See the synopsis in B<HTML::Mason> for a
 simple example. The next section discusses in detail how to configure
 this file.
 
@@ -81,8 +81,8 @@ These objects have a fair number of possible parameters. Only two of
 them are required, I<comp_root> and I<data_dir>; these are discussed
 in the next two subsections. The various parameters are documented in
 the individual reference manuals for each object:
-B<L<HTML::Mason::Parser>>, B<L<HTML::Mason::Interp>>, and
-B<L<HTML::Mason::ApacheHandler>>.
+B<HTML::Mason::Parser>, B<HTML::Mason::Interp>, and
+B<HTML::Mason::ApacheHandler>.
 
 The advantage of embedding these parameters in objects is that
 advanced configurations can create more than one set of objects,
@@ -147,10 +147,10 @@ this manual.
 =head2 External modules
 
 Components will often need access to external Perl modules. Any such
-modules that export symbols should by listed in handler.pl, rather
+modules that export symbols should be listed in handler.pl, rather
 than the standard practice of using a PerlModule configuration
 directive. This is because components are executed inside the
-B<L<HTML::Mason::Commands>> package, and can only access symbols exported
+B<HTML::Mason::Commands> package, and can only access symbols exported
 to that package. Here's sample module list:
 
     { package HTML::Mason::Commands;
@@ -181,7 +181,7 @@ end of the startup code in C<handler.pl>:
     chown ( [getpwnam('nobody')]->[2], [getgrnam('nobody')]->[2],
             $interp->files_written );
 
-=head2 Persistent user sessions (new in 0.5)
+=head2 Persistent user sessions
 
 With just a few lines in handler.pl you can make a global hash
 (e.g. I<%session>) available to all components containing persistent user
@@ -202,7 +202,7 @@ This code is customizable; you can change the user ID location
 (e.g. URL instead of cookie), the user data storage mechanism
 (e.g. DBI database), and the name of the global hash.
 
-=head2 Using global variables (new in 0.5)
+=head2 Using global variables
 
 Global variables generally make programs harder to read, maintain, and
 debug, and this is no less true for Mason.  Due to the persistent
@@ -230,21 +230,21 @@ package that components execute in, by default B<HTML::Mason::Commands>:
       use vars qw($dbh %session);
     }
 
-Alternatively you can use the L<Parser/allow_globals> parameter or method:
+Alternatively you can use the Parser/allow_globals parameter or method:
 
     my $parser = new HTML::Mason::Parser (..., allow_globals => [qw($dbh %session)]);
     $parser->allow_globals(qw($foo @bar))
 
 The only advantage to C<allow_globals> is that it will do
 the right thing if you've chosen a different package for components
-to run in (via the L<Parser/in_package> Parser parameter.)
+to run in (via the Parser/in_package Parser parameter.)
 
 Similarly, to initialize the variable in handler.pl, you need to
 set it in the component package:
 
    $HTML::Mason::Commands::dbh = DBI->connect(...);
 
-Alternatively you can use the L<Interp/set_global> interpreter method:
+Alternatively you can use the Interp/set_global interpreter method:
 
     $interp->set_global(dbh => DBI->connect(...));
 
@@ -274,19 +274,22 @@ serialization mechanisms (B<Data::Dumper>, B<FreezeThaw> or
 B<Storable>). Mason's Config.pm controls which packages are used.
 
 The most important task is selecting a good DBM package.  Most
-standard DBM packages (B<SDBM>, B<ODBM>, B<NDBM>) are unsuitable for data
-caching due to significant limitations on the size of keys and values.
-Perl only comes with B<SDBM>, so you'll need to obtain a good-quality
-package if you haven't already. At this time the best options are
-Berkeley DB (B<DB_File>), available at www.sleepycat.com, and GNU's gdbm
-(B<GDBM>), available at GNU mirror sites everywhere.
+standard DBM packages (B<SDBM>, B<ODBM>, B<NDBM>) are unsuitable for
+data caching due to significant limitations on the size of keys and
+values. Perl only comes with B<SDBM>, so you'll need to obtain a
+good-quality package if you haven't already. At this time the best
+options are Berkeley DB (B<DB_File>) version 2.x, available at
+www.sleepycat.com, and GNU's gdbm (B<GDBM>), available at GNU mirror
+sites everywhere. Stay away from Berkeley DB version 1.x on Linux
+which has a serious memory leak (and is unfortunately pre-installed on
+many distributions).
 
-As far as the serialization methods, all of them should work fine.
-B<Data::Dumper> is probably simplest: it comes with the latest versions
-of Perl, is required by Mason anyway, and produces readable output
-(possibly useful for debugging cache files).  On the other hand
-B<Storable> is significantly faster than the other options according to
-the MLDBM documentation.
+As far as the serialization methods, all of them should work
+fine. B<Data::Dumper> is probably simplest: it comes with the latest
+versions of Perl, is required by Mason anyway, and produces readable
+output (possibly useful for debugging cache files).  On the other hand
+B<Storable> is significantly faster than the other options according
+to the MLDBM documentation.
 
 =item Administration
 
@@ -391,7 +394,7 @@ allows the developer to select a variety of options such as time,
 browser, and display mode.  The set of these options together is
 called a previewer configuration. Configurations can be saved under
 one of several preview ports. For more information on how the
-previewer is used, see B<L<HTML::Mason::Components>>.
+previewer is used, see B<HTML::Mason::Components>.
 
 Follow these steps to activate the Previewer:
 
@@ -462,7 +465,7 @@ setup.
 To test whether the previewer is working: restart your server, go to the
 previewer interface, and click "View".  You should see your site's home page.
 
-=head2 System logs (new in 0.3)
+=head2 System logs
 
 Mason will log various events to a system log file if you so desire.
 This can be useful for performance monitoring and debugging.
@@ -480,10 +483,10 @@ The events are:
  EVENT NAME	DESCRIPTION			EXTRA FIELDS
 
  REQ_START	start of HTTP request		request number, URL + query string
- REQ_END	end of HTTP request		request number, error flag (1 if error occurred,
-						0 otherwise)
- CACHE_READ	attempt to read from		component path, cache key, success flag
-		data cache (mc_cache)		(1 if item was found, 0 otherwise)
+ REQ_END	end of HTTP request		request number, error flag (1 if
+						error occurred, 0 otherwise)
+ CACHE_READ	attempt to read from		component path, cache key, success
+		data cache (mc_cache)		flag (1 if item found, 0 otherwise)
  CACHE_STORE	store to data cache		component path, cache key
  COMP_LOAD	component loaded into memory	component path
 		for first time	
@@ -641,23 +644,23 @@ To reduce this overhead Mason generates, in certain cases, code that
 reads from the source file at runtime.  For example, the following
 component:
 
-    <%mc_comp(' top')%>
+    <& top &>
     ... 20K of HTML ...
-    <%mc_comp('center')%>
+    <& center &>
     ... 30K of HTML ...
 
 translates to something like:
 
     my $_srctext = mc_file('/usr/local/www/htdocs/foo/bar');
-    print(mc_comp('top'));
+    mc_comp('top');
     print(substr($_srctext,18,20498));
-    print(mc_comp('center'));
+    mc_comp('center');
     print(substr($_srctext,20520,30720));
 
 The resulting code is a bit slower but more memory efficient. Mason
 decides whether to use these "source references" by first measuring
 both the total size and the amount of HTML in a component. Those
-values are then examined by a customizable "L<Parser/source_refer_predicate>"
+values are then examined by a customizable "Parser/source_refer_predicate"
 which makes a determination based on local policy, say "more than 50%
 HTML", or "more than 20K of HTML".
 
@@ -711,7 +714,7 @@ behavior in two ways:
 1.  Does not check component source files at all, relying solely on
 object files.  This means the developer or an automated system is
 responsible for recompiling any components that change and recreating
-object files, using the Parser L<Parser/parse> method.
+object files, using the Parser Parser/parse method.
 
 2.  Rather than continuously checking whether object files have
 changed, Mason monitors a "reload file" containing an ever-growing
@@ -720,7 +723,7 @@ the developer or an automated system is responsible for appending the
 component path to the reload file. The reload file is kept in
 C<data_dir/etc/reload.lst>.
 
-You can activate this mode with the L<Interp/use_reload_file>
+You can activate this mode with the Interp/use_reload_file
 Interp method.
 
 The advantage of using this mode is that Mason stats one file per
@@ -815,7 +818,7 @@ Consider reload files only for frequently visited production sites.
 
 =head1 CONFIGURING VIRTUAL SITES 
 
-The example below extends the L<Mason/single site configuration>
+The example below extends the Mason/single site configuration
 example in B<HTML::Mason>.
 
 When configuring Mason to serve multiple virtual hosts, Mason's
@@ -872,9 +875,9 @@ Jonathan Swartz, swartz@transbay.net
 
 =head1 SEE ALSO
 
-L<HTML::Mason>,
-L<HTML::Mason::Parser>,
-L<HTML::Mason::Interp>,
-L<HTML::Mason::ApacheHandler>
+HTML::Mason,
+HTML::Mason::Parser,
+HTML::Mason::Interp,
+HTML::Mason::ApacheHandler
 
 =cut

@@ -61,16 +61,33 @@ HTTP status code.
 
 <P>
 
-<DT><STRONG><A NAME="item_mc_cache_action_retrieve_">mc_cache ([action=&gt;'retrieve'], [key=&gt;name],
-B&lt;[keep_in_memory=E&lt;gt&gt;0|1], [expire_if=E&lt;gt&gt;sub])&gt;
+<DT><STRONG><A NAME="item_mc_auto_next_args_">mc_auto_next ([args...])
 
 </A></STRONG><DD>
-<DT><STRONG><A NAME="item_mc_cache_action_store_key_">mc_cache (action=&gt;'store', [key=&gt;name], value=&gt;data,
-[keep_in_memory=&gt;0|1], B&lt;[expire_at=E&lt;gt&gt;time |
-expire_next=E&lt;gt&gt;'hour'|'day' | expire_in=E&lt;gt&gt;delta])&gt;
+Calls the component interrupted by an autohandler. With no arguments, the
+original arguments are passed to the component. Any arguments specified
+here serve to augment and override (in case of conflict) the original
+arguments. Works like mc_comp in terms of return value and scalar/list
+context. See the <A HREF="././Components.html#autohandlers">autohandlers</A> section of the
+<EM>Component Developer's Guide</EM> for examples.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_mc_auto_comp">mc_auto_comp
 
 </A></STRONG><DD>
-<DT><STRONG><A NAME="item_mc_cache_action_expire_key">mc_cache (action=&gt;'expire', [key=&gt;name])
+Returns the path of the component interrupted by an autohandler. This is
+generally a relative path; it is only absolute if you call
+<A HREF="././Commands.html#item_mc_auto_comp">mc_auto_comp</A> from a component other than the autohandler and a forward relative path
+cannot be generated. See the <A HREF="././Components.html#autohandlers">autohandlers</A>
+section of the <EM>Component Developer's Guide</EM> for usage and examples.
+
+
+<P>
+
+<DT><STRONG><A NAME="item_mc_cache_action_retrieve_sto">mc_cache ([action=&gt;'retrieve|store|expire|keys'], [key=&gt;name],
+[value=&gt;data], [keep_in_memory=&gt;0|1], [expire options...])
 
 </A></STRONG><DD>
 <CODE>mc_cache()</CODE> lets you store and retrieve the results of
@@ -156,21 +173,19 @@ when the cache value was last written.
 
 <P>
 
-<DT><STRONG><A NAME="item_mc_cache_self_key_name_kee">mc_cache_self ([key=&gt;name], [keep_in_memory=&gt;0|1],
-B&lt;[expire_if=E&lt;gt&gt;sub | expire_at=E&lt;gt&gt;time |
-expire_next=E&lt;gt&gt;'hour'|'day' | expire_in=E&lt;gt&gt;delta])&gt;
+<DT><STRONG><A NAME="item_mc_cache_self_same_as_mc_ca">mc_cache_self (... same as mc_cache options...)
 
 </A></STRONG><DD>
 Uses mc_cache to cache the entire output of the current component. It is
-typically used right at the top of a <CODE>&lt;%perl_init%&gt;</CODE> section:
+typically used right at the top of an <CODE>&lt;%init%&gt;</CODE> section:
 
 
 <P>
 
-<PRE>    &lt;%perl_init&gt;
+<PRE>    &lt;%init&gt;
         return if mc_cache_self(expire_in=&gt;'3 hours'[, key=&gt;'fookey']);
-        ... &lt;rest of perl_init&gt; ...
-    &lt;/%perl_init%&gt;
+        ... &lt;rest of init&gt; ...
+    &lt;/%init&gt;
 </PRE>
 
 <P>
@@ -228,6 +243,32 @@ mc_comp_stack.
 
 <P>
 
+<DT><STRONG><A NAME="item_mc_call_self_output_ref_ret">mc_call_self ([output_ref], [retval_ref])
+
+</A></STRONG><DD>
+This command allows you to filter both the output and the return value of
+the current component. It is typically called at the top of an
+&lt;%init&gt; section:
+
+
+<P>
+
+<PRE>    &lt;%init&gt;
+        if mc_call_self(my \$output, my \$retval) {
+            ... &lt; perform filter and return &gt; ...
+        }
+        ... &lt;rest of init&gt; ...
+    &lt;/%init&gt;
+</PRE>
+
+<P>
+
+See the <A HREF="././Components.html#filtering">filtering</A> section of the <EM>Component Developer's Guide</EM>
+for usage and examples.
+
+
+<P>
+
 <DT><STRONG><A NAME="item_mc_comp_compPath_option_value">mc_comp (compPath, option=&gt;value, ...[, STORE=&gt;ref])
 
 </A></STRONG><DD>
@@ -253,11 +294,31 @@ instead of being sent to the default output stream.
 
 <P>
 
+The &lt;&amp; &amp;&gt; tag provides a convenient shortcut for mc_comp.
+
+
+<P>
+
 <DT><STRONG><A NAME="item_mc_comp_exists_compPath_">mc_comp_exists (compPath)
 
 </A></STRONG><DD>
-Returns 1 if compPath is a valid component path, 0 otherwise. 
+Returns 1 if <EM>compPath</EM> is a valid component path, 0 otherwise. 
 
+
+<P>
+
+<DT><STRONG><A NAME="item_mc_comp_source_compPath_">mc_comp_source ([compPath])
+
+</A></STRONG><DD>
+Returns the full source filename for <EM>compPath</EM>, which may be absolute or relative. With no arguments, defaults to the
+current component. For example, to get the last modified time of this
+component:
+
+
+<P>
+
+<PRE>    my $lastmod = (stat(mc_comp_source))[9];
+</PRE>
 
 <P>
 
@@ -306,13 +367,14 @@ caching results.
 
 </A></STRONG><DD>
 Returns the contents of filename as a string. <EM>filename</EM> may be an absolute filesystem path (starting with a '/') or relative (no
-leading '/'); if relative, the static file root is prepended.
+leading '/'). If relative, Mason prepends the static file root, or the
+current component directory if no static file root is defined.
 
 
 <P>
 
 Developers are encouraged to use relative paths whenever possible. This
-eliminates the need for component updates when data files are moved (the
+eliminates the need for component updates when content files are moved (the
 administrator just updates the static file root).
 
 
@@ -337,7 +399,7 @@ need to output something in the middle of a Perl block.
 
 <P>
 
-<CODE>mc_out()</CODE> should be favored over the lower-level <CODE>$r-&gt;print</CODE>, since <CODE>mc_out()</CODE> may be redirected or buffered, depending on
+<CODE>mc_out()</CODE> should be favored over <CODE>print</CODE> or <CODE>$r-&gt;print</CODE>, since <CODE>mc_out()</CODE> may be redirected or buffered depending on
 the current state of the interpreter.
 
 
@@ -385,7 +447,7 @@ leading slash.
 </A></STRONG><DD>
 Mason normally emits any pending HTTP headers just before entering the
 primary section of a component. To prevent this, call
-<CODE>mc_suppress_http_header(1)</CODE> somewhere in the <CODE>&lt;%perl_init%&gt;</CODE>
+<CODE>mc_suppress_http_header(1)</CODE> somewhere in the <CODE>&lt;%init%&gt;</CODE>
 block. You can call <CODE>mc_suppress_http_header(0)</CODE> to cancel.
 
 

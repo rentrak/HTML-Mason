@@ -2,15 +2,22 @@
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
+#
+# Miscellaneous tools used by the other Mason modules.  Some of these
+# admittedly exist in better versions on CPAN but we rewrite them so
+# as to minimize external package requirements.
+#
+
 package HTML::Mason::Tools;
 require 5.004;
 require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw();
-@EXPORT_OK = qw(read_file chop_slash html_escape url_escape url_unescape date_delta_to_secs pkg_loaded);
+@EXPORT_OK = qw(read_file chop_slash html_escape url_escape url_unescape date_delta_to_secs make_absolute_path pkg_loaded pkg_installed);
 
 use strict;
 use IO::File qw(!/^SEEK/);
+use Cwd;
 
 #
 # Return contents of file.
@@ -99,7 +106,37 @@ sub date_delta_to_secs
     return $num * $mult * ($sign eq '-' ? -1 : 1);
 }
 
+#
+# Return an absolute version of a pathname.  No change if already absolute.
+#
+sub make_absolute_path
+{
+    my ($path) = @_;
+    # filenames beginning with / or a drive letter (e.g. C:/) are absolute
+    unless ($path =~ /^([A-Za-z]:)?\//) {
+	$path = cwd() . $path;
+    }
+    return $path;
+}
+
+
 no strict 'refs';
+
+#
+# Determine if package is installed without loading it, by checking
+# the INC path.
+#
+sub pkg_installed
+{
+    my ($pkg) = @_;
+
+    (my $pkgfile = "$pkg.pm") =~ s{::}{/}g;
+    return grep(-f "$_/$pkgfile",@INC);
+}
+
+#
+# Determined if package is loaded by checking for its version.
+#
 sub pkg_loaded
 {
     my ($pkg) = @_;
@@ -107,3 +144,4 @@ sub pkg_loaded
     my $varname = "${pkg}::VERSION";
     return $$varname ? 1 : 0;
 }
+

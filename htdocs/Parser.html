@@ -95,7 +95,14 @@ from being compiled and executed. For example:
 
 <P>
 
-Undefined by default, meaning that all warnings are fatal. 
+If undef, all warnings are heeded; if '.', all warnings are ignored.
+
+
+<P>
+
+By default, this is set to 'Subroutine .* redefined'. This allows you to
+declare global subroutines inside &lt;%once&gt; sections and not receive an
+error when the component is reloaded.
 
 
 <P>
@@ -301,6 +308,72 @@ Called with no arguments, this returns the value of allow_globals as a
 list. Called with one or more variable names, it appends the names to the
 existing list, removing duplicates if any.
 
+
+<P>
+
+<a name="item_make">
+
+<DT><STRONG><A NAME="item_make_comp_root_data_dir_p">make ($comp_root, $data_dir, [@paths, $verbose, $predicate,
+$dir_create_mode, $update_reload_file])
+
+</A></STRONG><DD>
+make traverses a tree of components, compiles any out-of-date components
+into object files, and reports errors. All parameters listed above are
+passed as name/value pairs; the first two are required.
+
+
+<P>
+
+<EM>$comp_root</EM> and <EM>$data_dir</EM> contain the Mason component root and data directory respectively.
+
+
+<P>
+
+<EM>@paths</EM> is a reference to a list of component paths to make recursively. By
+default, makes '/' (the entire component tree).
+
+
+<P>
+
+<EM>$verbose</EM> is a flag indicating whether to report components compiled and directories
+created. True by default.
+
+
+<P>
+
+<EM>$predicate</EM> is a subroutine that takes one argument, the component source file, and
+returns true or false indicating whether or not to try to compile it. By
+default <EM>$predicate</EM> ignores all filenames ending with ``~''.
+
+
+<P>
+
+<EM>$dir_create_mode</EM> contains the permissions mode for creating new directories, by default
+0775.
+
+
+<P>
+
+<EM>$update_reload_file</EM> is a flag indicating whether to update a reload file in the data directory
+as components are recompiled. False by default.
+
+
+<P>
+
+Example of usage:
+
+
+<P>
+
+<PRE>    #!/usr/bin/perl
+    use HTML::Mason;
+    use HTML::Mason::ApacheHandler;  # load explicitly to bring in special mc_ commands
+    
+    my $p = new HTML::Mason::Parser;
+    $p-&gt;allow_globals(qw($r));       # allow Apache $r global
+    $p-&gt;make (comp_root=&gt;'/usr/home/swartz/web/comps',
+              data_dir=&gt;'/usr/home/swartz/web/mason');
+</PRE>
 
 <P>
 

@@ -25,7 +25,8 @@ Mason - High-performance, dynamic web site authoring system
                                    comp_root=>'/opt/www/htdocs',
                                    data_dir=>'/opt/mason/data');
     my $ah = new HTML::Mason::ApacheHandler (interp=>$interp);
-    chown ( 60001, 60001, $interp->files_written );  # chown nobody
+    chown ( [getpwnam('nobody')]->[2], [getgrnam('nobody')]->[2],
+            $interp->files_written );   # chown nobody
 
     sub handler
     {
@@ -91,7 +92,7 @@ Mason is optimized for use with mod_perl, but can also be used from
 CGI or as a standalone tool to generate other types of dynamic text
 files (similar to Text::Template, ePerl, etc.). To learn more about
 this option see the STANDALONE MODE section in
-B<L<HTML::Mason::Interp>>.
+B<HTML::Mason::Interp>.
 
 =back
 
@@ -274,22 +275,22 @@ multiple virtual servers on the same box.
 =head1 DOCUMENTATION ROADMAP 
 
 Once Mason is on its feet, the next step is to write a component or
-two. The I<Mason Developer's Manual> (B<L<HTML::Mason::Components>>) 
+two. The I<Mason Developer's Manual> (B<HTML::Mason::Components>) 
 is a complete tutorial for writing, using, and debugging components. A
 companion to the Developer's Manual is the Mason commands reference,
-B<L<HTML::Mason::Commands>>.
+B<HTML::Mason::Commands>.
 
 Whoever is responsible for setting up and tuning Mason should read the
-I<Administrator's Manual> (B<L<HTML::Mason::Admin>>).  Details of
-Mason's core modules can be found in B<L<HTML::Mason::Parser>>,
-B<L<HTML::Mason::Interp>>, and B<L<HTML::Mason::ApacheHandler>>.
+I<Administrator's Manual> (B<HTML::Mason::Admin>).  Details of
+Mason's core modules can be found in B<HTML::Mason::Parser>,
+B<HTML::Mason::Interp>, and B<HTML::Mason::ApacheHandler>.
 
 Most of this documentation assumes that you're running Mason on top of
 mod_perl, since that is the most common configuration.  If you are
 using Mason outside of mod_perl, the documentation is still valid;
 you'll just have to ignore mod_perl specific references like $r and
 the ApacheHandler object, and you'll want to read the STANDALONE MODE section in
-B<L<HTML::Mason::Interp>>.
+B<HTML::Mason::Interp>.
 
 =head1 AUTHOR 
 
@@ -297,10 +298,10 @@ Jonathan Swartz, swartz@transbay.net
 
 =head1 SEE ALSO
 
-L<HTML::Mason::Components>,
-L<HTML::Mason::Commands>,
-L<HTML::Mason::Parser>,
-L<HTML::Mason::Interp>,
-L<HTML::Mason::ApacheHandler>
+HTML::Mason::Components,
+HTML::Mason::Commands,
+HTML::Mason::Parser,
+HTML::Mason::Interp,
+HTML::Mason::ApacheHandler
 
 =cut

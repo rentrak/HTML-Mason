@@ -23,7 +23,7 @@ use File::Path;
 use HTML::Mason::Interp;
 use HTML::Mason::Commands;
 use HTML::Mason::FakeApache;
-use HTML::Mason::Tools qw(html_escape url_unescape);
+use HTML::Mason::Tools qw(html_escape url_unescape pkg_installed);
 use HTML::Mason::Utils;
 use Apache::Status;
 use CGI qw(-private_tempfiles);
@@ -88,20 +88,18 @@ sub _initialize {
         $title=$name;
         $name=~s/\W/_/g;
     }
-    Apache::Status->menu_item(
-        $name=>$title,
-	    sub {
-            my($r,$q) = @_; #request and CGI objects
-            my(@strings);
 
-            push (@strings,
-                    qq(<FONT size="+2"><B>$self->{apache_status}</B></FONT><BR><BR>),
-                    $self->interp_status);
+    my $statsub = sub {
+	my($r,$q) = @_; #request and CGI objects
+	my(@strings);
 
-            return \@strings;     #return an array ref
-        }
-    ) if $Apache::Status::VERSION; #only if Apache::Status is loaded
+	push (@strings,
+	      qq(<FONT size="+2"><B>$self->{apache_status}</B></FONT><BR><BR>),
+	      $self->interp_status);
 
+	return \@strings;     #return an array ref
+    };
+    Apache::Status->menu_item ($name,$title,$statsub) if $Apache::Status::VERSION;
     
     #
     # Create data subdirectories if necessary. mkpath will die on error.
@@ -110,12 +108,6 @@ sub _initialize {
 	my @newdirs = mkpath($interp->data_dir."/$subdir",0,0775);
 	$interp->push_files_written(@newdirs);
     }
-    
-    #
-    # Send HTTP headers when the primary section is reached.
-    #
-    $interp->remove_hooks(name=>'http_header');
-    $interp->add_hook(name=>'http_header',type=>'start_primary',order=>75,code=>\&send_http_header_hook);
 
     #
     # Allow global $r in components
@@ -157,14 +149,6 @@ sub interp_status
     push @strings, '</DL>';
     return @strings;
 }         
-
-sub send_http_header_hook
-{
-    my ($interp) = @_;
-    my $r = $interp->vars('server');
-    $r->send_http_header if (!http_header_sent($r));
-    $interp->suppress_hooks(name=>'http_header');
-}
 
 #
 # Standard entry point for handling request
@@ -253,7 +237,7 @@ sub handle_request {
 	    print("<pre><font size=-1>\n$debugMsg\n</font></pre>\n") if defined($debugMsg);
 	}
     } else {
-	print("\n<!--\n$debugMsg\n-->\n") if defined($debugMsg) && http_header_sent($req) && $req->header_out("Content-type") =~ /text\/html/;
+	print("\n<!--\n$debugMsg\n-->\n") if defined($debugMsg) && http_header_sent($req) && !$req->header_only && $req->header_out("Content-type") =~ /text\/html/;
 	print($outbuf) if $self->output_mode eq 'batch';
     }
 
@@ -270,7 +254,7 @@ sub preview_dir { return shift->interp->data_dir . "/preview" }
 sub write_debug_file
 {
     my ($self, $r, $dref) = @_;
-    my $user = $r->cgi_var('REMOTE_USER') || 'anon';
+    my $user = $r->connection->user || 'anon';
     my $outFile = sprintf("%d",int(rand(20))+1);
     my $outDir = $self->debug_dir . "/$user";
     if (!-d $outDir) {
@@ -341,7 +325,7 @@ PERL
     $o .= "my ";
     $o .= $d->Dumpxs;
     $o .= 'my $r = HTML::Mason::ApacheHandler::simulate_debug_request($dref);'."\n";
-    $o .= 'local %ENV = %{$dref->{ENV}};'."\n";
+    $o .= 'local %ENV = (%ENV,%{$dref->{ENV}});'."\n";
     $o .= 'my $status = '.$self->debug_handler_proc."(\$r);\n";
     $o .= 'print "return status: $status\n";'."\n}\n\n";
     $o .= <<'PERL';
@@ -369,9 +353,23 @@ sub capture_debug_state
 	$expr .= "\$d{$field} = \$r->$field;\n";
     }
     eval($expr);
-
     warn "error creating debug file: $@\n" if $@;
+
+    if (pkg_installed('Apache::Table')) {
+	$expr = "my \$href;\n";
+	foreach my $field (qw(headers_in headers_out err_headers_out notes dir_config subprocess_env)) {
+	    $expr .= "\$href = scalar(\$r->$field); \$d{$field} = {\%\$href};\n";
+	}
+	eval($expr);
+	warn "error creating debug file: $@\n" if $@;
+    } else {
+	foreach my $field (qw(headers_in headers_out err_headers_out notes dir_config subprocess_env)) {
+	    $d{$field} = {};
+	}
+    }
+    
     $d{'args@'} = [$r->args];
+    
     $d{'args$'} = scalar($r->args);
     
     if ($r->method eq 'POST') {
@@ -484,6 +482,17 @@ sub handle_request_1
     $argString = '' if !defined($argString);
 
     #
+    # Send HTTP headers when the primary section is reached.
+    #
+    my $hdrsub = sub {
+	my ($interp) = @_;
+	$r->send_http_header() if !http_header_sent($r);
+	$interp->abort() if $r->header_only;
+	$interp->suppress_hook(name=>'http_header',type=>'start_primary');
+    };
+    $interp->add_hook(name=>'http_header',type=>'start_primary',code=>$hdrsub);
+
+    #
     # Set up interpreter global variables.
     #
     $interp->vars(http_input=>$argString);
@@ -551,9 +560,9 @@ sub mc_dhandler_arg ()
 sub mc_suppress_http_header
 {
     if ($_[0]) {
-	$INTERP->suppress_hooks(name=>'http_header');
+	$INTERP->suppress_hook(name=>'http_header',type=>'start_primary');
     } else {
-	$INTERP->unsuppress_hooks(name=>'http_header');
+	$INTERP->unsuppress_hook(name=>'http_header',type=>'start_primary');
     }
 }
 
