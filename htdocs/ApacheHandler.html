@@ -7,30 +7,30 @@
 
 <body style="background-color: white">
 
-<p><a name="__index__"></a></p>
+<p><A NAME="__index__"></a></p>
 <!-- INDEX BEGIN -->
 
 <ul>
 
-	<li><a href="#name">NAME</a></li>
-	<li><a href="#synopsis">SYNOPSIS</a></li>
-	<li><a href="#description">DESCRIPTION</a></li>
-	<li><a href="#parameters_to_the_new()_constructor">PARAMETERS TO THE <code>new()</code> CONSTRUCTOR</a></li>
-	<li><a href="#accessor_methods">ACCESSOR METHODS</a></li>
-	<li><a href="#other_methods">OTHER METHODS</a></li>
-	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><A HREF="#name">NAME</a></li>
+	<li><A HREF="#synopsis">SYNOPSIS</a></li>
+	<li><A HREF="#description">DESCRIPTION</a></li>
+	<li><A HREF="#parameters_to_the_new__construc">PARAMETERS TO THE <code>new()</code> CONSTRUCTOR</a></li>
+	<li><A HREF="#accessor_methods">ACCESSOR METHODS</a></li>
+	<li><A HREF="#other_methods">OTHER METHODS</a></li>
+	<li><A HREF="#see_also">SEE ALSO</a></li>
 </ul>
 <!-- INDEX END -->
 
 <hr />
 <p>
 </p>
-<h1><a name="name">NAME</a></h1>
+<h1><A NAME="name">NAME</a></h1>
 <p>HTML::Mason::ApacheHandler - Mason/mod_perl interface</p>
 <p>
 </p>
 <hr />
-<h1><a name="synopsis">SYNOPSIS</a></h1>
+<h1><A NAME="synopsis">SYNOPSIS</a></h1>
 <pre>
     use HTML::Mason::ApacheHandler;</pre>
 <pre>
@@ -43,18 +43,18 @@
 <p>
 </p>
 <hr />
-<h1><a name="description">DESCRIPTION</a></h1>
+<h1><A NAME="description">DESCRIPTION</a></h1>
 <p>The ApacheHandler object links Mason to mod_perl, running components in
 response to HTTP requests. It is controlled primarily through
 parameters to the <code>new()</code> constructor.</p>
-<p><a href="#item_handle_request"><code>handle_request()</code></a> is not a user method, but rather is called from the
+<p><A HREF="#item_handle_request"><code>handle_request()</code></a> is not a user method, but rather is called from the
 HTML::Mason::handler() routine in handler.pl.</p>
 <p>
 </p>
 <hr />
-<h1><a name="parameters_to_the_new()_constructor">PARAMETERS TO THE <code>new()</code> CONSTRUCTOR</a></h1>
+<h1><A NAME="parameters_to_the_new__construc">PARAMETERS TO THE <code>new()</code> CONSTRUCTOR</a></h1>
 <dl>
-<dt><strong><a name="item_apache_status_title">apache_status_title</a></strong><br />
+<dt><strong><A NAME="item_apache_status_title">apache_status_title</a></strong><br />
 </dt>
 <dd>
 Title that you want this ApacheHandler to appear as under
@@ -63,7 +63,7 @@ you create more than one ApacheHandler object and want them all
 visible via Apache::Status.
 </dd>
 <p></p>
-<dt><strong><a name="item_args_method">args_method</a></strong><br />
+<dt><strong><A NAME="item_args_method">args_method</a></strong><br />
 </dt>
 <dd>
 Method to use for unpacking GET and POST arguments. The valid options
@@ -84,7 +84,7 @@ object used for argument processing.</p>
 <p>If args_method is 'mod_perl', the <code>$r</code> global is upgraded to an
 Apache::Request object. This object inherits all Apache methods and
 adds a few of its own, dealing with parameters and file uploads.  See
-<a href="/Apache/Request.html">Apache::Request</a> for more information.</p>
+<code>Apache::Request</code> for more information.</p>
 </dd>
 <dd>
 <p>While Mason will load <code>Apache::Request</code> or <code>CGI</code> as needed at runtime, it
@@ -92,33 +92,33 @@ is recommended that you preload the relevant module either in your
 <em>httpd.conf</em> or <em>handler.pl</em> file, as this will save some memory.</p>
 </dd>
 <p></p>
-<dt><strong><a name="item_decline_dirs">decline_dirs</a></strong><br />
+<dt><strong><A NAME="item_decline_dirs">decline_dirs</a></strong><br />
 </dt>
 <dd>
 True or false, default is true. Indicates whether Mason should decline
 directory requests, leaving Apache to serve up a directory index or a
-<code>FORBIDDEN</code> error as appropriate. See the <a href="/HTML/Mason/Admin.html#allowing_directory_requests">allowing directory requests</a> section of the administrator's manual
+<code>FORBIDDEN</code> error as appropriate. See the <A HREF="Admin.html#allowing_directory_requests">allowing directory requests</a> section of the administrator's manual
 for more information about handling directories with Mason.
 </dd>
 <p></p>
-<dt><strong><a name="item_interp">interp</a></strong><br />
+<dt><strong><A NAME="item_interp">interp</a></strong><br />
 </dt>
 <dd>
 The interpreter object to associate with this compiler. By default a
-new object of class <a href="/HTML/Mason/Params.html#interp_class">interp_class</a> will be created.
+new object of class <A HREF="Params.html#interp_class">interp_class</a> will be created.
 </dd>
 <p></p>
-<dt><strong><a name="item_interp_class">interp_class</a></strong><br />
+<dt><strong><A NAME="item_interp_class">interp_class</a></strong><br />
 </dt>
 <dd>
 The class to use when creating a interpreter. Defaults to
-<a href="/HTML/Mason/Interp.html">HTML::Mason::Interp</a>.
+<a HREF="Interp.html">HTML::Mason::Interp</a>.
 </dd>
 <p></p></dl>
 <p>
 </p>
 <hr />
-<h1><a name="accessor_methods">ACCESSOR METHODS</a></h1>
+<h1><A NAME="accessor_methods">ACCESSOR METHODS</a></h1>
 <p>All of the above properties, except interp, have standard accessor
 methods of the same name: no arguments retrieves the value, and one
 argument sets it, except for args_method, which is not settable.  For
@@ -130,11 +130,11 @@ example:</p>
 <p>
 </p>
 <hr />
-<h1><a name="other_methods">OTHER METHODS</a></h1>
+<h1><A NAME="other_methods">OTHER METHODS</a></h1>
 <p>The ApacheHandler object has a few other publically accessible methods
 that may be of interest to end users.</p>
 <dl>
-<dt><strong><a name="item_handle_request">handle_request ($r)</a></strong><br />
+<dt><strong><A NAME="item_handle_request">handle_request ($r)</a></strong><br />
 </dt>
 <dd>
 This method takes an Apache object representing a request and
@@ -142,7 +142,7 @@ translates that request into a form Mason can understand.  It's return
 value is an Apache status code.
 </dd>
 <p></p>
-<dt><strong><a name="item_prepare_request">prepare_request ($r)</a></strong><br />
+<dt><strong><A NAME="item_prepare_request">prepare_request ($r)</a></strong><br />
 </dt>
 <dd>
 This method takes an Apache object representing a request and returns
@@ -175,7 +175,7 @@ object.  For example:</p>
     $req-&gt;exec;</pre>
 </dd>
 <p></p>
-<dt><strong><a name="item_request_args">request_args ($r)</a></strong><br />
+<dt><strong><A NAME="item_request_args">request_args ($r)</a></strong><br />
 </dt>
 <dd>
 Given an Apache request object, this method returns a three item list.
@@ -188,16 +188,16 @@ passed to the method.</p>
 </dd>
 <dd>
 <p>The third item may be a CGI.pm object or <code>undef</code>, depending on the
-value of the <a href="/HTML/Mason/Params.html#args_method">args_method</a> parameter.</p>
+value of the <A HREF="Params.html#args_method">args_method</a> parameter.</p>
 </dd>
 <p></p></dl>
 <p>
 </p>
 <hr />
-<h1><a name="see_also">SEE ALSO</a></h1>
-<p><a href="/HTML/Mason.html">HTML::Mason</a>,
-<a href="/HTML/Mason/Admin.html">HTML::Mason::Admin</a>,
-<a href="/HTML/Mason/Interp.html">HTML::Mason::Interp</a></p>
+<h1><A NAME="see_also">SEE ALSO</a></h1>
+<p><a HREF="Mason.html">HTML::Mason</a>,
+<a HREF="Admin.html">HTML::Mason::Admin</a>,
+<a HREF="Interp.html">HTML::Mason::Interp</a></p>
 
 </body>
 

@@ -7,56 +7,56 @@
 
 <body style="background-color: white">
 
-<p><a name="__index__"></a></p>
+<p><A NAME="__index__"></a></p>
 <!-- INDEX BEGIN -->
 
 <ul>
 
-	<li><a href="#name">NAME</a></li>
-	<li><a href="#synopsis">SYNOPSIS</a></li>
-	<li><a href="#description">DESCRIPTION</a></li>
-	<li><a href="#methods">METHODS</a></li>
+	<li><A HREF="#name">NAME</a></li>
+	<li><A HREF="#synopsis">SYNOPSIS</a></li>
+	<li><A HREF="#description">DESCRIPTION</a></li>
+	<li><A HREF="#methods">METHODS</a></li>
 </ul>
 <!-- INDEX END -->
 
 <hr />
 <p>
 </p>
-<h1><a name="name">NAME</a></h1>
+<h1><A NAME="name">NAME</a></h1>
 <p>HTML::Mason::ComponentSource - represents information about an component</p>
 <p>
 </p>
 <hr />
-<h1><a name="synopsis">SYNOPSIS</a></h1>
+<h1><A NAME="synopsis">SYNOPSIS</a></h1>
 <pre>
     my $info = $resolver-&gt;get_info($comp_path);</pre>
 <p>
 </p>
 <hr />
-<h1><a name="description">DESCRIPTION</a></h1>
+<h1><A NAME="description">DESCRIPTION</a></h1>
 <p>Mason uses the ComponentSource class abstract information about a source
 component, one that has yet to be compiled.</p>
 <p>
 </p>
 <hr />
-<h1><a name="methods">METHODS</a></h1>
+<h1><A NAME="methods">METHODS</a></h1>
 <dl>
-<dt><strong><a name="item_new">new</a></strong><br />
+<dt><strong><A NAME="item_new">new</a></strong><br />
 </dt>
 <dd>
 This method takes the following arguments:
 </dd>
 <ul>
-<li><strong><a name="item_comp_path">comp_path</a></strong><br />
+<li><strong><A NAME="item_comp_path">comp_path</a></strong><br />
 </li>
 The component's component path.
 <p></p>
-<li><strong><a name="item_last_modified">last_modified</a></strong><br />
+<li><strong><A NAME="item_last_modified">last_modified</a></strong><br />
 </li>
 This is the last modificatoin time for the component, in Unix time
 (seconds since the epoch).
 <p></p>
-<li><strong><a name="item_comp_id">comp_id</a></strong><br />
+<li><strong><A NAME="item_comp_id">comp_id</a></strong><br />
 </li>
 This is a unique id for the component used to distinguish two
 components with the same name in different component roots.
@@ -72,13 +72,13 @@ some forward slashes in them or also <strong>all</strong> of your generated obje
 files will end up in a single directory, which could affect
 performance.</p>
 <p></p>
-<li><strong><a name="item_comp_class">comp_class</a></strong><br />
+<li><strong><A NAME="item_comp_class">comp_class</a></strong><br />
 </li>
 The component class into which this particular component should be
 blessed when it is created.  This must be a subclass of
 <code>HTML::Mason::Component</code>, which is the default.
 <p></p>
-<li><strong><a name="item_friendly_name">friendly_name</a></strong><br />
+<li><strong><A NAME="item_friendly_name">friendly_name</a></strong><br />
 </li>
 This is used when displaying error messages related to the component,
 like parsing errors.  This should be something that will help whoever
@@ -86,7 +86,7 @@ sees the message identify the component.  For example, for component
 stored on the filesystem, this should be the absolute path to the
 component.
 <p></p>
-<li><strong><a name="item_source_callback">source_callback</a></strong><br />
+<li><strong><A NAME="item_source_callback">source_callback</a></strong><br />
 </li>
 This is a subroutine reference which, when called, returns the
 component source.
@@ -94,13 +94,13 @@ component source.
 profusion of tiny little <code>HTML::Mason::ComponentSource</code> subclasses that
 don't do very much.</p>
 <p></p>
-<li><strong><a name="item_extra">extra</a></strong><br />
+<li><strong><A NAME="item_extra">extra</a></strong><br />
 </li>
 This optional parameter should be a hash reference.  It is used to
 pass information from the resolver to the component class.
 <p>This is needed since a
-<a href="/HTML/Mason/Resolver.html"><code>HTML::Mason::Resolver</code></a> subclass and a
-<a href="/HTML/Mason/Component.html"><code>HTML::Mason::Component</code></a> subclass can be
+<a HREF="Resolver.html"><code>HTML::Mason::Resolver</code></a> subclass and a
+<a HREF="Component.html"><code>HTML::Mason::Component</code></a> subclass can be
 rather tightly coupled, but they must communicate with each through
 the interpreter (this may change in the future).</p>
 <p></p></ul>
@@ -121,22 +121,22 @@ These are all simple accessors that return the value given to the
 constructor.
 </dd>
 <p></p>
-<dt><strong><a name="item_comp_source">comp_source</a></strong><br />
+<dt><strong><A NAME="item_comp_source">comp_source</a></strong><br />
 </dt>
 <dd>
 Returns the source of the component.
 </dd>
 <p></p>
-<dt><strong><a name="item_object_code">object_code ( compiler =&gt; $compiler )</a></strong><br />
+<dt><strong><A NAME="item_object_code">object_code ( compiler =&gt; $compiler )</a></strong><br />
 </dt>
 <dd>
 Given a compiler, this method returns the object code for the
 component.
 </dd>
 <p></p></dl>
-<p><a href="/HTML/Mason.html">HTML::Mason</a>,
-<a href="/HTML/Mason/Admin.html">HTML::Mason::Admin</a>,
-<a href="/HTML/Mason/Component.html">HTML::Mason::Component</a></p>
+<p><a HREF="Mason.html">HTML::Mason</a>,
+<a HREF="Admin.html">HTML::Mason::Admin</a>,
+<a HREF="Component.html">HTML::Mason::Component</a></p>
 
 </body>
 

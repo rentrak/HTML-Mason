@@ -456,7 +456,8 @@ sub cache
     unless (pkg_loaded($mason_cache_class)) {
 	load_pkg('Cache::Cache', '$m->cache requires the Cache::Cache module, available from CPAN.');
 	load_pkg($cache_class, 'Fix your Cache::Cache installation or choose another cache class.');
-	eval sprintf('package %s; use base qw(HTML::Mason::Cache::BaseCache %s); use vars qw($VERSION); $VERSION = 1.0',
+        # need to break up mention of VERSION var or else CPAN/EU::MM can choke when running 'r'
+	eval sprintf('package %s; use base qw(HTML::Mason::Cache::BaseCache %s); use vars qw($' . 'VERSION); $' . 'VERSION = 1.0;',
 		     $mason_cache_class, $cache_class);
 	die "Error constructing mason cache class $mason_cache_class: $@" if $@;
     }
@@ -600,7 +601,7 @@ sub cache_self {
     #
     my $filter;
     $filter = pop @{ $self->{buffer_stack} }
-        if $self->top_buffer->filter;
+        if $self->top_stack->{comp}->has_filter;
 
     my ($output, $retval);
     eval
@@ -1222,9 +1223,9 @@ method C<instance>.
 
 =head1 COMPONENT PATHS
 
-The methods L<Request-E<gt>comp|HTML::Mason::Request/comp>,
-L<Request-E<gt>comp_exists|HTML::Mason::Request/comp_exists>, and
-L<Request-E<gt>fetch_comp|HTML::Mason::Request/fetch_comp> take a
+The methods L<Request-E<gt>comp|HTML::Mason::Request/item_comp>,
+L<Request-E<gt>comp_exists|HTML::Mason::Request/item_comp_exists>, and
+L<Request-E<gt>fetch_comp|HTML::Mason::Request/item_fetch_comp> take a
 component path argument.  Component paths are like URL paths, and
 always use a forward slash (/) as the separator, regardless of what
 your operating system uses.
@@ -1755,7 +1756,7 @@ C<$m-E<gt>print>.
 =item request_args
 
 Returns the arguments originally passed to the top level component
-(see L<Request-E<gt>request_comp|HTML::Mason::Request/request_comp> for
+(see L<Request-E<gt>request_comp|HTML::Mason::Request/item_request_comp> for
 definition).  When called in scalar context, a hash reference is
 returned. When called in list context, a list of arguments (which may
 be assigned to a hash) is returned.
@@ -1773,7 +1774,7 @@ C<$m-E<gt>call_next> chain.
 
 =item scomp (comp, args...)
 
-Like C<$m-E<gt>comp>, but returns the component output as a string
+Like L<comp|HTML::Mason::Request/item_comp>, but returns the component output as a string
 instead of printing it. (Think sprintf versus printf.) The
 component's return value is discarded.
 

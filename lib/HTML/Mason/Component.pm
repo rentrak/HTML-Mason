@@ -14,17 +14,20 @@ Params::Validate::validation_options( on_fail => sub { param_error join '', @_  
 use HTML::Mason::Exceptions( abbr => ['error'] );
 use HTML::Mason::MethodMaker
     ( read_only => [ qw( code
-			 load_time
-			 declared_args
 			 comp_id
+			 compiler_id
+			 declared_args
 			 inherit_path
 			 inherit_start_path
                          interp
+                         has_filter
+			 load_time
 			 object_size
-			 compiler_id ) ],
+                       ) ],
 
       read_write => [ [ dynamic_subs_request => { isa => 'HTML::Mason::Request' } ],
 		      [ mfu_count => { type => SCALAR } ],
+                      [ filter => { type => CODEREF } ],
 		    ]
       );
 
@@ -114,12 +117,11 @@ sub run {
 
     $self->{mfu_count}++;
 
-    return $self->{code}->(@_) unless $self->{filter};
+    return $self->{code}->(@_) unless $self->has_filter;
 
     my $req = HTML::Mason::Request->instance;
 
-    $req->push_filter_buffer( filter => $self->{filter},
-                              filter_args => \@_ );
+    $req->push_filter_buffer( filter_from => $self );
 
     my @r;
 
@@ -128,15 +130,15 @@ sub run {
     # Note: this must always preserve calling wantarray() context
     eval {
         if ($wantarray) {
-            @result = $self->{code}->(@_);;
+            @result = $self->{code}->(@_);
         } elsif (defined $wantarray) {
-            $result[0] = $self->{code}->(@_);;
+            $result[0] = $self->{code}->(@_);
         } else {
             $self->{code}->(@_);
         }
     };
 
-    $req->flush_buffer;
+    $req->top_buffer->flush;
     $req->pop_buffer_stack;
 
     die $@ if $@;
@@ -158,7 +160,7 @@ sub run_dynamic_sub {
     error "call_dynamic: assert error - could not find code for key $key in component " . $self->title
 	unless exists $self->{dynamic_subs_hash}->{$key};
 
-    $self->{dynamic_subs_hash}->{$key}->(@args);
+    return $self->{dynamic_subs_hash}->{$key}->(@args);
 }
 
 # Legacy, left in for pre-0.8 obj files
@@ -392,14 +394,14 @@ directly with a component object.
 =head2 CREATING AND ACCESSING COMPONENTS
 
 Common ways to get handles on existing component objects include the
-L<Request-E<gt>current_comp|HTML::Mason::Request/current_comp>,
-L<Request-E<gt>callers|HTML::Mason::Request/callers>, and
-L<Request-E<gt>fetch_comp|HTML::Mason::Request/fetch_comp> methods.
+L<Request-E<gt>current_comp|HTML::Mason::Request/item_current_comp>,
+L<Request-E<gt>callers|HTML::Mason::Request/item_callers>, and
+L<Request-E<gt>fetch_comp|HTML::Mason::Request/item_fetch_comp> methods.
 
 There is no published C<new> method, because creating a component
-requires an Interpreter. Use the L<Interp's
-make_component|HTML::Mason::Interp/make_component> method to create a
-new component dynamically.
+requires an Interpreter. Use the
+L<make_component|HTML::Mason::Interp/item_make_component> method to
+create a new component dynamically.
 
 Similarly, there is no C<execute> or C<call> method, because calling a
 component requires a request. All of the interfaces for calling a
@@ -539,10 +541,9 @@ Returns the entire path of this component, relative to the component root.
 
 =item scall_method (name, args...)
 
-Like L<Component-E<gt>call_method (name, args...)|call_method (name,
-args...)>, but returns the method output as a string instead of
-printing it. (Think sprintf versus printf.) The method's return value,
-if any, is discarded.
+Like L<item_call_method|call_method>, but returns the method output as
+a string instead of printing it. (Think sprintf versus printf.) The
+method's return value, if any, is discarded.
 
 =for html <a name="item_subcomps"></a>
 

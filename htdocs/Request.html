@@ -7,33 +7,33 @@
 
 <body style="background-color: white">
 
-<p><a name="__index__"></a></p>
+<p><A NAME="__index__"></a></p>
 <!-- INDEX BEGIN -->
 
 <ul>
 
-	<li><a href="#name">NAME</a></li>
-	<li><a href="#synopsis">SYNOPSIS</a></li>
-	<li><a href="#description">DESCRIPTION</a></li>
-	<li><a href="#component_paths">COMPONENT PATHS</a></li>
-	<li><a href="#parameters_to_the_new()_constructor">PARAMETERS TO THE <code>new()</code> CONSTRUCTOR</a></li>
-	<li><a href="#methods">METHODS</a></li>
-	<li><a href="#apacheonly_methods">APACHE-ONLY METHODS</a></li>
-	<li><a href="#apache_or_cgionly_method">APACHE- OR CGI-ONLY METHOD</a></li>
-	<li><a href="#authors">AUTHORS</a></li>
-	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><A HREF="#name">NAME</a></li>
+	<li><A HREF="#synopsis">SYNOPSIS</a></li>
+	<li><A HREF="#description">DESCRIPTION</a></li>
+	<li><A HREF="#component_paths">COMPONENT PATHS</a></li>
+	<li><A HREF="#parameters_to_the_new__construc">PARAMETERS TO THE <code>new()</code> CONSTRUCTOR</a></li>
+	<li><A HREF="#methods">METHODS</a></li>
+	<li><A HREF="#apacheonly_methods">APACHE-ONLY METHODS</a></li>
+	<li><A HREF="#apache_or_cgionly_method">APACHE- OR CGI-ONLY METHOD</a></li>
+	<li><A HREF="#authors">AUTHORS</a></li>
+	<li><A HREF="#see_also">SEE ALSO</a></li>
 </ul>
 <!-- INDEX END -->
 
 <hr />
 <p>
 </p>
-<h1><a name="name">NAME</a></h1>
+<h1><A NAME="name">NAME</a></h1>
 <p>HTML::Mason::Request - Mason Request Class</p>
 <p>
 </p>
 <hr />
-<h1><a name="synopsis">SYNOPSIS</a></h1>
+<h1><A NAME="synopsis">SYNOPSIS</a></h1>
 <pre>
     $m-&gt;abort (...)
     $m-&gt;comp (...)
@@ -41,19 +41,19 @@
 <p>
 </p>
 <hr />
-<h1><a name="description">DESCRIPTION</a></h1>
+<h1><A NAME="description">DESCRIPTION</a></h1>
 <p>The Request API is your gateway to all Mason features not provided by
 syntactic tags. Mason creates a new Request object for every web
 request. Inside a component you access the current request object via
 the global <code>$m</code>.  Outside of a component, you can use the class
-method <a href="#item_instance"><code>instance</code></a>.</p>
+method <A HREF="#item_instance"><code>instance</code></a>.</p>
 <p>
 </p>
 <hr />
-<h1><a name="component_paths">COMPONENT PATHS</a></h1>
-<p>The methods <a href="/HTML/Mason/Request.html#comp">Request-&gt;comp</a>,
-<a href="/HTML/Mason/Request.html#comp_exists">Request-&gt;comp_exists</a>, and
-<a href="/HTML/Mason/Request.html#fetch_comp">Request-&gt;fetch_comp</a> take a
+<h1><A NAME="component_paths">COMPONENT PATHS</a></h1>
+<p>The methods <A HREF="Request.html#item_comp">Request-&gt;comp</a>,
+<A HREF="Request.html#item_comp_exists">Request-&gt;comp_exists</a>, and
+<A HREF="Request.html#item_fetch_comp">Request-&gt;fetch_comp</a> take a
 component path argument.  Component paths are like URL paths, and
 always use a forward slash (/) as the separator, regardless of what
 your operating system uses.</p>
@@ -73,9 +73,9 @@ subcomponent takes precedence.
 <p>
 </p>
 <hr />
-<h1><a name="parameters_to_the_new()_constructor">PARAMETERS TO THE <code>new()</code> CONSTRUCTOR</a></h1>
+<h1><A NAME="parameters_to_the_new__construc">PARAMETERS TO THE <code>new()</code> CONSTRUCTOR</a></h1>
 <dl>
-<dt><strong><a name="item_autoflush">autoflush</a></strong><br />
+<dt><strong><A NAME="item_autoflush">autoflush</a></strong><br />
 </dt>
 <dd>
 True or false, default is false. Indicates whether to flush the output buffer
@@ -83,27 +83,27 @@ after every string is output. Turn on autoflush if you need to send partial
 output to the client, for example in a progress meter.
 </dd>
 <p></p>
-<dt><strong><a name="item_buffer_class">buffer_class</a></strong><br />
+<dt><strong><A NAME="item_buffer_class">buffer_class</a></strong><br />
 </dt>
 <dd>
 The class to use when creating buffers. Defaults to
-<a href="/HTML/Mason/Buffer.html">HTML::Mason::Buffer</a>.
+<a HREF="Buffer.html">HTML::Mason::Buffer</a>.
 </dd>
 <p></p>
-<dt><strong><a name="item_data_cache_api">data_cache_api</a></strong><br />
+<dt><strong><A NAME="item_data_cache_api">data_cache_api</a></strong><br />
 </dt>
 <dd>
-The <a href="#item_cache"><code>$m-&gt;cache</code></a> API to use. '1.1', the default, indicates the newer
-API <a href="/HTML/Mason/Request.html#item_cache">documented in this manual</a>.
+The <A HREF="#item_cache"><code>$m-&gt;cache</code></a> API to use. '1.1', the default, indicates the newer
+API <A HREF="Request.html#item_cache">documented in this manual</a>.
 '1.0' indicates the old API documented in 1.0x and earlier. This
 compatibility layer is provided as a convenience for users upgrading
 from older versions of Mason, but will not be supported indefinitely.
 </dd>
 <p></p>
-<dt><strong><a name="item_data_cache_defaults">data_cache_defaults</a></strong><br />
+<dt><strong><A NAME="item_data_cache_defaults">data_cache_defaults</a></strong><br />
 </dt>
 <dd>
-A hash reference of default options to use for the <a href="#item_cache"><code>$m-&gt;cache</code></a>
+A hash reference of default options to use for the <A HREF="#item_cache"><code>$m-&gt;cache</code></a>
 command. For example, to use the <code>MemoryCache</code> implementation
 by default,
 </dd>
@@ -113,16 +113,16 @@ by default,
 </dd>
 <dd>
 <p>These settings are overriden by options given to particular
-<a href="#item_cache"><code>$m-&gt;cache</code></a> calls.</p>
+<A HREF="#item_cache"><code>$m-&gt;cache</code></a> calls.</p>
 </dd>
 <p></p>
-<dt><strong><a name="item_dhandler_name">dhandler_name</a></strong><br />
+<dt><strong><A NAME="item_dhandler_name">dhandler_name</a></strong><br />
 </dt>
 <dd>
-File name used for <a href="/HTML/Mason/Devel.html#dhandlers">dhandlers</a>. Default is ``dhandler''.
+File name used for <A HREF="Devel.html#dhandlers">dhandlers</a>. Default is ``dhandler''.
 </dd>
 <p></p>
-<dt><strong><a name="item_error_format">error_format</a></strong><br />
+<dt><strong><A NAME="item_error_format">error_format</a></strong><br />
 </dt>
 <dd>
 Indicates how errors are formatted. The built-in choices are
@@ -140,8 +140,8 @@ Indicates how errors are formatted. The built-in choices are
 <li></li>
 <em>html</em> - a fancy html format
 <p></p></ul>
-<p>The default format under <a href="/HTML/Mason/ApacheHandler.html">Apache</a> and
-<a href="/HTML/Mason/CGIHandler.html">CGI</a> is either <em>line</em> or <em>html</em> depending
+<p>The default format under <a HREF="ApacheHandler.html">Apache</a> and
+<a HREF="CGIHandler.html">CGI</a> is either <em>line</em> or <em>html</em> depending
 on whether the error mode is <em>fatal</em> or <em>output</em>, respectively. The
 default for standalone mode is <em>text</em>.</p>
 <p>The formats correspond to <code>HTML::Mason::Exception</code> methods named
@@ -149,7 +149,7 @@ as_<em>format</em>. You can define your own format by creating an
 appropriately named method; for example, to define an ``xml'' format,
 create a method <code>HTML::Mason::Exception::as_xml</code> patterned after one of
 the built-in methods.</p>
-<dt><strong><a name="item_error_mode">error_mode</a></strong><br />
+<dt><strong><A NAME="item_error_mode">error_mode</a></strong><br />
 </dt>
 <dd>
 Indicates how errors are returned to the caller.  The choices are
@@ -157,13 +157,13 @@ Indicates how errors are returned to the caller.  The choices are
 the error just like regular output.
 </dd>
 <dd>
-<p>The default under <a href="/HTML/Mason/ApacheHandler.html">Apache</a> and
-<a href="/HTML/Mason/CGIHandler.html">CGI</a> is <em>output</em>, causing the error to be
+<p>The default under <a HREF="ApacheHandler.html">Apache</a> and
+<a HREF="CGIHandler.html">CGI</a> is <em>output</em>, causing the error to be
 displayed in the browser.  The default for standalone mode is
 <em>fatal</em>.</p>
 </dd>
 <p></p>
-<dt><strong><a name="item_max_recurse">max_recurse</a></strong><br />
+<dt><strong><A NAME="item_max_recurse">max_recurse</a></strong><br />
 </dt>
 <dd>
 The maximum recursion depth for the component stack, for the request
@@ -171,7 +171,7 @@ stack, and for the inheritance stack. An error is signalled if the
 maximum is exceeded.  Default is 32.
 </dd>
 <p></p>
-<dt><strong><a name="item_out_method">out_method</a></strong><br />
+<dt><strong><A NAME="item_out_method">out_method</a></strong><br />
 </dt>
 <dd>
 Indicates where to send output. If out_method is a reference to a
@@ -187,16 +187,16 @@ string. For example, to send output to a file called ``mason.out'':
 </dd>
 <dd>
 <p>By default, out_method prints to standard output. Under
-<a href="/HTML/Mason/ApacheHandler.html">Apache</a>, standard output is
-redirected to <a href="#item_print"><code>$r-&gt;print</code></a>.</p>
+<a HREF="ApacheHandler.html">Apache</a>, standard output is
+redirected to <A HREF="#item_print"><code>$r-&gt;print</code></a>.</p>
 </dd>
 <p></p></dl>
 <p>
 </p>
 <hr />
-<h1><a name="methods">METHODS</a></h1>
-<a name="item_abort"></a><dl>
-<dt><strong><a name="item_abort">abort ([return value])</a></strong><br />
+<h1><A NAME="methods">METHODS</a></h1>
+<A NAME="item_abort"></a><dl>
+<dt><strong><A NAME="item_abort">abort ([return value])</a></strong><br />
 </dt>
 <dd>
 Ends the current request, finishing the page without returning
@@ -205,20 +205,20 @@ value from <code>Interp::exec</code>; in a web environment, this ultimately
 becomes the HTTP status code.
 </dd>
 <dd>
-<p><a href="#item_abort"><code>abort</code></a> is implemented by throwing an HTML::Mason::Exception::Abort
-object and can thus be caught by eval(). The <a href="#item_aborted"><code>aborted</code></a> method is a
+<p><A HREF="#item_abort"><code>abort</code></a> is implemented by throwing an HTML::Mason::Exception::Abort
+object and can thus be caught by eval(). The <A HREF="#item_aborted"><code>aborted</code></a> method is a
 shortcut for determining whether a caught error was generated by
-<a href="#item_abort"><code>abort</code></a>.</p>
+<A HREF="#item_abort"><code>abort</code></a>.</p>
 </dd>
-<a name="item_aborted"></a><p></p>
-<dt><strong><a name="item_aborted">aborted ([$err])</a></strong><br />
+<A NAME="item_aborted"></a><p></p>
+<dt><strong><A NAME="item_aborted">aborted ([$err])</a></strong><br />
 </dt>
 <dd>
 Returns true or undef indicating whether the specified <code>$err</code>
-was generated by <a href="#item_abort"><code>abort</code></a>. If no <code>$err</code> was passed, use <code>$@</code>.
+was generated by <A HREF="#item_abort"><code>abort</code></a>. If no <code>$err</code> was passed, use <code>$@</code>.
 </dd>
 <dd>
-<p>In this code, we catch and process fatal errors while letting <a href="#item_abort"><code>abort</code></a>
+<p>In this code, we catch and process fatal errors while letting <A HREF="#item_abort"><code>abort</code></a>
 exceptions pass through:</p>
 </dd>
 <dd>
@@ -236,22 +236,22 @@ exceptions pass through:</p>
 $m-&gt;aborted more than a few lines after the eval, you should save $@
 to a temporary variable.</p>
 </dd>
-<a name="item_base_comp"></a><p></p>
-<dt><strong><a name="item_base_comp">base_comp</a></strong><br />
+<A NAME="item_base_comp"></a><p></p>
+<dt><strong><A NAME="item_base_comp">base_comp</a></strong><br />
 </dt>
 <dd>
 Returns the current base component for method and attributes.
 Initially, the base component is the same as the requested component
-(returned by <a href="#item_request_comp"><code>$m-&gt;request_comp</code></a>.  However, whenever a component
+(returned by <A HREF="#item_request_comp"><code>$m-&gt;request_comp</code></a>.  However, whenever a component
 call is made, the base component changes to the called component,
 unless the component call was made uses a component object for its
 first argument, or the call starts with SELF: or PARENT:.
 </dd>
-<a name="item_cache"></a><p></p>
-<dt><strong><a name="item_cache">cache (cache_class=&gt;'...', [cache_options])</a></strong><br />
+<A NAME="item_cache"></a><p></p>
+<dt><strong><A NAME="item_cache">cache (cache_class=&gt;'...', [cache_options])</a></strong><br />
 </dt>
 <dd>
-<a href="#item_cache"><code>$m-&gt;cache</code></a> returns a new <a href="/HTML/Mason/Cache/BaseCache.html">cache object</a> with a namespace specific to
+<A HREF="#item_cache"><code>$m-&gt;cache</code></a> returns a new <a HREF="Cache/BaseCache.html">cache object</a> with a namespace specific to
 this component.
 </dd>
 <dd>
@@ -270,30 +270,30 @@ the cache class. e.g. for C&lt;FileCache&gt;, valid options include
 default_expires_in and cache_depth.</pre>
 </dd>
 <dd>
-<p>See the <a href="/HTML/Mason/Devel.html#data_caching">data caching</a> section of the developer's manual for a caching tutorial and examples. See the
-<a href="/HTML/Mason/Cache/BaseCache.html">HTML::Mason::Cache::BaseCache</a>
+<p>See the <A HREF="Devel.html#data_caching">data caching</a> section of the developer's manual for a caching tutorial and examples. See the
+<a HREF="Cache/BaseCache.html">HTML::Mason::Cache::BaseCache</a>
 documentation for a method reference.</p>
 </dd>
 <dd>
 <p>Note: users upgrading from 1.0x and earlier can continue to use the
-old <a href="#item_cache"><code>$m-&gt;cache</code></a> API by setting <a href="/HTML/Mason/Params.html#data_cache_api">data_cache_api</a> to '1.0'.  This
+old <A HREF="#item_cache"><code>$m-&gt;cache</code></a> API by setting <A HREF="Params.html#data_cache_api">data_cache_api</a> to '1.0'.  This
 support will be removed at a later date.</p>
 </dd>
-<a name="item_cache_self"></a><p></p>
-<dt><strong><a name="item_cache_self">cache_self ([expires_in =&gt; '...'], [key =&gt; '...'], [get_options], [cache_options])</a></strong><br />
+<A NAME="item_cache_self"></a><p></p>
+<dt><strong><A NAME="item_cache_self">cache_self ([expires_in =&gt; '...'], [key =&gt; '...'], [get_options], [cache_options])</a></strong><br />
 </dt>
 <dd>
-<a href="#item_cache_self"><code>$m-&gt;cache_self</code></a> caches the entire output and return result of a
+<A HREF="#item_cache_self"><code>$m-&gt;cache_self</code></a> caches the entire output and return result of a
 component.
 </dd>
 <dd>
-<p><a href="#item_cache_self"><code>cache_self</code></a> either returns undef, or a list containing the
+<p><A HREF="#item_cache_self"><code>cache_self</code></a> either returns undef, or a list containing the
 return value of the component followed by '1'. You should return
 immediately upon getting the latter result, as this indicates
 that you are inside the second invocation of the component.</p>
 </dd>
 <dd>
-<p><a href="#item_cache_self"><code>cache_self</code></a> takes any of parameters to <a href="#item_cache"><code>$m-&gt;cache</code></a>
+<p><A HREF="#item_cache_self"><code>cache_self</code></a> takes any of parameters to <A HREF="#item_cache"><code>$m-&gt;cache</code></a>
 (e.g. <em>cache_depth</em>), any of the optional parameters to
 <code>$cache-&gt;get</code> (<em>expire_if</em>, <em>busy_lock</em>), and two additional
 options:</p>
@@ -334,9 +334,9 @@ is passed as the first argument to <code>$cache-&gt;get</code> and
 <p>We call <code>pop</code> on <code>@retval</code> to remove the mandatory '1' at the end of
 the list.</p>
 <p>Note: users upgrading from 1.0x and earlier can continue to use the
-old <a href="#item_cache_self"><code>$m-&gt;cache_self</code></a> API by setting <a href="/HTML/Mason/Params.html#data_cache_api">data_cache_api</a> to '1.0'.
+old <A HREF="#item_cache_self"><code>$m-&gt;cache_self</code></a> API by setting <A HREF="Params.html#data_cache_api">data_cache_api</a> to '1.0'.
 This support will be removed at a later date.</p>
-<a name="item_caller_args"></a><dt><strong><a name="item_caller_args">caller_args</a></strong><br />
+<A NAME="item_caller_args"></a><dt><strong><A NAME="item_caller_args">caller_args</a></strong><br />
 </dt>
 <dd>
 Returns the arguments passed by the component at the specified stack
@@ -355,8 +355,8 @@ stack. e.g.
 called in list context, a list of arguments (which may be assigned to
 a hash) is returned.</p>
 </dd>
-<a name="item_callers"></a><p></p>
-<dt><strong><a name="item_callers">callers</a></strong><br />
+<A NAME="item_callers"></a><p></p>
+<dt><strong><A NAME="item_callers">callers</a></strong><br />
 </dt>
 <dd>
 With no arguments, returns the current component stack as a list of
@@ -373,26 +373,26 @@ the component at the bottom of the stack. e.g.
     $m-&gt;callers(1)            # component that called us
     $m-&gt;callers(-1)           # first component executed</pre>
 </dd>
-<a name="item_caller"></a><p></p>
-<dt><strong><a name="item_caller">caller</a></strong><br />
+<A NAME="item_caller"></a><p></p>
+<dt><strong><A NAME="item_caller">caller</a></strong><br />
 </dt>
 <dd>
-A synonym for <a href="#item_caller"><code>$m-&gt;caller(1)</code></a>, i.e. the component that called the
+A synonym for <A HREF="#item_caller"><code>$m-&gt;caller(1)</code></a>, i.e. the component that called the
 currently executing component.
 </dd>
-<a name="item_call_next"></a><p></p>
-<dt><strong><a name="item_call_next">call_next ([args...])</a></strong><br />
+<A NAME="item_call_next"></a><p></p>
+<dt><strong><A NAME="item_call_next">call_next ([args...])</a></strong><br />
 </dt>
 <dd>
 Calls the next component in the content wrapping chain; usually called
 from an autohandler. With no arguments, the original arguments are
 passed to the component.  Any arguments specified here serve to
 augment and override (in case of conflict) the original
-arguments. Works like <a href="#item_comp"><code>$m-&gt;comp</code></a> in terms of return value and
-scalar/list context.  See the <a href="/HTML/Mason/Devel.html#autohandlers">autohandlers</a> section of the developer's manual for examples.
+arguments. Works like <A HREF="#item_comp"><code>$m-&gt;comp</code></a> in terms of return value and
+scalar/list context.  See the <A HREF="Devel.html#autohandlers">autohandlers</a> section of the developer's manual for examples.
 </dd>
-<a name="item_clear_buffer"></a><p></p>
-<dt><strong><a name="item_clear_buffer">clear_buffer</a></strong><br />
+<A NAME="item_clear_buffer"></a><p></p>
+<dt><strong><A NAME="item_clear_buffer">clear_buffer</a></strong><br />
 </dt>
 <dd>
 Clears the Mason output buffer. Any output sent before this line is
@@ -400,10 +400,10 @@ discarded. Useful for handling error conditions that can only be
 detected in the middle of a request.
 </dd>
 <dd>
-<p>clear_buffer is, of course, thwarted by <a href="#item_flush_buffer"><code>flush_buffer</code></a>.</p>
+<p>clear_buffer is, of course, thwarted by <A HREF="#item_flush_buffer"><code>flush_buffer</code></a>.</p>
 </dd>
-<a name="item_comp"></a><p></p>
-<dt><strong><a name="item_comp">comp (comp, args...)</a></strong><br />
+<A NAME="item_comp"></a><p></p>
+<dt><strong><A NAME="item_comp">comp (comp, args...)</a></strong><br />
 </dt>
 <dd>
 Calls the component designated by <em>comp</em> with the specified
@@ -413,10 +413,10 @@ object.
 <dd>
 <p>Components work exactly like Perl subroutines in terms of return
 values and context. A component can return any type of value, which is
-then returned from the <a href="#item_comp"><code>$m-&gt;comp</code></a> call.</p>
+then returned from the <A HREF="#item_comp"><code>$m-&gt;comp</code></a> call.</p>
 </dd>
 <dd>
-<p>The &lt;&amp; &amp;&gt; tag provides a convenient shortcut for <a href="#item_comp"><code>$m-&gt;comp</code></a>.</p>
+<p>The &lt;&amp; &amp;&gt; tag provides a convenient shortcut for <A HREF="#item_comp"><code>$m-&gt;comp</code></a>.</p>
 </dd>
 <dd>
 <p>As of 1.10, component calls can accept an initial hash reference of
@@ -440,16 +440,16 @@ return value.</p>
 <pre>
   &lt;&amp; { store =&gt; \$buf }, '/some/comp', size =&gt; 'medium' &amp;&gt;</pre>
 </dd>
-<a name="item_comp_exists"></a><p></p>
-<dt><strong><a name="item_comp_exists">comp_exists (comp_path)</a></strong><br />
+<A NAME="item_comp_exists"></a><p></p>
+<dt><strong><A NAME="item_comp_exists">comp_exists (comp_path)</a></strong><br />
 </dt>
 <dd>
 Returns 1 if <em>comp_path</em> is the path of an existing component, 0
 otherwise.  That path given may be relative, in which case the current
 component's directory path will be prepended.
 </dd>
-<a name="content"></a><p></p>
-<dt><strong><a name="item_content">content</a></strong><br />
+<A NAME="content"></a><p></p>
+<dt><strong><A NAME="item_content">content</a></strong><br />
 </dt>
 <dd>
 Evaluates the content (passed between &lt;&amp;| comp &amp;&gt; and &lt;/&amp;&gt; tags) of the 
@@ -458,21 +458,21 @@ current component, and returns the resulting text.
 <dd>
 <p>Returns undef if there is no content.</p>
 </dd>
-<a name="item_count"></a><p></p>
-<dt><strong><a name="item_count">count</a></strong><br />
+<A NAME="item_count"></a><p></p>
+<dt><strong><A NAME="item_count">count</a></strong><br />
 </dt>
 <dd>
 Returns the number of this request, which is unique for a given
 request and interpreter.
 </dd>
-<a name="item_current_comp"></a><p></p>
-<dt><strong><a name="item_current_comp">current_comp</a></strong><br />
+<A NAME="item_current_comp"></a><p></p>
+<dt><strong><A NAME="item_current_comp">current_comp</a></strong><br />
 </dt>
 <dd>
 Returns the current component object.
 </dd>
-<a name="item_decline"></a><p></p>
-<dt><strong><a name="item_decline">decline</a></strong><br />
+<A NAME="item_decline"></a><p></p>
+<dt><strong><A NAME="item_decline">decline</a></strong><br />
 </dt>
 <dd>
 Used from a top-level component or dhandler, this method clears the
@@ -481,15 +481,15 @@ applicable dhandler up the tree. If no dhandler is available, an error
 occurs.  This method bears no relation to the Apache DECLINED status
 except in name.
 </dd>
-<a name="item_depth"></a><p></p>
-<dt><strong><a name="item_depth">depth</a></strong><br />
+<A NAME="item_depth"></a><p></p>
+<dt><strong><A NAME="item_depth">depth</a></strong><br />
 </dt>
 <dd>
 Returns the current size of the component stack.  The lowest possible
 value is 1, which indicates we are in the top-level component.
 </dd>
-<a name="item_dhandler_arg"></a><p></p>
-<dt><strong><a name="item_dhandler_arg">dhandler_arg</a></strong><br />
+<A NAME="item_dhandler_arg"></a><p></p>
+<dt><strong><A NAME="item_dhandler_arg">dhandler_arg</a></strong><br />
 </dt>
 <dd>
 If the request has been handled by a dhandler, this method returns the
@@ -497,11 +497,11 @@ remainder of the URI or <code>Interp::exec</code> path when the dhandler directo
 removed. Otherwise returns undef.
 </dd>
 <dd>
-<p><a href="#item_dhandler_arg"><code>dhandler_arg</code></a> may be called from any component in the request, not just
+<p><A HREF="#item_dhandler_arg"><code>dhandler_arg</code></a> may be called from any component in the request, not just
 the dhandler.</p>
 </dd>
-<a name="item_exec"></a><p></p>
-<dt><strong><a name="item_exec">exec (comp, args...)</a></strong><br />
+<A NAME="item_exec"></a><p></p>
+<dt><strong><A NAME="item_exec">exec (comp, args...)</a></strong><br />
 </dt>
 <dd>
 Starts the request by executing the top-level component and
@@ -512,38 +512,38 @@ you can use it to execute subrequests.
 <p>A request can only be executed once; e.g. it is an error to call this
 recursively on the same request.</p>
 </dd>
-<a name="item_fetch_comp"></a><p></p>
-<dt><strong><a name="item_fetch_comp">fetch_comp (comp_path)</a></strong><br />
+<A NAME="item_fetch_comp"></a><p></p>
+<dt><strong><A NAME="item_fetch_comp">fetch_comp (comp_path)</a></strong><br />
 </dt>
 <dd>
 Given a <em>comp_path</em>, returns the corresponding component object or
 undef if no such component exists.
 </dd>
-<a name="item_fetch_next"></a><p></p>
-<dt><strong><a name="item_fetch_next">fetch_next</a></strong><br />
+<A NAME="item_fetch_next"></a><p></p>
+<dt><strong><A NAME="item_fetch_next">fetch_next</a></strong><br />
 </dt>
 <dd>
 Returns the next component in the content wrapping chain, or undef if
 there is no next component. Usually called from an autohandler.  See
-the <a href="/HTML/Mason/Devel.html#autohandlers">autohandlers</a> section of the developer's manual for usage and examples.
+the <A HREF="Devel.html#autohandlers">autohandlers</a> section of the developer's manual for usage and examples.
 </dd>
-<a name="item_fetch_next_all"></a><p></p>
-<dt><strong><a name="item_fetch_next_all">fetch_next_all</a></strong><br />
+<A NAME="item_fetch_next_all"></a><p></p>
+<dt><strong><A NAME="item_fetch_next_all">fetch_next_all</a></strong><br />
 </dt>
 <dd>
 Returns a list of the remaining components in the content wrapping
-chain. Usually called from an autohandler.  See the <a href="/HTML/Mason/Devel.html#autohandlers">autohandlers</a> section of the developer's manual
+chain. Usually called from an autohandler.  See the <A HREF="Devel.html#autohandlers">autohandlers</a> section of the developer's manual
 for usage and examples.
 </dd>
-<a name="item_file"></a><p></p>
-<dt><strong><a name="item_file">file (filename)</a></strong><br />
+<A NAME="item_file"></a><p></p>
+<dt><strong><A NAME="item_file">file (filename)</a></strong><br />
 </dt>
 <dd>
 Returns the contents of <em>filename</em> as a string. If <em>filename</em> is a
 relative path, Mason prepends the current component directory.
 </dd>
-<a name="item_flush_buffer"></a><p></p>
-<dt><strong><a name="item_flush_buffer">flush_buffer</a></strong><br />
+<A NAME="item_flush_buffer"></a><p></p>
+<dt><strong><A NAME="item_flush_buffer">flush_buffer</a></strong><br />
 </dt>
 <dd>
 Flushes the Mason output buffer. Under mod_perl, also sends HTTP
@@ -553,7 +553,7 @@ servers appear more responsive.
 </dd>
 <dd>
 <p>Attempts to flush the buffers are ignored within the context of a call
-to <a href="#item_scomp"><code>$m-&gt;scomp</code></a> or when output is being stored in a scalar
+to <A HREF="#item_scomp"><code>$m-&gt;scomp</code></a> or when output is being stored in a scalar
 reference, as with the <code> { store =</code> \$out } &gt; component call
 modifier.</p>
 </dd>
@@ -563,8 +563,8 @@ component is buffered until its entire output is generated.  This
 means that inside that component and any components that it calls,
 the buffer cannot be flushed.</p>
 </dd>
-<a name="item_instance"></a><p></p>
-<dt><strong><a name="item_instance">instance</a></strong><br />
+<A NAME="item_instance"></a><p></p>
+<dt><strong><A NAME="item_instance">instance</a></strong><br />
 </dt>
 <dd>
 This class method returns the <code>HTML::Mason:::Request</code> currently in
@@ -574,18 +574,18 @@ use.  If called when no Mason request is active it will return
 <dd>
 <p>If called inside a subrequest, it returns the subrequest object.</p>
 </dd>
-<a name="item_interp"></a><p></p>
-<dt><strong><a name="item_interp">interp</a></strong><br />
+<A NAME="item_interp"></a><p></p>
+<dt><strong><A NAME="item_interp">interp</a></strong><br />
 </dt>
 <dd>
 Returns the Interp object associated with this request.
 </dd>
-<a name="item_make_subrequest"></a><p></p>
-<dt><strong><a name="item_make_subrequest">make_subrequest (comp =&gt; path, args =&gt; arrayref, other parameters)</a></strong><br />
+<A NAME="item_make_subrequest"></a><p></p>
+<dt><strong><A NAME="item_make_subrequest">make_subrequest (comp =&gt; path, args =&gt; arrayref, other parameters)</a></strong><br />
 </dt>
 <dd>
 This method creates a new Request object which inherits its parent's
-settable properties, such as <a href="/HTML/Mason/Params.html#autoflush">autoflush</a> and <a href="/HTML/Mason/Params.html#out_method">out_method</a>.  These
+settable properties, such as <A HREF="Params.html#autoflush">autoflush</a> and <A HREF="Params.html#out_method">out_method</a>.  These
 values may be overridden by passing parameters to this method.
 </dd>
 <dd>
@@ -593,56 +593,56 @@ values may be overridden by passing parameters to this method.
 optional.</p>
 </dd>
 <dd>
-<p>See the <a href="/HTML/Mason/Devel.html#subrequests">subrequests</a> section of the developer's manual for more information about subrequests.</p>
+<p>See the <A HREF="Devel.html#subrequests">subrequests</a> section of the developer's manual for more information about subrequests.</p>
 </dd>
-<a name="item_out"></a><p></p>
-<dt><strong><a name="item_out">out (string)</a></strong><br />
+<A NAME="item_out"></a><p></p>
+<dt><strong><A NAME="item_out">out (string)</a></strong><br />
 </dt>
 <dd>
-A synonym for <a href="#item_print"><code>$m-&gt;print</code></a>.
+A synonym for <A HREF="#item_print"><code>$m-&gt;print</code></a>.
 </dd>
-<a name="item_print"></a><p></p>
-<dt><strong><a name="item_print">print (string)</a></strong><br />
+<A NAME="item_print"></a><p></p>
+<dt><strong><A NAME="item_print">print (string)</a></strong><br />
 </dt>
 <dd>
 Print the given <em>string</em>. Rarely needed, since normally all text is just
-placed in the component body and output implicitly. <a href="#item_print"><code>$m-&gt;print</code></a> is useful
+placed in the component body and output implicitly. <A HREF="#item_print"><code>$m-&gt;print</code></a> is useful
 if you need to output something in the middle of a Perl block.
 </dd>
 <dd>
-<p>In 1.1 and on, <a href="#item_print"><code>print</code></a> and <a href="#item_print"><code>$r-&gt;print</code></a> are remapped to <a href="#item_print"><code>$m-&gt;print</code></a>,
+<p>In 1.1 and on, <A HREF="#item_print"><code>print</code></a> and <A HREF="#item_print"><code>$r-&gt;print</code></a> are remapped to <A HREF="#item_print"><code>$m-&gt;print</code></a>,
 so they may be used interchangeably. Before 1.1, one should only use
-<a href="#item_print"><code>$m-&gt;print</code></a>.</p>
+<A HREF="#item_print"><code>$m-&gt;print</code></a>.</p>
 </dd>
-<a name="item_request_args"></a><p></p>
-<dt><strong><a name="item_request_args">request_args</a></strong><br />
+<A NAME="item_request_args"></a><p></p>
+<dt><strong><A NAME="item_request_args">request_args</a></strong><br />
 </dt>
 <dd>
 Returns the arguments originally passed to the top level component
-(see <a href="/HTML/Mason/Request.html#request_comp">Request-&gt;request_comp</a> for
+(see <A HREF="Request.html#item_request_comp">Request-&gt;request_comp</a> for
 definition).  When called in scalar context, a hash reference is
 returned. When called in list context, a list of arguments (which may
 be assigned to a hash) is returned.
 </dd>
-<a name="item_request_comp"></a><p></p>
-<dt><strong><a name="item_request_comp">request_comp</a></strong><br />
+<A NAME="item_request_comp"></a><p></p>
+<dt><strong><A NAME="item_request_comp">request_comp</a></strong><br />
 </dt>
 <dd>
 Returns the component originally called in the request. Without
 autohandlers, this is the same as the first component executed.  With
 autohandlers, this is the component at the end of the
-<a href="#item_call_next"><code>$m-&gt;call_next</code></a> chain.
+<A HREF="#item_call_next"><code>$m-&gt;call_next</code></a> chain.
 </dd>
-<a name="item_scomp"></a><p></p>
-<dt><strong><a name="item_scomp">scomp (comp, args...)</a></strong><br />
+<A NAME="item_scomp"></a><p></p>
+<dt><strong><A NAME="item_scomp">scomp (comp, args...)</a></strong><br />
 </dt>
 <dd>
-Like <a href="#item_comp"><code>$m-&gt;comp</code></a>, but returns the component output as a string
+Like <A HREF="Request.html#item_comp">comp</a>, but returns the component output as a string
 instead of printing it. (Think sprintf versus printf.) The
 component's return value is discarded.
 </dd>
-<a name="item_subexec"></a><p></p>
-<dt><strong><a name="item_subexec">subexec (comp, args...)</a></strong><br />
+<A NAME="item_subexec"></a><p></p>
+<dt><strong><A NAME="item_subexec">subexec (comp, args...)</a></strong><br />
 </dt>
 <dd>
 This method creates a new subrequest with the specified top-level
@@ -651,7 +651,7 @@ to perform an ``internal redirect'' to a new component such that
 autohandlers and dhandlers take effect.
 </dd>
 <p></p>
-<dt><strong><a name="item_time">time</a></strong><br />
+<dt><strong><A NAME="item_time">time</a></strong><br />
 </dt>
 <dd>
 Returns the interpreter's notion of the current time (deprecated).
@@ -660,24 +660,24 @@ Returns the interpreter's notion of the current time (deprecated).
 <p>
 </p>
 <hr />
-<h1><a name="apacheonly_methods">APACHE-ONLY METHODS</a></h1>
+<h1><A NAME="apacheonly_methods">APACHE-ONLY METHODS</a></h1>
 <p>These additional methods are available when running Mason with mod_perl
 and the ApacheHandler.</p>
-<a name="item_ah"></a><dl>
-<dt><strong><a name="item_ah">ah</a></strong><br />
+<A NAME="item_ah"></a><dl>
+<dt><strong><A NAME="item_ah">ah</a></strong><br />
 </dt>
 <dd>
 Returns the ApacheHandler object associated with this request.
 </dd>
-<a name="item_apache_req"></a><p></p>
-<dt><strong><a name="item_apache_req">apache_req</a></strong><br />
+<A NAME="item_apache_req"></a><p></p>
+<dt><strong><A NAME="item_apache_req">apache_req</a></strong><br />
 </dt>
 <dd>
 Returns the Apache request object.  This is also available in the
 global <code>$r</code>.
 </dd>
-<a name="item_auto_send_headers"></a><p></p>
-<dt><strong><a name="item_auto_send_headers">auto_send_headers</a></strong><br />
+<A NAME="item_auto_send_headers"></a><p></p>
+<dt><strong><A NAME="item_auto_send_headers">auto_send_headers</a></strong><br />
 </dt>
 <dd>
 True or false, default is true.  Indicates whether Mason should
@@ -686,38 +686,38 @@ client. If you set to false, you should call <code>$r-&gt;send_http_header</code
 manually.
 </dd>
 <dd>
-<p>See the <a href="/HTML/Mason/Devel.html#sending_http_headers">sending HTTP headers</a> section of the developer's manual for more details about the automatic
+<p>See the <A HREF="Devel.html#sending_http_headers">sending HTTP headers</a> section of the developer's manual for more details about the automatic
 header feature.</p>
 </dd>
 <p></p></dl>
 <p>
 </p>
 <hr />
-<h1><a name="apache_or_cgionly_method">APACHE- OR CGI-ONLY METHOD</a></h1>
+<h1><A NAME="apache_or_cgionly_method">APACHE- OR CGI-ONLY METHOD</a></h1>
 <p>This method is available when Mason is running under either the
 ApacheHandler or CGIHandler modules.</p>
-<a name="item_cgi_object"></a><dl>
-<dt><strong><a name="item_cgi_object">cgi_object</a></strong><br />
+<A NAME="item_cgi_object"></a><dl>
+<dt><strong><A NAME="item_cgi_object">cgi_object</a></strong><br />
 </dt>
 <dd>
 Returns the CGI object used to parse any CGI parameters submitted to
 the component, assuming that you have not changed the default value of
-the ApacheHandler <a href="/HTML/Mason/Params.html#args_method">args_method</a> parameter.  If you are using the
+the ApacheHandler <A HREF="Params.html#args_method">args_method</a> parameter.  If you are using the
 'mod_perl' args method, then calling this method is a fatal error.
-See the <a href="/HTML/Mason/ApacheHandler.html">ApacheHandler</a> and
-<a href="/HTML/Mason/CGIHandler.html">CGIHandler</a> documentation for more details.
+See the <a HREF="ApacheHandler.html">ApacheHandler</a> and
+<a HREF="CGIHandler.html">CGIHandler</a> documentation for more details.
 </dd>
-<a name="item_redirect"></a><p></p>
-<dt><strong><a name="item_redirect">redirect ($url, [$status])</a></strong><br />
+<A NAME="item_redirect"></a><p></p>
+<dt><strong><A NAME="item_redirect">redirect ($url, [$status])</a></strong><br />
 </dt>
 <dd>
 Given a url, this generates a proper HTTP redirect for that URL. It
-uses <a href="#item_clear_buffer"><code>$m-&gt;clear_buffer</code></a> to clear out any previous output, and <code>&lt;
+uses <A HREF="#item_clear_buffer"><code>$m-&gt;clear_buffer</code></a> to clear out any previous output, and <code>&lt;
 $m-</code>abort &gt;&gt; to abort the request.  By default, the status code used
 is 302, but this can be overridden by the user.
 </dd>
 <dd>
-<p>Since this is implemented using <a href="#item_abort"><code>$m-&gt;abort</code></a>, it will be trapped
+<p>Since this is implemented using <A HREF="#item_abort"><code>$m-&gt;abort</code></a>, it will be trapped
 by an <code> eval {} </code> block.  If you are using an <code> eval {} </code> block in
 your code to trap errors, you need to make sure to rethrow these
 exceptions, like this:</p>
@@ -740,15 +740,15 @@ exceptions, like this:</p>
 <p>
 </p>
 <hr />
-<h1><a name="authors">AUTHORS</a></h1>
+<h1><A NAME="authors">AUTHORS</a></h1>
 <p>Jonathan Swartz &lt;<a href="mailto:swartz@pobox.com">swartz@pobox.com</a>&gt;, Dave Rolsky &lt;<a href="mailto:autarch@urth.org">autarch@urth.org</a>&gt;, Ken Williams &lt;<a href="mailto:ken@mathforum.org">ken@mathforum.org</a>&gt;</p>
 <p>
 </p>
 <hr />
-<h1><a name="see_also">SEE ALSO</a></h1>
-<p><a href="/HTML/Mason.html">HTML::Mason</a>,
-<a href="/HTML/Mason/Devel.html">HTML::Mason::Devel</a>,
-<a href="/HTML/Mason/Component.html">HTML::Mason::Component</a></p>
+<h1><A NAME="see_also">SEE ALSO</a></h1>
+<p><a HREF="Mason.html">HTML::Mason</a>,
+<a HREF="Devel.html">HTML::Mason::Devel</a>,
+<a HREF="Component.html">HTML::Mason::Component</a></p>
 
 </body>
 

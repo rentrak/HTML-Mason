@@ -824,8 +824,8 @@ File name used for L<autohandlers|HTML::Mason::Devel/autohandlers>. Default is "
 =item code_cache_max_size
 
 Specifies the maximum size, in bytes, of the in-memory code cache
-where components are stored. Default is 10 MB. See the ADMIN<code
-cache> section of the administrator's manual for further details.
+where components are stored. Default is 10 MB. See the L<code cache|HTML::Mason::Admin/code cache> section of the administrator's manual
+for further details.
 
 =item compiler
 
@@ -854,15 +854,15 @@ need to change this on certain systems that assign a high-level
 server root such as F</usr>!
 
 In non-Apache environments, data_dir has no default. If it is left
-unspecified, Mason will not use the L<object files|HTML::Mason::Admin/object files> section of the administrator's manual, and the default
+unspecified, Mason will not use L<object files|HTML::Mason::Admin/object files>, and the default
 L<data cache class|HTML::Mason::Request/item_cache> will be
 C<MemoryCache> instead of C<FileCache>.
 
 =item escape_flags
 
 A hash reference of escape flags to set for this object.  See the
-section on the L<C<set_escape()>
-method|HTML::Mason::Interp/set_escape> for more details.
+section on the L<set_escape
+method|HTML::Mason::Interp/item_set_escape> for more details.
 
 =item ignore_warnings_expr
 
@@ -888,8 +888,7 @@ when the interpreter initializes. e.g.
 
 Default is the empty list.  For maximum performance, this should only
 be used for components that are frequently viewed and rarely updated.
-See the the L<preloading|HTML::Mason::Admin/preloading> section of the administrator's manual section of the administrator's manual for
-further details.
+See the L<preloading|HTML::Mason::Admin/preloading> section of the administrator's manual for further details.
 
 As mentioned in the developer's manual, a component's C<< <%once> >>
 section is executed when it is loaded.  For preloaded components, this
@@ -1056,7 +1055,7 @@ Component object.  The source may be passed in as a string in C<comp_source>,
 or as a filename in C<comp_file>.  When using C<comp_file>, the
 filename is specified as a path on the file system, not as a path
 relative to Mason's component root (see 
-L<Request-E<gt>fetch_comp|HTML::Mason::Request/fetch_comp> for that).
+L<$m-E<gt>fetch_comp|HTML::Mason::Request/item_fetch_comp> for that).
 
 If Mason encounters an error during processing, an exception will be thrown.
 

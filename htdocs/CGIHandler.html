@@ -7,34 +7,34 @@
 
 <body style="background-color: white">
 
-<p><a name="__index__"></a></p>
+<p><A NAME="__index__"></a></p>
 <!-- INDEX BEGIN -->
 
 <ul>
 
-	<li><a href="#name">NAME</a></li>
-	<li><a href="#synopsis">SYNOPSIS</a></li>
-	<li><a href="#description">DESCRIPTION</a></li>
+	<li><A HREF="#name">NAME</a></li>
+	<li><A HREF="#synopsis">SYNOPSIS</a></li>
+	<li><A HREF="#description">DESCRIPTION</a></li>
 	<ul>
 
-		<li><a href="#html::mason::cgihandler_methods"><code>HTML::Mason::CGIHandler</code> Methods</a></li>
-		<li><a href="#$r_methods"><code>$r</code> Methods</a></li>
-		<li><a href="#added_$m_methods">Added <code>$m</code> methods</a></li>
+		<li><A HREF="#html_mason_cgihandler_methods"><code>HTML::Mason::CGIHandler</code> Methods</a></li>
+		<li><A HREF="#_r_methods"><code>$r</code> Methods</a></li>
+		<li><A HREF="#added__m_methods">Added <code>$m</code> methods</a></li>
 	</ul>
 
-	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><A HREF="#see_also">SEE ALSO</a></li>
 </ul>
 <!-- INDEX END -->
 
 <hr />
 <p>
 </p>
-<h1><a name="name">NAME</a></h1>
+<h1><A NAME="name">NAME</a></h1>
 <p>HTML::Mason::CGIHandler - Use Mason in a CGI environment</p>
 <p>
 </p>
 <hr />
-<h1><a name="synopsis">SYNOPSIS</a></h1>
+<h1><A NAME="synopsis">SYNOPSIS</a></h1>
 <p>In httpd.conf or .htaccess:</p>
 <pre>
    Action html-mason /cgi-bin/mason_handler.cgi
@@ -63,7 +63,7 @@
 <p>
 </p>
 <hr />
-<h1><a name="description">DESCRIPTION</a></h1>
+<h1><A NAME="description">DESCRIPTION</a></h1>
 <p>This module lets you execute Mason components in a CGI environment.
 It lets you keep your top-level components in the web server's
 document root, using regular component syntax and without worrying
@@ -71,7 +71,7 @@ about the particular details of invoking Mason on each request.</p>
 <p>If you want to use Mason components from <em>within</em> a regular CGI
 script (or any other Perl program, for that matter), then you don't
 need this module.  You can simply follow the directions in
-the <a href="/HTML/Mason/Admin.html#using_mason_from_a_standalone_script">Using Mason from a standalone script</a> section of the administrator's manual.</p>
+the <A HREF="Admin.html#using_mason_from_a_standalone_sc">Using Mason from a standalone script</a> section of the administrator's manual.</p>
 <p>This module also provides an <code>$r</code> request object for use inside
 components, similar to the Apache request object under
 <code>HTML::Mason::ApacheHandler</code>, but limited in functionality.  Please
@@ -84,57 +84,58 @@ able to provide it.</p>
 provide direct access to the CGI query, should such access be necessary.</p>
 <p>
 </p>
-<h2><a name="html::mason::cgihandler_methods"><code>HTML::Mason::CGIHandler</code> Methods</a></h2>
+<h2><A NAME="html_mason_cgihandler_methods"><code>HTML::Mason::CGIHandler</code> Methods</a></h2>
 <ul>
-<li><strong><a name="item_new"><code>new()</code></a></strong><br />
+<li><strong><A NAME="item_new"><code>new()</code></a></strong><br />
 </li>
 Creates a new handler.  Accepts any parameter that the Interpreter
 accepts.
-<p>If no <code>comp_root</code> parameter is passed to <a href="#item_new"><code>new()</code></a>, the component root
+<p>If no <code>comp_root</code> parameter is passed to <A HREF="#item_new"><code>new()</code></a>, the component root
 will be <code>$ENV{DOCUMENT_ROOT}</code>.</p>
 <p></p>
-<li><strong><a name="item_handle_request"><code>handle_request()</code></a></strong><br />
+<li><strong><A NAME="item_handle_request"><code>handle_request()</code></a></strong><br />
 </li>
 Handles the current request, reading input from <code>$ENV{QUERY_STRING}</code>
 or <code>STDIN</code> and sending headers and component output to <code>STDOUT</code>.
 This method doesn't accept any parameters.  The initial component
 will be the one specified in <code>$ENV{PATH_INFO}</code>.
 <p></p>
-<li><strong><a name="item_handle_comp"><code>handle_comp()</code></a></strong><br />
+<li><strong><A NAME="item_handle_comp"><code>handle_comp()</code></a></strong><br />
 </li>
-Like <a href="#item_handle_request"><code>handle_request()</code></a>, but the first (only) parameter is a
+Like <A HREF="#item_handle_request"><code>handle_request()</code></a>, but the first (only) parameter is a
 component path or component object.  This is useful within a
 traditional CGI environment, in which you're essentially using Mason
 as a templating language but not an application server.
 <p><code>handle_component()</code> will create a CGI query object, parse the query
 parameters, and send the HTTP header and component output to STDOUT.
-If you want to handle those parts yourself, see <a href="/HTML/Mason/Interp.html#using_mason_from_a_standalone_script">Using Mason from a standalone script</a>.</p>
+If you want to handle those parts yourself, see
+the <A HREF="Admin.html#using_mason_from_a_standalone_sc">Using Mason from a standalone script</a> section of the administrator's manual.</p>
 <p></p>
-<li><strong><a name="item_handle_cgi_object"><code>handle_cgi_object()</code></a></strong><br />
+<li><strong><A NAME="item_handle_cgi_object"><code>handle_cgi_object()</code></a></strong><br />
 </li>
-Also like <a href="#item_handle_request"><code>handle_request()</code></a>, but this method takes only a CGI object
+Also like <A HREF="#item_handle_request"><code>handle_request()</code></a>, but this method takes only a CGI object
 as its parameter.  This can be quite useful if you want to use this
 module with CGI::Fast.
 <p>The component path will be the value of the CGI object's
 <code>path_info()</code> method.</p>
 <p></p>
-<li><strong><a name="item_request_args"><code>request_args()</code></a></strong><br />
+<li><strong><A NAME="item_request_args"><code>request_args()</code></a></strong><br />
 </li>
 Given an <code>HTML::Mason::FakeApache</code> object, this method is expected to
 return a hash containing the arguments to be passed to the component.
 It is a separate method in order to make it easily overrideable in a
 subclass.
 <p></p>
-<li><strong><a name="item_interp"><code>interp()</code></a></strong><br />
+<li><strong><A NAME="item_interp"><code>interp()</code></a></strong><br />
 </li>
 Returns the Mason Interpreter associated with this handler.  The
 Interpreter lasts for the entire lifetime of the handler.
 <p></p></ul>
 <p>
 </p>
-<h2><a name="$r_methods"><code>$r</code> Methods</a></h2>
+<h2><A NAME="_r_methods"><code>$r</code> Methods</a></h2>
 <ul>
-<li><strong><a name="item_header_out"><code>header_out()</code></a></strong><br />
+<li><strong><A NAME="item_header_out"><code>header_out()</code></a></strong><br />
 </li>
 This works much like the <code>Apache</code> method of the same name.  When
 passed the name of a header, returns the value of the given outgoing
@@ -154,25 +155,25 @@ do a redirect, all you need to do is:</p>
 because it hides most of the complexities of sending headers and
 getting the status code right.</p>
 <p></p>
-<li><strong><a name="item_content_type"><code>content_type()</code></a></strong><br />
+<li><strong><A NAME="item_content_type"><code>content_type()</code></a></strong><br />
 </li>
 When passed an argument, sets the content type of the current request
 to the value of the argument.  Use this method instead of setting a
-<code>Content-Type</code> header directly with <a href="#item_header_out"><code>header_out()</code></a>.  Like
-<a href="#item_header_out"><code>header_out()</code></a>, setting the content type to <code>undef</code> will remove any
+<code>Content-Type</code> header directly with <A HREF="#item_header_out"><code>header_out()</code></a>.  Like
+<A HREF="#item_header_out"><code>header_out()</code></a>, setting the content type to <code>undef</code> will remove any
 content type set previously.
 <p>When called without arguments, returns the value set by a previous
-call to <a href="#item_content_type"><code>content_type()</code></a>.  The behavior when <a href="#item_content_type"><code>content_type()</code></a> hasn't
+call to <A HREF="#item_content_type"><code>content_type()</code></a>.  The behavior when <A HREF="#item_content_type"><code>content_type()</code></a> hasn't
 already been set is undefined - currently it returns <code>undef</code>.</p>
 <p>If no content type is set during the request, the default MIME type
 <code>text/html</code> will be used.</p>
 <p></p>
-<li><strong><a name="item_http_header"><code>http_header()</code></a></strong><br />
+<li><strong><A NAME="item_http_header"><code>http_header()</code></a></strong><br />
 </li>
 This method returns the outgoing headers as a string, suitable for
 sending to the client.
 <p></p>
-<li><strong><a name="item_params"><code>params()</code></a></strong><br />
+<li><strong><A NAME="item_params"><code>params()</code></a></strong><br />
 </li>
 This method returns a hash containing the parameters sent by the
 client.  Multiple parameters of the same name are represented by array
@@ -180,11 +181,11 @@ references.
 <p></p></ul>
 <p>
 </p>
-<h2><a name="added_$m_methods">Added <code>$m</code> methods</a></h2>
+<h2><A NAME="added__m_methods">Added <code>$m</code> methods</a></h2>
 <p>The <code>$m</code> object provided in components has all the functionality of
 the regular <code>HTML::Mason::Request</code> object <code>$m</code>, and the following:</p>
 <ul>
-<li><strong><a name="item_cgi_object"><code>cgi_object()</code></a></strong><br />
+<li><strong><A NAME="item_cgi_object"><code>cgi_object()</code></a></strong><br />
 </li>
 Returns the current <code>CGI</code> request object.  This is handy for
 processing cookies or perhaps even doing HTML generation (but is that
@@ -193,17 +194,17 @@ method, you can set the request object to the argument passed.  Use
 this with care, as it may affect components called after the current
 one (they may check the content length of the request, for example).
 <p>Note that the ApacheHandler class (for using Mason under mod_perl)
-also provides a <a href="#item_cgi_object"><code>cgi_object()</code></a> method that does the same thing as
+also provides a <A HREF="#item_cgi_object"><code>cgi_object()</code></a> method that does the same thing as
 this one.  This makes it easier to write components that function
 equally well under CGIHandler and ApacheHandler.</p>
 <p></p></ul>
 <p>
 </p>
 <hr />
-<h1><a name="see_also">SEE ALSO</a></h1>
-<p><a href="/HTML/Mason.html">HTML::Mason</a>,
-<a href="/HTML/Mason/Admin.html">HTML::Mason::Admin</a>,
-<a href="/HTML/Mason/ApacheHandler.html">HTML::Mason::ApacheHandler</a></p>
+<h1><A NAME="see_also">SEE ALSO</a></h1>
+<p><a HREF="Mason.html">HTML::Mason</a>,
+<a HREF="Admin.html">HTML::Mason::Admin</a>,
+<a HREF="ApacheHandler.html">HTML::Mason::ApacheHandler</a></p>
 
 </body>
 

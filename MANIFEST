@@ -4,10 +4,6 @@ MANIFEST			This list of files
 Makefile.PL
 README
 UPGRADE
-benchmarks/bench.pl
-benchmarks/comps/comp.mas
-benchmarks/comps/comp_helper.mas
-benchmarks/comps/print.mas
 bin/convert0.6.README
 bin/convert0.6.pl
 bin/convert0.8.README
@@ -24,6 +20,7 @@ htdocs/Cache/BaseCache.html
 htdocs/Compiler.html
 htdocs/Compiler/ToObject.html
 htdocs/Component.html
+htdocs/Component/Subcomponent.html
 htdocs/ComponentSource.html
 htdocs/Devel.html
 htdocs/Interp.html

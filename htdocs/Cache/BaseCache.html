@@ -7,42 +7,42 @@
 
 <body style="background-color: white">
 
-<p><a name="__index__"></a></p>
+<p><A NAME="__index__"></a></p>
 <!-- INDEX BEGIN -->
 
 <ul>
 
-	<li><a href="#name">NAME</a></li>
-	<li><a href="#description">DESCRIPTION</a></li>
-	<li><a href="#methods">METHODS</a></li>
+	<li><A HREF="#name">NAME</a></li>
+	<li><A HREF="#description">DESCRIPTION</a></li>
+	<li><A HREF="#methods">METHODS</a></li>
 </ul>
 <!-- INDEX END -->
 
 <hr />
 <p>
 </p>
-<h1><a name="name">NAME</a></h1>
+<h1><A NAME="name">NAME</a></h1>
 <p>HTML::Mason::Cache::BaseCache - Base cache object</p>
 <p>
 </p>
 <hr />
-<h1><a name="description">DESCRIPTION</a></h1>
+<h1><A NAME="description">DESCRIPTION</a></h1>
 <p>This is the base module for all cache implementations used in Mason.
 It provides a few additional methods on top of <code>Cache::BaseCache</code> in
 Dewitt Clinton's <code>Cache::Cache</code> package.</p>
-<p>An object of this class is returned from <a href="/HTML/Mason/Request.html#item_cache">$m-&gt;cache</a>.</p>
+<p>An object of this class is returned from <A HREF="../Request.html#item_cache">$m-&gt;cache</a>.</p>
 <p>
 </p>
 <hr />
-<h1><a name="methods">METHODS</a></h1>
-<a name="item_clear"></a><dl>
-<dt><strong><a name="item_clear">clear ()</a></strong><br />
+<h1><A NAME="methods">METHODS</a></h1>
+<A NAME="item_clear"></a><dl>
+<dt><strong><A NAME="item_clear">clear ()</a></strong><br />
 </dt>
 <dd>
 Remove all values in the cache.
 </dd>
-<a name="item_get"></a><p></p>
-<dt><strong><a name="item_get">get (key, [%params])</a></strong><br />
+<A NAME="item_get"></a><p></p>
+<dt><strong><A NAME="item_get">get (key, [%params])</a></strong><br />
 </dt>
 <dd>
 Returns the value associated with <em>key</em> or undef if it is
@@ -50,17 +50,17 @@ non-existent or expired. This is extended with the following optional
 name/value parameters:
 </dd>
 <dl>
-<dt><strong><a name="item_busy_lock_%3d%3e_duration">busy_lock =&gt; duration</a></strong><br />
+<dt><strong><A NAME="item_busy_lock__3d_3e_duration">busy_lock =&gt; duration</a></strong><br />
 </dt>
 <dd>
 If the value has expired, set its expiration time to the current time plus
 <em>duration</em> (instead of removing it from the cache) before returning undef.
 This is used to prevent multiple processes from recomputing the same
 expensive value simultaneously. The <em>duration</em> may be of any form acceptable
-to <a href="/HTML/Mason/Cache/BaseCache.html#item_set">set</a>.
+to <A HREF="../Cache/BaseCache.html#item_set">set</a>.
 </dd>
 <p></p>
-<dt><strong><a name="item_expire_if_%3d%3e_sub">expire_if =&gt; sub</a></strong><br />
+<dt><strong><A NAME="item_expire_if__3d_3e_sub">expire_if =&gt; sub</a></strong><br />
 </dt>
 <dd>
 If the value exists and has not expired, call <em>sub</em> with the cache
@@ -68,7 +68,7 @@ object as a single parameter. If <em>sub</em> returns a true value, expire
 the value.
 </dd>
 <p></p></dl>
-<a name="item_get_object"></a><dt><strong><a name="item_get_object">get_object (key)</a></strong><br />
+<A NAME="item_get_object"></a><dt><strong><A NAME="item_get_object">get_object (key)</a></strong><br />
 </dt>
 <dd>
 Returns the underlying <code>Cache::Object</code> object associated with <em>key</em>.
@@ -80,23 +80,23 @@ The most useful methods on this object are
     $co-&gt;get_accessed_at();   # when was object last accessed
     $co-&gt;get_expires_at();    # when does object expire</pre>
 </dd>
-<a name="item_expire"></a><p></p>
-<dt><strong><a name="item_expire">expire (key)</a></strong><br />
+<A NAME="item_expire"></a><p></p>
+<dt><strong><A NAME="item_expire">expire (key)</a></strong><br />
 </dt>
 <dd>
 Expires the value associated with <em>key</em>, if it exists. Differs from
-<a href="/HTML/Mason/Cache/BaseCache.html#item_remove">remove</a> only in that
+<A HREF="../Cache/BaseCache.html#item_remove">remove</a> only in that
 the cache object is left around, e.g. for retrieval by
-<a href="/HTML/Mason/Cache/BaseCache.html#item_get_object">get_object</a>.
+<A HREF="../Cache/BaseCache.html#item_get_object">get_object</a>.
 </dd>
-<a name="item_remove"></a><p></p>
-<dt><strong><a name="item_remove">remove (key)</a></strong><br />
+<A NAME="item_remove"></a><p></p>
+<dt><strong><A NAME="item_remove">remove (key)</a></strong><br />
 </dt>
 <dd>
 Removes the cache object associated with <em>key</em>, if it exists.
 </dd>
-<a name="item_set"></a><p></p>
-<dt><strong><a name="item_set">set (key, data, [duration])</a></strong><br />
+<A NAME="item_set"></a><p></p>
+<dt><strong><A NAME="item_set">set (key, data, [duration])</a></strong><br />
 </dt>
 <dd>
 Associates <em>data</em> with <em>key</em> in the cache. <em>duration</em>

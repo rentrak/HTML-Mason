@@ -5,9 +5,28 @@ available at http://www.masonhq.com/code/history.html.
 
 ** denotes an incompatible change
 
-1.14  
+1.15  October 14, 2002
 
-      [ BACKWARDS COMPATIBILITY ]
+    [ BUG FIXES ]
+
+    - Fixed a number of problems with filters:
+      -- They didn't see changes made to %ARGS (they were seeing a copy).
+      -- They couldn't see any variables declared in <%args> blocks.
+      -- The presence of a filter caused a call to $m->flush_buffer,
+      breaking redirects.
+    - Added a number of tests for filters (*cough*).
+    - Fixed broken links and other bugs in the POD and HTML versions of
+      the docs.
+    - Fixed test failures when running as root.  These failures were not
+      reflective of bugs in Mason, simply problems in the tests or test
+      setup.  Now we skip the tests for end user installs (we still run them
+      during development, never fear).
+    - HTML::Mason::Request contained code that caused an error when using
+      the CPAN shell's "r" command.
+
+1.14  October 7, 2002
+
+    [ BACKWARDS COMPATIBILITY ]
 
     - Added compatibility layer for 1.0x cache API. It is now possible to
       use $m->cache and $m->cache_self in the old way by setting the
@@ -15,10 +34,9 @@ available at http://www.masonhq.com/code/history.html.
     - Added back $comp->create_time, which was renamed as $comp->load_time
       in 1.09_02, as a deprecated method.
     - Added back $interp->time and $m->current_time, which were removed in
+      1.09_01, as deprecated methods.
 
-1.09_01, as deprecated methods.
-
-      [ ENHANCEMENTS ]
+    [ ENHANCEMENTS ]
 
     - Implemented the long requested user-defined escapes feature.  It is
       now possible to define your own escape flags, as well as overriding
@@ -43,7 +61,7 @@ available at http://www.masonhq.com/code/history.html.
       Apache::Status, which comes with mod_perl 1.x, but not (yet?) with
       mod_perl 2.
 
-      [ BUG FIXES ]
+    [ BUG FIXES ]
 
     - Installation was failing when Exception::Class wasn't installed.
     - Calling <%def> subcomponents no longer changes base_comp, which is
@@ -83,14 +101,14 @@ available at http://www.masonhq.com/code/history.html.
 
 1.13  August 26, 2002 (Taiwan time)
 
-      [ ENHANCEMENTS ]
+    [ ENHANCEMENTS ]
 
     - Replace the regex "[A-Za-z0-9]" with "\w", which should cooperate
       better with Unicode.
     - Added a section called "Avoiding Concurrent Recomputations" to the
       Developer's Manual.  This describes how to achieve the same effect as
       was provided by the "busy locks" feature in 1.0x.
-      [ BUG FIXES ]
+    [ BUG FIXES ]
 
     - When running under mod_perl, a warning was issued from
       HTML::Mason::Request::ApacheHandler's exec() method.  (reported by
@@ -140,14 +158,14 @@ available at http://www.masonhq.com/code/history.html.
 
 1.1201  July 24, 2002
 
-      [ ENHANCEMENTS ]
+    [ ENHANCEMENTS ]
 
     - Added details to the UPGRADE document on what has changed with the
       caching system.
     - Added some documentation on how to arbitrarily expire items in the
       cache with the new caching system.  This is in HTML::Mason::Devel.
 
-      [ BUG FIXES ]
+    [ BUG FIXES ]
 
     - Fixed a compilation error in HTML::Mason::Tools that was occuring
       with Perl 5.00503.
@@ -156,7 +174,7 @@ available at http://www.masonhq.com/code/history.html.
 
 1.12  July 23, 2002
 
-      [ ENHANCEMENTS ]
+    [ ENHANCEMENTS ]
 
     - Various optimizations have been added to this release in order to
       address the fact that Mason 1.11 is quite a bit slower than 1.05.  One
@@ -170,7 +188,7 @@ available at http://www.masonhq.com/code/history.html.
     - Added alter_superclass method to Request class, for use by Request
       subclasses.  See the HTML::Mason::Subclassing document for details.
 
-      [ BUG FIXES ]
+    [ BUG FIXES ]
 
     - Fix HTML generated for error messages so that tags balance out.
       Unbalanced table tags caused this page to not display properly with
@@ -179,7 +197,7 @@ available at http://www.masonhq.com/code/history.html.
 
 1.11  July 3, 2002
 
-      [ BUG FIXES ]
+    [ BUG FIXES ]
 
     - The 08-ah.t tests failed with a runtime error if run by root.  This
       was not a Mason bug, but a bug in the test code itself.
@@ -204,7 +222,7 @@ available at http://www.masonhq.com/code/history.html.
       incompatibilities with version 1.05 and earlier.  Please make sure to
       read the UPGRADE document, which covers these in more detail.
 
-      [ ENHANCEMENTS ]
+    [ ENHANCEMENTS ]
 
     - Mason can always detect when an object file was compiled with an
       incompatible compiler/lexer, even if the object file contains syntax
@@ -219,7 +237,7 @@ available at http://www.masonhq.com/code/history.html.
     - Mason automatically calls $m->clear_buffer when $m->decline is
       called.
 
-      [ BUG FIXES ]
+    [ BUG FIXES ]
 
     - Fixed a bug in the lexer that made it think it had found a Perl-line
       where none existed.
@@ -233,7 +251,7 @@ available at http://www.masonhq.com/code/history.html.
 
 1.09_02  June 4, 2002
 
-      [ INCOMPATIBLE CHANGES ]
+    [ INCOMPATIBLE CHANGES ]
 
     - ** The Component class's create_time method has been renamed as
       load_time.
@@ -252,7 +270,7 @@ available at http://www.masonhq.com/code/history.html.
       CGIHandler is now the current working directory at the time the
       HTML::Mason::Resolver::File class is loaded.
 
-      [ ENHANCEMENTS ]
+    [ ENHANCEMENTS ]
 
     - All the modules included with Mason are now documented.
     - Various pieces of existing documentation have been tweaked and
@@ -265,7 +283,7 @@ available at http://www.masonhq.com/code/history.html.
     - When running Mason with the ApacheHandler or CGIHandler modules, the
       Mason request object ($m) now has a "redirect" method, which can be
       used to send an HTTP redirect to the client.
-      [ BUG FIXES ]
+    [ BUG FIXES ]
 
     - $m->flush_buffer was sending out '' to the buffer, even if no output
       existed.  This caused ApacheHandler to send headers, which broke
@@ -294,7 +312,7 @@ available at http://www.masonhq.com/code/history.html.
 
 1.09_01  April 4, 2002
 
-      [ INCOMPATIBLE CHANGES ]
+    [ INCOMPATIBLE CHANGES ]
 
     - ** Errors now report line numbers from the component source file.
     - ** The Parser class has been removed entirely.  Its functionality
@@ -345,7 +363,7 @@ available at http://www.masonhq.com/code/history.html.
       call starts with SELF: or PARENT:.
     - ** The "perl_" prefix for Mason tags is no longer supported.
 
-      [ ENHANCEMENTS AND NEW FEATURES ]
+    [ ENHANCEMENTS AND NEW FEATURES ]
 
     - It is now possible to pass chunks of component content as part of a
       component call.
@@ -395,7 +413,7 @@ available at http://www.masonhq.com/code/history.html.
     - The ApacheHandler object will chown any files created during server
       startup as needed.
 
-      [ BUG FIXES ]
+    [ BUG FIXES ]
 
     - The <%args> section can now contain comments which contain the
       string '=>' (reported by Chris Hutchinson).
@@ -406,7 +424,7 @@ available at http://www.masonhq.com/code/history.html.
       abort inside a component called via $m->scomp() still cause the output
       generated by that component to disappear.
 
-      [ INTERNALS ]
+    [ INTERNALS ]
 
     - Output buffering and filtering is handled by the new
       HTML::Mason::Buffer class.

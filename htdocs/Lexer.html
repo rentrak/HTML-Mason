@@ -7,28 +7,28 @@
 
 <body style="background-color: white">
 
-<p><a name="__index__"></a></p>
+<p><A NAME="__index__"></a></p>
 <!-- INDEX BEGIN -->
 
 <ul>
 
-	<li><a href="#name">NAME</a></li>
-	<li><a href="#synopsis">SYNOPSIS</a></li>
-	<li><a href="#description">DESCRIPTION</a></li>
-	<li><a href="#methods">METHODS</a></li>
-	<li><a href="#subclassing">SUBCLASSING</a></li>
+	<li><A HREF="#name">NAME</a></li>
+	<li><A HREF="#synopsis">SYNOPSIS</a></li>
+	<li><A HREF="#description">DESCRIPTION</a></li>
+	<li><A HREF="#methods">METHODS</a></li>
+	<li><A HREF="#subclassing">SUBCLASSING</a></li>
 </ul>
 <!-- INDEX END -->
 
 <hr />
 <p>
 </p>
-<h1><a name="name">NAME</a></h1>
+<h1><A NAME="name">NAME</a></h1>
 <p>HTML::Mason::Lexer - Generates events based on component source lexing</p>
 <p>
 </p>
 <hr />
-<h1><a name="synopsis">SYNOPSIS</a></h1>
+<h1><A NAME="synopsis">SYNOPSIS</a></h1>
 <pre>
   my $lexer = HTML::Mason::Lexer-&gt;new;</pre>
 <pre>
@@ -36,7 +36,7 @@
 <p>
 </p>
 <hr />
-<h1><a name="description">DESCRIPTION</a></h1>
+<h1><A NAME="description">DESCRIPTION</a></h1>
 <p>The Lexer works in tandem with the Compiler to turn Mason component
 source into something else, generally Perl code.</p>
 <p>As the lexer finds component elements, like a tag or block, it calls
@@ -49,39 +49,39 @@ it scans the source.</p>
 <p>
 </p>
 <hr />
-<h1><a name="methods">METHODS</a></h1>
+<h1><A NAME="methods">METHODS</a></h1>
 <p>The lexer has very few public methods.</p>
 <dl>
-<dt><strong><a name="item_new">new</a></strong><br />
+<dt><strong><A NAME="item_new">new</a></strong><br />
 </dt>
 <dd>
 This method creates a new Lexer object.  This methods takes no
 parameters.
 </dd>
 <p></p>
-<dt><strong><a name="item_lex">lex ( comp_source =&gt; ..., name =&gt; ..., compiler =&gt; ... )</a></strong><br />
+<dt><strong><A NAME="item_lex">lex ( comp_source =&gt; ..., name =&gt; ..., compiler =&gt; ... )</a></strong><br />
 </dt>
 <dd>
 This method tells the lexer to start scanning the given component
-source.  All of these parameters are required.  The <a href="#item_name"><code>name</code></a> parameter
+source.  All of these parameters are required.  The <A HREF="#item_name"><code>name</code></a> parameter
 will be used in any error messages generated during lexing.  The
 <code>compiler</code> object must be an object that implements the Mason
 Component API.
 </dd>
 <p></p>
-<dt><strong><a name="item_line_number">line_number</a></strong><br />
+<dt><strong><A NAME="item_line_number">line_number</a></strong><br />
 </dt>
 <dd>
 The current line number that the lexer has reached.
 </dd>
 <p></p>
-<dt><strong><a name="item_name">name</a></strong><br />
+<dt><strong><A NAME="item_name">name</a></strong><br />
 </dt>
 <dd>
 The name of the component currently being lexed.
 </dd>
 <p></p>
-<dt><strong><a name="item_throw_syntax_error">throw_syntax_error ($error)</a></strong><br />
+<dt><strong><A NAME="item_throw_syntax_error">throw_syntax_error ($error)</a></strong><br />
 </dt>
 <dd>
 This throws an <code>HTML::Mason::Exception::Syntax</code> error with the given
@@ -95,7 +95,7 @@ source.
 <p>
 </p>
 <hr />
-<h1><a name="subclassing">SUBCLASSING</a></h1>
+<h1><A NAME="subclassing">SUBCLASSING</a></h1>
 <p>Any subclass of the lexer should declare itself to be a subclass of
 <code>HTML::Mason::Lexer</code>, even if it plans to override all of its public
 methods.</p>

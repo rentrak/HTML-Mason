@@ -12,7 +12,8 @@ $tests->run;
 sub make_tests
 {
     my $group = HTML::Mason::Tests->new( name => 'interp',
-					 description => 'interp object functionality' );
+					 description => 'interp object functionality',
+                                         pre_test_cleanup => 0 );
 
 #------------------------------------------------------------
 
@@ -948,6 +949,9 @@ EOF
     {
         $group->add_test( name => 'source_filter',
                           description => 'make sure source filters work',
+                          interp_params =>
+                          { ignore_warnings_expr =>
+                            qr/uninitialized|Subroutine .* redefined/i },
                           component => <<'EOF',
 no explosion
 <%init>
@@ -966,7 +970,7 @@ EOF
 
 #------------------------------------------------------------
 
-    $group->add_test( name => 'escape_falgs',
+    $group->add_test( name => 'escape_flags',
 		      description => 'test setting escape flags via constructor',
                       interp_params =>
                       { escape_flags => { uc => sub { ${$_[0]} = uc ${$_[0]} } } },

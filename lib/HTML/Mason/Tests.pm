@@ -89,6 +89,9 @@ sub new
     die "No description for test group provided\n"
 	unless exists $p{description};
 
+    $p{pre_test_cleanup} = 1
+        unless exists $p{pre_test_cleanup};
+
     return bless {
 		  interp_class => 'HTML::Mason::Interp',
 		  %p,
@@ -179,6 +182,8 @@ sub run
 
     eval
     {
+        # 1 indicates to be silent on missing directories
+	$self->_cleanup(1) if $self->{pre_test_cleanup};
 	$self->_make_dirs;
 	$self->_write_shared_comps;
 	$self->_write_support_comps;
@@ -492,7 +497,7 @@ sub _success
 # otherwise interfere with tests.
 #
 sub rm_tree {
-    my ($path, $debug) = @_;
+    my ($path, $debug, $silent) = @_;
     $path =~ s#/$##;
     if (-d $path) {
 	local *DIR;
@@ -506,7 +511,8 @@ sub rm_tree {
     } elsif (-f $path) {
 	unlink $path;
     } else {
-	warn "Can't find $path to remove";
+	warn "Can't find $path to remove"
+            unless $silent;
     }
 }
 
@@ -514,7 +520,7 @@ sub _cleanup
 {
     my $self = shift;
 
-    rm_tree( $self->{base_path}, $DEBUG ) if $self->{base_path};
+    rm_tree( $self->base_path, $DEBUG, @_ );
 }
 
 1;
@@ -580,6 +586,11 @@ What this group tests.
 =item * interp_class (optional, default='HTML::Mason::Interp')
 
 Specifies an alternate class for creating the Interpreter.
+
+=item * pre_test_cleanup (optional, default=1)
+
+If this is true (the default), the component root and data directory
+will be deleted both before and after running tests.
 
 =back
 
