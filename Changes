@@ -1,5 +1,16 @@
 Revision history for Perl extension HTML::Mason.
 
-0.1  Wed Jul 22 20:53:56 1998
-	- original version; created by h2xs 1.18
+0.2b  Fri Aug 21 08:54:13 1998
+	- replaced File::lockf module, which could not port to some systems, with simple call to flock
+	- corrected email address in README
+	- fixed undeclared variable bug in preview component
+	- the previewer did not work in basic versions of Perl 5.004 due to an eval scoping bug.
+          A workaround was put in place.
+	- fixed expire_if cache option to pass correct argument to provided subroutine
+	- empty argument section no longer parsing incorrectly
+	- took out directory names from manifest which were causing errors on install
+	- debug file is no longer prepared when debug_mode is "none"
+	- use Preview.pm in Mason.pm
 
+0.1b  Wed Jul 22 20:53:56 1998
+        - original version; created by h2xs 1.18

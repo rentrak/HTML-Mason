@@ -46,8 +46,10 @@ released under the same terms as Perl itself.  For more information
 see the "README" or "Artistic" files provided with the Perl
 distribution.
 
-Send feedback, comments, bug reports, etc. to the mod_perl list
-(see http://perl.apache.org for information) or to jswartz@transbay.net.
+Send feedback, questions, bug reports, etc. to the mod_perl list
+(modperl@apache.org; see http://perl.apache.org for more information);
+that way other folks will benefit from the communciation. Or, if you
+prefer, send directly to swartz@transbay.net.
 
 For all bug reports indicate your architecture, Apache/Perl/module
 versions, etc. For installation problems send your handler.pl and

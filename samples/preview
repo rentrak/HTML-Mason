@@ -3,15 +3,15 @@
 # Main previewer interface. See admin manual for details on setting up previewer.
 #
 
-my ($previewDir,$previewServer,@sites,@versions,@sitePorts,@previewPorts);
+my ($previewDir,$previewServer,@versions,@sitePorts,@previewPorts);
 
 ######################################################################
 #
 # ADMIN CONFIGURATION
 
 #
-# Where preview files are stored. Replace <data_dir> with this server's data directory
-# (should match data_dir parameter in handler.pl).
+# Where preview files are stored. Replace <data_dir> with this server's
+# data directory (should match data_dir parameter in handler.pl).
 #
 $previewDir = "<data_dir>/preview";
 
@@ -61,8 +61,8 @@ foreach (@versions) { $versionsMap{$_->{name}} = $_ }
 <tr><td>&nbsp;</td></tr>
 
 <tr>
-<td>
 %if (@versions) {
+<td>
 <tt><font color="#FF0000">Version</font></tt>
 <br>
 <%$query->popup_menu(name=>'b_version','values'=>[keys(%versionsMap)],default=>$conf{b_version})%>
@@ -121,9 +121,6 @@ foreach (@versions) { $versionsMap{$_->{name}} = $_ }
 <table border=1>
 <tr>
 <th>&nbsp;</th>
-%if (@sites) {
-<th>Site</th>
-%}
 <th>Port</th>
 %if (@versions) {
 <th>Version</th>
@@ -138,11 +135,6 @@ foreach (@versions) { $versionsMap{$_->{name}} = $_ }
 <%$setting->{previewPort}%>
 </a>
 </td>
-%if (@sites) {
-<td>
-<%$setting->{b_site}%>
-</td>
-%}
 <td>
 <%$setting->{request}->{env}->{SERVER_PORT}%>
 </td>
@@ -171,13 +163,6 @@ foreach (@versions) { $versionsMap{$_->{name}} = $_ }
 %my $spacer = '&nbsp;'x10;
 
 To activate these options, select "Other..." in the corresponding menu above.<p>
-
-%if (@sites) {
-<tt><font color="#FF0000">Site</font></tt><br>
-<%$spacer%>Host name: &nbsp;<input type=text name=a_site_server_name size=20 value=<%$conf{a_site_server_name}%>>&nbsp;&nbsp;
-Component prefix: &nbsp;<input type=text name=a_site_prefix size=20 value=<%$conf{a_site_prefix}%>> 
-<p>
-%}
 
 <tt><font color="#FF0000">Port</font></tt><br>
 <%$spacer%>Port number: &nbsp;<input type=text name=a_port size=7 value=<%$conf{a_port}%>>
@@ -253,7 +238,7 @@ if ($mode eq 'home') {
     $query->use_named_parameters(1);
     my $in = HTML::Mason::Preview::open_preview_settings($previewDir,$userName,0);
     foreach my $p (@previewPorts) {
-	if (exists($in->{$p})) {
+	if (defined($in->{$p})) {
 	    my %c = %{$in->{$p}};
 	    %conf = %c if $previewPort eq $p;
 	    $c{previewPort} = $p;
@@ -272,7 +257,6 @@ if ($mode eq 'home') {
     if (!%conf) {
 	%conf =
 	    (
-	     b_site => (@sites ? $sites[0]->{name} : undef),
 	     b_port => $previewPorts[0],
 	     b_version => (@versions ? $versions[0]->{name} : undef),
 	     b_time => 'Real',
@@ -315,24 +299,6 @@ if ($mode eq 'save') {
 	    $request{interp}->{$field} = $v->{$field} if defined($v->{$field});
 	}
 	$request{alternate_source} = $v->{alternate_source};
-    }
-
-    # Site
-    if (@sites) {
-	my $siteName = $options{b_site};
-	my ($serverName,$topPrefix);
-	if ($siteName !~ /^Other/) {
-	    $serverName = $sitesMap{$siteName}->{server_name};
-	    $topPrefix = $sitesMap{$siteName}->{prefix};
-	} else {
-	    $serverName = $options{a_site_server_name};
-	    $topPrefix = $options{a_site_prefix};
-	}
-	$request{top_prefix} = $topPrefix;
-	$request{env}->{SERVER_NAME} = $serverName;
-	my $host = $serverName;
-	$host .= ":$port" if $port ne '80';
-	$request{headers_in}->{Host} = $host;
     }
 
     # Time

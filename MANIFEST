@@ -2,9 +2,7 @@ Changes
 MANIFEST
 Makefile.PL
 README
-eg/
 eg/handler.pl
-htdocs/
 htdocs/Admin.html
 htdocs/ApacheHandler.html
 htdocs/Commands.html
@@ -12,9 +10,6 @@ htdocs/Components.html
 htdocs/Interp.html
 htdocs/Mason.html
 htdocs/Parser.html
-lib/
-lib/HTML/
-lib/HTML/Mason/
 lib/HTML/Mason/ApacheHandler.pm
 lib/HTML/Mason/Commands.pm
 lib/HTML/Mason/Config.pm
@@ -24,7 +19,6 @@ lib/HTML/Mason/Parser.pm
 lib/HTML/Mason/Preview.pm
 lib/HTML/Mason/Tools.pm
 lib/HTML/Mason/Utils.pm
-lib/HTML/Mason/Changes
 lib/HTML/Mason/Admin.pod
 lib/HTML/Mason/ApacheHandler.pod
 lib/HTML/Mason/Commands.pod
@@ -34,9 +28,7 @@ lib/HTML/Mason/Parser.pod
 lib/HTML/Mason.pm
 lib/HTML/Mason.pod
 test.pl
-samples/
 samples/dump-request
-samples/cd-me/
 samples/cd-me/README
 samples/preview
 samples/README

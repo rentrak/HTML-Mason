@@ -48,13 +48,13 @@ my %fields =
      debug_handler_script => undef,
      debug_handler_proc => undef,
      debug_dir_config_keys => [],
+	 request_number => 0,
      );
 
 sub new
 {
     my $class = shift;
     my $self = {
-	request_number => 0,
 	_permitted => \%fields,
 	%fields,
     };
@@ -115,7 +115,16 @@ sub handle_request {
     my ($self,$r) = @_;
     my ($outbuf, $outsub, $retval, $argString, $debugMsg);
     my $interp = $self->interp;
-    $self->{request_number}++;
+
+	#
+	# construct (and truncate if necessary) the request to log at start
+	#
+	my $rstring;
+	(undef, $rstring) = split (/\s/, $r->the_request);
+	$rstring = $r->cgi_var('HTTP_HOST') . $rstring;
+	$rstring = substr($rstring,0,97).'...' if length($rstring) > 100;
+	$interp->write_system_log('REQ_START', ++$self->{request_number},
+		$rstring);
 
     #
     # If output mode is 'batch', collect output in a buffer and
@@ -146,6 +155,7 @@ sub handle_request {
     
     eval('$retval = handle_request_1($self, $r, $argString)');
     my $err = $@;
+	my $err_status = $err ? 1 : 0;
 
     if ($err) {
 	#
@@ -173,6 +183,8 @@ sub handle_request {
 	$r->print("\n<!--\n$debugMsg\n-->\n") if defined($debugMsg) && http_header_sent($r) && $r->header_out("Content-type") =~ /text\/html/;
 	$r->print($outbuf) if $self->output_mode eq 'batch';
     }
+
+	$interp->write_system_log('REQ_END', $self->{request_number}, $err_status);
     return ($err) ? &OK : $retval;
 }
 
@@ -256,7 +268,6 @@ sub handle_request_1
 {
     my ($self,$r,$argString) = @_;
     my $interp = $self->interp;
-
     my $compRoot = $interp->comp_root;
 
     #

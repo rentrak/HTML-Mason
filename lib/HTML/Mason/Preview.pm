@@ -90,8 +90,8 @@ sub AUTOLOAD {
     my $name = $AUTOLOAD;
     $name =~ s/.*://;   # strip fully-qualified portion
     return if $name eq 'DESTROY';
-    my $r = $self->{r};
-    eval(sprintf('$r->%s(@_)',$name));
+    my $realr = $self->{r};
+    eval(sprintf('$realr->%s(@_)',$name));
 }
 
 #

@@ -206,7 +206,9 @@ sub parse
 	#
 	# Declare the args as lexically scoped locals.
 	#
-	$body .= "my (".join(",",@vars).");\n{".$argsec."}\n";
+	if (@vars) {
+	    $body .= "my (".join(",",@vars).");\n{".$argsec."}\n";
+	}
     }
     
     #

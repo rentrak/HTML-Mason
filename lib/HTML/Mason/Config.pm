@@ -18,3 +18,5 @@ $HTML::Mason::DBM_FILE_EXT = '.pag';	# this for file locking
 
 # use MLDBM qw(GDBM_File FreezeThaw);
 # $HTML::Mason::DBM_FILE_EXT = '';
+
+1;

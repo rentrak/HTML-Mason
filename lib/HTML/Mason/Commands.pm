@@ -71,7 +71,15 @@ sub mc_cache
 	$options{memory_cache} = $INTERP->{data_cache_store};
 	delete($options{keep_in_memory});
     }
-    return HTML::Mason::Utils::access_data_cache(%options);
+   
+    $options{action} = $options{action} || 'retrieve';
+    $options{key} = $options{key} || 'main';
+	my $results = HTML::Mason::Utils::access_data_cache(%options);
+	if ($options{action} eq 'retrieve') {
+		$INTERP->write_system_log('CACHE_READ',$options{key},
+		defined $results ? 1 : 0);
+	}
+    return $results;
 }
 
 sub mc_cache_self
