@@ -95,6 +95,9 @@ sub _reinitialize {
 sub exec {
     my ($self, $comp, @args) = @_;
     my $interp = $self->interp;
+
+    # Error may occur in several places in function.
+    my $err;
     
     # Check if reload file has changed.
     $interp->check_reload_file if ($interp->use_reload_file);
@@ -108,7 +111,13 @@ sub exec {
     my ($path, $orig_path);
     if (!ref($comp) && substr($comp,0,1) eq '/') {
 	$orig_path = $path = $comp;
-	if (!($comp = $interp->load($path))) {
+	{
+	    local $SIG{'__DIE__'} = $interp->die_handler if $interp->die_handler;
+	    eval { $comp = $interp->load($path) };
+	    $err = $@;
+	    goto error if ($err);
+	}
+	unless ($comp) {
 	    if (defined($interp->dhandler_name) and $comp = $interp->find_comp_upwards($path,$interp->dhandler_name)) {
 		my $parent_path = $comp->dir_path;
 		($self->{dhandler_arg} = $path) =~ s{^$parent_path/?}{};
@@ -137,7 +146,7 @@ sub exec {
      $self->{wrapper_index} = {map(($wrapper_chain[$_]->path => $_),(0..$#wrapper_chain))}; }
 
     # Fill top_level slots for introspection.
-    $self->{top_comp} = $first_comp;
+    $self->{top_comp} = $comp;
     $self->{top_args} = \@args;
 
     # Call the first component.
@@ -149,7 +158,7 @@ sub exec {
 	local $SIG{'__DIE__'} = $interp->die_handler if $interp->die_handler;
 	$result = eval {$self->comp({base_comp=>$comp}, $first_comp, @args)};
     }
-    my $err = $@;
+    $err = $@;
 
     # If declined, try to find the next dhandler.
     if ($self->declined and $path) {
@@ -165,25 +174,7 @@ sub exec {
 
     # If an error occurred...
     if ($err and !$self->aborted) {
-	if ($interp->die_handler_overridden) {
-	    # the default $SIG{__DIE__} was overridden so let's not
-	    # mess with the error message
-	    die $err;
-	} else {
-	    my $i = index($err,'HTML::Mason::Interp::exec');
-	    $err = substr($err,0,$i) if $i!=-1;
-	    $err =~ s/^\s*(HTML::Mason::Commands::__ANON__|HTML::Mason::Request::call).*\n//gm;
-	    # Get backtrace information
-	    if ($self->{error_backtrace} and @{$self->{error_backtrace}}) {
-		my @titles = map($_->title,@{$self->{error_backtrace}});
-		my $errmsg = "error while executing $titles[-1]:\n";
-		$errmsg .= $err."\n";
-		$errmsg .= "backtrace: " . join(" <= ",reverse(@titles)) . "\n" if @titles > 1;
-		die ($errmsg);
-	    } else {
-		die ($err);
-	    }
-	}
+	goto error;
     }
 
     # Flush output buffer for batch mode.
@@ -197,6 +188,17 @@ sub exec {
     return $self->{aborted_value} if ($self->{aborted});
 
     return wantarray ? @result : $result;
+
+    error:
+    # don't mess with error message if default $SIG{__DIE__} was overridden
+    unless ($interp->die_handler_overridden) {
+	$err = $self->{error_clean} if $self->{error_clean};
+	if ($self->{error_backtrace}) {
+	    my $title = $self->{error_backtrace}->[0]->title;
+	    $err = "error while executing $title:\n$err";
+	}
+    }
+    die $err;
 }
 
 #
@@ -572,8 +574,10 @@ sub parser
 sub comp {
     my $self = shift;
 
-    # Clear error backtrace, in case we had an error which was caught by an eval.
+    # Clear error backtrace and message, in case we had an error which
+    # was caught by an eval.
     undef $self->{error_backtrace};
+    undef $self->{error_clean};
     
     # Get modifiers: optional hash reference passed in as first argument.
     my %mods = (ref($_[0]) eq 'HASH') ? %{shift()} : ();
@@ -654,10 +658,14 @@ sub comp {
     # Put current component stack in error backtrace unless this has already
     # been done higher up.
     #
-    if ($@) {
+    if (my $err = $@) {
 	$self->{error_backtrace} ||= [reverse(map($_->{'comp'},@$stack))];
+	$self->{error_clean}     ||= $err;
 	pop(@$stack);
-	die $@;
+	unless ($self->interp->die_handler_overridden) {
+	    $err .= "\n" if $err !~ /\n$/;
+	}
+	die $err;
     }
 
     #

@@ -78,10 +78,11 @@ sub SERVER_ERROR { return 500 }
 sub NOT_FOUND { return 404 }
 use Data::Dumper;
 use File::Path;
+use HTML::Mason::Error qw(error_process error_display_html);
 use HTML::Mason;
 use HTML::Mason::Commands;
 use HTML::Mason::FakeApache;
-use HTML::Mason::Tools qw(dumper_method html_escape pkg_installed);
+use HTML::Mason::Tools qw(dumper_method html_escape make_fh pkg_installed);
 use HTML::Mason::Utils;
 use Params::Validate qw(:all);
 use Apache;
@@ -105,7 +106,9 @@ use HTML::Mason::MethodMaker
       );
 
 # use() params. Assign defaults, in case ApacheHandler is only require'd.
-use vars qw($ARGS_METHOD $AH);
+use vars qw($ARGS_METHOD $AH $VERSION);
+
+$VERSION = sprintf '%2d.%02d', q$Revision: 1.68.4.11.2.23 $ =~ /(\d+)\.(\d+)/;
 
 my @used = ($HTML::Mason::IN_DEBUG_FILE);
 
@@ -201,6 +204,7 @@ sub _make_ah
     $p{debug_handler_script} = _get_string_param('DebugHandlerScript');
     $p{debug_mode} = _get_string_param('DebugMode');
     $p{debug_perl_binary} = _get_string_param('DebugPerlBinary');
+    $p{decline_dirs} = _get_boolean_param('DeclineDirs');
     $p{error_mode} = _get_string_param('ErrorMode');
     $p{top_level_predicate} = _get_code_param('TopLevelPredicate');
 
@@ -243,7 +247,7 @@ sub _make_interp
     $p{use_reload_file}       = _get_boolean_param('UseReloadFile');
 
     my @comp_root = _get_list_param('CompRoot', 1);
-    if (@comp_root == 1)
+    if (@comp_root == 1 && $comp_root[0] !~ /=>/)
     {
 	$p{comp_root} = $comp_root[0];
     }
@@ -397,8 +401,8 @@ sub new
 
     my (%options) = @_;
 
-    die "error_mode parameter must be either 'html' or 'fatal'\n"
-	if exists $options{error_mode} && $options{error_mode} ne 'html' && $options{error_mode} ne 'fatal';
+    die "error_mode parameter must be one of 'html', 'fatal', 'raw_html', or 'raw_fatal'\n"
+	if exists $options{error_mode} && $options{error_mode} !~ /^(?:html|fatal|raw_html|raw_fatal)$/;
 
     while (my ($key,$value) = each(%options)) {
 	$self->{$key} = $value;
@@ -556,7 +560,6 @@ sub handle_request {
     eval { $retval = $self->handle_request_1($apreq, $request, $debug_state) };
     my $err = $@;
     my $err_code = $request->error_code;
-    undef $request;  # ward off memory leak
     my $err_status = $err ? 1 : 0;
 
     if ($err) {
@@ -580,25 +583,49 @@ sub handle_request {
 	}
 
 	#
-	# Take out date stamp and (eval nnn) prefix
-	# Add server name, uri
+	# Do not process error at all in raw mode or if die handler was overriden.
 	#
-	$err =~ s@^\[[^\]]*\] \(eval [0-9]+\): @@mg;
-	$err = html_escape($err);
-	$err = sprintf("while serving %s %s\n%s",$apreq->server->server_hostname,$apreq->uri,$err);
+	unless ($self->error_mode =~ /^raw_/ or $interp->die_handler_overridden) {
+	    $err = error_process ($err, $request);
+	}
 
+	#
+	# In fatal/raw_fatal mode, compress error to one line (for Apache logs) and die.
+	# In html/raw_html mode, call error_display_html and print result.
+	# The raw_ modes correspond to pre-1.02 error formats.
+	#
+	# [This is a load of spaghetti. It will be cleaned up in 1.2 when we lose
+	# debug mode and standardize error handling.]
+	#
 	if ($self->error_mode eq 'fatal') {
-	    die ("System error:\n$err\n");
-	} elsif ($self->error_mode eq 'html') {
+	    unless ($interp->die_handler_overridden) {
+		$err =~ s/\n/\t/g;
+		$err =~ s/\t$//g;
+		$err .= "\n" if $err !~ /\n$/;
+	    }
+	    die $err;
+	} elsif ($self->error_mode eq 'raw_fatal') {
+	    die ("System error:\n$err\n");	    
+	} elsif ($self->error_mode =~ /html$/) {
+	    unless ($interp->die_handler_overridden) {
+		my $debug_msg;
+		if ($debugMode eq 'error' or $debugMode eq 'all') {
+		    $debug_msg = $self->write_debug_file($apreq,$debug_state);
+		}
+		if ($self->error_mode =~ /^raw_/) {
+		    $err .= "$debug_msg\n" if $debug_msg;
+		    $err = "<h3>System error</h3><p><pre><font size=-1>$err</font></pre>\n";
+		} else {
+		    $err .= "Debug info: $debug_msg\n" if $debug_msg;
+		    $err = error_display_html($err);
+		}
+	    }
+	    # Send HTTP headers if they have not been sent.
 	    if (!http_header_sent($apreq)) {
 		$apreq->content_type('text/html');
 		$apreq->send_http_header();
 	    }
-	    print("<h3>System error</h3><p><pre><font size=-1>$err</font></pre>\n");
-	    if ($debugMode eq 'error' or $debugMode eq 'all') {
-		my $debug_msg = $self->write_debug_file($apreq,$debug_state);
-		print("<pre><font size=-1>\n$debug_msg\n</font></pre>\n");
-	    }
+	    print($err);
 	}
     } else {
 	if ($debugMode eq 'all') {
@@ -606,6 +633,7 @@ sub handle_request {
 	    print "\n<!--\n$debug_msg\n-->\n" if (http_header_sent($apreq) && !$apreq->header_only && $apreq->header_out("Content-type") =~ /text\/html/);
 	}
     }
+    undef $request;  # ward off memory leak
 
     $interp->write_system_log('REQ_END', $self->{request_number}, $err_status);
     return ($err) ? &OK : (defined($retval)) ? $retval : &OK;
@@ -627,7 +655,7 @@ sub write_debug_file
 	mkpath($outDir,0,0755) or die "cannot create debug directory '$outDir'";
     }
     my $out_path = "$outDir/$outFile";
-    my $outfh = do { local *FH; *FH; };  # double *FH avoids warning
+    my $outfh = make_fh();
     unless ( open $outfh, ">$out_path" ) {
 	$r->warn("cannot open debug file '$out_path' for writing");
 	return;
@@ -710,7 +738,7 @@ PERL
     close $outfh or die "can't close file: $out_path: $!";
     chmod(0775,$out_path) or die "can't chmod file to 0775: $out_path: $!";
 
-    my $debug_msg = "Debug file is '$outFile'.\nFull debug path is '$out_path'.\n";
+    my $debug_msg = "Debug file is '$out_path'.";
     return $debug_msg;
 }
 

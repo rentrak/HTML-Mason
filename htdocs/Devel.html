@@ -876,7 +876,8 @@ Here's how a simple /newsfeeds/dhandler might look:
     my ($section,$story) = split(&quot;/&quot;,$arg);    # split out pieces
     my $sth = $DBH-&gt;prepare
         (qq{SELECT headline,body FROM news
-            WHERE section='$section' AND story='$story'});
+            WHERE section=? AND story=?);
+    $sth-&gt;execute($section,$story);
     my ($headline,$body) = $sth-&gt;fetchrow_array;
     return 404 if !$headline;                  # return &quot;not found&quot; if no such story
     &lt;/%init&gt;
@@ -1343,7 +1344,8 @@ discouraged by Perl code. For example:
 <PRE>    &lt;%init&gt;
     # Fetch article from database
     my $dbh = DBI::connect ...;
-    my $sth = $dbh-&gt;prepare(&quot;select * from articles where id = $article_id&quot;);
+    my $sth = $dbh-&gt;prepare(&quot;select * from articles where id = ?&quot;);
+    $sth-&gt;execute($article_id);
     my ($headline,$date,$author,$body) = $sth-&gt;fetchrow_array;
     # Massage the fields
     $headline = uc($headline);
@@ -3161,7 +3163,8 @@ about the logged-in user. We use a <CODE>&lt;%shared&gt;</CODE> section to fetch
     &lt;%shared&gt;
     my $dbh = DBI::connect ...;
     my $user = $r-&gt;connection-&gt;user;
-    my $sth = $dbh-&gt;prepare(&quot;select lname,fname, from users where user_id = '$user'&quot;);
+    my $sth = $dbh-&gt;prepare(&quot;select lname,fname, from users where user_id = ?&quot;);
+    $sth-&gt;execute($user);
     my ($lname,$fname) = $sth-&gt;fetchrow_array;
     my $full_name = &quot;$first $last&quot;;
     &lt;/%shared&gt;

@@ -168,6 +168,14 @@ for flexibility arises.
 
 <P>
 
+It is important to note that you cannot mix httpd.conf configuration
+directives with a handler script. Depending on how you declare your
+<CODE>PerlHandler</CODE>, one or the other will always take precedence and the other will be
+ignored.
+
+
+<P>
+
 <P>
 <HR>
 <H1><A NAME="minimal_configuration">MINIMAL CONFIGURATION
