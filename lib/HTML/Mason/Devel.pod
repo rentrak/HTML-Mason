@@ -653,6 +653,14 @@ A component or dhandler that does not want to handle a particular
 request may defer control to the next dhandler by calling C<<
 $m->decline >>.
 
+When using dhandlers under mod_perl, you may find that sometimes
+Apache will not set a content type for a response.  This usually
+happens when a dhandler handles a request for a non-existent file or
+directory.  You can add a C<< <Location> >> or C<< <LocationMatch> >>
+block containing a C<SetType> directive to your Apache config file, or
+you can just set the content type dynamically by calling C<<
+$r->content_type >>.
+
 The administrator can customize the file name used for dhandlers with
 the L<dhandler_name|HTML::Mason::Params/dhandler_name> parameter.
 
@@ -996,6 +1004,10 @@ hash or variables created via an C<< <%args> >> block inside a shared
 section.  However, you can access arguments via
 L<$m-E<gt>request_args|HTML::Mason::Request/item_request_args>.
 
+Additionally, you cannot call a components' own methods or
+subcomponents from inside a C<< <%shared> >>, though you can call
+other components.
+
 Avoid using C<< <%shared> >> for side-effect code that needs to run at a
 predictable time during page generation. You may assume only that
 C<< <%shared> >> runs just before the first code that needs it and runs at
@@ -1039,7 +1051,8 @@ precedence. You would need to use an absolute path to call the
 file-based component. To avoid this situation and for general clarity,
 we recommend that you pick a unique way to name all of your
 subcomponents that is unlikely to interfere with file-based
-components. For example, you could start subcomponent names with ".".
+components. A commonly accepted practice is to start subcomponent
+names with ".".
 
 While inside a subcomponent, you may use absolute or relative paths to
 call file-based components and also call any of your "sibling"
@@ -1094,6 +1107,9 @@ Second, via the call_method component method:
 Methods are commonly used in conjunction with autohandlers to make
 templates more flexible. See L<Object-Oriented
 Techniques|"Object-Oriented Techniques"> for more information.
+
+You cannot create a subcomponent and method with the same name. 
+This is mostly to prevent obfuscation and accidental errors.
 
 =head1 FLAGS AND ATTRIBUTES
 
@@ -1174,6 +1190,11 @@ This allows a designer to code such a navigation bar intuitively
 without C<if> statements surrounding each link!  Note that the regular
 expression need not be very robust as long as you have control over what
 will appear in the body.
+
+A filter block does not have access to variables declared in a
+component's C<< <%init> >> section, though variables declared in the
+C<< <%args> >>, C<< <%once> >> or C<< <%shared> >> blocks are
+usable in a filter.
 
 It should be noted that a filter cannot rely on receiving all of a
 component's output at once, and so may be called multiple times with

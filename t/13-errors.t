@@ -201,6 +201,34 @@ EOF
 
 #------------------------------------------------------------
 
+    $group->add_test( name => 'object_exception',
+		      description => "Make sure Mason doesn't co-opt non Exception::Class exception objects",
+		      component => <<'EOF',
+% eval { die bless { foo => 'bar' }, 'FooException' };
+<% ref $@ %>
+EOF
+		      expect => <<'EOF',
+FooException
+EOF
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'method_subcomp_conflict',
+		      description => "Make sure Mason doesn't allow a subcomponent and method to have the same name",
+		      component => <<'EOF',
+<%method foo>
+foo
+</%method>
+<%def foo>
+foo
+</%def>
+EOF
+		      expect_error => qr/with the same name/,
+		    );
+
+#------------------------------------------------------------
+
     return $group;
 }
 

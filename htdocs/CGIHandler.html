@@ -38,9 +38,9 @@
 <p>In httpd.conf or .htaccess:</p>
 <pre>
    Action html-mason /cgi-bin/mason_handler.cgi
-   &lt;FilesMatch &quot;\.html$&quot;&gt;
+   &lt;LocationMatch &quot;\.html$&quot;&gt;
     SetHandler html-mason
-   &lt;/FilesMatch&gt;</pre>
+   &lt;/LocationMatch&gt;</pre>
 <p>A script at /cgi-bin/mason_handler.pl :</p>
 <pre>
    #!/usr/bin/perl

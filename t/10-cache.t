@@ -495,6 +495,25 @@ EOF
 
 #------------------------------------------------------------
 
+    $group->add_support( path => 'declined/dhandler',
+                         component => <<'EOF',
+decline was called
+EOF
+                       );
+
+    $group->add_test( name => 'declined/cache_self_decline',
+                      description => 'test $m->decline in presence of $m->cache_self',
+                      component => <<'EOF',
+% return if $m->cache_self;
+% $m->decline;
+EOF
+                      expect => <<'EOF',
+decline was called
+EOF
+                    );
+
+#------------------------------------------------------------
+
     return $group;
 }
 

@@ -134,7 +134,7 @@ knowing which private components exist. Any other file extensions
 
 You might prefer C<FilesMatch> to C<LocationMatch>. However, be aware
 that C<LocationMatch> will work best in conjunction with Mason's
-L<HTML::Mason::Devel/dhandlers>.
+L<dhandlers|HTML::Mason::Devel/dhandlers>.
 
 =head2 Configuration Parameters
 
@@ -376,8 +376,8 @@ the component root must change depending on the site requested.
       DocumentRoot  /usr/local/www/htdocs/site1
 
       # Mason configuration
-      PerlSetVar  MasonCompRoot  /usr/local/www/htdocs/site1
-      PerlSetVar  MasonDataDir   /usr/local/mason/site1
+      PerlSetVar  MasonCompRoot    /usr/local/www/htdocs/site1
+      PerlSetVar  MasonDataDir     /usr/local/mason/site1
 
       <LocationMatch ...>
         SetHandler   perl-script
@@ -390,8 +390,8 @@ the component root must change depending on the site requested.
       DocumentRoot  /usr/local/www/htdocs/site2
 
       # Mason configuration
-      PerlSetVar  MasonCompRoot  /usr/local/www/htdocs/site2
-      PerlSetVar  MasonDataDir   /usr/local/mason/site2
+      PerlSetVar  MasonCompRoot    /usr/local/www/htdocs/site2
+      PerlSetVar  MasonDataDir     /usr/local/mason/site2
 
       <LocationMatch ...>
         SetHandler   perl-script
@@ -443,6 +443,12 @@ this case, your Apache configuration would look like this:
 You may still see references to a F<handler.pl> file in the Mason
 users list archives, as well as the FAQ.  These references will
 generally be applicable to any custom code wrapping Mason.
+
+=head2 Wrapping with a <Perl> block
+
+You can also put your wrapper code in a C<< <Perl> >> block as part of
+your F<httpd.conf> file.  The result is no different than loading a
+file via the C<PerlRequire> directive.
 
 =head2 Wrapping with a Module
 
@@ -613,38 +619,6 @@ like this:
 This is more flexible but you lose the memory savings of creating all
 your objects during server startup.
 
-=head2 Calling a Component to Handle Errors
-
-How about if you wanted to handle all request errors by calling an
-error handling component?  There is no way to do this without wrapper
-code.  Here's an example C<handler()> subroutine that does this:
-
-    sub handler {
-        my ($r) = @_;
-
-        my $return = eval { $ah->handle_request($r) };
-
-        if ( my $err = $@ )
-        {
-            $r->pnotes( error => $err );
-            $r->filename( $r->document_root . '/error/500.html' );
-
-            return $ah->handle_request($r);
-        }
-
-        return $return;
-    }
-
-Mason throws exceptions to indicate errors so we wrap our call to C<< $ah->handle_request() >>
-in an C<eval {}> block.  If an error occurs, we store it in the
-request object using the C<< $r->pnotes() >> method.  Then we change
-the filename property of the Apache request object to point to our
-error-handling component and call the C<< $ah->handle_request() >>
-method again, passing it the altered request object.  We could have
-put the exception in C<< $r->args >>, but it might be nice to leave
-this untouched so that the error-handling component can see the
-original arguments.
-
 =head3 Other uses for a wrapper
 
 If you have some code which must I<always> run after a request, then
@@ -717,8 +691,8 @@ needs to be initialized every request.
 
 Mason does not have a built-in session mechanism, but you can use the
 C<MasonX::Request::WithApacheSession> module, available from CPAN, to
-add a session to every request.  It can also handle setting and
-reading cookies to automatically store the session id in the browser.
+add a session to every request.  It can also automatically set and
+read cookies containing the session id.
 
 =head2 Data Caching
 
@@ -820,6 +794,26 @@ object file rather than the source file.
 If for some reason you don't want Mason to create object files, set
 L<use_object_files|HTML::Mason::Params/use_object_files> to 0.
 
+=head2 Write a handler subroutine
+
+Writing your own C<handler()> subroutine which uses an ApacheHandler
+object (or objects) created during server startup is slightly faster
+(around 5% or so) than configuring mason via your F<httpd.conf> file
+and letting Mason create its own ApacheHandler objects internally.
+
+=head2 Static Source Mode
+
+As described above, Mason checks the timestamp of a component source
+file every time that component is called. This can add up to a lot
+of file stats.
+
+If you have a live site with infrequent and well-controlled updates,
+you may choose to use L<static_source|HTML::Mason::Params/static_source> mode. In this mode Mason will
+not check source timestamps when it uses an in-memory cache or object
+file.  The disadvantage is that you must remove object files and
+restart the server whenever you change component source; however this
+process can be easily automated.
+
 =head2 Preloading Components
 
 You can tell Mason to preload a set of components in the parent
@@ -846,20 +840,7 @@ Try to preload components that are used frequently and do not change
 often.  (If a preloaded component changes, all the children will have
 to reload it from scratch.)
 
-=head2 Static Source Mode
-
-As described above, Mason checks the timestamp of a component source
-file every time that component is called. This can add up to a lot
-of file stats.
-
-If you have a live site with infrequent and well-controlled updates,
-you may choose to use L<static_source|HTML::Mason::Params/static_source> mode. In this mode Mason will
-not check source timestamps when it uses an in-memory cache or object
-file.  The disadvantage is that you must remove object files and
-restart the server whenever you change component source; however this
-process can be easily automated.
-
-=head1 ERROR REPORTING
+=head1 ERROR REPORTING AND EXCEPTIONS
 
 When an error occurs, Mason can respond by:
 
@@ -894,6 +875,115 @@ Finally, you can use Apache's C<ErrorDocument> directive to specify a
 custom error handler for 500 errors.  In this case, you'd set the
 L<error_mode|HTML::Mason::Params/error_mode> to "fatal".  The URL specified by the C<ErrorDocument>
 directive could point to a Mason component.
+
+=head2 Exceptions Under the Hood
+
+The way that Mason really reports errors is through the use of
+exception objects, which are implemented with the C<Exception::Class>
+module from CPAN, and some custom code in the
+L<HTML::Mason::Exceptions|HTML::Mason::Exceptions> module.
+
+If, during the execution of a component, execution stops because some
+code calls C<die()>, then Mason will catch this exception.  If the
+exception being thrown is just a string, then it will be converted to
+an C<HTML::Mason::Exception> object.  If the exception being thrown is
+an object with a C<rethrow()> method, then this method will be called.
+Otherwise, Mason simply leaves the exception untouched and calls
+C<die()> again.
+
+=head3 Calling a Component to Handle Errors
+
+Returning to the topic of wrapper code that we covered earlier, what
+if you wanted to handle all request errors by calling an error
+handling component?  There is no way to do this without wrapper code.
+Here's an example C<handler()> subroutine that does this:
+
+    sub handler {
+        my ($r) = @_;
+
+        my $return = eval { $ah->handle_request($r) };
+
+        if ( my $err = $@ )
+        {
+            $r->pnotes( error => $err );
+            $r->filename( $r->document_root . '/error/500.html' );
+
+            return $ah->handle_request($r);
+        }
+
+        return $return;
+    }
+
+First, we wrap our call to C<< $ah->handle_request() >> in an
+C<eval{}> block.  If an error occurs, we store it in the request
+object using the C<< $r->pnotes() >> method.  Then we change the
+filename property of the Apache request object to point to our
+error-handling component and call the C<< $ah->handle_request() >>
+method again, passing it the altered request object.  We could have
+put the exception in C<< $r->args >>, but we want to leave this
+untouched so that the error-handling component can see the original
+arguments.
+
+Here's what that component error-handling component might look like:
+
+ <html>
+ <head>
+ <title>Error</title>
+ </head>
+
+ <body>
+
+ <p>
+ Looks like our application broke.  Whatever you did, don't do it again!
+ </p>
+
+ <p>
+ If you have further questions, please feel free to contact us at <a
+ href="mailto:support@example.com">support@example.com</a>.
+ </p>
+
+ <p><a href="/">Click here</a> to continue.</p>
+
+ </body>
+ </html>
+
+ <%init>
+  my $error = $r->pnotes('error');
+
+  my $error_text = "Page is " . $r->parsed_uri->unparse . "\n\n";
+
+  $error_text .= UNIVERSAL::can( $error, 'as_text' ) ? $error->as_text : $error;
+
+  $r->log_error($error_text);
+
+  my $mail =
+      MIME::Lite->new
+          ( From => 'error-handler@example.com',
+            To   => 'rt@example.com',
+            Subject => 'Application error',
+            Data => $error_text,
+          );
+
+  $r->register_cleanup( sub { $mail->send } );
+ </%init>
+
+ <%flags>
+  inherit => undef
+ </%flags>
+
+This component does several things.  First of all, it logs the
+complete error to the Apache error logs, along with the complete URL,
+including query string, that was requested.  The C<< $r->parsed_uri() >>
+method that we use above is only available if the C<Apache::URI>
+module has been loaded.
+
+The component also sends an email containing the error, in this case
+to an RT installation, so that the error is logged in a bug tracking
+system.  Finally, it displays a less technical error message to the
+user.
+
+For this to work properly, you must set L<error_mode|HTML::Mason::Params/error_mode> to "fatal", so
+that Mason doesn't just display its own HTML error page.
 
 =head1 RUNNING OUTSIDE OF MOD_PERL
 

@@ -16,9 +16,13 @@ BEGIN
 
 	   'HTML::Mason::Exception::Abort' =>
 	   { isa => 'HTML::Mason::Exception',
-	     alias => 'abort_error',
 	     fields => [qw(aborted_value)],
 	     description => 'a component called $m->abort' },
+
+	   'HTML::Mason::Exception::Decline' =>
+	   { isa => 'HTML::Mason::Exception',
+	     fields => [qw(declined_value)],
+	     description => 'a component called $m->decline' },
 
 	   'HTML::Mason::Exception::Compiler' =>
 	   { isa => 'HTML::Mason::Exception',
@@ -117,6 +121,9 @@ sub rethrow_exception
 
     if ( UNIVERSAL::can($err, 'rethrow') ) {
 	$err->rethrow;
+    }
+    elsif ( ref $err ) {
+        die $err;
     }
     HTML::Mason::Exception->throw(error => $err);
 }
@@ -433,11 +440,17 @@ __END__
 
 HTML::Mason::Exceptions - Exception objects thrown by Mason
 
-=head1 DESCRIPTION
+=head1 SYNOPSIS
 
   use HTML::Mason::Exceptions qw(system_error);
 
   open FH, 'foo' or system_error "cannot open foo: $!";
+
+=head1 DESCRIPTION
+
+This module creates the hierarchy of exception objects used by Mason,
+and provides some extra methods for them beyond those provided by
+C<Exception::Class>
 
 =head1 IMPORT
 
@@ -467,7 +480,11 @@ The C<< $m->abort >> method was called.
 
 Exceptions in this class contain the field C<aborted_value>.
 
-Abbreviated as C<abort_error>.
+=item HTML::Mason::Exception::Decline
+
+The C<< $m->decline >> method was called.
+
+Exceptions in this class contain the field C<declined_value>.
 
 =item HTML::Mason::Exception::Compilation
 

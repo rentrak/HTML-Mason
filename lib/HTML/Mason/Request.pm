@@ -40,7 +40,8 @@ use HTML::Mason::Buffer;
 use Class::Container;
 use base qw(Class::Container);
 
-use HTML::Mason::Exceptions( abbr => [qw(param_error syntax_error abort_error
+# HTML::Mason::Exceptions always exports rethrow_exception() and isa_mason_exception()
+use HTML::Mason::Exceptions( abbr => [qw(param_error syntax_error
 					 top_level_not_found_error error)] );
 
 use Params::Validate qw(:all);
@@ -155,6 +156,7 @@ sub new
 		      stack => undef,
 		      wrapper_chain => undef,
 		      wrapper_index => undef,
+		      notes => {},
 	     );
 
     $self->{request_comp} = delete($self->{comp});
@@ -181,10 +183,8 @@ sub _initialize {
     # Mason exception and placed in the {prepare_error} slot.  exec()
     # will then trigger the error. This makes for an easier new + exec
     # API.
-    local $SIG{'__DIE__'} = sub {
-        rethrow_exception( $_[0] );
-    };
-
+    local $SIG{'__DIE__'} = \&rethrow_exception;
+    
     eval {
 	# create base buffer
 	$self->{buffer_stack} = [];
@@ -277,9 +277,7 @@ sub exec {
     }
 
     # All errors returned from this routine will be in exception form.
-    local $SIG{'__DIE__'} = sub {
-        rethrow_exception( $_[0] );
-    };
+    local $SIG{'__DIE__'} = \&rethrow_exception;
 
     #
     # $m is a dynamically scoped global containing this
@@ -287,8 +285,6 @@ sub exec {
     # package, as well as the component package if that is different.
     #
     local $HTML::Mason::Commands::m = $self;
-    $interp->set_global('m'=>$self)
-        if ($interp->compiler->in_package ne 'HTML::Mason::Commands');
 
     # Save context of subroutine for use inside eval.
     my $wantarray = wantarray;
@@ -327,7 +323,7 @@ sub exec {
 
 	{
 	    local *SELECTED;
-	    tie *SELECTED, 'Tie::Handle::Mason', $self;
+	    tie *SELECTED, 'Tie::Handle::Mason';
 
 	    my $old = select SELECTED;
 	    if ($wantarray) {
@@ -344,7 +340,7 @@ sub exec {
 
     # Handle errors.
     my $err = $@;
-    if ($err and !$self->aborted($err)) {
+    if ($err and !$self->_aborted_or_declined($err)) {
 	pop @{ $self->{buffer_stack} };
 	pop @{ $self->{buffer_stack} };
 	$interp->purge_code_cache;
@@ -363,6 +359,7 @@ sub exec {
 
     # Return aborted value or result.
     @result = ($err->aborted_value) if $self->aborted($err);
+    @result = ($err->declined_value) if $self->declined($err);
     return $wantarray ? @result : defined($wantarray) ? $result[0] : undef;
 }
 
@@ -441,6 +438,20 @@ sub aborted {
     my ($self, $err) = @_;
     $err = $@ if !defined($err);
     return isa_mason_exception( $err, 'Abort' );
+}
+
+#
+# Determine whether $err (or $@ by default) is an Decline exception.
+#
+sub declined {
+    my ($self, $err) = @_;
+    $err = $@ if !defined($err);
+    return isa_mason_exception( $err, 'Decline' );
+}
+
+sub _aborted_or_declined {
+    my ($self, $err) = @_;
+    return $self->aborted($err) || $self->declined($err);
 }
 
 #
@@ -645,7 +656,7 @@ sub cache_self {
 
 }
 
-my $do_nothing_sub;
+my $do_nothing = sub {};
 sub call_self
 {
     my ($self, $output, $retval) = @_;
@@ -660,7 +671,7 @@ sub call_self
 
     unless (defined $output) {
         # don't bother accumulating output that will never be seen
-        $output = $do_nothing_sub;
+        $output = $do_nothing;
     }
 
     eval
@@ -709,10 +720,10 @@ sub call_self
 
         pop @{ $self->{buffer_stack} };
 
-        rethrow_exception($@);
+        rethrow_exception $@;
     };
 
-    rethrow_exception($@);
+    rethrow_exception $@ unless $self->declined;
 
     return 1;
 }
@@ -782,7 +793,7 @@ sub decline
 	 args => [$self->request_args],
 	 declined_comps => {$self->request_comp->comp_id, 1, %{$self->{declined_comps}}});
     my $retval = $subreq->exec;
-    $self->abort($retval);
+    HTML::Mason::Exception::Decline->throw( error => 'Request->decline was called', declined_value => $retval );
 }
 
 #
@@ -1073,7 +1084,7 @@ sub comp {
         pop @{ $self->{buffer_stack} };
     }
 
-    rethrow_exception($err);
+    rethrow_exception $err;
 
     return wantarray ? @result : $result[0];  # Will return undef in void context (correct)
 }
@@ -1104,9 +1115,19 @@ sub content {
 
     push @{ $self->{stack} }, $old_frame;
 
-    rethrow_exception($err);
+    rethrow_exception $err;
 
     return $buffer->output;
+}
+
+sub notes {
+  my $self = shift;
+  return $self->{notes} unless @_;
+  
+  my $key = shift;
+  return $self->{notes}{$key} unless @_;
+  
+  return $self->{notes}{$key} = shift;
 }
 
 sub clear_buffer
@@ -1229,9 +1250,8 @@ sub TIEHANDLE
 {
     my $class = shift;
 
-    my $req = shift;
 
-    return bless { request => $req }, $class;
+    return bless {}, $class;
 }
 
 sub PRINT
@@ -1239,8 +1259,7 @@ sub PRINT
     my $self = shift;
 
     my $old = select STDOUT;
-
-    $self->{request}->print(@_);
+    HTML::Mason::Request->instance->print(@_);
 
     select $old;
 }
@@ -1438,7 +1457,7 @@ C<abort> is called from a C<< <%shared> >> block.
 =item aborted ([$err])
 
 Returns true or undef indicating whether the specified C<$err>
-was generated by C<abort>. If no C<$err> was passed, use C<$@>.
+was generated by C<abort>. If no C<$err> was passed, uses C<$@>.
 
 In this code, we catch and process fatal errors while letting C<abort>
 exceptions pass through:
@@ -1748,6 +1767,13 @@ applicable dhandler up the tree. If no dhandler is available, an error
 occurs.  This method bears no relation to the Apache DECLINED status
 except in name.
 
+=for html <a name="item_declined"></a>
+
+=item declined ([$err])
+
+Returns true or undef indicating whether the specified C<$err> was
+generated by C<decline>. If no C<$err> was passed, uses C<$@>.
+
 =for html <a name="item_depth"></a>
 
 =item depth
@@ -1818,7 +1844,7 @@ servers appear more responsive.
 
 Attempts to flush the buffers are ignored within the context of a call
 to C<< $m->scomp >> or when output is being stored in a scalar
-reference, as with the C< { store => \$out } > component call
+reference, as with the C< { store =E<gt> \$out } > component call
 modifier.
 
 Additionally, if a component has a C<< <%filter> >> block, that
@@ -1855,6 +1881,28 @@ optional.
 
 See the L<subrequests|HTML::Mason::Devel/subrequests> section of the developer's manual for more information about subrequests.
 
+=for html <a name="notes"></a>
+
+=item notes (key, value)
+
+The C<notes()> method provides a place to store application data,
+giving developers a way to share data among multiple components.  Any
+data stored here persists for the duration of the request, i.e. the
+same lifetime as the Request object.
+
+Conceptually, C<notes()> contains a hash of key-value pairs.
+C<notes($key, $value)> stores a new entry in this hash.
+C<notes($key)> returns a previously stored value.  C<notes()> without
+any arguments returns a reference to the entire hash of key-value
+pairs.
+
+C<notes()> is similar to the mod_perl method C<< $r->pnotes() >>.  The
+main differences are that this C<notes()> can be used in a
+non-mod_perl environment, and that its lifetime is tied to the
+I<Mason> request object, not the I<Apache> request object.  In
+particular, a Mason subrequest has its own C<notes()> structure, but
+would access the same C<< $r->pnotes() >> structure.
+
 =for html <a name="item_out"></a>
 
 =item out (string)
@@ -1878,7 +1926,7 @@ C<$m-E<gt>print>.
 =item request_args
 
 Returns the arguments originally passed to the top level component
-(see L<Request-E<gt>request_comp|HTML::Mason::Request/item_request_comp> for
+(see L<request_comp|HTML::Mason::Request/item_request_comp> for
 definition).  When called in scalar context, a hash reference is
 returned. When called in list context, a list of arguments (which may
 be assigned to a hash) is returned.
@@ -1968,7 +2016,7 @@ more details.
 
 =back
 
-=head1 APACHE- OR CGI-ONLY METHOD
+=head1 APACHE- OR CGI-ONLY METHODS
 
 This method is available when Mason is running under either the
 ApacheHandler or CGIHandler modules.
@@ -1986,7 +2034,7 @@ the ApacheHandler L<args_method|HTML::Mason::Params/args_method> parameter.  If 
 See the L<ApacheHandler|HTML::Mason::ApacheHandler> and
 L<CGIHandler|HTML::Mason::CGIHandler> documentation for more details.
 
-=for html <a name="item_redirect"></a>
+=for html <a name="item_redirect_url_status_"></a>
 
 =item redirect ($url, [$status])
 

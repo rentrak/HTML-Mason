@@ -308,7 +308,7 @@ use HTML::Mason::MethodMaker
 			  interp ) ]
     );
 
-use vars qw($AH $STARTED);
+my ($STARTED);
 
 # hack to let the make_params_pod.pl script work
 __PACKAGE__->_startup() if Apache->server;
@@ -317,7 +317,7 @@ sub _startup
     my $pack = shift;
     return if $STARTED++; # Allows a subclass to call us, without running twice
 
-    if ( my $args_method = $pack->get_param('ArgsMethod') )
+    if ( my $args_method = $pack->_get_string_param('MasonArgsMethod') )
     {
 	if ($args_method eq 'CGI')
 	{
@@ -327,40 +327,18 @@ sub _startup
 	{
 	    require Apache::Request unless defined $Apache::Request::VERSION;
 	}
-
-	# if we are in a simple conf file (meaning one without
-	# multiple different Mason configs) we make the apachehandler
-	# object now and simply reuse it later in the handler sub
-	$AH = $pack->make_ah() if $pack->_in_simple_conf_file;
     }
 }
 
-#
-# This is our best guess as to whether we are being configured via the
-# conf file without multiple configs.  It's flawed, because simple
-# configurations don't require an explicit component root to be set.
-#
-sub _in_simple_conf_file
-{
-    my $self = shift;
+use constant
+    HAS_TABLE_API => $mod_perl::VERSION >= 1.99 || Apache::perl_hook('TableApi');
 
-    my @roots = $self->_get_string_param('MasonCompRoot');
-    return $ENV{MOD_PERL} && @roots;
-}
-
-my %AH;
+my %AH_BY_CONFIG;
 sub make_ah
 {
     my ($package, $r) = @_;
 
-    my ($vals, %p) = $package->_get_mason_params($r);
-
-    #
-    # Now that we have all the original config strings stored, we put
-    # them all together in a string that we use to determine whether
-    # or not we've seen this particular set of config values before.
-    #
-    my $key = join $;, map "$_$;$vals->{$_}", sort keys %$vals;
+    my $config = $r->dir_config;
 
     #
     # If the user has virtual hosts, each with a different document
@@ -371,9 +349,17 @@ sub make_ah
     # comp root), we append the document root for the current request
     # to the key.
     #
-    $key .= $; . $r->document_root if $r;
+    my $key =
+        ( join $;,
+          $r->document_root,
+          map { $_, HAS_TABLE_API ? sort $config->get($_) : $config->{$_} }
+          grep { /^Mason/ }
+          keys %$config
+        );
 
-    return $AH{$key} if exists $AH{$key};
+    return $AH_BY_CONFIG{$key} if exists $AH_BY_CONFIG{$key};
+
+    my %p = $package->_get_mason_params($r);
 
     # can't use hash_list for this one because it's _either_ a string
     # or a hash_list
@@ -397,7 +383,7 @@ sub make_ah
     }
 
     my $ah = $package->new(%p, $r);
-    $AH{$key} = $ah if $key;
+    $AH_BY_CONFIG{$key} = $ah if $key;
 
     return $ah;
 }
@@ -426,12 +412,6 @@ sub _get_mason_params
 
     my $config = $r ? $r->dir_config : Apache->server->dir_config;
 
-    #
-    # We will accumulate all the string versions of the keys and
-    # values here for later use.
-    #
-    my %vals;
-
     # Get all params starting with 'Mason'
     my %candidates;
 
@@ -443,21 +423,26 @@ sub _get_mason_params
 	$candidates{$calm} = $config->{$studly};
     }
 
-    return ( \%vals,
-             map { $_ =>
-                       scalar $self->get_param( $_, \%vals, \%candidates, $r )
-                   }
+    return unless %candidates;
+
+    #
+    # We will accumulate all the string versions of the keys and
+    # values here for later use.
+    #
+    return ( map { $_ =>
+                   scalar $self->get_param( $_, \%candidates, $config, $r )
+                 }
              keys %candidates );
 }
 
 sub get_param {
     # Gets a single config item from dir_config.
 
-    my ($self, $key, $vals, $params, $r) = @_;
+    my ($self, $key, $candidates, $config, $r) = @_;
 
     $key = $self->calm_form($key);
 
-    my $spec = $self->allowed_params( $params || {} )->{$key}
+    my $spec = $self->allowed_params( $candidates || {} )->{$key}
         or error "Unknown config item '$key'";
 
     # Guess the default parse type from the Params::Validate validation spec
@@ -469,26 +454,26 @@ sub get_param {
         or error "Unknown parse type for config item '$key'";
 
     my $method = "_get_${type}_param";
-    return $self->$method('Mason'.$self->studly_form($key), $vals, $r);
+    return $self->$method('Mason'.$self->studly_form($key), $config, $r);
 }
 
 sub _get_string_param
 {
     my $self = shift;
-    return $self->_get_val(@_);
+    return scalar $self->_get_val(@_);
 }
 
 sub _get_boolean_param
 {
     my $self = shift;
-    return $self->_get_val(@_);
+    return scalar $self->_get_val(@_);
 }
 
 sub _get_code_param
 {
     my $self = shift;
     my $p = $_[0];
-    my $val = $self->_get_val(@_);
+    my $val = $self->_get_val(0, @_);
 
     return unless $val;
 
@@ -535,20 +520,31 @@ sub _get_hash_list_param
     return \%hash;
 }
 
-use constant
-    HAS_TABLE_API => $mod_perl::VERSION >= 1.99 || Apache::perl_hook('TableApi');
-
 sub _get_val
 {
-    my ($self, $p, $vals, $r) = @_;
+    my ($self, $p, $config, $r) = @_;
 
-    my $c = $r ? $r : Apache->server;
-    my @val = HAS_TABLE_API ? $c->dir_config->get($p) : $c->dir_config($p);
+    my @val;
+    if (wantarray || !$config)
+    {
+        if ($config)
+        {
+            my $c = $r ? $r : Apache->server;
+            @val = HAS_TABLE_API ? $config->get($p) : $config->{$p};
+        }
+        else
+        {
+            my $c = $r ? $r : Apache->server;
+            @val = HAS_TABLE_API ? $c->dir_config->get($p) : $c->dir_config($p);
+        }
+    }
+    else
+    {
+        @val = exists $config->{$p} ? $config->{$p} : ();
+    }
 
     param_error "Only a single value is allowed for configuration parameter '$p'\n"
 	if @val > 1 && ! wantarray;
-
-    $vals->{$p} = join '', @val if $vals;
 
     return wantarray ? @val : $val[0];
 }
@@ -973,7 +969,10 @@ BEGIN
 sub handler %s
 {
     my ($package, $r) = @_;
-    my $ah = $AH || $package->make_ah($r);
+
+    my $ah;
+    $ah ||= $package->make_ah($r);
+
     return $ah->handle_request($r);
 }
 EOF
@@ -1053,7 +1052,7 @@ for more information about handling directories with Mason.
 =item interp
 
 The interpreter object to associate with this compiler. By default a
-new object of class L<interp_class|HTML::Mason::Params/interp_class> will be created.
+new object of the specified L<interp_class|HTML::Mason::Params/interp_class> will be created.
 
 =item interp_class
 

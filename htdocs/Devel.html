@@ -722,6 +722,13 @@ can let in directory requests as well; see the <A HREF="Admin.html#allowing_dire
 <p>A component or dhandler that does not want to handle a particular
 request may defer control to the next dhandler by calling <code>&lt;
 $m-</code>decline &gt;&gt;.</p>
+<p>When using dhandlers under mod_perl, you may find that sometimes
+Apache will not set a content type for a response.  This usually
+happens when a dhandler handles a request for a non-existent file or
+directory.  You can add a <code>&lt;Location&gt;</code> or <code>&lt;LocationMatch&gt;</code>
+block containing a <code>SetType</code> directive to your Apache config file, or
+you can just set the content type dynamically by calling <code>&lt;
+$r-</code>content_type &gt;&gt;.</p>
 <p>The administrator can customize the file name used for dhandlers with
 the <A HREF="Params.html#dhandler_name">dhandler_name</a> parameter.</p>
 <p>
@@ -1029,6 +1036,9 @@ main body and one more subcomponents or methods. See <A HREF="#objectoriented_te
 hash or variables created via an <code>&lt;%args&gt;</code> block inside a shared
 section.  However, you can access arguments via
 <A HREF="Request.html#item_request_args">$m-&gt;request_args</a>.</p>
+<p>Additionally, you cannot call a components' own methods or
+subcomponents from inside a <code>&lt;%shared&gt;</code>, though you can call
+other components.</p>
 <p>Avoid using <code>&lt;%shared&gt;</code> for side-effect code that needs to run at a
 predictable time during page generation. You may assume only that
 <code>&lt;%shared&gt;</code> runs just before the first code that needs it and runs at
@@ -1069,7 +1079,8 @@ precedence. You would need to use an absolute path to call the
 file-based component. To avoid this situation and for general clarity,
 we recommend that you pick a unique way to name all of your
 subcomponents that is unlikely to interfere with file-based
-components. For example, you could start subcomponent names with ``.''.</p>
+components. A commonly accepted practice is to start subcomponent
+names with ``.''.</p>
 <p>While inside a subcomponent, you may use absolute or relative paths to
 call file-based components and also call any of your ``sibling''
 subcomponents.</p>
@@ -1117,6 +1128,8 @@ other components.</p>
     $comp-&gt;call_method('method1');</pre>
 <p>Methods are commonly used in conjunction with autohandlers to make
 templates more flexible. See <A HREF="#objectoriented_techniques">Object-Oriented Techniques</a> for more information.</p>
+<p>You cannot create a subcomponent and method with the same name. 
+This is mostly to prevent obfuscation and accidental errors.</p>
 <p>
 </p>
 <hr />
@@ -1192,6 +1205,10 @@ the item corresponding to the current page:</p>
 without <code>if</code> statements surrounding each link!  Note that the regular
 expression need not be very robust as long as you have control over what
 will appear in the body.</p>
+<p>A filter block does not have access to variables declared in a
+component's <code>&lt;%init&gt;</code> section, though variables declared in the
+<code>&lt;%args&gt;</code>, <code>&lt;%once&gt;</code> or <code>&lt;%shared&gt;</code> blocks are
+usable in a filter.</p>
 <p>It should be noted that a filter cannot rely on receiving all of a
 component's output at once, and so may be called multiple times with
 different chunks of output.  This can happen if autoflush is on, or if

@@ -89,6 +89,20 @@ order whenever a component path must be resolved to a filesystem path.</p>
 This method returns the component root, which will either be a scalar
 or an array reference, as documented <A HREF="../Resolver/File.html#item_comp_root">here</a>.
 </dd>
+<p></p>
+<dt><strong><A NAME="item_comp_root_array">comp_root_array</a></strong><br />
+</dt>
+<dd>
+Returns the component root as an array of name/path pairs.  Can be
+used like the following:
+</dd>
+<dd>
+<pre>
+  foreach my $pair ($self-&gt;comp_root_array) {
+    my ($name, $path) = @$pair;
+    ...
+  }</pre>
+</dd>
 <p></p></dl>
 <p>
 </p>
