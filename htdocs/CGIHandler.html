@@ -16,12 +16,12 @@
 	<LI><A HREF="#description">DESCRIPTION</A></LI>
 	<UL>
 
-		<LI><A HREF="#html::mason::cgihandler methods"><CODE>HTML::Mason::CGIHandler</CODE> Methods</A></LI>
-		<LI><A HREF="#$r methods"><CODE>$r</CODE> Methods</A></LI>
-		<LI><A HREF="#added $m methods">Added <CODE>$m</CODE> methods</A></LI>
+		<LI><A HREF="#html_mason_cgihandler_methods"><CODE>HTML::Mason::CGIHandler</CODE> Methods</A></LI>
+		<LI><A HREF="#_r_methods"><CODE>$r</CODE> Methods</A></LI>
+		<LI><A HREF="#added_m_methods">Added <CODE>$m</CODE> methods</A></LI>
 	</UL>
 
-	<LI><A HREF="#see also">SEE ALSO</A></LI>
+	<LI><A HREF="#see_also">SEE ALSO</A></LI>
 </UL>
 <!-- INDEX END -->
 
@@ -70,7 +70,7 @@ about the particular details of invoking Mason on each request.</P>
 <P>If you want to use Mason components from <EM>within</EM> a regular CGI
 script (or any other Perl program, for that matter), then you don't
 need this module.  You can simply follow the directions in
-<A HREF="#using mason from a standalone script">HTLM::Mason::Admin/Using Mason from a standalone script</A>.</P>
+<A HREF="#using_mason_from_a_standalone_sc">HTLM::Mason::Admin/Using Mason from a standalone script</A>.</P>
 <P>This module also provides an <CODE>$r</CODE> request object for use inside
 components, similar to the Apache request object under
 <CODE>HTML::Mason::ApacheHandler</CODE>, but limited in functionality.  Please
@@ -82,7 +82,7 @@ able to provide it.</P>
 <P>Finally, this module alters the <CODE>HTML::Mason::Request</CODE> object <CODE>$m</CODE> to
 provide direct access to the CGI query, should such access be necessary.</P>
 <P>
-<H2><A NAME="html::mason::cgihandler methods"><CODE>HTML::Mason::CGIHandler</CODE> Methods</A></H2>
+<H2><A NAME="html_mason_cgihandler_methods"><CODE>HTML::Mason::CGIHandler</CODE> Methods</A></H2>
 <UL>
 <LI><STRONG><A NAME="item_new"><CODE>new()</CODE></A></STRONG><BR>
 
@@ -129,7 +129,7 @@ Returns the Mason Interpreter associated with this handler.  The
 Interpreter lasts for the entire lifetime of the handler.
 <P></P></UL>
 <P>
-<H2><A NAME="$r methods"><CODE>$r</CODE> Methods</A></H2>
+<H2><A NAME="_r_methods"><CODE>$r</CODE> Methods</A></H2>
 <UL>
 <LI><STRONG><A NAME="item_header_out"><CODE>header_out()</CODE></A></STRONG><BR>
 
@@ -176,7 +176,7 @@ client.  Multiple parameters of the same name are represented by array
 references.
 <P></P></UL>
 <P>
-<H2><A NAME="added $m methods">Added <CODE>$m</CODE> methods</A></H2>
+<H2><A NAME="added_m_methods">Added <CODE>$m</CODE> methods</A></H2>
 <P>The <CODE>$m</CODE> object provided in components has all the functionality of
 the regular <CODE>HTML::Mason::Request</CODE> object <CODE>$m</CODE>, and the following:</P>
 <UL>
@@ -195,7 +195,7 @@ equally well under CGIHandler and ApacheHandler.</P>
 <P></P></UL>
 <P>
 <HR>
-<H1><A NAME="see also">SEE ALSO</A></H1>
+<H1><A NAME="see_also">SEE ALSO</A></H1>
 <P><A HREF="Mason.html">HTML::Mason</A>,
 <A HREF="Admin.html">HTML::Mason::Admin</A>,
 <A HREF="ApacheHandler.html">HTML::Mason::ApacheHandler</A></P>

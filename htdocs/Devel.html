@@ -13,123 +13,124 @@
 
 	<LI><A HREF="#name">NAME</A></LI>
 	<LI><A HREF="#description">DESCRIPTION</A></LI>
-	<LI><A HREF="#how to use this manual">HOW TO USE THIS MANUAL</A></LI>
-	<LI><A HREF="#what are components">WHAT ARE COMPONENTS?</A></LI>
-	<LI><A HREF="#inline perl sections">IN-LINE PERL SECTIONS</A></LI>
+	<LI><A HREF="#how_to_use_this_manual">HOW TO USE THIS MANUAL</A></LI>
+	<LI><A HREF="#what_are_components">WHAT ARE COMPONENTS?</A></LI>
+	<LI><A HREF="#inline_perl_sections">IN-LINE PERL SECTIONS</A></LI>
 	<UL>
 
-		<LI><A HREF="#examples and recommended usage">Examples and Recommended Usage</A></LI>
+		<LI><A HREF="#examples_and_recommended_usage">Examples and Recommended Usage</A></LI>
 	</UL>
 
-	<LI><A HREF="#mason objects">MASON OBJECTS</A></LI>
+	<LI><A HREF="#mason_objects">MASON OBJECTS</A></LI>
 	<UL>
 
-		<LI><A HREF="#request objects">Request Objects</A></LI>
-		<LI><A HREF="#system objects">System Objects</A></LI>
-		<LI><A HREF="#component objects">Component Objects</A></LI>
+		<LI><A HREF="#request_objects">Request Objects</A></LI>
+		<LI><A HREF="#system_objects">System Objects</A></LI>
+		<LI><A HREF="#component_objects">Component Objects</A></LI>
 	</UL>
 
-	<LI><A HREF="#calling components">CALLING COMPONENTS</A></LI>
+	<LI><A HREF="#calling_components">CALLING COMPONENTS</A></LI>
 	<UL>
 
-		<LI><A HREF="#components that output html">Components that output HTML</A></LI>
-		<LI><A HREF="#component calls with content">Component Calls with Content</A></LI>
-		<LI><A HREF="#advanced components calls with content">Advanced Components Calls with Content</A></LI>
-		<LI><A HREF="#components that compute values">Components that compute values</A></LI>
+		<LI><A HREF="#components_that_output_html">Components that output HTML</A></LI>
+		<LI><A HREF="#component_calls_with_content">Component Calls with Content</A></LI>
+		<LI><A HREF="#advanced_components_calls_with_c">Advanced Components Calls with Content</A></LI>
+		<LI><A HREF="#components_that_compute_values">Components that compute values</A></LI>
 		<LI><A HREF="#subrequests">Subrequests</A></LI>
 	</UL>
 
-	<LI><A HREF="#toplevel components">TOP-LEVEL COMPONENTS</A></LI>
+	<LI><A HREF="#toplevel_components">TOP-LEVEL COMPONENTS</A></LI>
 	<UL>
 
 		<LI><A HREF="#dhandlers">dhandlers</A></LI>
 		<LI><A HREF="#autohandlers">autohandlers</A></LI>
-		<LI><A HREF="#dhandlers vs. autohandlers">dhandlers vs. autohandlers</A></LI>
+		<LI><A HREF="#dhandlers_vs_autohandlers">dhandlers vs. autohandlers</A></LI>
 	</UL>
 
-	<LI><A HREF="#passing parameters">PASSING PARAMETERS</A></LI>
+	<LI><A HREF="#passing_parameters">PASSING PARAMETERS</A></LI>
 	<UL>
 
-		<LI><A HREF="#in component calls">In Component Calls</A></LI>
-		<LI><A HREF="#in http requests">In HTTP requests</A></LI>
-		<LI><A HREF="#accessing parameters">Accessing Parameters</A></LI>
-		<LI><A HREF="#parameter passing examples">Parameter Passing Examples</A></LI>
-		<LI><A HREF="#using @_ instead">Using @_ instead</A></LI>
+		<LI><A HREF="#in_component_calls">In Component Calls</A></LI>
+		<LI><A HREF="#in_http_requests">In HTTP requests</A></LI>
+		<LI><A HREF="#accessing_parameters">Accessing Parameters</A></LI>
+		<LI><A HREF="#parameter_passing_examples">Parameter Passing Examples</A></LI>
+		<LI><A HREF="#using___instead">Using @_ instead</A></LI>
 	</UL>
 
-	<LI><A HREF="#initialization and cleanup">INITIALIZATION AND CLEANUP</A></LI>
+	<LI><A HREF="#initialization_and_cleanup">INITIALIZATION AND CLEANUP</A></LI>
 	<UL>
 
-		<LI><A HREF="#<%init>">&lt;%init&gt;</A></LI>
-		<LI><A HREF="#<%cleanup>">&lt;%cleanup&gt;</A></LI>
-		<LI><A HREF="#<%once>">&lt;%once&gt;</A></LI>
-		<LI><A HREF="#<%shared>">&lt;%shared&gt;</A></LI>
+		<LI><A HREF="#_init_">&lt;%init&gt;</A></LI>
+		<LI><A HREF="#_cleanup_">&lt;%cleanup&gt;</A></LI>
+		<LI><A HREF="#_once_">&lt;%once&gt;</A></LI>
+		<LI><A HREF="#_shared_">&lt;%shared&gt;</A></LI>
 	</UL>
 
-	<LI><A HREF="#embedded components">EMBEDDED COMPONENTS</A></LI>
+	<LI><A HREF="#embedded_components">EMBEDDED COMPONENTS</A></LI>
 	<UL>
 
-		<LI><A HREF="#<%def name>">&lt;%def <EM>name</EM>&gt;</A></LI>
-		<LI><A HREF="#<%method name>">&lt;%method <EM>name</EM>&gt;</A></LI>
+		<LI><A HREF="#_def_name_">&lt;%def <EM>name</EM>&gt;</A></LI>
+		<LI><A HREF="#_method_name_">&lt;%method <EM>name</EM>&gt;</A></LI>
 	</UL>
 
-	<LI><A HREF="#flags and attributes">FLAGS AND ATTRIBUTES</A></LI>
+	<LI><A HREF="#flags_and_attributes">FLAGS AND ATTRIBUTES</A></LI>
 	<UL>
 
-		<LI><A HREF="#<%flags>">&lt;%flags&gt;</A></LI>
-		<LI><A HREF="#<%attr>">&lt;%attr&gt;</A></LI>
+		<LI><A HREF="#_flags_">&lt;%flags&gt;</A></LI>
+		<LI><A HREF="#_attr_">&lt;%attr&gt;</A></LI>
 	</UL>
 
 	<LI><A HREF="#filtering">FILTERING</A></LI>
 	<UL>
 
-		<LI><A HREF="#<%filter> section">&lt;%filter&gt; section</A></LI>
+		<LI><A HREF="#_filter_section">&lt;%filter&gt; section</A></LI>
 	</UL>
 
-	<LI><A HREF="#other syntax">OTHER SYNTAX</A></LI>
+	<LI><A HREF="#other_syntax">OTHER SYNTAX</A></LI>
 	<UL>
 
-		<LI><A HREF="#<%doc>">&lt;%doc&gt;</A></LI>
-		<LI><A HREF="#<%text>">&lt;%text&gt;</A></LI>
-		<LI><A HREF="#escaping expressions">Escaping expressions</A></LI>
-		<LI><A HREF="#backslash at end of line">Backslash at end of line</A></LI>
+		<LI><A HREF="#_doc_">&lt;%doc&gt;</A></LI>
+		<LI><A HREF="#_text_">&lt;%text&gt;</A></LI>
+		<LI><A HREF="#escaping_expressions">Escaping expressions</A></LI>
+		<LI><A HREF="#backslash_at_end_of_line">Backslash at end of line</A></LI>
 	</UL>
 
-	<LI><A HREF="#data caching">DATA CACHING</A></LI>
+	<LI><A HREF="#data_caching">DATA CACHING</A></LI>
 	<UL>
 
-		<LI><A HREF="#basic usage">Basic Usage</A></LI>
-		<LI><A HREF="#multiple keys/values">Multiple Keys/Values</A></LI>
+		<LI><A HREF="#basic_usage">Basic Usage</A></LI>
+		<LI><A HREF="#multiple_keys_values">Multiple Keys/Values</A></LI>
 		<LI><A HREF="#expiration">Expiration</A></LI>
-		<LI><A HREF="#caching all output">Caching All Output</A></LI>
-		<LI><A HREF="#cache object metadata">Cache Object Meta-data</A></LI>
-		<LI><A HREF="#choosing a cache subclass">Choosing a Cache Subclass</A></LI>
-		<LI><A HREF="#accessing a cache externally">Accessing a Cache Externally</A></LI>
+		<LI><A HREF="#avoiding_concurrent_recomputatio">Avoiding Concurrent Recomputation</A></LI>
+		<LI><A HREF="#caching_all_output">Caching All Output</A></LI>
+		<LI><A HREF="#cache_object_metadata">Cache Object Meta-data</A></LI>
+		<LI><A HREF="#choosing_a_cache_subclass">Choosing a Cache Subclass</A></LI>
+		<LI><A HREF="#accessing_a_cache_externally">Accessing a Cache Externally</A></LI>
 	</UL>
 
-	<LI><A HREF="#webspecific features">WEB-SPECIFIC FEATURES</A></LI>
+	<LI><A HREF="#webspecific_features">WEB-SPECIFIC FEATURES</A></LI>
 	<UL>
 
-		<LI><A HREF="#sending http headers">Sending HTTP Headers</A></LI>
-		<LI><A HREF="#returning http status">Returning HTTP Status</A></LI>
-		<LI><A HREF="#external redirects">External Redirects</A></LI>
-		<LI><A HREF="#internal redirects">Internal Redirects</A></LI>
+		<LI><A HREF="#sending_http_headers">Sending HTTP Headers</A></LI>
+		<LI><A HREF="#returning_http_status">Returning HTTP Status</A></LI>
+		<LI><A HREF="#external_redirects">External Redirects</A></LI>
+		<LI><A HREF="#internal_redirects">Internal Redirects</A></LI>
 	</UL>
 
-	<LI><A HREF="#using the perl debugger">USING THE PERL DEBUGGER</A></LI>
-	<LI><A HREF="#objectoriented techniques">OBJECT-ORIENTED TECHNIQUES</A></LI>
+	<LI><A HREF="#using_the_perl_debugger">USING THE PERL DEBUGGER</A></LI>
+	<LI><A HREF="#objectoriented_techniques">OBJECT-ORIENTED TECHNIQUES</A></LI>
 	<UL>
 
-		<LI><A HREF="#determining inheritance">Determining inheritance</A></LI>
-		<LI><A HREF="#content wrapping">Content wrapping</A></LI>
-		<LI><A HREF="#accessing methods and attributes">Accessing methods and attributes</A></LI>
-		<LI><A HREF="#sharing data">Sharing data</A></LI>
+		<LI><A HREF="#determining_inheritance">Determining inheritance</A></LI>
+		<LI><A HREF="#content_wrapping">Content wrapping</A></LI>
+		<LI><A HREF="#accessing_methods_and_attributes">Accessing methods and attributes</A></LI>
+		<LI><A HREF="#sharing_data">Sharing data</A></LI>
 		<LI><A HREF="#example">Example</A></LI>
 	</UL>
 
-	<LI><A HREF="#common traps">COMMON TRAPS</A></LI>
+	<LI><A HREF="#common_traps">COMMON TRAPS</A></LI>
 	<LI><A HREF="#authors">AUTHORS</A></LI>
-	<LI><A HREF="#see also">SEE ALSO</A></LI>
+	<LI><A HREF="#see_also">SEE ALSO</A></LI>
 </UL>
 <!-- INDEX END -->
 
@@ -160,20 +161,20 @@ the focus of this manual.</P>
 still be useful, of course.  Also make sure to read <A HREF="Admin.html#nonweb mason">NON-WEB MASON in Admin</A> in the Administrator's Guide.</P>
 <P>
 <HR>
-<H1><A NAME="how to use this manual">HOW TO USE THIS MANUAL</A></H1>
+<H1><A NAME="how_to_use_this_manual">HOW TO USE THIS MANUAL</A></H1>
 <P>If you are just learning Mason and want to get started quickly, we
 recommend the following sections:</P>
-<P>o <A HREF="#what are components">What Are Components?</A></P>
-<P>o <A HREF="#inline perl sections">In-Line Perl Sections</A></P>
-<P>o <A HREF="#calling components">Calling Components</A></P>
-<P>o <A HREF="#toplevel components">Top-Level Components</A></P>
-<P>o <A HREF="#passing parameters">Passing Parameters</A></P>
-<P>o <A HREF="#initialization and cleanup">Initialization and Cleanup</A> (mainly <CODE>&lt;%init&gt;</CODE>)</P>
-<P>o <A HREF="#webspecific features">Web-Specific Features</A></P>
-<P>o <A HREF="#common traps">Common Traps</A></P>
+<P>o <A HREF="#what_are_components">What Are Components?</A></P>
+<P>o <A HREF="#inline_perl_sections">In-Line Perl Sections</A></P>
+<P>o <A HREF="#calling_components">Calling Components</A></P>
+<P>o <A HREF="#toplevel_components">Top-Level Components</A></P>
+<P>o <A HREF="#passing_parameters">Passing Parameters</A></P>
+<P>o <A HREF="#initialization_and_cleanup">Initialization and Cleanup</A> (mainly <CODE>&lt;%init&gt;</CODE>)</P>
+<P>o <A HREF="#webspecific_features">Web-Specific Features</A></P>
+<P>o <A HREF="#common_traps">Common Traps</A></P>
 <P>
 <HR>
-<H1><A NAME="what are components">WHAT ARE COMPONENTS?</A></H1>
+<H1><A NAME="what_are_components">WHAT ARE COMPONENTS?</A></H1>
 <P>The component - a mix of Perl and HTML - is Mason's basic building
 block and computational unit. Under Mason, web pages are formed by
 combining the output from multiple components.  An article page for a
@@ -224,7 +225,7 @@ Perl debugger to step through components, and <STRONG>Devel::DProf</STRONG> to
 profile their performance.</P>
 <P>
 <HR>
-<H1><A NAME="inline perl sections">IN-LINE PERL SECTIONS</A></H1>
+<H1><A NAME="inline_perl_sections">IN-LINE PERL SECTIONS</A></H1>
 <P>Here is a simple component example:</P>
 <PRE>
     &lt;%perl&gt;
@@ -265,7 +266,7 @@ number of lines. <CODE>&lt;%perl&gt;</CODE> blocks cannot be nested inside one
 another.</P>
 <P></P></OL>
 <P>
-<H2><A NAME="examples and recommended usage">Examples and Recommended Usage</A></H2>
+<H2><A NAME="examples_and_recommended_usage">Examples and Recommended Usage</A></H2>
 <P><STRONG>% lines</STRONG></P>
 <P>Most useful for conditional and loop structures - if, while, foreach,
 , etc. - as well as side-effect commands like assignments. Examples:</P>
@@ -319,12 +320,12 @@ expressions. Examples:</P>
 <P>Useful for Perl blocks of more than a few lines.</P>
 <P>
 <HR>
-<H1><A NAME="mason objects">MASON OBJECTS</A></H1>
+<H1><A NAME="mason_objects">MASON OBJECTS</A></H1>
 <P>This section describes the various objects in the Mason universe.
 If you're just starting out, all you need to worry about initially
 are the request objects.</P>
 <P>
-<H2><A NAME="request objects">Request Objects</A></H2>
+<H2><A NAME="request_objects">Request Objects</A></H2>
 <P>Two global per-request objects are available to all components: $r and
 $m.</P>
 <P>$r, the mod_perl request object, provides a Perl API to the current
@@ -342,8 +343,11 @@ Mason. Almost all Mason features not activated by syntactic tags are
 accessed via $m methods.  You'll be introduced to these methods
 throughout this document as they are needed.  For a description of all
 methods see <STRONG><A HREF="Request.html">HTML::Mason::Request</A></STRONG>.</P>
+<P>Because these are always set inside components, you should not ever
+define other variables with the same name, or else your code may fail
+in strange and mysterious ways.</P>
 <P>
-<H2><A NAME="system objects">System Objects</A></H2>
+<H2><A NAME="system_objects">System Objects</A></H2>
 <P>Five system objects share the work of serving requests in Mason:
 Lexer, Compiler, Interp, Resolver, and ApacheHandler. The
 administrator creates these objects and provides parameters that shape
@@ -351,7 +355,7 @@ Mason's behavior. As a pure component developer you shouldn't need to
 worry about or access these objects, but occasionally we'll mention a
 relevant parameter.</P>
 <P>
-<H2><A NAME="component objects">Component Objects</A></H2>
+<H2><A NAME="component_objects">Component Objects</A></H2>
 <P>Mason provides an object API for components, allowing you to query a
 component's various asociated files, arguments, etc. For a description
 of all methods see
@@ -363,22 +367,22 @@ components is call them, for which no object method is needed. See
 next section.</P>
 <P>
 <HR>
-<H1><A NAME="calling components">CALLING COMPONENTS</A></H1>
+<H1><A NAME="calling_components">CALLING COMPONENTS</A></H1>
 <P>Mason pages often are built not from a single component, but from
 multiple components that call each other in a hierarchical fashion.</P>
 <P>
-<H2><A NAME="components that output html">Components that output HTML</A></H2>
+<H2><A NAME="components_that_output_html">Components that output HTML</A></H2>
 <P>To call one component from another, use the &lt;&amp; &amp;&gt; tag:</P>
 <PRE>
     &lt;&amp; comp_path, [name=&gt;value, ...] &amp;&gt;</PRE>
 <DL>
-<DT><STRONG><A NAME="item_comp_path%3A">comp_path:</A></STRONG><BR>
+<DT><STRONG><A NAME="item_comp_path_3A">comp_path:</A></STRONG><BR>
 <DD>
 The component path. With a leading '/', the path is relative to the
 component root (<CODE>comp_root</CODE>). Otherwise, it is relative to the
 location of the calling component.
 <P></P>
-<DT><STRONG><A NAME="item_name_%3D%3E_value_pairs%3A">name =&gt; value pairs:</A></STRONG><BR>
+<DT><STRONG><A NAME="item_name__3D_3E_value_pairs_3A">name =&gt; value pairs:</A></STRONG><BR>
 <DD>
 Parameters are passed as one or more <CODE>name =&gt; value</CODE> pairs,
 e.g. <CODE>player&nbsp;=&gt;&nbsp;'M.&nbsp;Jordan'</CODE>.
@@ -386,7 +390,7 @@ e.g. <CODE>player&nbsp;=&gt;&nbsp;'M.&nbsp;Jordan'</CODE>.
 <P>comp_path may be a literal string (quotes optional) or a Perl expression
 that evaluates to a string. To eliminate the need for quotes in most
 cases, Mason employs some magic parsing: If the first character is
-one of <CODE>[A-Za-z0-9/_.]</CODE>, comp_path is assumed to be a literal
+one of <CODE>[\w/_.]</CODE>, comp_path is assumed to be a literal
 string running up to the first comma or &amp;&gt;. Otherwise, comp_path
 is evaluated as an expression.</P>
 <P>Here are some examples:</P>
@@ -422,7 +426,7 @@ before printing:</P>
     $masthead =~ ...;
     $m-&gt;print($masthead);</PRE>
 <P>
-<H2><A NAME="component calls with content">Component Calls with Content</A></H2>
+<H2><A NAME="component_calls_with_content">Component Calls with Content</A></H2>
 <P>Components can be used to filter part of the page's content using an
 extended component syntax.</P>
 <PRE>
@@ -464,7 +468,7 @@ content will not be output.</P>
 the result will be functionally similar to a <CODE>&lt;%filter&gt;</CODE> section.
 See also <A HREF="#filtering">Filtering</A>.</P>
 <P>
-<H2><A NAME="advanced components calls with content">Advanced Components Calls with Content</A></H2>
+<H2><A NAME="advanced_components_calls_with_c">Advanced Components Calls with Content</A></H2>
 <P>Internally <A HREF="#item_content"><CODE>$m-&gt;content</CODE></A> is implemented with a closure containing
 the part of the component which is the content.  In English, that
 means that any mason tags and perl code in the content are evaluated
@@ -541,7 +545,7 @@ global, and is automatically local-ized by the foreach statement:</P>
     &lt;% $m-&gt;content %&gt;
     % }</PRE>
 <P>
-<H2><A NAME="components that compute values">Components that compute values</A></H2>
+<H2><A NAME="components_that_compute_values">Components that compute values</A></H2>
 <P>So far you have seen components used solely to output HTML.  However,
 components may also be used to compute a value. For example, you might
 have a component <CODE>is_netscape</CODE> that analyzes the user agent to
@@ -621,7 +625,7 @@ something else, you will need to explicitly override the subrequest's
 a new subrequest object for each one.</P>
 <P>
 <HR>
-<H1><A NAME="toplevel components">TOP-LEVEL COMPONENTS</A></H1>
+<H1><A NAME="toplevel_components">TOP-LEVEL COMPONENTS</A></H1>
 <P>The first component invoked for a page (the ``top-level component'')
 resides within the DocumentRoot and is chosen based on the URL. For
 example:</P>
@@ -679,7 +683,7 @@ database of stories.</P>
 directory itself (e.g. <EM>/newsfeeds</EM>). These are automatically
 deferred to Apache, which generates an index page or a FORBIDDEN
 error.  Often this is desirable, but if necessary the administrator
-can let in directory requests as well; see <A HREF="Admin.html#allowing directory requests">Allowing directgory request in Admin</A>.</P>
+can let in directory requests as well; see <A HREF="Admin.html#allowing directory requests">Allowing directory request in Admin</A>.</P>
 <P>A component or dhandler that does not want to handle a particular
 request may defer control to the next dhandler by calling <CODE>&lt;
 $m-</CODE>decline &gt;&gt;.</P>
@@ -745,11 +749,11 @@ more specific section-based templates.</P>
 <P>Autohandlers can be made even more powerful in conjunction with
 Mason's object-oriented style features: methods, attributes, and
 inheritance.  In the interest of space these are discussed in a
-separate section, <A HREF="#objectoriented techniques">Object-Oriented Techniques</A>.</P>
+separate section, <A HREF="#objectoriented_techniques">Object-Oriented Techniques</A>.</P>
 <P>The administrator can customize the file name used for autohandlers
 with the <A HREF="Interp.html#autohandler_name">Interp's autohandler_name</A> parameter.</P>
 <P>
-<H2><A NAME="dhandlers vs. autohandlers">dhandlers vs. autohandlers</A></H2>
+<H2><A NAME="dhandlers_vs_autohandlers">dhandlers vs. autohandlers</A></H2>
 <P>dhandlers and autohandlers both provide a way to exert control over a
 large set of URLs. However, each specializes in a very different
 application.  The key difference is that dhandlers are invoked only
@@ -765,12 +769,12 @@ example, you might have a mix of real URLs and virtual URLs to which
 you would like to apply a common template/filter.</P>
 <P>
 <HR>
-<H1><A NAME="passing parameters">PASSING PARAMETERS</A></H1>
+<H1><A NAME="passing_parameters">PASSING PARAMETERS</A></H1>
 <P>This section describes Mason's facilities for passing parameters to
 components (either from HTTP requests or component calls) and for
 accessing parameter values inside components.</P>
 <P>
-<H2><A NAME="in component calls">In Component Calls</A></H2>
+<H2><A NAME="in_component_calls">In Component Calls</A></H2>
 <P>Any Perl data type can be passed in a component call:</P>
 <PRE>
     &lt;&amp; /sales/header, s =&gt; 'dog', l =&gt; [2, 3, 4], h =&gt; {a =&gt; 7, b =&gt; 8} &amp;&gt;</PRE>
@@ -778,7 +782,7 @@ accessing parameter values inside components.</P>
 list and hash must be passed as references, but they will be automatically
 dereferenced in the called component.</P>
 <P>
-<H2><A NAME="in http requests">In HTTP requests</A></H2>
+<H2><A NAME="in_http_requests">In HTTP requests</A></H2>
 <P>Consider a CGI-style URL with a query string:</P>
 <PRE>
     <A HREF="http://www.foo.com/mktg/prods.html?str=dog&amp">http://www.foo.com/mktg/prods.html?str=dog&amp</A>;lst=2&amp;lst=3&amp;lst=4</PRE>
@@ -786,7 +790,7 @@ dereferenced in the called component.</P>
 the GET/POST values and makes them available to the component as
 parameters.</P>
 <P>
-<H2><A NAME="accessing parameters">Accessing Parameters</A></H2>
+<H2><A NAME="accessing_parameters">Accessing Parameters</A></H2>
 <P>Component parameters, whether they come from GET/POST or another
 component, can be accessed in two ways.</P>
 <P>1.  Declared named arguments: Components can define an
@@ -829,7 +833,7 @@ have declared in <CODE>&lt;%args&gt;</CODE>.</P>
 <PRE>
     &lt;&amp; template, %ARGS &amp;&gt;</PRE>
 <P>
-<H2><A NAME="parameter passing examples">Parameter Passing Examples</A></H2>
+<H2><A NAME="parameter_passing_examples">Parameter Passing Examples</A></H2>
 <P>The following examples illustrate the different ways to pass and receive parameters.</P>
 <P>1.  Passing a scalar <EM>id</EM> with value 5.</P>
 <PRE>
@@ -862,7 +866,7 @@ have declared in <CODE>&lt;%args&gt;</CODE>.</P>
     query string, there is no detectable difference between a list or
     hash.)</PRE>
 <P>
-<H2><A NAME="using @_ instead">Using @_ instead</A></H2>
+<H2><A NAME="using___instead">Using @_ instead</A></H2>
 <P>If you don't like named parameters, you can pass a traditional
 list of ordered parameters:</P>
 <PRE>
@@ -877,11 +881,11 @@ using <CODE>@_</CODE> may be convenient for very small components, especially
 subcomponents created with <CODE>&lt;%def&gt;</CODE>.</P>
 <P>
 <HR>
-<H1><A NAME="initialization and cleanup">INITIALIZATION AND CLEANUP</A></H1>
+<H1><A NAME="initialization_and_cleanup">INITIALIZATION AND CLEANUP</A></H1>
 <P>The following sections contain blocks of Perl to execute at specific
 times.</P>
 <P>
-<H2><A NAME="<%init>">&lt;%init&gt;</A></H2>
+<H2><A NAME="_init_">&lt;%init&gt;</A></H2>
 <P>This section contains initialization code that executes as soon as the
 component is called. For example: checking that a user is logged in;
 selecting rows from a database into a list; parsing the contents of a
@@ -923,7 +927,7 @@ HTML without getting distracted or discouraged by Perl code. For example:</P>
     $article_id
     &lt;/%args&gt;</PRE>
 <P>
-<H2><A NAME="<%cleanup>">&lt;%cleanup&gt;</A></H2>
+<H2><A NAME="_cleanup_">&lt;%cleanup&gt;</A></H2>
 <P>This section contains cleanup code that executes just before the
 component exits. For example: closing a database connection or closing
 a file handle.</P>
@@ -933,7 +937,7 @@ subroutine block, and since Perl is so darned good at cleaning up
 stuff at the end of blocks, <CODE>&lt;%cleanup&gt;</CODE> sections are rarely
 needed.</P>
 <P>
-<H2><A NAME="<%once>">&lt;%once&gt;</A></H2>
+<H2><A NAME="_once_">&lt;%once&gt;</A></H2>
 <P>This code executes once when the component is loaded. Variables
 declared in this section can be seen in all of a component's code and
 persist for the lifetime of the component.</P>
@@ -966,13 +970,13 @@ section:</P>
 preloaded component, because neither of those variable exist when a
 component is preloaded.</P>
 <P>
-<H2><A NAME="<%shared>">&lt;%shared&gt;</A></H2>
+<H2><A NAME="_shared_">&lt;%shared&gt;</A></H2>
 <P>As with <CODE>&lt;%once&gt;</CODE>, variables declared in this section can be seen in all
 of a component's code: the main component, subcomponents, and methods.
 However, the code runs once per request (whenever the component is used)
 and its variables last only til the end of the request.</P>
 <P>Useful for initializing variables needed in, say, the main body and
-one more subcomponents or methods. See <A HREF="#objectoriented techniques">Object-Oriented Techniques</A> for an example of
+one more subcomponents or methods. See <A HREF="#objectoriented_techniques">Object-Oriented Techniques</A> for an example of
 usage.</P>
 <P>It's important to realize that you do not have access to the <CODE>%ARGS</CODE>
 hash or variables created via an <CODE>&lt;%args&gt;</CODE> block inside a shared
@@ -994,14 +998,14 @@ as well.</P>
 current compiler cannot properly handle it.</P>
 <P>
 <HR>
-<H1><A NAME="embedded components">EMBEDDED COMPONENTS</A></H1>
+<H1><A NAME="embedded_components">EMBEDDED COMPONENTS</A></H1>
 <P>
-<H2><A NAME="<%def name>">&lt;%def <EM>name</EM>&gt;</A></H2>
+<H2><A NAME="_def_name_">&lt;%def <EM>name</EM>&gt;</A></H2>
 <P>Each instance of this section creates a <EM>subcomponent</EM> embedded
 inside the current component. Inside you may place anything that a
 regular component contains, with the exception of <CODE>&lt;%def&gt;</CODE>, <CODE>&lt;%method&gt;</CODE>,
 <CODE>&lt;%once&gt;</CODE>, and <CODE>&lt;%shared&gt;</CODE> tags.</P>
-<P>The <EM>name</EM> consists of characters in the set <CODE>[A-Za-z0-9._-]</CODE>. To
+<P>The <EM>name</EM> consists of characters in the set <CODE>[\w._-]</CODE>. To
 call a subcomponent simply use its name in &lt;&amp; &amp;&gt; or <CODE>$m-&gt;comp</CODE>. A
 subcomponent can only be seen from the surrounding component.</P>
 <P>If you define a subcomponent with the same name as a file-based
@@ -1038,7 +1042,7 @@ standardized hyperlink:</P>
     &lt;li&gt;&lt;&amp; .link, site=&gt;'excite' &amp;&gt;
     &lt;/ul&gt;</PRE>
 <P>
-<H2><A NAME="<%method name>">&lt;%method <EM>name</EM>&gt;</A></H2>
+<H2><A NAME="_method_name_">&lt;%method <EM>name</EM>&gt;</A></H2>
 <P>Each instance of this section creates a <EM>method</EM> embedded inside
 the current component. Methods resemble subcomponents in terms of
 naming, contents, and scope. However, while subcomponents can only be
@@ -1056,29 +1060,29 @@ other components.</P>
     ...
     $comp-&gt;call_method('method1');</PRE>
 <P>Methods are commonly used in conjunction with autohandlers to make
-templates more flexible. See <A HREF="#objectoriented techniques">Object-Oriented Techniques</A> for more information.</P>
+templates more flexible. See <A HREF="#objectoriented_techniques">Object-Oriented Techniques</A> for more information.</P>
 <P>
 <HR>
-<H1><A NAME="flags and attributes">FLAGS AND ATTRIBUTES</A></H1>
+<H1><A NAME="flags_and_attributes">FLAGS AND ATTRIBUTES</A></H1>
 <P>The <CODE>&lt;%flags&gt;</CODE> and <CODE>&lt;%attr&gt;</CODE> sections consist of key/value
 pairs, one per line, joined by '=&gt;'.  The key and value in each pair
 must be valid Perl hash keys and values respectively. An optional
 comment may follow each line.</P>
 <P>
-<H2><A NAME="<%flags>">&lt;%flags&gt;</A></H2>
+<H2><A NAME="_flags_">&lt;%flags&gt;</A></H2>
 <P>Use this section to set official Mason flags that affect the current
 component's behavior.</P>
 <P>Currently there is only one flag, <CODE>inherit</CODE>, which specifies the
 component's <EM>parent</EM> in the form of a relative or absolute component
 path. A component inherits methods and attributes from its parent; see
-<A HREF="#objectoriented techniques">Object-Oriented Techniques</A> for
+<A HREF="#objectoriented_techniques">Object-Oriented Techniques</A> for
 examples.</P>
 <PRE>
     &lt;%flags&gt;
     inherit=&gt;'/site_handler'
     &lt;/%flags&gt;</PRE>
 <P>
-<H2><A NAME="<%attr>">&lt;%attr&gt;</A></H2>
+<H2><A NAME="_attr_">&lt;%attr&gt;</A></H2>
 <P>Use this section to assign static key/value attributes that can be
 queried from other components.</P>
 <PRE>
@@ -1100,7 +1104,7 @@ the results of the current component.  By separating out and hiding a
 filter that, say, changes HTML in a complex way, we allow
 non-programmers to work in a cleaner HTML environment.</P>
 <P>
-<H2><A NAME="<%filter> section">&lt;%filter&gt; section</A></H2>
+<H2><A NAME="_filter_section">&lt;%filter&gt; section</A></H2>
 <P>The <CODE>&lt;%filter&gt;</CODE> section allows you to arbitrarily filter the output of
 the current component. Upon entry to this code, <CODE>$_</CODE> contains the
 component output, and you are expected to modify it in place. The code
@@ -1126,13 +1130,13 @@ the item corresponding to the current page:</P>
 without <CODE>if</CODE> statements surrounding each link!  Note that the regular
 expression need not be very robust as long as you have control over what
 will appear in the body.</P>
-<P>You can use <A HREF="#component calls with content">Component Calls with Content</A> if you want to filter specific parts of a component rather
+<P>You can use <A HREF="#component_calls_with_content">Component Calls with Content</A> if you want to filter specific parts of a component rather
 than the entire component.</P>
 <P>
 <HR>
-<H1><A NAME="other syntax">OTHER SYNTAX</A></H1>
+<H1><A NAME="other_syntax">OTHER SYNTAX</A></H1>
 <P>
-<H2><A NAME="<%doc>">&lt;%doc&gt;</A></H2>
+<H2><A NAME="_doc_">&lt;%doc&gt;</A></H2>
 <P>Text in this section is treated as a comment and ignored. Most useful
 for a component's main documentation.  One can easily write a program
 to sift through a set of components and pull out their <CODE>&lt;%doc&gt;</CODE>
@@ -1144,7 +1148,7 @@ cumbersome comment marker.  Another option is '%#':</P>
 <P>These comments differ from HTML comments in that they do not appear in
 the HTML.</P>
 <P>
-<H2><A NAME="<%text>">&lt;%text&gt;</A></H2>
+<H2><A NAME="_text_">&lt;%text&gt;</A></H2>
 <P>Text in this section is passed through unmodified by Mason.  Any Mason
 syntax inside it is ignored.  This is useful, for example, when
 documenting Mason itself from a component:</P>
@@ -1158,7 +1162,7 @@ documenting Mason itself from a component:</P>
 <PRE>
     % $m-&gt;print('The tags are &lt;%text&gt; and &lt;/%text&gt;.');</PRE>
 <P>
-<H2><A NAME="escaping expressions">Escaping expressions</A></H2>
+<H2><A NAME="escaping_expressions">Escaping expressions</A></H2>
 <P>Mason has facilities for <EM>escaping</EM> the output from <CODE>&lt;% %&gt;</CODE>
 tags, on either a site-wide or a per-expression basis.</P>
 <P>Any <CODE>&lt;% %&gt;</CODE> expression may be terminated by a '|' and one or more
@@ -1182,7 +1186,7 @@ specific expression:</P>
     &lt;% $html_block |n %&gt;</PRE>
 <P>Future Mason versions will allow user-defined and multi-letter escape flags.</P>
 <P>
-<H2><A NAME="backslash at end of line">Backslash at end of line</A></H2>
+<H2><A NAME="backslash_at_end_of_line">Backslash at end of line</A></H2>
 <P>A backslash (\) at the end of a line suppresses the newline. In HTML
 components, this is mostly useful for fixed width areas like <CODE>&lt;pre&gt;</CODE>
 tags, since browsers ignore white space for the most part. An example:</P>
@@ -1215,7 +1219,7 @@ To suppress the newlines:</P>
     foobarbaz</PRE>
 <P>
 <HR>
-<H1><A NAME="data caching">DATA CACHING</A></H1>
+<H1><A NAME="data_caching">DATA CACHING</A></H1>
 <P>Mason's data caching interface allows components to cache the results
 of computation for improved performance.  Anything may be cached, from
 a block of HTML to a complex data structure.</P>
@@ -1229,7 +1233,7 @@ documentation</EM> for <CODE>Cache::Cache</CODE> as well as for relevant subclas
 (e.g. <CODE>Cache::FileCache</CODE>). Our documentation here covers common usage
 but skips many options and features.</P>
 <P>
-<H2><A NAME="basic usage">Basic Usage</A></H2>
+<H2><A NAME="basic_usage">Basic Usage</A></H2>
 <P>The <CODE>$m-&gt;cache</CODE> method returns an object representing the cache
 for this component. Here's the typical usage of <CODE>$m-&gt;cache</CODE>:</P>
 <PRE>
@@ -1243,7 +1247,7 @@ value. If the value is available it is placed in <CODE>$result</CODE>. If the
 value is not available, <CODE>$result</CODE> is computed and stored in the
 cache by <CODE>$m-&gt;cache-&gt;set</CODE>.</P>
 <P>
-<H2><A NAME="multiple keys/values">Multiple Keys/Values</A></H2>
+<H2><A NAME="multiple_keys_values">Multiple Keys/Values</A></H2>
 <P>A cache can store multiple key/value pairs. A value can be
 anything serializable by <CODE>Storable</CODE>, from a simple scalar to an
 arbitrary complex list or hash reference:</P>
@@ -1277,9 +1281,45 @@ whenever a particular <CODE>$file</CODE> changes:</P>
         $m-&gt;cache-&gt;remove($key);
     }</PRE>
 <P>You can also expire a cache item from an external script; see
-<A HREF="#accessing a cache externally">Accessing a Cache Externally</A> below.</P>
+<A HREF="#accessing_a_cache_externally">Accessing a Cache Externally</A> below.</P>
 <P>
-<H2><A NAME="caching all output">Caching All Output</A></H2>
+<H2><A NAME="avoiding_concurrent_recomputatio">Avoiding Concurrent Recomputation</A></H2>
+<P>The code shown in ``Basic Usage'' above,</P>
+<PRE>
+   my $result = $m-&gt;cache-&gt;get('key');
+   if (!defined($result)) {
+       ... compute $result ...
+       $m-&gt;cache-&gt;set('key', $result);
+   }</PRE>
+<P>can suffer from a kind of race condition for caches that
+are accessed frequently and take a long time to recompute.</P>
+<P>Suppose that a particular cache value is accessed five times a
+second and takes three seconds to recompute.  When the cache expires,
+the first process comes in, sees that it is expired, and starts to
+recompute the value.  The second process comes in and does the same thing.
+This sequence continues until the first process finishes and stores
+the new value.  On average, the value will be recomputed and written
+to the cache 15 times!</P>
+<P>One solution is to have the first process set the expiration time of
+the value ahead a few minutes, so that the other processes use the old
+value instead of also recomputing it:</P>
+<PRE>
+   my $result = $m-&gt;cache-&gt;get('key');
+   if (!defined($result)) {
+       if (my $o = $m-&gt;cache-&gt;get_object('key')) {
+           $o-&gt;set_expiration_time(time + 2*60);
+       }
+       ... compute $result ...
+       $m-&gt;cache-&gt;set('key', $result);
+   }</PRE>
+<P>Of course, this solution will only work if it is acceptable for a
+component to get a slightly stale cache value for a few minutes.</P>
+<P>Mason 1.0x and earlier had a feature called ``busy locks'' that
+addressed the same problem in an admittedly more compact fashion.
+This feature is not currently supported, although a version of it may
+be added to <CODE>Cache::Cache</CODE> in the future.</P>
+<P>
+<H2><A NAME="caching_all_output">Caching All Output</A></H2>
 <P>Occasionally you will need to cache the complete output of a
 component.  For this purpose, Mason offers the <CODE>$m-&gt;cache_self</CODE>
 method.  This method causes Mason to check to see if this component
@@ -1289,15 +1329,16 @@ normally and its output and return value cached.</P>
 <P>It is typically used right at the top of an <CODE>&lt;%init&gt;</CODE> section:</P>
 <PRE>
     &lt;%init&gt;
-    return if $m-&gt;cache_self(expire_in =&gt; '3 hours' [, key =&gt; 'fookey' ]);
+    return if $m-&gt;cache_self([key =&gt; 'fookey', expires_in =&gt; '3 hours',
+                             ... &lt;other cache options&gt; ... ]);
      ... &lt;rest of init&gt; ...
     &lt;/%init&gt;</PRE>
 <P><CODE>$m-&gt;cache_self</CODE> is built on top of <CODE>$m-&gt;cache</CODE>, so it
 accepts all of the cache options described earlier.  <CODE>&lt;
-$m-</CODE>cache_self &gt;&gt; can also cache a component's return value; see the
+$m-</CODE>cache_self &gt;&gt; can also cache a component's return value. See the
 <STRONG><A HREF="Request.html">HTML::Mason::Request</A></STRONG> documentation for details.</P>
 <P>
-<H2><A NAME="cache object metadata">Cache Object Meta-data</A></H2>
+<H2><A NAME="cache_object_metadata">Cache Object Meta-data</A></H2>
 <P><CODE>$m-&gt;cache-&gt;get_object</CODE> returns the <STRONG>Cache::Object</STRONG> associated
 with a particular key. You can use this to retrieve useful
 meta-data:</P>
@@ -1307,7 +1348,7 @@ meta-data:</P>
     $co-&gt;get_accessed_at();   # when was object last accessed
     $co-&gt;get_expired_at();    # when does object expire</PRE>
 <P>
-<H2><A NAME="choosing a cache subclass">Choosing a Cache Subclass</A></H2>
+<H2><A NAME="choosing_a_cache_subclass">Choosing a Cache Subclass</A></H2>
 <P><CODE>Cache::Cache</CODE> is a purely virtual API implemented by a variety of
 subclasses. For example, <STRONG>Cache::FileCache</STRONG> implements the interface with a
 set of directories and files, while <STRONG>Cache::MemoryCache</STRONG> implements the
@@ -1324,7 +1365,7 @@ same component. Just make sure the correct value is passed to all
 calls to <CODE>$m-&gt;cache</CODE>; Mason does not remember which subclass you
 have used for a given component or key.</P>
 <P>
-<H2><A NAME="accessing a cache externally">Accessing a Cache Externally</A></H2>
+<H2><A NAME="accessing_a_cache_externally">Accessing a Cache Externally</A></H2>
 <P>To access a component's cache from outside the component (e.g. in an
 external Perl script), you'll need have the following information:</P>
 <UL>
@@ -1356,9 +1397,9 @@ and the cache subclass is <CODE>Cache::FileCache</CODE>:</P>
     $cache-&gt;remove('key1');</PRE>
 <P>
 <HR>
-<H1><A NAME="webspecific features">WEB-SPECIFIC FEATURES</A></H1>
+<H1><A NAME="webspecific_features">WEB-SPECIFIC FEATURES</A></H1>
 <P>
-<H2><A NAME="sending http headers">Sending HTTP Headers</A></H2>
+<H2><A NAME="sending_http_headers">Sending HTTP Headers</A></H2>
 <P>Mason automatically sends HTTP headers via <CODE>$r-&gt;send_http_header</CODE>
 but it will not send headers if they've already been sent manually.</P>
 <P>To determine the exact header behavior on your system, you need to
@@ -1392,7 +1433,7 @@ output anything (given its functional nature, it shouldn't).</P>
 <A HREF="Request.html#auto_send_headers">Request's auto_send_headers</A>
 parameter available when running Mason with the ApacheHandler module.</P>
 <P>
-<H2><A NAME="returning http status">Returning HTTP Status</A></H2>
+<H2><A NAME="returning_http_status">Returning HTTP Status</A></H2>
 <P>The value returned from the top-most component becomes the status code
 of the request. If no value is explicitly returned, it defaults to OK
 (0).</P>
@@ -1421,7 +1462,7 @@ or the status will not make it out:</P>
       }
    }</PRE>
 <P>
-<H2><A NAME="external redirects">External Redirects</A></H2>
+<H2><A NAME="external_redirects">External Redirects</A></H2>
 <P>Because it is so commonly needed, Mason provides an external redirect
 method:</P>
 <PRE>
@@ -1429,7 +1470,7 @@ method:</P>
 <P>This method uses the clear_buffer/abort technique mentioned above,
 so the same warnings apply regarding evals.</P>
 <P>
-<H2><A NAME="internal redirects">Internal Redirects</A></H2>
+<H2><A NAME="internal_redirects">Internal Redirects</A></H2>
 <P>There are two ways to perform redirects that are invisible to the
 client.</P>
 <P>First, you can use a Mason subrequest (see <A HREF="#subrequests">Subrequests</A>). This only
@@ -1445,7 +1486,7 @@ whether or not the new URL will be handled by Mason.  Use it this way:</P>
 generating extra headers or content.</P>
 <P>
 <HR>
-<H1><A NAME="using the perl debugger">USING THE PERL DEBUGGER</A></H1>
+<H1><A NAME="using_the_perl_debugger">USING THE PERL DEBUGGER</A></H1>
 <P>You can use the perl debugger in conjunction with a live
 mod_perl/Mason server with the help of Apache::DB, available from
 CPAN. Refer to the Apache::DB documentation for details.</P>
@@ -1472,7 +1513,7 @@ components using a conditional on $_[1]:</P>
     mb $_[1] =~ /component name/</PRE>
 <P>
 <HR>
-<H1><A NAME="objectoriented techniques">OBJECT-ORIENTED TECHNIQUES</A></H1>
+<H1><A NAME="objectoriented_techniques">OBJECT-ORIENTED TECHNIQUES</A></H1>
 <P>Earlier you learned how to assign a common template to an entire
 hierarchy of pages using <EM>autohandlers</EM>. The basic template looks like:</P>
 <PRE>
@@ -1493,7 +1534,7 @@ implements them in a shallow way to solve a particular set of
 problems. Future redesigns may incorporate a deeper object
 architecture if the current prototype proves successful.</P>
 <P>
-<H2><A NAME="determining inheritance">Determining inheritance</A></H2>
+<H2><A NAME="determining_inheritance">Determining inheritance</A></H2>
 <P>Every component may have a single <EM>parent</EM>. The default parent is a
 component named <CODE>autohandler</CODE> in the closest parent directory.  This
 rule applies to autohandlers too: an autohandler may not have itself
@@ -1509,7 +1550,7 @@ no one.  This is how to suppress templates.</P>
 <P>Currently there is no way to specify a parent dynamically at run-time,
 or to specify multiple parents.</P>
 <P>
-<H2><A NAME="content wrapping">Content wrapping</A></H2>
+<H2><A NAME="content_wrapping">Content wrapping</A></H2>
 <P>At page execution time, Mason builds a chain of components from the
 called component, its parent, its parent's parent, and so
 on. Execution begins with the top-most component; calling
@@ -1517,7 +1558,7 @@ on. Execution begins with the top-most component; calling
 is the familiar autohandler ``wrapping'' behavior, generalized for any
 number of arbitrarily named templates.</P>
 <P>
-<H2><A NAME="accessing methods and attributes">Accessing methods and attributes</A></H2>
+<H2><A NAME="accessing_methods_and_attributes">Accessing methods and attributes</A></H2>
 <P>A template can access methods and/or attributes of the requested
 page. First, use <CODE>$m-&gt;request_comp</CODE> to get a handle on the
 appropriate component:</P>
@@ -1584,7 +1625,7 @@ questionable attributes:</P>
 <PRE>
     my $color = $self-&gt;attr_if_exists('color'); # if it doesn't exist $color is undef</PRE>
 <P>
-<H2><A NAME="sharing data">Sharing data</A></H2>
+<H2><A NAME="sharing_data">Sharing data</A></H2>
 <P>A component's main body and its methods occupy separate lexical
 scopes. Variables declared, say, in the <CODE>&lt;%init&gt;</CODE> section of the main
 component cannot be seen from methods.</P>
@@ -1683,7 +1724,7 @@ chain to run.</P>
 a primary section for the body.</P>
 <P>
 <HR>
-<H1><A NAME="common traps">COMMON TRAPS</A></H1>
+<H1><A NAME="common_traps">COMMON TRAPS</A></H1>
 <DL>
 <DT><STRONG><A NAME="item_content">Do not call $r-&gt;content or ``new CGI''</A></STRONG><BR>
 <DD>
@@ -1710,7 +1751,7 @@ initialize the object from %ARGS:</P>
 <P>Jonathan Swartz &lt;<A HREF="mailto:swartz@pobox.com">swartz@pobox.com</A>&gt;, Dave Rolsky &lt;<A HREF="mailto:autarch@urth.org">autarch@urth.org</A>&gt;, Ken Williams &lt;<A HREF="mailto:ken@mathforum.org">ken@mathforum.org</A>&gt;</P>
 <P>
 <HR>
-<H1><A NAME="see also">SEE ALSO</A></H1>
+<H1><A NAME="see_also">SEE ALSO</A></H1>
 <P><A HREF="Mason.html">HTML::Mason</A>,
 <A HREF="Admin.html">HTML::Mason::Admin</A>,
 <A HREF="Request.html">HTML::Mason::Request</A></P>

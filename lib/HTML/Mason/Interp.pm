@@ -113,14 +113,12 @@ sub _initialize
     $self->{code_cache_current_size} = 0;
 
     #
-    # Check that directories are absolute.
+    # Check that data_dir is absolute.
     #
-    foreach my $field (qw(data_dir)) {
-	if ($self->{$field}) {
-	    $self->{$field} = File::Spec->canonpath( $self->{$field} );
-	    param_error "$field '$self->{$field}' must be an absolute directory"
-		unless File::Spec->file_name_is_absolute( $self->{$field} );
-	}
+    if ($self->{data_dir}) {
+        $self->{data_dir} = File::Spec->canonpath( $self->{data_dir} );
+        param_error "data_dir '$self->{data_dir}' must be an absolute directory"
+            unless File::Spec->file_name_is_absolute( $self->{data_dir} );
     }
 
     #
@@ -494,16 +492,10 @@ sub eval_object_code
 	#
 	if ( $Config{d_alarm} && $] < 5.007003 )
 	{
-	    my $sec = 5;
-	    eval
-	    {
-		local $SIG{ALRM} =
-		    sub { die $warnstr };
-		alarm $sec;
-		$comp = eval $object_code;
-		alarm 0;
-		die $@ if $@;
-	    };
+           local $SIG{ALRM} = sub { die $warnstr };
+           alarm 5;
+           $comp = eval $object_code;
+           alarm 0;
 	}
 	else
 	{
@@ -856,6 +848,21 @@ preloads.
 =head1 OTHER METHODS
 
 =over
+
+=for html <a name="item_exec"></a>
+
+=item exec (comp, args...)
+
+Creates a new HTML::Mason::Request object for the given I<comp> and
+I<args>, and executes it. The return value is the return value of
+I<comp>, if any.
+
+This is useful for running Mason outside of a web environment.
+See L<HTML::Mason::Admin/Using Mason from a standalone script>
+for examples.
+
+This method isn't generally useful in a mod_perl environment; see
+L<subrequests|HTML::Mason::Devel/Subrequests> instead.
 
 =for html <a name="item_set_global"></a>
 

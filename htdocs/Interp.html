@@ -14,10 +14,10 @@
 	<LI><A HREF="#name">NAME</A></LI>
 	<LI><A HREF="#synopsis">SYNOPSIS</A></LI>
 	<LI><A HREF="#description">DESCRIPTION</A></LI>
-	<LI><A HREF="#parameters for new() constructor">PARAMETERS FOR <CODE>new()</CODE> CONSTRUCTOR</A></LI>
-	<LI><A HREF="#accessor methods">ACCESSOR METHODS</A></LI>
-	<LI><A HREF="#other methods">OTHER METHODS</A></LI>
-	<LI><A HREF="#see also">SEE ALSO</A></LI>
+	<LI><A HREF="#parameters_for_new_constructor">PARAMETERS FOR <CODE>new()</CODE> CONSTRUCTOR</A></LI>
+	<LI><A HREF="#accessor_methods">ACCESSOR METHODS</A></LI>
+	<LI><A HREF="#other_methods">OTHER METHODS</A></LI>
+	<LI><A HREF="#see_also">SEE ALSO</A></LI>
 </UL>
 <!-- INDEX END -->
 
@@ -42,7 +42,7 @@ which internally calls the Interp implementation methods. In that case
 the only user method is the <CODE>new()</CODE> constructor.</P>
 <P>
 <HR>
-<H1><A NAME="parameters for new() constructor">PARAMETERS FOR <CODE>new()</CODE> CONSTRUCTOR</A></H1>
+<H1><A NAME="parameters_for_new_constructor">PARAMETERS FOR <CODE>new()</CODE> CONSTRUCTOR</A></H1>
 <DL>
 <DT><STRONG><A NAME="item_autohandler_name">autohandler_name</A></STRONG><BR>
 <DD>
@@ -146,7 +146,7 @@ should be left alone.
 <P></P></DL>
 <P>
 <HR>
-<H1><A NAME="accessor methods">ACCESSOR METHODS</A></H1>
+<H1><A NAME="accessor_methods">ACCESSOR METHODS</A></H1>
 <P>All of the above properties have standard accessor methods of the same
 name. In general, no arguments retrieves the value, and one argument
 sets and returns the value.  For example:</P>
@@ -158,8 +158,19 @@ sets and returns the value.  For example:</P>
 preloads.</P>
 <P>
 <HR>
-<H1><A NAME="other methods">OTHER METHODS</A></H1>
-<a name="item_set_global"></a><DL>
+<H1><A NAME="other_methods">OTHER METHODS</A></H1>
+<a name="item_exec"></a><DL>
+<DT><STRONG><A NAME="item_exec">exec (comp, args...)</A></STRONG><BR>
+<DD>
+Creates a new HTML::Mason::Request object for the given <EM>comp</EM> and
+<EM>args</EM>, and executes it. The return value is the return value of
+<EM>comp</EM>, if any.
+<P>This is useful for running Mason outside of a web environment.
+See <A HREF="Admin.html#using mason from a standalone script">Using Mason from a standalone script in the HTML::Mason::Admin manpage</A>
+for examples.</P>
+<P>This method isn't generally useful in a mod_perl environment; see
+<A HREF="Devel.html#subrequests">subrequests</A> instead.</P>
+<a name="item_set_global"></a><P></P>
 <DT><STRONG><A NAME="item_set_global">set_global ($varname, [values...])</A></STRONG><BR>
 <DD>
 This method sets a global to be used in components. <CODE>varname</CODE> is a
@@ -225,7 +236,7 @@ convenience method will not work.
 <P></P></DL>
 <P>
 <HR>
-<H1><A NAME="see also">SEE ALSO</A></H1>
+<H1><A NAME="see_also">SEE ALSO</A></H1>
 <P><A HREF="Mason.html">HTML::Mason</A>,
 <A HREF="Admin.html">HTML::Mason::Admin</A>,
 <A HREF="ApacheHandler.html">HTML::Mason::ApacheHandler</A></P>

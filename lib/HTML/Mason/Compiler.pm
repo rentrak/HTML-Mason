@@ -332,7 +332,7 @@ sub start_named_block
 	    unless $self->{in_main};
 
     $self->lexer->throw_syntax_error("Invalid $p{block_type} name: $p{name}")
-	if $p{name} =~ /[^.\w]/;
+	if $p{name} =~ /[^.\w-]/;
 
     $self->{in_main}--;
 
@@ -391,7 +391,7 @@ sub component_call
 
     my $call = $p{call};
     for ($call) { s/^\s+//; s/\s+$//; }
-    if ( $call =~ m,^[A-Za-z0-9/_.],)
+    if ( $call =~ m,^[\w/.],)
     {
 	my $comma = index($call, ',');
 	$comma = length $call if $comma == -1;
@@ -432,7 +432,7 @@ sub component_content_call_end
 
     my $call = pop @{ $self->{comp_with_content_stack} };
 
-    if ( $call =~ m,^[A-Za-z0-9/_.],)
+    if ( $call =~ m,^[\w/.],)
     {
 	my $comma = index($call, ',');
 	$comma = length $call if $comma == -1;

@@ -13,25 +13,25 @@
 
 	<LI><A HREF="#name">NAME</A></LI>
 	<LI><A HREF="#description">DESCRIPTION</A></LI>
-	<LI><A HREF="#class::container">Class::Container</A></LI>
-	<LI><A HREF="#subclassable classes">SUBCLASSABLE CLASSES</A></LI>
+	<LI><A HREF="#class_container">Class::Container</A></LI>
+	<LI><A HREF="#subclassable_classes">SUBCLASSABLE CLASSES</A></LI>
 	<LI><A HREF="#constructors">CONSTRUCTORS</A></LI>
 	<LI><A HREF="#request">Request</A></LI>
 	<UL>
 
-		<LI><A HREF="#what to subclass">What to Subclass?</A></LI>
-		<LI><A HREF="#the exec() method">The <CODE>exec()</CODE> method</A></LI>
+		<LI><A HREF="#what_to_subclass">What to Subclass?</A></LI>
+		<LI><A HREF="#the_exec_method">The <CODE>exec()</CODE> method</A></LI>
 		<LI><A HREF="#subrequests">Subrequests</A></LI>
 		<LI><A HREF="#examples">Examples</A></LI>
 	</UL>
 
-	<LI><A HREF="#resolver and componentsource">Resolver and ComponentSource</A></LI>
+	<LI><A HREF="#resolver_and_componentsource">Resolver and ComponentSource</A></LI>
 	<LI><A HREF="#lexer">Lexer</A></LI>
 	<LI><A HREF="#compiler">Compiler</A></LI>
 	<LI><A HREF="#buffer">Buffer</A></LI>
 	<LI><A HREF="#apachehandler">ApacheHandler</A></LI>
 	<LI><A HREF="#cgihandler">CGIHandler</A></LI>
-	<LI><A HREF="#using subclasses">USING SUBCLASSES</A></LI>
+	<LI><A HREF="#using_subclasses">USING SUBCLASSES</A></LI>
 </UL>
 <!-- INDEX END -->
 
@@ -48,7 +48,7 @@ custom subclasses for parts of Mason, such as the Request or Buffer
 objects.</P>
 <P>
 <HR>
-<H1><A NAME="class::container">Class::Container</A></H1>
+<H1><A NAME="class_container">Class::Container</A></H1>
 <P>A number of modules in Mason are subclasses of <CODE>Class::Container</CODE>.
 This module was originally part of the Mason core as
 <CODE>HTML::Mason::Container</CODE>, but Ken Williams decided to release it separately on CPAN.</P>
@@ -65,55 +65,55 @@ some of the Mason core modules to see how <CODE>Class::Container</CODE> is used
 within Mason itself.</P>
 <P>
 <HR>
-<H1><A NAME="subclassable classes">SUBCLASSABLE CLASSES</A></H1>
+<H1><A NAME="subclassable_classes">SUBCLASSABLE CLASSES</A></H1>
 <P>The following classes have been designed with subclassing in mind:</P>
 <UL>
-<LI><STRONG><A NAME="item_HTML%3A%3AMason%3A%3ARequest">HTML::Mason::Request</A></STRONG><BR>
+<LI><STRONG><A NAME="item_HTML_3A_3AMason_3A_3AReques">HTML::Mason::Request</A></STRONG><BR>
 
 This object is your old friend <CODE>$m</CODE>.  The request contains
 information about the current request context, and provides methods
 for calling other components.
 <P></P>
-<LI><STRONG><A NAME="item_HTML%3A%3AMason%3A%3AResolver">HTML::Mason::Resolver</A></STRONG><BR>
+<LI><STRONG><A NAME="item_HTML_3A_3AMason_3A_3AResolv">HTML::Mason::Resolver</A></STRONG><BR>
 
 The resolver's job is to translate a component paths into an actual
 component.  Mason comes with a single Resolver subclass,
 <CODE>HTML::Mason::Resolver::File</CODE>, which is used to translate component
 paths into filesystem paths.
 <P></P>
-<LI><STRONG><A NAME="item_HTML%3A%3AMason%3A%3AComponentSource">HTML::Mason::ComponentSource</A></STRONG><BR>
+<LI><STRONG><A NAME="item_HTML_3A_3AMason_3A_3ACompon">HTML::Mason::ComponentSource</A></STRONG><BR>
 
 An object of this class represents a component's source.  These
 objects are instantiated by the resolver when it finds a component
 matching a given path.
 <P></P>
-<LI><STRONG><A NAME="item_HTML%3A%3AMason%3A%3ALexer">HTML::Mason::Lexer</A></STRONG><BR>
+<LI><STRONG><A NAME="item_HTML_3A_3AMason_3A_3ALexer">HTML::Mason::Lexer</A></STRONG><BR>
 
 The lexer is responsible for parsing a component.  Creating a new
 lexer would allow you to change Mason's component syntax.
 <P></P>
-<LI><STRONG><A NAME="item_HTML%3A%3AMason%3A%3ACompiler">HTML::Mason::Compiler</A></STRONG><BR>
+<LI><STRONG><A NAME="item_HTML_3A_3AMason_3A_3ACompil">HTML::Mason::Compiler</A></STRONG><BR>
 
 The compiler takes the parsed chunks from the lexer and gives them
 meaning.  The default compiler, <CODE>HTML::Mason::Compiler::ToObject</CODE>,
 turns a Mason component into a Mason ``object file'', which contains
 actual Perl code.
 <P></P>
-<LI><STRONG><A NAME="item_HTML%3A%3AMason%3A%3ABuffer">HTML::Mason::Buffer</A></STRONG><BR>
+<LI><STRONG><A NAME="item_HTML_3A_3AMason_3A_3ABuffer">HTML::Mason::Buffer</A></STRONG><BR>
 
 Buffers are created and manipulated (mostly) by the request class and
 are responsible for handling output.  Buffers apply filters to output
 and buffer it (surprise) as well.
 <P></P>
-<LI><STRONG><A NAME="item_HTML%3A%3AMason%3A%3AApacheHandler">HTML::Mason::ApacheHandler</A></STRONG><BR>
+<LI><STRONG><A NAME="item_HTML_3A_3AMason_3A_3AApache">HTML::Mason::ApacheHandler</A></STRONG><BR>
 
 The ApacheHandler class is the bridge between the mod_perl world and
 Mason, primarily Mason's Interp class.
-<P>It also provides its own <A HREF="#item_HTML%3A%3AMason%3A%3ARequest"><CODE>HTML::Mason::Request</CODE></A> and
+<P>It also provides its own <A HREF="#item_HTML_3A_3AMason_3A_3AReques"><CODE>HTML::Mason::Request</CODE></A> and
 <CODE>HTML::Resolver::File</CODE> subclasses which implement some mod_perl
 specific behaviors and features.</P>
 <P></P>
-<LI><STRONG><A NAME="item_HTML%3A%3AMason%3A%3AInterp">HTML::Mason::Interp</A></STRONG><BR>
+<LI><STRONG><A NAME="item_HTML_3A_3AMason_3A_3AInterp">HTML::Mason::Interp</A></STRONG><BR>
 
 The Interp is the core of Mason, and is primarily responsible for
 making all the other objects do their jobs.
@@ -140,9 +140,9 @@ overridden constructor looks something like this:</P>
 <HR>
 <H1><A NAME="request">Request</A></H1>
 <P>
-<H2><A NAME="what to subclass">What to Subclass?</A></H2>
+<H2><A NAME="what_to_subclass">What to Subclass?</A></H2>
 <P>One important thing to know about this class is that it is actually
-several classes.  The first, <A HREF="#item_HTML%3A%3AMason%3A%3ARequest"><CODE>HTML::Mason::Request</CODE></A>, is used when
+several classes.  The first, <A HREF="#item_HTML_3A_3AMason_3A_3AReques"><CODE>HTML::Mason::Request</CODE></A>, is used when
 ApacheHandler is not loaded.  The other,
 <CODE>HTML::Mason::Request::ApacheHandler</CODE>, is loaded by ApacheHandler and
 used to provide some mod_perl specific features.  Similar, the
@@ -173,12 +173,12 @@ constructor, like this:</P>
 <P>It is quite important that you do this as these handler-specific
 subclasses provide important functionality.  The <CODE>alter_superclass()</CODE>
 method is implemented in the
-<A HREF="Request.html"><A HREF="#item_HTML%3A%3AMason%3A%3ARequest"><CODE>HTML::Mason::Request</CODE></A></A> base class, and will
+<A HREF="Request.html"><A HREF="#item_HTML_3A_3AMason_3A_3AReques"><CODE>HTML::Mason::Request</CODE></A></A> base class, and will
 do the right thing even in cases of multiple inheritance.  It also
 cooperates with <CODE>Class::Container</CODE> to make sure that it sees changes
 to the inheritance hierarchy.</P>
 <P>
-<H2><A NAME="the exec() method">The <CODE>exec()</CODE> method</A></H2>
+<H2><A NAME="the_exec_method">The <CODE>exec()</CODE> method</A></H2>
 <P>The <CODE>exec</CODE> method is called in order to execute a request, and is the
 method that you are most likely to want to override.</P>
 <P>However, if you do override it we suggest that you make sure to call
@@ -218,15 +218,15 @@ request, you can simply check the value of <CODE>$self-&gt;is_subrequest</CODE>.
 <P>See the <CODE>HTML::Mason::Request::WithApacheSession</CODE> module on CPAN.</P>
 <P>
 <HR>
-<H1><A NAME="resolver and componentsource">Resolver and ComponentSource</A></H1>
+<H1><A NAME="resolver_and_componentsource">Resolver and ComponentSource</A></H1>
 <P>The resolver takes a component path and figures out what component
 that path corresponds to.</P>
 <P>All resolver classes must implement two methods, <CODE>get_info</CODE> and
 <CODE>glob_path</CODE>.  The first takes a component path and returns a new
-<A HREF="#item_HTML%3A%3AMason%3A%3AComponentSource"><CODE>HTML::Mason::ComponentSource</CODE></A> object.  This object contains
+<A HREF="#item_HTML_3A_3AMason_3A_3ACompon"><CODE>HTML::Mason::ComponentSource</CODE></A> object.  This object contains
 information about the component, such as its last modified time and
 its source.  See the
-<A HREF="ComponentSource.html"><A HREF="#item_HTML%3A%3AMason%3A%3AComponentSource"><CODE>HTML::Mason::ComponentSource</CODE></A></A>
+<A HREF="ComponentSource.html"><A HREF="#item_HTML_3A_3AMason_3A_3ACompon"><CODE>HTML::Mason::ComponentSource</CODE></A></A>
 documentation for more details.</P>
 <P>You may choose to provide your own ComponentSource subclass as well,
 if your resolver implementation can take advantage of it.</P>
@@ -251,7 +251,7 @@ details on what methods a subclass of this class needs to provide.</P>
 <HR>
 <H1><A NAME="buffer">Buffer</A></H1>
 <P>The public API documented in
-<A HREF="Buffer.html"><A HREF="#item_HTML%3A%3AMason%3A%3ABuffer"><CODE>HTML::Mason::Buffer</CODE></A></A> is the complete Buffer
+<A HREF="Buffer.html"><A HREF="#item_HTML_3A_3AMason_3A_3ABuffer"><CODE>HTML::Mason::Buffer</CODE></A></A> is the complete Buffer
 class API, except for one method, <CODE>_initialize</CODE>, which is called as
 part of the buffer's construction, from the <CODE>new</CODE> method.</P>
 <P>Those interested in subclassing this class should also know that the
@@ -259,7 +259,7 @@ constructor may take an additional parameter, <CODE>parent</CODE>, which should
 be a Buffer object.  This parameter is automatically supplied by the
 <CODE>new_child</CODE> method.</P>
 <P>Any subclass of this class you create should declare itself to be a
-subclass of the <A HREF="#item_HTML%3A%3AMason%3A%3ABuffer"><CODE>HTML::Mason::Buffer</CODE></A> class.</P>
+subclass of the <A HREF="#item_HTML_3A_3AMason_3A_3ABuffer"><CODE>HTML::Mason::Buffer</CODE></A> class.</P>
 <P>
 <HR>
 <H1><A NAME="apachehandler">ApacheHandler</A></H1>
@@ -277,7 +277,7 @@ provide your own argument processing or to step in and provide a
 different way to handle requests.</P>
 <P>
 <HR>
-<H1><A NAME="using subclasses">USING SUBCLASSES</A></H1>
+<H1><A NAME="using_subclasses">USING SUBCLASSES</A></H1>
 <P>When using your custom subclasses, we recommend that you take
 advantage of Mason's ability to construct subclassed object on the
 fly.</P>

@@ -249,6 +249,10 @@ accessed via $m methods.  You'll be introduced to these methods
 throughout this document as they are needed.  For a description of all
 methods see B<L<HTML::Mason::Request|HTML::Mason::Request>>.
 
+Because these are always set inside components, you should not ever
+define other variables with the same name, or else your code may fail
+in strange and mysterious ways.
+
 =head2 System Objects
 
 Five system objects share the work of serving requests in Mason:
@@ -300,7 +304,7 @@ e.g. S<C<< player => 'M. Jordan' >>>.
 comp_path may be a literal string (quotes optional) or a Perl expression
 that evaluates to a string. To eliminate the need for quotes in most
 cases, Mason employs some magic parsing: If the first character is
-one of C<[A-Za-z0-9/_.]>, comp_path is assumed to be a literal
+one of C<[\w/_.]>, comp_path is assumed to be a literal
 string running up to the first comma or &>. Otherwise, comp_path
 is evaluated as an expression.
 
@@ -634,7 +638,7 @@ By default dhandlers do not get a chance to handle requests to a
 directory itself (e.g. F</newsfeeds>). These are automatically
 deferred to Apache, which generates an index page or a FORBIDDEN
 error.  Often this is desirable, but if necessary the administrator
-can let in directory requests as well; see L<Allowing directgory
+can let in directory requests as well; see L<Allowing directory
 request in Admin|HTML::Mason::Admin/"Allowing directory requests">.
 
 A component or dhandler that does not want to handle a particular
@@ -1013,7 +1017,7 @@ inside the current component. Inside you may place anything that a
 regular component contains, with the exception of C<< <%def> >>, C<< <%method> >>,
 C<< <%once> >>, and C<< <%shared> >> tags.
 
-The I<name> consists of characters in the set C<[A-Za-z0-9._-]>. To
+The I<name> consists of characters in the set C<[\w._-]>. To
 call a subcomponent simply use its name in <& &> or C<< $m->comp >>. A
 subcomponent can only be seen from the surrounding component.
 
@@ -1338,6 +1342,48 @@ whenever a particular C<$file> changes:
 You can also expire a cache item from an external script; see
 L<Accessing a Cache Externally|"Accessing a Cache Externally"> below.
 
+=head2 Avoiding Concurrent Recomputation
+
+The code shown in "Basic Usage" above,
+
+   my $result = $m->cache->get('key');
+   if (!defined($result)) {
+       ... compute $result ...
+       $m->cache->set('key', $result);
+   }
+
+can suffer from a kind of race condition for caches that
+are accessed frequently and take a long time to recompute.
+
+Suppose that a particular cache value is accessed five times a
+second and takes three seconds to recompute.  When the cache expires,
+the first process comes in, sees that it is expired, and starts to
+recompute the value.  The second process comes in and does the same thing.
+This sequence continues until the first process finishes and stores
+the new value.  On average, the value will be recomputed and written
+to the cache 15 times!
+
+One solution is to have the first process set the expiration time of
+the value ahead a few minutes, so that the other processes use the old
+value instead of also recomputing it:
+
+   my $result = $m->cache->get('key');
+   if (!defined($result)) {
+       if (my $o = $m->cache->get_object('key')) {
+           $o->set_expiration_time(time + 2*60);
+       }
+       ... compute $result ...
+       $m->cache->set('key', $result);
+   }
+
+Of course, this solution will only work if it is acceptable for a
+component to get a slightly stale cache value for a few minutes.
+
+Mason 1.0x and earlier had a feature called "busy locks" that
+addressed the same problem in an admittedly more compact fashion.
+This feature is not currently supported, although a version of it may
+be added to C<Cache::Cache> in the future.
+
 =head2 Caching All Output
 
 Occasionally you will need to cache the complete output of a
@@ -1350,13 +1396,14 @@ normally and its output and return value cached.
 It is typically used right at the top of an C<< <%init> >> section:
 
     <%init>
-    return if $m->cache_self(expire_in => '3 hours' [, key => 'fookey' ]);
+    return if $m->cache_self([key => 'fookey', expires_in => '3 hours',
+                             ... <other cache options> ... ]);
      ... <rest of init> ...
     </%init>
 
 C<< $m->cache_self >> is built on top of C<< $m->cache >>, so it
 accepts all of the cache options described earlier.  C<<
-$m->cache_self >> can also cache a component's return value; see the
+$m->cache_self >> can also cache a component's return value. See the
 B<L<HTML::Mason::Request|HTML::Mason::Request>> documentation for details.
 
 =head2 Cache Object Meta-data

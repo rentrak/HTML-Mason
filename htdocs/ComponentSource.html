@@ -19,6 +19,111 @@
 <!-- INDEX END -->
 
 <HR>
+<P>
+<H1><A NAME="name">NAME</A></H1>
+<P>HTML::Mason::ComponentSource - represents information about an component</P>
+<P>
+<HR>
+<H1><A NAME="synopsis">SYNOPSIS</A></H1>
+<PRE>
+    my $info = $resolver-&gt;get_info($comp_path);</PRE>
+<P>
+<HR>
+<H1><A NAME="description">DESCRIPTION</A></H1>
+<P>Mason uses the ComponentSource class abstract information about a source
+component, one that has yet to be compiled.</P>
+<P>
+<HR>
+<H1><A NAME="methods">METHODS</A></H1>
+<DL>
+<DT><STRONG><A NAME="item_new">new</A></STRONG><BR>
+<DD>
+This method takes the following arguments:
+<UL>
+<LI><STRONG><A NAME="item_comp_path">comp_path</A></STRONG><BR>
+
+The component's component path.
+<P></P>
+<LI><STRONG><A NAME="item_last_modified">last_modified</A></STRONG><BR>
+
+This is the last modificatoin time for the component, in Unix time
+(seconds since the epoch).
+<P></P>
+<LI><STRONG><A NAME="item_comp_id">comp_id</A></STRONG><BR>
+
+This is a unique id for the component used to distinguish two
+components with the same name in different component roots.
+<P>If your resolver does not support multiple component roots, this can
+simply be the same as the ``comp_path'' key or it can be any other id
+you wish.</P>
+<P>This value will be used when constructing filesystem paths so it needs
+to be something that works on different filesystems.  If it contains
+forward slashes, these will be converted to the appropriate
+filesystem-specific path separator.</P>
+<P>In fact, we encourage you to make sure that your component ids have
+some forward slashes in them or also <STRONG>all</STRONG> of your generated object
+files will end up in a single directory, which could affect
+performance.</P>
+<P></P>
+<LI><STRONG><A NAME="item_comp_class">comp_class</A></STRONG><BR>
+
+The component class into which this particular component should be
+blessed when it is created.  This must be a subclass of
+<CODE>HTML::Mason::Component</CODE>, which is the default.
+<P></P>
+<LI><STRONG><A NAME="item_friendly_name">friendly_name</A></STRONG><BR>
+
+This is used when displaying error messages related to the component,
+like parsing errors.  This should be something that will help whoever
+sees the message identify the component.  For example, for component
+stored on the filesystem, this should be the absolute path to the
+component.
+<P></P>
+<LI><STRONG><A NAME="item_source_callback">source_callback</A></STRONG><BR>
+
+This is a subroutine reference which, when called, returns the
+component source.
+<P>The reasoning behind using this parameter is that it helps avoid a
+profusion of tiny little <CODE>HTML::Mason::ComponentSource</CODE> subclasses that
+don't do very much.</P>
+<P></P>
+<LI><STRONG><A NAME="item_extra">extra</A></STRONG><BR>
+
+This optional parameter should be a hash reference.  It is used to
+pass information from the resolver to the component class.
+<P>This is needed since a
+<A HREF="Resolver.html"><CODE>HTML::Mason::Resolver</CODE></A> subclass and a
+<A HREF="Component.html"><CODE>HTML::Mason::Component</CODE></A> subclass can be
+rather tightly coupled, but they must communicate with each through
+the interpreter (this may change in the future).</P>
+<P></P></UL>
+<DT><STRONG>comp_path</STRONG><BR>
+<DD>
+<DT><STRONG>last_modified</STRONG><BR>
+<DD>
+<DT><STRONG>comp_id</STRONG><BR>
+<DD>
+<DT><STRONG>comp_class</STRONG><BR>
+<DD>
+<DT><STRONG>friendly_name</STRONG><BR>
+<DD>
+<DT><STRONG>extra</STRONG><BR>
+<DD>
+These are all simple accessors that return the value given to the
+constructor.
+<P></P>
+<DT><STRONG><A NAME="item_comp_source">comp_source</A></STRONG><BR>
+<DD>
+Returns the source of the component.
+<P></P>
+<DT><STRONG><A NAME="item_object_code">object_code ( compiler =&gt; $compiler )</A></STRONG><BR>
+<DD>
+Given a compiler, this method returns the object code for the
+component.
+<P></P></DL>
+<P><A HREF="Mason.html">HTML::Mason</A>,
+<A HREF="Admin.html">HTML::Mason::Admin</A>,
+<A HREF="Component.html">HTML::Mason::Component</A></P>
 
 </BODY>
 

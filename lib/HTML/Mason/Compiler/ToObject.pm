@@ -220,10 +220,26 @@ sub _component_params
     my %params = ( code => join ( '', "sub {\n", $self->_body, "}" ),
 		 );
 
-    $params{flags} = join '', "{\n", $self->_flags, "\n}" if keys %{ $self->{current_comp}{flags} };
-    $params{attr}  = join '', "{\n", $self->_attr, "\n}" if keys %{ $self->{current_comp}{attr} };
+    $params{flags} = join '', "{\n", $self->_flags, "\n}"
+        if keys %{ $self->{current_comp}{flags} };
+
+    $params{attr}  = join '', "{\n", $self->_attr, "\n}"
+        if keys %{ $self->{current_comp}{attr} };
+
     $params{declared_args} = join '', "{\n", $self->_declared_args, "\n}"
 	if @{ $self->{current_comp}{args} };
+
+    if ( my @filter = $self->_blocks('filter') )
+    {
+        $params{filter} =
+            ( join '',
+              "sub { local \$_ = shift;\n",
+              ( join ";\n", @filter ),
+              ";\n",
+              "return \$_;\n",
+              "}\n",
+            );
+    }
 
     return \%params;
 }
@@ -249,39 +265,13 @@ EOF
     return join '', ( $self->preamble,
 		      "my \%ARGS;\n",
 		      @args,
-		      $self->_filter_code,
 		      "\$m->debug_hook( \$m->current_comp->path ) if ( \%DB:: );\n\n",
 		      $self->_blocks('init'),
 		      $self->{current_comp}{body},
 		      $self->_blocks('cleanup'),
 		      $self->postamble,
-		      $self->_finish_filter,
 		      "return undef;\n",
 		    );
-}
-
-sub _filter_code
-{
-    my $self = shift;
-    return unless $self->_blocks('filter');
-
-    return ( "my \$filter = sub { local \$_ = shift;\n",
-	     ( join ";\n", $self->_blocks('filter') ),
-	     ";\n",
-	     "return \$_;\n",
-	     "};\n",
-	     "\$m->push_buffer_stack( \$m->top_buffer->new_child( filter => \$filter ) );\n",
-	   );
-}
-
-sub _finish_filter
-{
-    my $self = shift;
-    return unless $self->_blocks('filter');
-
-    return ( "\$m->top_buffer->flush;\n",
-	     "\$m->pop_buffer_stack;\n",
-	   );
 }
 
 my %coercion_funcs = ( '@' => 'HTML::Mason::Tools::coerce_to_array',
@@ -368,7 +358,7 @@ sub _flags_or_attr
     my $self = shift;
     my $type = shift;
 
-    return join ",\n", ( map { "$_ => $self->{current_comp}{$type}{$_}" }
+    return join "\n,", ( map { "$_ => $self->{current_comp}{$type}{$_}" }
 			 keys %{ $self->{current_comp}{$type} } );
 }
 

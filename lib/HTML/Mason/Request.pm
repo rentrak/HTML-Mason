@@ -263,6 +263,8 @@ sub exec {
     $interp->set_global('m'=>$self)
         if ($interp->compiler->in_package ne 'HTML::Mason::Commands');
 
+    # Save context of subroutine for use inside eval.
+    my $wantarray = wantarray;
     my @result;
     eval {
 	# Create initial buffer.
@@ -289,7 +291,10 @@ sub exec {
 
 	    $first_comp = $wrapper_chain[0];
 	    $self->{wrapper_chain} = [@wrapper_chain];
-	    $self->{wrapper_index} = {map((($wrapper_chain[$_]->path || '') => $_),(0..$#wrapper_chain))};
+	    $self->{wrapper_index} = { map
+                                       { $wrapper_chain[$_]->comp_id => $_ }
+                                       (0..$#wrapper_chain)
+                                     };
 	}
 
 	{
@@ -297,12 +302,14 @@ sub exec {
 	    tie *SELECTED, 'Tie::Handle::Mason', $self;
 
 	    my $old = select SELECTED;
-	    if (wantarray) {
+	    if ($wantarray) {
 		@result = eval {$self->comp({base_comp=>$request_comp}, $first_comp, @request_args)};
-	    } else {
+	    } elsif (defined($wantarray)) {
 		$result[0] = eval {$self->comp({base_comp=>$request_comp}, $first_comp, @request_args)};
+	    } else {
+		eval {$self->comp({base_comp=>$request_comp}, $first_comp, @request_args)};
 	    }
-	    select STDOUT;
+	    select $old;
 	    die $@ if $@;
 	}
     };
@@ -325,7 +332,8 @@ sub exec {
     $interp->purge_code_cache;
 
     # Return aborted value or result.
-    return ($self->aborted($err) ? $err->aborted_value : (wantarray ? @result : $result[0]));
+    @result = ($err->aborted_value) if $self->aborted($err);
+    return $wantarray ? @result : defined($wantarray) ? $result[0] : undef;
 }
 
 #
@@ -441,51 +449,88 @@ sub cache_self {
     my $key = delete $options{key} || '__mason_cache_self__';
     my $cache = $self->cache(%options);
 
+    # If the top buffer has a filter we need to remove it because
+    # either:
+    #
+    # 1. We have no cached output and we'll be calling the component
+    # again in a moment.  And when the component is called it'll stick
+    # _another_ filtering buffer on the stack.
+    #
+    # ... or ...
+    #
+    # 2. We do have cached output, and that output has already passed
+    # through the filter in the past so we don't want to filter it
+    # again.
+    #
+    # We'll put it back later no matter what in order to let it be
+    # taken off for real in Component.pm
+    #
+    my $filter;
+    $filter = pop @{ $self->{buffer_stack} }
+        if $self->top_buffer->filter;
+
     my ($output, $retval);
-    if (my $cached = $cache->get($key)) {
-	($output, $retval) = @$cached;
-    } else {
-	local $self->top_stack->{in_cache_self} = 1;
+    eval
+    {
+        if (my $cached = $cache->get($key)) {
+            ($output, $retval) = @$cached;
+        } else {
+            my $top_stack = $self->top_stack;
+            my $comp = $top_stack->{comp};
+            my @args = @{ $top_stack->{args} };
 
-	push @{ $self->{buffer_stack} },
-            $self->top_buffer->new_child(sink => \$output, ignore_flush => 1);
+            push @{ $self->{buffer_stack} },
+                $self->top_buffer->new_child(sink => \$output, ignore_flush => 1);
 
-	my $comp = $self->top_stack->{comp};
-	my @args = @{ $self->top_stack->{args} };
+            local $top_stack->{in_cache_self} = 1;
+            #
+            # Go back and find the context that the component was first
+            # called in (back up there in the comp method).
+            #
 
-	#
-	# Go back and find the context that the component was first
-	# called in (back up there in the comp method).
-	#
-	my $wantarray = (caller(1))[5];
-	my @result;
-	eval {
-	    if ($wantarray) {
-		@result = $comp->run(@args);
-	    } elsif (defined $wantarray) {
-		$result[0] = $comp->run(@args);
-	    } else {
-		$comp->run(@args);
-	    }
-	};
-	$retval = \@result;
+            my $wantarray = (caller(1))[5];
+            my @result;
+            eval {
+                if ($wantarray) {
+                    @result = $comp->run(@args);
+                } elsif (defined $wantarray) {
+                    $result[0] = $comp->run(@args);
+                } else {
+                    $comp->run(@args);
+                }
+            };
+            $retval = \@result;
 
-	#
-	# Whether there was an error or not we need to pop the buffer
-	# stack.
-	#
-	pop @{ $self->{buffer_stack} };
-	if ($@) {
-	    UNIVERSAL::can($@, 'rethrow') ? $@->rethrow : error $@;
-	}
+            # We do this in case the component stuck a filtering buffer
+            # after our caching buffer
+            $self->top_buffer->flush;
 
-	$cache->set($key, [$output, $retval], $expires_in);
+            #
+            # Whether there was an error or not we need to pop the buffer
+            # stack.
+            #
+            pop @{ $self->{buffer_stack} };
+
+            if ($@) {
+                UNIVERSAL::can($@, 'rethrow') ? $@->rethrow : error $@;
+            }
+
+            $cache->set($key, [$output, $retval], $expires_in);
+        }
+    };
+
+    if ($@) {
+        push @{ $self->{buffer_stack} }, $filter;
+        UNIVERSAL::can($@, 'rethrow') ? $@->rethrow : error $@;
     }
 
     #
     # Print the component output.
     #
     $self->print($output);
+
+    push @{ $self->{buffer_stack} }, $filter
+        if $filter;
 
     #
     # Return the component return value in case the caller is interested,
@@ -647,12 +692,12 @@ sub fetch_comp
 #
 sub _fetch_next_helper {
     my ($self) = @_;
-    my $index = $self->{wrapper_index}->{$self->current_comp->path};
+    my $index = $self->{wrapper_index}->{$self->current_comp->comp_id};
     unless (defined($index)) {
 	my @callers = $self->callers;
 	shift(@callers);
 	while (my $comp = shift(@callers) and !defined($index)) {
-	    $index = $self->{wrapper_index}->{$comp->path};
+	    $index = $self->{wrapper_index}->{$comp->comp_id};
 	}
     }
     return $index;
@@ -819,6 +864,7 @@ sub comp {
 
     # more common case optimizations
     $self->{buffer_stack}[-1]->flush;
+
     pop @{ $self->{stack} };
     pop @{ $self->{buffer_stack} };
     pop @{ $self->{buffer_stack} } if ($mods{store});
@@ -834,6 +880,15 @@ sub scomp {
     my $buf;
     $self->comp({store=>\$buf},@_);
     return $buf;
+}
+
+sub push_filter_buffer
+{
+    my $self = shift;
+    my %p = @_;
+
+    push @{ $self->{buffer_stack} },
+        $self->top_buffer->new_child( filter => $p{filter} );
 }
 
 sub content {
@@ -925,8 +980,8 @@ sub top_stack {
 }
 
 # These push/pop interfaces are not used internally (for speed) but
-# may be useful externally.  For example, Compiler::ToObject generates
-# code for <%filter> blocks that pushes and pops a buffer object.
+# may be useful externally.  For example, Component.pm pushes and pops
+# a buffer object.
 sub push_buffer_stack {
     my $self = shift;
 
@@ -1190,7 +1245,7 @@ for details on what formats it accepts.
 
 I<key>: An identifier used to uniquely identify the cache results - it
 is passed as the first argument to $cache-E<gt>get and
-$cache-E<gt>set.  A default key will be provided if none is passed.
+$cache-E<gt>set.  The default key is '__mason_cache_self__'.
 
 =back
 

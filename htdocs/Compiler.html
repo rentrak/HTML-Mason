@@ -17,10 +17,10 @@
 	<LI><A HREF="#methods">METHODS</A></LI>
 	<UL>
 
-		<LI><A HREF="#compilation callbacks">Compilation Callbacks</A></LI>
+		<LI><A HREF="#compilation_callbacks">Compilation Callbacks</A></LI>
 	</UL>
 
-	<LI><A HREF="#see also">SEE ALSO</A></LI>
+	<LI><A HREF="#see_also">SEE ALSO</A></LI>
 </UL>
 <!-- INDEX END -->
 
@@ -60,7 +60,7 @@ objects in order to determine whether or not the object should be
 re-compiled.
 <P></P></DL>
 <P>
-<H2><A NAME="compilation callbacks">Compilation Callbacks</A></H2>
+<H2><A NAME="compilation_callbacks">Compilation Callbacks</A></H2>
 <P>These are methods called by the Lexer while processing a component
 source.  You may wish to override some of these methods if you're
 implementing your own custom Compiler class.</P>
@@ -124,7 +124,7 @@ section into the component.
 <P></P>
 <DT><STRONG><A NAME="item_start_named_block">start_named_block(block_type =&gt; &lt;string&gt;, name =&gt; &lt;name&gt;)</A></STRONG><BR>
 <DD>
-Analogous to <A HREF="#start_block()">start_block()</A>, but starts a ``named'' block 
+Analogous to <A HREF="#start_block_">start_block()</A>, but starts a ``named'' block 
 (<CODE>&lt;%method&gt;</CODE> or <CODE>&lt;%def&gt;</CODE>).
 <P></P>
 <DT><STRONG><A NAME="item_end_named_block"><CODE>end_named_block()</CODE></A></STRONG><BR>
@@ -163,7 +163,7 @@ Called by the Lexer when it encounters a <CODE>%</CODE>-line.
 <P></P></DL>
 <P>
 <HR>
-<H1><A NAME="see also">SEE ALSO</A></H1>
+<H1><A NAME="see_also">SEE ALSO</A></H1>
 <P><A HREF="Mason.html">HTML::Mason</A>,
 <A HREF="Admin.html">HTML::Mason::Admin</A>,
 <A HREF="Interp.html">HTML::Mason::Interp</A></P>
