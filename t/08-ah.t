@@ -22,7 +22,6 @@ BEGIN
 use File::Basename;
 use File::Path;
 use HTML::Mason::Tests;
-use mod_perl;
 
 use lib 'lib', 't/lib';
 
@@ -36,6 +35,9 @@ eval { require Apache::Request; };
 $has_apache_request = 0 if $@;
 
 local $| = 1;
+
+test_load_apache();
+
 
 {
     my $both_tests = 12;
@@ -589,6 +591,31 @@ sub filter_response
     $actual .= "Status code: $code" unless $with_handler;
 
     return $actual;
+}
+
+sub test_load_apache
+{
+    print STDERR "\nTesting whether Apache can be started\n";
+    if ( system ("$ENV{APACHE_DIR}/httpd -f $ENV{APACHE_DIR}/httpd.conf") )
+    {
+	print STDERR "Error loading Apache.  This probably indicates a misconfiguration in the $ENV{APACHE_DIR}/httpd.conf file.  We will skip all the live Apache tests.";
+	print "1..0\n";
+	exit;
+    }
+
+    my $x = 0;
+    print STDERR "Waiting for httpd to start.\n";
+    until ( -e 't/httpd.pid' )
+    {
+	sleep (1);
+	$x++;
+	if ( $x > 10 )
+	{
+	    die "No t/httpd.pid file has appeared after 10 seconds.  Exiting.";
+	}
+    }
+
+    kill_httpd(1);
 }
 
 sub start_httpd

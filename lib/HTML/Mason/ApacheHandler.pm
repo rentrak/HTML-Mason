@@ -108,7 +108,7 @@ use HTML::Mason::MethodMaker
 # use() params. Assign defaults, in case ApacheHandler is only require'd.
 use vars qw($ARGS_METHOD $AH $VERSION);
 
-$VERSION = sprintf '%2d.%02d', q$Revision: 1.68.4.11.2.23 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf '%2d.%02d', q$Revision: 1.68.4.11.2.25 $ =~ /(\d+)\.(\d+)/;
 
 my @used = ($HTML::Mason::IN_DEBUG_FILE);
 
@@ -276,7 +276,7 @@ sub _make_interp
 
     # if version <= 1.21 then these files shouldn't be created til
     # after a fork so they should have the right ids anyway
-    if ($interp->files_written && $mod_perl::VERSION > 1.21)
+    if ($interp->files_written && $mod_perl::VERSION > 1.21 && ! ($> || $<))
     {
 	chown Apache->server->uid, Apache->server->gid, $interp->files_written
 	    or die "Can't change ownership of files written by interp object\n";
@@ -585,6 +585,7 @@ sub handle_request {
 	#
 	# Do not process error at all in raw mode or if die handler was overriden.
 	#
+	my $raw_err = $err;
 	unless ($self->error_mode =~ /^raw_/ or $interp->die_handler_overridden) {
 	    $err = error_process ($err, $request);
 	}
@@ -605,7 +606,7 @@ sub handle_request {
 	    }
 	    die $err;
 	} elsif ($self->error_mode eq 'raw_fatal') {
-	    die ("System error:\n$err\n");	    
+	    die ("System error:\n$raw_err\n");	    
 	} elsif ($self->error_mode =~ /html$/) {
 	    unless ($interp->die_handler_overridden) {
 		my $debug_msg;
@@ -614,10 +615,10 @@ sub handle_request {
 		}
 		if ($self->error_mode =~ /^raw_/) {
 		    $err .= "$debug_msg\n" if $debug_msg;
-		    $err = "<h3>System error</h3><p><pre><font size=-1>$err</font></pre>\n";
+		    $err = "<h3>System error</h3><p><pre><font size=-1>$raw_err</font></pre>\n";
 		} else {
 		    $err .= "Debug info: $debug_msg\n" if $debug_msg;
-		    $err = error_display_html($err);
+		    $err = error_display_html($err,$raw_err);
 		}
 	    }
 	    # Send HTTP headers if they have not been sent.
