@@ -5,10 +5,8 @@ use strict;
 use Cwd;
 
 use File::Path;
-use File::Spec;
 
 use HTML::Mason;
-use HTML::Mason::Compiler::ToObject;
 use HTML::Mason::Tools qw(make_fh);
 
 use Getopt::Long;
@@ -29,23 +27,24 @@ BEGIN
 if ($error) {
   my @lines = split("\n",$error);
   $error = join("\n",@lines[0..$lines-1]);
-  $error =~ s{\s+at .*}{}g;
+  $error =~ s{ at ([A-Z]:)?/.*}{ }g;
 }
-</%init>
+</%init>\
 <%args>
 $error
 $lines=>1
-</%args>
+</%args>\
 EOF
 	    },
 	    { path => '/shared/display_comp_obj',
 	      component => <<'EOF',
 Declared args:
 % my %decl = %{$comp->declared_args};
-% foreach (sort keys %decl) {
-<% $_ %><% (defined($decl{$_}->{default})) ? "=>".$decl{$_}->{default} : "" %>
+% while (my ($key,$val) = each(%decl)) {
+<% $key %><% (defined($val->{default})) ? "=>".$val->{default} : "" %>
 % }
 
+This is <% $comp->first_time ? '' : 'not ' %>my first time.
 I am <% $comp->is_subcomp ? '' : 'not ' %>a subcomponent.
 I am <% $comp->is_file_based ? '' : 'not ' %>file-based.
 % if (defined($comp->name)) {
@@ -57,6 +56,7 @@ My parent component is <% $comp->parent_comp->title %>.
 % if (defined($comp->dir_path)) {
 My directory is <% $comp->dir_path %>.
 % }
+I have run <% $comp->run_count %> time(s).
 % my @subkeys = sort keys(%{$comp->subcomps});
 I have <% scalar(@subkeys) %> subcomponent(s).
 % if (@subkeys) {
@@ -64,6 +64,12 @@ Including one called <% $comp->subcomps($subkeys[0])->name %>.
 % }
 My title is <% $comp->title =~ /anon/ ? '[anon something]' : $comp->title %>.
 
+% if (defined($comp->cache_file)) {
+%   my ($subfile) = ($comp->cache_file =~ m{data/(?:[^/]+/)?(cache/.*?)$});
+%   if (defined($subfile)) {
+My cache file is /.../<% $subfile %>
+%   }
+% }
 % if (defined($comp->object_file)) {
 %   my ($subfile) = ($comp->object_file =~ m{data/(?:[^/]+/)?(obj/.*?)$});
 %   if (defined($subfile)) {
@@ -73,8 +79,8 @@ My object file is /.../<% $subfile %>
 % if (defined($comp->path)) {
 My path is <% $comp->path %>.
 % }
-% if (defined($comp->comp_id)) {
-My comp_id is <% $comp->comp_id =~ /anon/ ? '[anon something]' : $comp->comp_id %>.
+% if (defined($comp->fq_path)) {
+My fq_path is <% $comp->fq_path =~ /anon/ ? '[anon something]' : $comp->fq_path %>.
 % }
 % if ($comp->is_file_based and defined($comp->source_file)) {
 %   my ($subfile) = ($comp->source_file =~ m{((alt_root|comps)/.*?)$});
@@ -87,7 +93,7 @@ My source dir is /.../<% $subfile %>
 
 <%args>
 $comp
-</%args>
+</%args>\
 EOF
 	    },
 	  );
@@ -98,7 +104,9 @@ sub new
     my $class = shift;
     my %p = @_;
 
-    GetOptions( 'create' => \$p{create},
+    my $self = bless {}, $class;
+
+    GetOptions( 'create' => \$self->{create},
 	      );
 
     die "No group name provided\n"
@@ -107,12 +115,13 @@ sub new
     die "No description for test group provided\n"
 	unless exists $p{description};
 
-    return bless {
-		  interp_class => 'HTML::Mason::Interp',
-		  %p,
-		  support => [],
-		  tests => [],
-		 }, $class;
+    $self->{name} = $p{name};
+    $self->{description} = $p{description};
+
+    $self->{support} = [];
+    $self->{tests} = [];
+
+    return $self;
 }
 
 sub add_support
@@ -142,17 +151,10 @@ sub add_test
 	$p{path} = $p{call_path} || $p{name};
     }
 
-    my $call_path = "/$self->{name}";
-    if ( exists $p{call_path} )
-    {
-	$call_path .= '/' unless substr( $p{call_path}, 0, 1 ) eq '/';
-	$call_path .= $p{call_path};
-    }
-    else
-    {
-	$call_path .= '/' . $p{name};
-    }
+    my $call_path = "/$self->{name}/";
+    $call_path .= exists $p{call_path} ? $p{call_path} : $p{name};
     $p{call_path} = $call_path;
+    $p{call_path} =~ s,/+,/,g;
 
     if ( ref($p{call_args}) eq 'HASH' )
     {
@@ -172,7 +174,7 @@ sub add_test
     die "'$p{name}' test has no 'expect' or 'expect_error' key\n"
 	unless exists $p{expect} || exists $p{expect_error} || $p{skip_expect} || $self->{create};
 
-    foreach ( qw( interp_params ) )
+    foreach ( qw( parser_params interp_params ) )
     {
 	die "$_ must be a hash reference"
 	    if exists $p{$_} && ! UNIVERSAL::isa( $p{$_}, 'HASH' );
@@ -236,12 +238,12 @@ sub base_path
 
     if (ref $proto)
     {
-	$proto->{base_path} ||= File::Spec->catdir( cwd(), 'mason_tests' );
+	$proto->{base_path} ||= join '/',  cwd(), 'mason_tests';
 	return $proto->{base_path};
     }
     else
     {
-	return File::Spec->catdir( cwd(), 'mason_tests' );
+	return join '/', cwd(), 'mason_tests';
     }
 }
 
@@ -249,14 +251,14 @@ sub comp_root
 {
     my $proto = shift;
 
-    return File::Spec->catdir( $proto->base_path, 'comps' );
+    return join '/', $proto->base_path, 'comps';
 }
 
 sub data_dir
 {
     my $proto = shift;
 
-    return File::Spec->catdir( $proto->base_path, 'data' );
+    return join '/', $proto->base_path, 'data';
 }
 
 sub _write_shared_comps
@@ -270,7 +272,7 @@ sub _write_shared_comps
 	my @path = split m(/), $comp->{path};
 	my $file = pop @path;
 
-	my $dir = File::Spec->catdir( $self->comp_root, @path );
+	my $dir = join '/', $self->comp_root, @path;
 
 	$self->write_comp( $comp->{path}, $dir, $file, $comp->{component} );
     }
@@ -291,7 +293,7 @@ sub _write_support_comps
 	my @path = split m(/), $supp->{path};
 	my $file = pop @path;
 
-	my $dir = File::Spec->catdir( $self->comp_root, $self->{name}, @path );
+	my $dir = join '/', $self->comp_root, $self->{name}, @path;
 
 	$self->write_comp( $supp->{path}, $dir, $file, $supp->{component} );
     }
@@ -305,7 +307,7 @@ sub _write_test_comp
     my @path = split m(/), $test->{path};
     my $file = pop @path;
 
-    my $dir = File::Spec->catdir( $self->comp_root, $self->{name}, @path );
+    my $dir = join '/', $self->comp_root, $self->{name}, @path;
     unless ( -d $dir )
     {
 	print "Making dir: $dir\n" if $DEBUG;
@@ -328,7 +330,7 @@ sub write_comp
 	    or die "Unable to create directory '$dir': $!";
     }
 
-    my $real_file = File::Spec->catfile( $dir, $file );
+    my $real_file = join '/', $dir, $file;
 
     print "Making component $path at $real_file\n"
 	if $DEBUG;
@@ -360,53 +362,11 @@ sub _run_tests
 	    if $VERBOSE;
 
 	$self->{current_test} = $test;
-	$self->_make_component unless $test->{skip_component};
+	$self->_write_test_comp unless $test->{skip_component};
 	$self->_run_test;
 
 	$x++;
     }
-}
-
-sub _make_component
-{
-    my $self = shift;
-    my $test = $self->{current_test};
-    $self->_write_test_comp;
-}
-
-sub _make_interp
-{
-    my $self = shift;
-    my $test = $self->{current_test};
-    return $test->{interp} if $test->{interp};
-
-    my %interp_params = ( exists $test->{interp_params} ?
-			  %{ $test->{interp_params} } :
-			  () );
-
-    if ($DEBUG && %interp_params)
-    {
-	print "Interp params:\n";
-	while ( my ($k, $v) = each %interp_params)
-	{
-	    print "  $k => $v\n";
-	}
-    }
-
-    return $self->{interp_class}->new( comp_root => $self->comp_root,
-				       data_dir  => $self->data_dir,
-				       %interp_params,
-				     );
-}
-
-sub _execute
-{
-    my ($self, $interp) = @_;
-    my $test = $self->{current_test};
-
-    print "Calling $test->{name} test with path: $test->{call_path}\n" if $DEBUG;
-    $test->{pretest_code}->() if $test->{pretest_code};
-    $interp->exec( $test->{call_path}, @{$test->{call_args}} );
 }
 
 sub _run_test
@@ -414,73 +374,161 @@ sub _run_test
     my $self = shift;
     my $test = $self->{current_test};
 
-    $self->{buffer} = '';
-    my $interp = $self->_make_interp;
-    $interp->out_method( sub { for (@_) { $self->{buffer} .= $_ if defined $_ } } );
+    my %params = ( exists $test->{parser_params} ?
+		   %{ $test->{parser_params} } :
+		   ()
+		 );
 
-    eval { $self->_execute($interp) };
-
-    return $self->check_result($@);
-}
-
-sub check_result {
-    my ($self, $error) = @_;
-    my $test = $self->{current_test};
-
-    if ($error)
+    if ($DEBUG && keys %params)
     {
-	if ( $test->{expect_error} )
+	print "Parser params:\n";
+	while ( my ($k, $v) = each %params)
 	{
-	    if ( $@ =~ /$test->{expect_error}/ )
-	    {
-		return $self->_success
-	    }
-	    else
-	    {
-		if ($VERBOSE)
-		{
-		    print "Got error:\n$error\n...but expected something matching:\n$test->{expect_error}\n";
-		}
-		return $self->_fail;
-	    }
+	    print "$k => $v\n";
 	}
-	else
-	{
-	    print "Unexpected error running $test->{name}:\n$error" if $VERBOSE;
-	    return $self->_fail;
-	}
+    }
 
+    my $parser = HTML::Mason::Parser->new( %params );
+
+    %params = ( exists $test->{interp_params} ?
+		%{ $test->{interp_params} } :
+		() );
+
+    if ($DEBUG && keys %params)
+    {
+	print "Interp params:\n";
+	while ( my ($k, $v) = each %params)
+	{
+	    print "$k => $v\n";
+	}
+    }
+
+    my $buf;
+    my $interp;
+
+    if ($test->{interp})
+    {
+	$interp = $test->{interp};
+	$interp->out_method(\$buf);
+    }
+    else
+    {
+	$interp = HTML::Mason::Interp->new( comp_root => $self->comp_root,
+					    data_dir  => $self->data_dir,
+					    out_method => \$buf,
+					    parser => $parser,
+					    %params,
+					  );
+    }
+
+    print "Calling $test->{name} test with path: $test->{call_path}\n" if $DEBUG;
+    $test->{pretest_code}->() if $test->{pretest_code};
+    eval { $interp->exec( $test->{call_path}, @{$test->{call_args}} ); };
+
+    if ( $@ && ! $test->{expect_error} )
+    {
+	print "Error running $test->{name}: $@" if $VERBOSE;
+	return $self->_fail($test);
     }
     elsif ( $test->{expect_error} )
     {
-	print "Expected an error matching '$test->{expect_error}' but no error occurred\n" if $VERBOSE;
-	return $self->_fail;
+	if ( $@ =~ /$test->{expect_error}/ )
+	{
+	    $self->_success
+	}
+	else
+	{
+	    if ($VERBOSE)
+	    {
+		print "Got error:\n$@\n...but expected something matching:\n$test->{expect_error}\n";
+	    }
+	    $self->_fail;
+	}
+
+	return;
     }
 
     if ($self->{create})
     {
-	print "Results for $test->{name}:\n$self->{buffer}\n";
+	print "Results for $test->{name}:\n$buf\n";
 	return;
     }
 
-    my $success = $test->{skip_expect} ? 1 : $self->check_output( actual => $self->{buffer}, expect => $test->{expect} );
+    my $success = $test->{skip_expect} ? 1 : $self->check_output( actual => $buf, expect => $test->{expect} );
 
     $success ? $self->_success : $self->_fail;
 }
 
 sub check_output
 {
-    my ($self, %p) = @_;
+    my $self = shift;
+    my %p = @_;
 
-    # Whitespace at end can vary.  (Or rather, it is varying in the tests, and
-    # should be made not to vary, but I don't have time to fix it yet.)
-    for ($p{actual}, $p{expect}) {  s/\s+$//  }
-    my $same = ($p{actual} eq $p{expect});
+    my @actual = split /\n/, $p{actual};
+    my @expect = split /\n/, $p{expect};
 
-    if (!$same and $VERBOSE) {
-	print "Got ...\n-----\n$p{actual}\n-----\n   ... but expected ...\n-----\n$p{expect}\n-----\n";
+    my $diff;
+    if (@expect > @actual)
+    {
+	$diff = @expect - @actual;
+	if ($VERBOSE)
+	{
+	    print "Actual result contained $diff too few lines.\n";
+	}
     }
-    return $same;
+    elsif (@expect < @actual)
+    {
+	$diff = @actual - @expect;
+	if ($VERBOSE)
+	{
+	    print "Actual result contained $diff too many lines.\n";
+	}
+    }
+
+    my $limit = @actual < @expect ? @actual : @expect;
+    my $line = 0;
+    for ( my $x = 0; $x < $limit; $x++ )
+    {
+	$line++;
+	if ( $actual[$x] ne $expect[$x] )
+	{
+	    if ($VERBOSE)
+	    {
+		local $^W; #suppress uninit value warnings.
+		print "Result differed from expected output at line $line\n";
+
+		my @actual_prev = ( $x == 0 ?
+				    () :
+				    ( $x == 1 ?
+				      ( $actual[0] ) :
+				      ( $actual[ $x - 2 ], $actual[ $x - 1 ] ) ) );
+		my @expect_prev = ( $x == 0 ?
+				  () :
+				    ( $x == 1 ?
+				      ( $expect[0] ) :
+				      ( $expect[ $x - 2 ], $expect[ $x - 1 ] ) ) );
+		my @actual_next = ( $x == $#actual ?
+				    () :
+				    ( $x == $#actual - 1 ?
+				      ( $actual[-1] ) :
+				      ( $actual[ $x + 1 ], $actual[ $x + 2 ] ) ) );
+		my @expect_next = ( $x == $#expect ?
+				    () :
+				    ( $x == $#expect - 1 ?
+				      ( $expect[-1] ) :
+				      ( $expect[ $x + 1 ], $expect[ $x + 2 ] ) ) );
+
+		my $actual = join "\n", ( @actual_prev, $actual[$x], @actual_next );
+		my $expect = join "\n", ( @expect_prev, $expect[$x], @expect_next );
+
+		print "Got ...\n-----\n$actual\n-----\n   ... but expected ...\n-----\n$expect\n-----\n";
+	    }
+	    $diff = 1;
+	    last;
+	}
+    }
+
+    return ! $diff;
 }
 
 sub _fail
@@ -532,7 +580,7 @@ sub _cleanup
 {
     my $self = shift;
 
-    rm_tree( $self->{base_path}, $DEBUG ) if $self->{base_path};
+    rm_tree ($self->{base_path}, $DEBUG) if $self->{base_path};
 }
 
 1;
@@ -561,8 +609,6 @@ HTML::Mason::Tests - Test harness for testing Mason
  EOF
                  );
 
- $group->run;
-
 =head1 DESCRIPTION
 
 This module is designed to automate as much as possible of the Mason
@@ -585,8 +631,6 @@ me!).
 
 Takes the following parameters:
 
-=over 4
-
 =item * name (required)
 
 The name of the entire group of tests.
@@ -594,12 +638,6 @@ The name of the entire group of tests.
 =item * description (required)
 
 What this group tests.
-
-=item * interp_class (optional, default='HTML::Mason::Interp')
-
-Specifies an alternate class for creating the Interpreter.
-
-=back
 
 =head2 add_support
 
@@ -624,13 +662,9 @@ unless the skip_component parameter is true.
 If true, then the test harness will not write a component to disk for
 this test.
 
-=back
-
 =head2 add_test
 
 Takes the following parameters:
-
-=over 4
 
 =item * name (required)
 
@@ -662,9 +696,9 @@ still prepended by /<group name>/.
 The arguments that should be passed to the component, in list or hash
 reference form. If none is given, no arguments are passed.
 
-=item * compiler_params
+=item * parser_params
 
-This is a hash reference of parameters to be passed to the Compiler->new
+This is a hash reference of parameters to be passed to the Parser->new
 method.
 
 =item * interp_params
@@ -685,8 +719,8 @@ One of the following three options is required:
 =item * expect
 
 The text expected as a result of calling the component.  This
-parameter is _not_ required when running in L<Create mode|"ADDITIONAL
-RUN MODES">.
+parameter is _not_ required when running in L<Create mode|ADDITIONAL
+RUN MODES>.
 
 =item * expect_error
 
@@ -701,16 +735,18 @@ the test to fail.  This is used in a few situations where it is
 necessary to just run a component as part the preparation for another
 test.
 
-=back
-
 =head2 run
 
 Run the tests in the group.
+
+=back
 
 =head2 Class methods
 
 These methods are provided since some tests may need to know these
 values.
+
+=over 4
 
 =head2 base_path
 
@@ -731,9 +767,13 @@ Given the parameters shown above, this method will check to see if the
 two are equal.  If they're not equal, it will print out an error
 message attempting to highlight the difference.
 
+=back
+
 =head1 ADDITIONAL RUN MODES
 
 The following additional modes are available for running tests.
+
+=over 4
 
 =head2 Verbose mode
 
@@ -758,8 +798,6 @@ the test harness will simply output its results.  This allows you to
 cut and paste these results back into the test file (assuming they are
 correct!).
 
-=head1 SEE ALSO
-
-L<HTML::Mason|HTML::Mason>
+=back
 
 =cut

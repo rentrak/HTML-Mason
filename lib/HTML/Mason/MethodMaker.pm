@@ -1,12 +1,11 @@
-# Copyright (c) 1998-2002 by Jonathan Swartz. All rights reserved.
+# Copyright (c) 1998-2000 by Jonathan Swartz. All rights reserved.
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
 package HTML::Mason::MethodMaker;
+require 5.004;
 
 use strict;
-
-use Params::Validate qw(validate_pos);
 
 sub import
 {
@@ -19,7 +18,7 @@ sub import
 	foreach my $ro ( ref $p{read_only} ? @{ $p{read_only} } : $p{read_only} )
 	{
 	    no strict 'refs';
-	    *{"$caller\::$ro"} = sub { return $_[0]->{$ro} };
+	    *{"$caller\::$ro"} = sub { return shift->{$ro} };
 	}
     }
 
@@ -27,67 +26,11 @@ sub import
     {
 	foreach my $rw ( ref $p{read_write} ? @{ $p{read_write} } : $p{read_write} )
 	{
-	    if (ref $rw)
-	    {
-		my ($name, $spec) = @$rw;
-		no strict 'refs';
-		*{"$caller\::$name"} =
-		    sub { my $s = shift;
-			  if (@_)
-			  {
-			      validate_pos(@_, $spec);
-			      $s->{$name} = shift;
-			  }
-			  return $s->{$name};
-		        };
-	    }
-	    else
-	    {
-		no strict 'refs';
-		*{"$caller\::$rw"} = sub { my $s = shift; $s->{$rw} = shift if @_; return $s->{$rw}; };
-	    }
-	}
-    }
-
-    if ($p{read_write_contained})
-    {
-	foreach my $object (keys %{ $p{read_write_contained} })
-	{
-	    foreach my $rwc (@{ $p{read_write_contained}{$object} })
-	    {
-		if (ref $rwc)
-		{
-		    my ($name, $spec) = @$rwc;
-		    no strict 'refs';
-		    *{"$caller\::$name"} =
-			sub { my $s = shift;
-			      my %new;
-			      if (@_)
-			      {
-				  validate_pos(@_, $spec);
-				  %new = ( $name => $_[0] );
-			      }
-			      my %args = $s->delayed_object_params( $object,
-								    %new );
-			      return $args{$rwc};
-			  };
-		}
-		else
-		{
-		    no strict 'refs';
-		    *{"$caller\::$rwc"} = sub { my $s = shift;
-						my %new = @_ ? ( $rwc => $_[0] ) : ();
-						my %args = $s->delayed_object_params( $object,
-										      %new );
-						return $args{$rwc};
-					    };
-		}
-	    }
+	    no strict 'refs';
+	    *{"$caller\::$rw"} = sub { my $s = shift; $s->{$rw} = shift if @_; return $s->{$rw}; };
 	}
     }
 }
-
-1;
 
 =pod
 
@@ -98,17 +41,7 @@ HTML::Mason::MethodMaker - Used to create simple get & get/set methods in other 
 =head1 SYNOPSIS
 
  use HTML::Mason::MethodMaker ( read_only => 'foo',
-                                read_write => [
-                                               [ bar => { type => SCALAR } ],
-                                               [ baz => { isa => 'HTML::Mason::Baz' } ],
-                                                'quux', # no validation
-                                              ],
-                                read_write_contained => { other_object =>
-                                                          [ [ 'thing1' => { isa => 'Thing1' } ],
-                                                            'thing2', # no validation
-                                                          ]
-                                                        },
-                              );
+                                read_write => [ qw( bar baz ) ] );
 
 =head1 DESCRIPTION
 
@@ -117,8 +50,7 @@ This automates the creation of simple accessor methods.
 =head1 USAGE
 
 This module creates methods when it is C<use>'d by another module.
-There are three types of methods: 'read_only', 'read_write',
-'read_write_contained'.
+There are two types of methods: 'read_only' and 'read_write'.
 
 Attributes specified as 'read_only' get an accessor that only returns
 the value of the attribute.  Presumably, these attributes are set via
@@ -129,27 +61,5 @@ Attributes specified as 'read_write' will take a single optional
 parameter.  If given, this parameter will become the new value of the
 attribute.  This value is then returned from the method.  If no
 parameter is given, then the current value is returned.
-
-If you want the accessor to use C<Params::Validate> to validate any
-values passed to the accessor (and you _do_), then the the accessor
-specification should be an array reference containing two elements.
-The first element is the accessor name and the second is the
-validation spec.
-
-The 'read_write_contained' parameter is used to create accessor for
-delayed contained objects.  A I<delayed> contained object is one that
-is B<not> created in the containing object's accessor, but rather at
-some point after the containing object is constructed.  For example,
-the Interpreter object creates Request objects after the Interpreter
-itself has been created.
-
-The value of the 'read_write_contained' parameter should be a hash
-reference.  The keys are the internal name of the contained object,
-such as "request" or "buffer".  The values for the keys are the same
-as the parameters given for 'read_write' accessors.
-
-=head1 SEE ALSO
-
-L<HTML::Mason|HTML::Mason>
 
 =cut

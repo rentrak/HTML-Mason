@@ -10,7 +10,7 @@
 #        returns its error conditions, or upgrade to Perl 5.6.0 or
 #        greater, which has its own bugs.
 
-package MyMason::MyApp;
+package HTML::Mason;
 
 # Bring in main Mason package.
 use HTML::Mason;
@@ -19,6 +19,7 @@ use HTML::Mason;
 # Uncomment the second line (and comment the first) to use
 # Apache::Request instead of CGI.pm to parse arguments.
 use HTML::Mason::ApacheHandler;
+# use HTML::Mason::ApacheHandler (args_method=>'mod_perl');
 
 use strict;
 
@@ -35,16 +36,18 @@ use strict;
    use Apache::Session::File 1.50;
 }
 
-
-# Create ApacheHandler object
+# Create Mason objects
 #
-my $ah = new HTML::Mason::ApacheHandler( comp_root => '<component root>',
-                                         data_dir => '<data directory>' );
+my $parser = new HTML::Mason::Parser;
+my $interp = new HTML::Mason::Interp (parser=>$parser,
+                                      comp_root=>'<component root>',
+                                      data_dir=>'<data directory>');
+my $ah = new HTML::Mason::ApacheHandler (interp=>$interp);
 
 # Activate the following if running httpd as root (the normal case).
 # Resets ownership of all files created by Mason at startup.
 #
-#chown (Apache->server->uid, Apache->server->gid, $ah->interp->files_written);
+#chown (Apache->server->uid, Apache->server->gid, $interp->files_written);
 
 sub handler
 {

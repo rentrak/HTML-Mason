@@ -12,13 +12,6 @@ if ($@)
     exit;
 }
 
-eval { require Cache::FileCache };
-if ($@)
-{
-    print "1..0\n";
-    exit;
-}
-
 my $tests = make_tests();
 $tests->run;
 
@@ -34,14 +27,15 @@ sub make_tests
 			 component => <<'EOF',
 <% $result %>
 This was<% $cached ? '' : ' not' %> cached.
+Return value: <% $return %>
 
 <%init>
 my $cached = 0;
 my $result;
 my $return;
-unless ($result = $m->cache->get('fandango')) {
+unless ($result = $m->cache(key=>'fandango')) {
     $result = "Hello Dolly.";
-    $return = $m->cache->set('fandango', $result) || '';
+    $return = $m->cache(action=>'store', key=>'fandango', value=>$result) || '';
 } else {
     $cached = 1;
 }
@@ -62,14 +56,58 @@ EOF
 		      expect => <<'EOF',
 Hello Dolly.
 This was not cached.
+Return value: Hello Dolly.
 
 
 Hello Dolly.
 This was cached.
+Return value: 
 
 
 Hello Dolly.
 This was cached.
+Return value: 
+
+
+EOF
+		    );
+
+
+#------------------------------------------------------------
+
+    $group->add_support( path => 'support/cache_self_test',
+			 component => <<'EOF',
+Hello World! var = <% $var %>
+<%init>
+return if $m->cache_self(key=>'fandango');
+</%init>
+<%args>
+$var
+</%args>
+
+EOF
+		       );
+
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'cache_self',
+		      description => 'cache_self functionality',
+		      component => <<'EOF',
+% my $var = 1;
+% for (my $i=0; $i<3; $i++) {
+<% $m->comp('support/cache_self_test',var=>$var) %>
+% $var++;
+% }
+EOF
+		      expect => <<'EOF',
+Hello World! var = 1
+
+
+Hello World! var = 1
+
+
+Hello World! var = 1
 
 
 EOF
@@ -79,24 +117,23 @@ EOF
 #------------------------------------------------------------
 
     $group->add_test( name => 'keys',
-		      description => q|test multiple keys and $m->cache->get_keys|,
+		      description => q|test $m->cache( action => 'keys' )|,
 		      component => <<'EOF',
 <%init>
 foreach my $key (qw(foo bar baz)) {
-    $m->cache->set($key, $key);
+    $m->cache(action=>'store',key=>$key,value=>$key);
 }
-my @keys = sort $m->cache->get_keys;
-$m->print("keys in cache: ".join(",",@keys)."\n");
+my @keys = sort $m->cache(action=>'keys');
+$m->out("keys in cache: ".join(",",@keys)."\n");
 foreach my $key (qw(foo bar baz)) {
-    my $value = $m->cache->get($key) || "undefined";
-    $m->print("value for $key is $value\n");
+    my $value = $m->cache(key=>$key) || "undefined";
+    $m->out("value for $key is $value\n");
 }
-$m->cache->remove('foo');
-$m->cache->remove('bar');
-$m->print("expiring foo and bar...\n");
+$m->cache(action=>'expire', key=>[qw(foo bar)]);
+$m->out("expiring foo and bar...\n");
 foreach my $key (qw(foo bar baz)) {
-    my $value = $m->cache->get($key) || "undefined";
-    $m->print("value for $key is $value\n");
+    my $value = $m->cache(key=>$key) || "undefined";
+    $m->out("value for $key is $value\n");
 }
 </%init>
 EOF
@@ -114,117 +151,5 @@ EOF
 
 #------------------------------------------------------------
 
-    $group->add_support ( path => 'support/cache_self',
-			  component => <<'EOF',
-x is <% $x %>
-<%args>
-$x
-</%args>
-<%init>
-return if $m->cache_self;
-</%init>
-EOF
-			);
-
-#------------------------------------------------------------
-
-    $group->add_test( name => 'cache_self',
-		      description => 'test $m->cache_self',
-		      component => <<'EOF',
-<& support/cache_self, x => 1 &>
-<& support/cache_self, x => 99 &>
-EOF
-		      expect => <<'EOF',
-x is 1
-
-x is 1
-EOF
-		    );
-
-#------------------------------------------------------------
-
-    $group->add_support ( path => 'support/cache_self_expires',
-			  component => <<'EOF',
-x is <% $x %>
-<%args>
-$x
-</%args>
-<%init>
-return if $m->cache_self( expires_in => '1s' );
-</%init>
-EOF
-			);
-
-#------------------------------------------------------------
-
-    $group->add_test( name => 'cache_self_expiration',
-		      description => 'test that $m->cache_self respects expires_in parameter',
-		      component => <<'EOF',
-<& support/cache_self_expires, x => 1 &>
-% sleep 3;
-<& support/cache_self_expires, x => 99 &>
-EOF
-		      expect => <<'EOF',
-x is 1
-
-x is 99
-EOF
-		    );
-
-#------------------------------------------------------------
-
-    $group->add_support ( path => 'support/cache_self_with_key',
-			  component => <<'EOF',
-x is <% $x %>
-<%args>
-$x
-$key
-</%args>
-<%init>
-return if $m->cache_self( key => $key );
-</%init>
-EOF
-			);
-
-#------------------------------------------------------------
-
-    $group->add_test( name => 'cache_self_key',
-		      description => 'test $m->cache_self with a key',
-		      component => <<'EOF',
-<& support/cache_self_with_key, x => 1, key => 1 &>
-<& support/cache_self_with_key, x => 99, key => 99 &>
-<& support/cache_self_with_key, x => 1000, key => 1 &>
-EOF
-		      expect => <<'EOF',
-x is 1
-
-x is 99
-
-x is 1
-EOF
-		    );
-
-#------------------------------------------------------------
-
-    $group->add_support ( path => 'support/cache_self_and_die',
-			  component => <<'EOF',
-<%init>
-return if $m->cache_self;
-die "argh!";
-</%init>
-EOF
-			);
-
-#------------------------------------------------------------
-
-    $group->add_test( name => 'cache_self_error',
-		      description => 'test $m->cache_self with an error to make sure errors are propogated',
-		      component => <<'EOF',
-<& support/cache_self_and_die, x => 1, key => 1 &>
-EOF
-		      expect_error => qr/argh! at .*/,
-		    );
-
     return $group;
 }
-

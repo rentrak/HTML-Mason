@@ -1,68 +1,49 @@
-# Copyright (c) 1998-2002 by Jonathan Swartz. All rights reserved.
+# Copyright (c) 1998-2000 by Jonathan Swartz. All rights reserved.
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
 use strict;
+require 5.004;
 
 #----------------------------------------------------------------------
 #
 # APACHE-SPECIFIC REQUEST OBJECT
 #
 package HTML::Mason::Request::ApacheHandler;
-
-use HTML::Mason::Request;
-use HTML::Mason::Container;
-use Params::Validate qw(BOOLEAN);
-Params::Validate::validation_options( on_fail => sub { param_error( join '', @_ ) } );
-
-use base qw(HTML::Mason::Request);
-
-use HTML::Mason::Exceptions( abbr => [qw(param_error error)] );
-
-use constant OK         => 0;
-use constant DECLINED   => -1;
-use constant NOT_FOUND  => 404;
-
-BEGIN
-{
-    __PACKAGE__->valid_params
-	( ah         => { isa => 'HTML::Mason::ApacheHandler',
-			  descr => 'An ApacheHandler to handle web requests',
-			  public => 0 },
-	  apache_req => { isa => 'Apache', default => undef,
-			  descr => "An Apache request object",
-			  public => 0 },
-	  cgi_object => { isa => 'CGI',    default => undef,
-			  descr => "A CGI.pm request object",
-			  public => 0 },
-	  auto_send_headers => { parse => 'boolean', type => BOOLEAN, default => 1,
-				 descr => "Whether HTTP headers should be auto-generated" },
-	);
-}
+use vars qw(@ISA);
+@ISA = qw(HTML::Mason::Request);
 
 use HTML::Mason::MethodMaker
-    ( read_only  => 'auto_send_headers',
-      read_write => [ map { [ $_ => __PACKAGE__->validation_spec->{$_} ] }
-		      qw( ah apache_req ) ] );
+    ( read_write => [ qw( ah apache_req ) ] );
+
+# Fields that can be set in new method, with defaults
+my %reqfields =
+    (ah => undef,
+     apache_req => undef,
+     cgi_object => undef,
+     );
 
 sub new
 {
-    my $class = shift;
-    my $self = $class->SUPER::new(@_);  # Magic!
-
-    unless ($self->apache_req or $self->cgi_object)
-    {
-	param_error __PACKAGE__ . "->new: must specify 'apache_req' or 'cgi_object' parameter";
+    my ($class,%options) = @_;
+    my $interp = $options{interp} or die "HTML::Mason::Request::ApacheHandler::new: must specify interp\n";
+    delete $options{interp};
+    my $self = $class->SUPER::new(interp=>$interp);
+    while (my ($key,$value) = each(%options)) {
+	if (exists($reqfields{$key})) {
+	    $self->{$key} = $value;
+	} else {
+	    die "HTML::Mason::Request::ApacheHandler::new: invalid option '$key'\n";
+	}
     }
-
     return $self;
 }
 
 # Override flush_buffer to also call $r->rflush
 sub flush_buffer
 {
-    my ($self) = @_;
-    $self->SUPER::flush_buffer;
+    my ($self, $content) = @_;
+    $self->SUPER::flush_buffer($content);
     $self->apache_req->rflush;
 }
 
@@ -70,10 +51,9 @@ sub cgi_object
 {
     my ($self) = @_;
 
-    error "Can't call cgi_object() unless 'args_method' is set to CGI.\n"
-	unless $self->ah->args_method eq 'CGI';
-
-    if (defined($_[1])) {
+    if ($HTML::Mason::ApacheHandler::ARGS_METHOD ne '_cgi_args') {
+	die "Can't call cgi_object method unless CGI.pm was used to handle incoming arguments.\n";
+    } elsif (defined($_[1])) {
 	$self->{cgi_object} = $_[1];
     } else {
 	# We may not have created a CGI object if, say, request was a
@@ -84,350 +64,276 @@ sub cgi_object
     return $self->{cgi_object};
 }
 
-#
-# Override this method to return NOT_FOUND when we get a
-# TopLevelNotFound exception. In case of POST we must trick
-# Apache into not reading POST content again. Wish there were
-# a more standardized way to do this...
-#
-sub exec
-{
-    my $self = shift;
-    my $r = $self->apache_req;
-    my $retval;
-
-    {
-	# Remap $r->print to Mason's $m->print while executing request
-	local *Apache::print = sub { shift; $self->print(@_) };
-	eval { $retval = $self->SUPER::exec(@_) };
-    }
-
-    if ($@) {
-	if (isa_mason_exception($@, 'TopLevelNotFound')) {
-	    # Log the error the same way that Apache does (taken from default_handler in http_core.c)
-	    $r->log_error("[Mason] File does not exist: ", $r->filename . ($r->path_info ? $r->path_info : ""));
-	    return $self->ah->return_not_found($r);
-	} else {
-	    die $@;
-	}
-    }
-
-    # On a success code, send headers if they have not been sent and
-    # if we are the top-level request. Since the out_method sends
-    # headers, this will typically only apply after $m->abort.
-    # On an error code, leave it to Apache to send the headers.
-    if (!$self->is_subrequest
-	and $self->auto_send_headers
-	and !HTML::Mason::ApacheHandler::http_header_sent($r)
-	and (!$retval or $retval==200)) {
-	$r->send_http_header();
-    }
-
-    return defined($retval) ? $retval : OK;
-}
-
-#
-# Override this method to always die when top level component is not found,
-# so we can return NOT_FOUND.
-#
-sub _handle_error
-{
-    my ($self, $err) = @_;
-
-    if (isa_mason_exception($err, 'TopLevelNotFound')) {
-	die $err;
-    } else {
-	$self->SUPER::_handle_error($err);
-    }
-}
-
-#----------------------------------------------------------------------
-#
-# APACHE-SPECIFIC FILE RESOLVER OBJECT
-#
-package HTML::Mason::Resolver::File::ApacheHandler;
-
-use strict;
-
-use HTML::Mason::Tools qw(paths_eq);
-
-use HTML::Mason::Resolver::File;
-use base qw(HTML::Mason::Resolver::File);
-
-#
-# Given an apache request object, return the associated component
-# path or undef if none exists. This is called for top-level web
-# requests that resolve to a particular file.
-#
-sub apache_request_to_comp_path {
-    my ($self, $r) = @_;
-
-    my $file = $r->filename;
-    $file .= $r->path_info unless -f $file;
-
-    foreach my $root (map $_->[1], $self->comp_root_array) {
-	if (paths_eq($root, substr($file, 0, length($root)))) {
-	    my $path = substr($file, ($root eq '/' ? 0 : length($root)));
-	    $path =~ s,\/$,, unless $path eq '/';
-	    return $path;
-	}
-    }
-    return undef;
-}
-
-
 #----------------------------------------------------------------------
 #
 # APACHEHANDLER OBJECT
 #
 package HTML::Mason::ApacheHandler;
 
+#JS - 6/30 - seems to infinite loop when using debug...help?!
+#use Apache::Constants qw(OK DECLINED SERVER_ERROR NOT_FOUND);
+sub OK { return 0 }
+sub DECLINED { return -1 }
+sub SERVER_ERROR { return 500 }
+sub NOT_FOUND { return 404 }
+use Data::Dumper;
 use File::Path;
-use File::Spec;
-use HTML::Mason::Exceptions( abbr => [qw(param_error system_error error)] );
-use HTML::Mason::Interp;
-use HTML::Mason::Utils;
+use HTML::Mason::Error qw(error_process error_display_html);
+use HTML::Mason;
+use HTML::Mason::Commands;
+use HTML::Mason::FakeApache;
+use HTML::Mason::Tools qw(dumper_method html_escape make_fh pkg_installed);
+use HTML::Mason::Utils qw(cgi_request_args);
 use Params::Validate qw(:all);
-Params::Validate::validation_options( on_fail => sub { param_error( join '', @_ ) } );
-
 use Apache;
 use Apache::Status;
-die "mod_perl must be compiled with PERL_METHOD_HANDLERS=1 (or EVERYTHING=1) to use ", __PACKAGE__, "\n"
-    unless Apache::perl_hook('MethodHandlers');
-
-# Require a reasonably modern mod_perl - should probably be later
-use mod_perl 1.22;
-
-use constant OK         => 0;
-use constant DECLINED   => -1;
-use constant NOT_FOUND  => 404;
-
-use vars qw($VERSION);
-
-$VERSION = sprintf '%2d.%02d', q$Revision: 1.197 $ =~ /(\d+)\.(\d+)/;
-
-use HTML::Mason::Container;
-use base qw(HTML::Mason::Container);
-
-BEGIN
-{
-    __PACKAGE__->valid_params
-	(
-	 apache_status_title   => { parse => 'string',  type => SCALAR,       default => 'HTML::Mason status',
-				    descr => "The title of the Apache::Status page" },
-	 args_method           => { parse => 'string',  type => SCALAR,       default => 'mod_perl',
-				    callbacks =>
-				    { "must be either 'CGI' or 'mod_perl'" =>
-				      sub { $_[0] =~ /^(?:CGI|mod_perl)$/ } },
-				    descr => "Whether to use CGI.pm or Apache::Request for parsing the incoming HTTP request",
-				  },
-	 decline_dirs          => { parse => 'boolean', type => BOOLEAN, default => 1,
-				    descr => "Whether Mason should decline to handle requests for directories" },
-	 # the only required param
-	 interp                => { isa => 'HTML::Mason::Interp',
-				    descr => "A Mason interpreter for processing components" },
-	);
-
-    __PACKAGE__->contained_objects
-	(
-	 interp => 'HTML::Mason::Interp',
-	);
-}
 
 use HTML::Mason::MethodMaker
-    ( read_write => [ map { [ $_ => __PACKAGE__->validation_spec->{$_} ] }
-		      qw( apache_status_title
-                          args_method
-			  decline_dirs
-			  interp ) ]
-    );
+    ( read_write => [ qw( apache_status_title
+			  auto_send_headers
 
-use vars qw($AH);
+			  debug_dir_config_keys
+			  debug_mode
+			  debug_handler_proc
+			  debug_handler_script
+			  debug_perl_binary
+
+			  decline_dirs
+			  error_mode
+			  interp
+			  output_mode
+			  top_level_predicate ) ]
+      );
+
+# use() params. Assign defaults, in case ApacheHandler is only require'd.
+use vars qw($ARGS_METHOD $AH $VERSION);
+
+$VERSION = sprintf '%2d.%02d', q$Revision: 1.68.4.11.2.26 $ =~ /(\d+)\.(\d+)/;
+
+my @used = ($HTML::Mason::IN_DEBUG_FILE);
+
+# Fields that can be set in new method, with defaults
+my %fields =
+    (
+     apache_status_title => 'mason',
+     auto_send_headers => 1, 
+     decline_dirs => 1,
+     error_mode => 'html',
+     interp => undef,
+     output_mode => undef,    # deprecated - now interp->out_mode
+     top_level_predicate => undef,
+     debug_mode => 'none',
+     debug_perl_binary => '/usr/bin/perl',
+     debug_handler_script => undef,
+     debug_handler_proc => undef,
+     debug_dir_config_keys => [],
+     );
+
+# If loaded via a PerlModule directive in a conf file we are being
+# loaded via 'require', not 'use'.  However, the import routine _must_
+# be called at some point during startup or things go boom.
+
+# If mod_perl <= 1.21 we will call import later (in the handler sub)
+# to make sure we can see the user's MasonArgsMethod setting (if there
+# is one)
+__PACKAGE__->import if $mod_perl::VERSION > 1.21;
 
 sub import
 {
-    my $pack = shift;
+    shift; # class not needed
 
-    if ( my $args_method = $pack->get_param('ArgsMethod') )
+    return if defined $ARGS_METHOD;
+
+    # We were called by the internal call a few lines back and it
+    # seems that we're not being loaded in a conf file.  We will
+    # expect to be called again via a 'use' line in the handler.pl
+    # file.  This is a bit of a hack, I must say.
+    return if caller eq __PACKAGE__ && ! _in_apache_conf_file();
+
+    my %params = @_;
+
+    if (_in_apache_conf_file())
     {
-	if ($args_method eq 'CGI')
-	{
-	    unless (defined $CGI::VERSION)
-	    {
-		require CGI;
-	    }
-	}
-	elsif ($args_method eq 'mod_perl')
-	{
-	    unless (defined $Apache::Request::VERSION)
-	    {
-		require Apache::Request;
-	    }
-	}
-
-	# if we are in a simple conf file (meaning one without
-	# multiple different Mason configs) we make the apachehandler
-	# object now and simply reuse it later in the handler sub
-	$AH = $pack->make_ah() if $pack->_in_simple_conf_file;
+	$params{args_method} = _get_string_param('ArgsMethod');
     }
+
+    # safe default.
+    $params{args_method} ||= 'CGI';
+    if ($params{args_method} eq 'CGI')
+    {
+	eval 'use CGI';
+	die $@ if $@;
+	$ARGS_METHOD = '_cgi_args';
+    }
+    elsif ($params{args_method} eq 'mod_perl')
+    {
+	eval 'use Apache::Request;';
+	die $@ if $@;
+	$ARGS_METHOD = '_mod_perl_args';
+    }
+    else
+    {
+	die "Invalid args_method parameter ('$params{args_method}') given to HTML::Mason::ApacheHandler in 'use'\n";
+    }
+
+    _make_ah() if _in_apache_conf_file() && ! _get_boolean_param('MultipleConfig');
 }
 
-#
 # This is my best guess as to whether we are being configured via the
-# conf file without multiple configs.  Without a comp root it will
-# blow up sooner or later anyway.  This may not be the case in the
-# future though.
-#
-sub _in_simple_conf_file
+# conf file or not.  Without a comp root it will blow up sooner or
+# later anyway.  This may not be the case in the future though.
+sub _in_apache_conf_file
 {
-    my $self = shift;
-
-    return $ENV{MOD_PERL} && $self->_get_string_param('MasonCompRoot');
+    # We don't want to try to read the configuration til we're in a
+    # request if mod_perl <= 1.21
+    return 0 if $mod_perl::VERSION <= 1.21 && ( $Apache::Server::Starting || $Apache::ServerStarting ||
+						$Apache::Server::ReStarting || $Apache::ServerReStarting );
+    return $ENV{MOD_PERL} && ( _get_list_param('CompRoot') ||
+			       _get_boolean_param('MultipleConfig') );
 }
 
-my %AH;
-sub make_ah
+sub _make_ah
 {
-    my ($package) = shift;
+    return $AH if $AH && ! _get_boolean_param('MultipleConfig');
 
-    my ($vals, %p) = $package->_get_mason_params;
+    my %p;
 
-    #
-    # Now that we have all the original config strings stored, we put
-    # them all together in a string that we use to determine whether
-    # or not we've seen this particular set of config values before.
-    #
-    my $key = '';
-    foreach my $k (sort keys %$vals)
+    $p{apache_status_title} = _get_string_param('ApacheStatusTitle');
+    $p{auto_send_headers} = _get_boolean_param('AutoSendHeaders');
+    $p{debug_handler_proc} = _get_string_param('DebugHandlerProc');
+    $p{debug_handler_script} = _get_string_param('DebugHandlerScript');
+    $p{debug_mode} = _get_string_param('DebugMode');
+    $p{debug_perl_binary} = _get_string_param('DebugPerlBinary');
+    $p{decline_dirs} = _get_boolean_param('DeclineDirs');
+    $p{error_mode} = _get_string_param('ErrorMode');
+    $p{top_level_predicate} = _get_code_param('TopLevelPredicate');
+
+    foreach (keys %p)
     {
-	$key .= $k;
-	$key .= $vals->{$k};
+	delete $p{$_} unless defined $p{$_};
     }
 
-    #
-    # If the user has virtual hosts, each with a different document
-    # root, then we will have to be called from the handler method.
-    # This means we have an active request.  In order to distinguish
-    # between virtual hosts with identical config directives that have
-    # no comp root defined (meaning they expect to use the default
-    # comp root), we append the document root for the current request
-    # to the key.
-    #
-    $key .= Apache->request->document_root if Apache->request;
+    $AH = HTML::Mason::ApacheHandler->new( interp => _make_interp(),
+					   %p,
+					 );
 
-    return $AH{$key} if exists $AH{$key};
+    return $AH;
+}
 
-    if (exists $p{comp_root}) {
-	if (@{$p{comp_root}} == 1 && $p{comp_root}->[0] !~ /=>/) {
-	    $p{comp_root} = $p{comp_root}[0];  # Convert to a simple string
-	} else {
-	    foreach my $root (@{$p{comp_root}}) {
-		$root = [ split /\s*=>\s*/, $root, 2 ];
-		param_error "Configuration parameter MasonCompRoot must be either a single string value ".
-			    "or multiple key/value pairs like 'foo => /home/mason/foo'" 
-		    unless defined $root->[1];
-	    }
+sub _make_interp
+{
+    my %p;
+
+    $p{allow_recursive_autohandlers} = _get_boolean_param('AllowRecursiveAutohandlers');
+    $p{autohandler_name}    = _get_string_param('AutohandlerName');
+    $p{code_cache_max_size} = _get_string_param('CodeCacheMaxSize');
+    $p{current_time}        = _get_string_param('CurrentTime');
+    $p{data_cache_dir}      = _get_string_param('DataCacheDir');
+    $p{dhandler_name}       = _get_string_param('DhandlerName');
+    $p{die_handler}         = _get_code_param('DieHandler');
+    $p{max_recurse}         = _get_string_param('MaxRecurse');
+    $p{out_method}          = _get_code_param('OutMethod');
+    $p{out_mode}            = _get_string_param('OutMode');
+    $p{preloads}              = [ _get_list_param('Preloads') ];
+    delete $p{preloads} unless @{ $p{preloads} };
+    $p{static_file_root}      = _get_string_param('StaticFileRoot');
+    $p{system_log_events}     = _get_string_param('SystemLogEvents');
+    $p{system_log_file}       = _get_string_param('SystemLogFile');
+    $p{system_log_separator}  = _get_string_param('SystemLogSepartor');
+    $p{use_autohandlers}      = _get_boolean_param('UseAutohandlers');
+    $p{use_data_cache}        = _get_boolean_param('UseDataCache');
+    $p{use_dhandlers}         = _get_boolean_param('UseDhandlers');
+    $p{use_object_files}      = _get_boolean_param('UseObjectFiles');
+    $p{use_reload_file}       = _get_boolean_param('UseReloadFile');
+
+    my @comp_root = _get_list_param('CompRoot', 1);
+    if (@comp_root == 1 && $comp_root[0] !~ /=>/)
+    {
+	$p{comp_root} = $comp_root[0];
+    }
+    else
+    {
+	my @root;
+	foreach my $root (@comp_root)
+	{
+	    my ($k, $v) = split /\s*=>\s*/, $root;
+	    die "Configuration parameter MasonCompRoot must be either a singular value or a multiple 'hash' values like 'foo => /home/mason/foo'"
+		unless defined $k && defined $v;
+	    push @{ $p{comp_root} }, [ $k => $v ];
 	}
     }
+    $p{data_dir} = _get_string_param('DataDir', 1);
 
-    my $ah = $package->new(%p);
-    $AH{$key} = $ah if $key;
-
-    # If we're running as superuser, change file ownership to http user & group
-    if (!($> || $<) && $ah->interp->files_written)
+    # If not defined we'll use the defaults
+    foreach (keys %p)
     {
-	chown Apache->server->uid, Apache->server->gid, $ah->interp->files_written
-	    or system_error( "Can't change ownership of files written by interp object: $!\n" );
+	delete $p{$_} unless defined $p{$_};
     }
 
-    return $ah;
+    my $interp = HTML::Mason::Interp->new( parser => _make_parser(),
+					   %p,
+					 );
+
+    # if version <= 1.21 then these files shouldn't be created til
+    # after a fork so they should have the right ids anyway
+    if ($interp->files_written && $mod_perl::VERSION > 1.21 && ! ($> || $<))
+    {
+	chown Apache->server->uid, Apache->server->gid, $interp->files_written
+	    or die "Can't change ownership of files written by interp object\n";
+    }
+
+    return $interp;
 }
 
-# The following routines handle getting information from $r->dir_config
-
-sub calm_form {
-    # Transform from StudlyCaps to name_like_this
-    my ($self, $string) = @_;
-    $string =~ s/^Mason//;
-    $string =~ s/(^|.)([A-Z])/$1 ? "$1\L_$2" : "\L$2"/ge;
-    return $string;
-}
-
-sub studly_form {
-    # Transform from name_like_this to StudlyCaps
-    my ($self, $string) = @_;
-    $string =~ s/(?:^|_)(\w)/\U$1/g;
-    return $string;
-}
-
-sub _get_mason_params
+sub _make_parser
 {
-    my $self = shift;
+    my %p;
+    $p{allow_globals} = [ _get_list_param('AllowGlobals') ];
+    delete $p{allow_globals} unless @{ $p{allow_globals} };
 
-    my $c = Apache->request ? Apache->request : Apache->server;
+    $p{default_escape_flags} = _get_string_param('DefaultEscapeFlags');
+    $p{ignore_warnings_expr} = _get_string_param('IgnoreWarningsExpr');
+    $p{in_package} = _get_string_param('InPackage');
+    $p{postamble} = _get_string_param('Postamble');
+    $p{preamble} = _get_string_param('Preamble');
+    $p{taint_check} = _get_boolean_param('TaintCheck') || 0;
+    $p{use_strict} = _get_boolean_param('UseStrict');
 
-    my $config = $c->dir_config;
-    my $specs = $self->allowed_params;
+    $p{preprocess} = _get_code_param('Preprocess');
+    $p{postprocess} = _get_code_param('Postprocess');
 
-    #
-    # We will accumulate all the string versions of the keys and
-    # values here for later use.
-    #
-    my %vals;
+    # If not defined we'll use the defaults
+    foreach (keys %p)
+    {
+	delete $p{$_} unless defined $p{$_};
+    }
 
-    # Get all params starting with 'Mason'
-    my @candidates = map { /^Mason/ ? $self->calm_form($_) : () } keys %$config;
-    return (\%vals, map { $_ => $self->get_param($_, $specs->{$_}, \%vals) } @candidates);
-}
-
-sub get_param {
-    # Gets a single config item from dir_config.
-
-    my ($self, $key, $spec, $vals) = @_;
-    $key = $self->calm_form($key);
-
-    # If we weren't given a spec, try to locate one in our own class.
-    $spec ||= $self->allowed_params->{$key};
-    error "Unknown config item '$key'" unless $spec;
-
-    # Guess the default parse type from the Params::Validate validation spec
-    my $type = ($spec->{parse} or
-		$spec->{type} & ARRAYREF ? 'list' :
-		$spec->{type} & SCALAR   ? 'string' :
-		$spec->{type} & CODEREF  ? 'code' :
-		undef);
-    error "Unknown parse type for config item '$key'" unless $type;
-
-    my $method = "_get_${type}_param";
-    return scalar $self->$method('Mason'.$self->studly_form($key), $vals);
+    return HTML::Mason::Parser->new(%p);
 }
 
 sub _get_string_param
 {
-    my $self = shift;
-    my ($p, $val) = $self->_get_val(@_);
+    my ($p, $val) = _get_val(@_[0, 1]);
 
     return $val;
 }
 
 sub _get_boolean_param
 {
-    my $self = shift;
-    my ($p, $val) = $self->_get_val(@_);
+    my ($p, $val) = _get_val(@_[0, 1]);
 
     return $val;
 }
 
 sub _get_code_param
 {
-    my $self = shift;
-    my ($p, $val) = $self->_get_val(@_);
+    my ($p, $val) = _get_val(@_[0, 1]);
 
     return unless $val;
 
     my $sub_ref = eval $val;
 
-    param_error "Configuration parameter '$p' is not valid perl:\n$@\n"
+    die "Configuration parameter '$p' is not valid perl:\n$@\n"
 	if $@;
 
     return $sub_ref;
@@ -435,28 +341,34 @@ sub _get_code_param
 
 sub _get_list_param
 {
-    my $self = shift;
-    my ($p, @val) = $self->_get_val($_[0], 1);
+    my ($p, @val) = _get_val(@_[0,1], 1);
     if (@val == 1 && ! defined $val[0])
     {
 	@val = ();
     }
 
-    return \@val;
+    return @val;
 }
 
 sub _get_val
 {
-    my ($self, $p, $wantarray, $vals) = @_;
+    my ($p, $required, $wantarray) = @_;
+    $p = "Mason$p";
 
+    if ( $mod_perl::VERSION <= 1.21 && ( $Apache::Server::Starting || $Apache::ServerStarting ||
+					 $Apache::Server::ReStarting || $Apache::ServerReStarting ) )
+    {
+	die "Can't get configuration info during server startup with mod_perl <= 1.21";
+    }
     my $c = Apache->request ? Apache->request : Apache->server;
 
-    my @val = Apache::perl_hook('TableApi') ? $c->dir_config->get($p) : $c->dir_config($p);
+    my @val = $mod_perl::VERSION < 1.24 ? $c->dir_config($p) : $c->dir_config->get($p);
 
-    param_error "Only a single value is allowed for configuration parameter '$p'\n"
+    die "Only a single value is allowed for configuration parameter '$p'\n"
 	if @val > 1 && ! $wantarray;
 
-    $vals->{$p} = join '', @val if $vals;
+    die "Configuration parameter '$p' is required\n"
+	if $required && ! defined $val[0];
 
     return ($p, $wantarray ? @val : $val[0]);
 }
@@ -464,198 +376,423 @@ sub _get_val
 sub new
 {
     my $class = shift;
+    my $self = {
+	request_number => 0,
+	%fields,
+    };
 
-    my $allowed_params = $class->allowed_params;
+    validate( @_,
+	      { apache_status_title => { type => SCALAR, optional => 1 },
+		auto_send_headers => { type => SCALAR | UNDEF, optional => 1 },
+		decline_dirs => { type => SCALAR | UNDEF, optional => 1 },
+		error_mode => { type => SCALAR, optional => 1 },
+		output_mode => { type => SCALAR | UNDEF, optional => 1 },
+		top_level_predicate => { type => CODEREF | UNDEF, optional => 1 },
+		debug_mode => { type => SCALAR, optional => 1 },
+		debug_perl_binary => { type => SCALAR, optional => 1 },
+		debug_handler_script => { type => SCALAR, optional => 1 },
+		debug_handler_proc => { type => SCALAR, optional => 1 },
+		debug_dir_config_keys => { type => ARRAYREF, optional => 1 },
 
-    my %defaults;
-    if (exists $allowed_params->{comp_root} && Apache->request)
-    {
-	$defaults{comp_root} = Apache->request->document_root;
+		# the only required param
+		interp => { isa => 'HTML::Mason::Interp' },
+	      }
+	    );
+
+    my (%options) = @_;
+
+    die "error_mode parameter must be one of 'html', 'fatal', 'raw_html', or 'raw_fatal'\n"
+	if exists $options{error_mode} && $options{error_mode} !~ /^(?:html|fatal|raw_html|raw_fatal)$/;
+
+    while (my ($key,$value) = each(%options)) {
+	$self->{$key} = $value;
     }
 
-    if (exists $allowed_params->{data_dir})
-    {
-	# constructs path to <server root>/mason
-	$defaults{data_dir} = Apache->server_root_relative('mason');
-    }
-
-    $defaults{request_class}  = 'HTML::Mason::Request::ApacheHandler';
-    $defaults{resolver_class} = 'HTML::Mason::Resolver::File::ApacheHandler';
-
-    # Set default error_format based on error_mode
-    my %params = @_;
-    if (exists($params{error_mode}) and $params{error_mode} eq 'fatal') {
-	$defaults{error_format} = 'line';
-    } else {
-	$defaults{error_mode} = 'output';
-	$defaults{error_format} = 'html';
-    }
-
-    my @args = $class->create_contained_objects(%defaults, @_);
-
-    my $self = bless {validate( @args, $class->validation_spec )}, $class;
-
-    unless ( $self->interp->resolver->can('apache_request_to_comp_path') )
-    {
-	error "The resolver class your Interp object uses does not implement the 'apache_request_to_comp_path' method.  This means that ApacheHandler cannot resolve requests.  Are you using a handler.pl file created before version 1.10?  Please see the handler.pl sample that comes with the latest version of Mason.";
-    }
-
+    bless $self, $class;
     $self->_initialize;
     return $self;
 }
 
-# Register with Apache::Status at module startup.  Will get replaced
-# with a more informative status once an interpreter has been created.
-
-my $status_name = 'mason0001';
-
-{
-    Apache::Status->menu_item
-	    ($status_name => __PACKAGE__->allowed_params->{apache_status_title}{default},
-	     sub { ["<b>(no interpreters created in this child yet)</b>"] });
-}
-
+my %status_sub_defined = ();
 
 sub _initialize {
     my ($self) = @_;
 
-    if ($self->args_method eq 'mod_perl') {
-	unless (defined $Apache::Request::VERSION) {
-	    warn "Loading Apache::Request at runtime.  You could increase shared memory between Apache processes by preloading it in your httpd.conf or handler.pl file\n";
-	    require Apache::Request;
-	}
-    } else {
-	unless (defined $CGI::VERSION) {
-	    warn "Loading CGI at runtime.  You could increase shared memory between Apache processes by preloading it in your httpd.conf or handler.pl file\n";
+    my $interp = $self->interp;
 
-	    require CGI;
-	}
-    }
+    if ($Apache::Status::VERSION) {
+	# Add an HTML::Mason menu item to the /perl-status page. Things we report:
+	# -- Interp properties
+	# -- loaded (cached) components
+	my $name = $self->apache_status_title;
+	unless ($status_sub_defined{$name}) {
 
-    # Add an HTML::Mason menu item to the /perl-status page.
-    if (defined $Apache::Status::VERSION) {
-	# A closure, carries a reference to $self
-	my $statsub = sub {
-	    my ($r,$q) = @_; # request and CGI objects
-	    return [] if !defined($r);
-
-	    if ($r->path_info and $r->path_info =~ /expire_code_cache=(.*)/) {
-		$self->interp->delete_from_code_cache($1);
+	    my $title;
+	    if ($name eq 'mason') {
+		$title='HTML::Mason status';
+	    } else {
+		$title=$name;
+		$name=~s/\W/_/g;
 	    }
 
-	    return ["<center><h2>" . $self->apache_status_title . "</h2></center>" ,
-		    $self->status_as_html(apache_req => $r),
-		    $self->interp->status_as_html(ah => $self, apache_req => $r)];
-	};
-	local $^W = 0; # to avoid subroutine redefined warnings
-	Apache::Status->menu_item($status_name, $self->apache_status_title, $statsub);
+	    my $statsub = sub {
+		my ($r,$q) = @_; # request and CGI objects
+		return [] if !defined($r);
+		my @strings = ();
+
+		push (@strings,
+		      qq(<FONT size="+2"><B>) . $self->apache_status_title . qq(</B></FONT><BR><BR>),
+		      $self->interp_status);
+
+		return \@strings;     # return an array ref
+	    };
+	    Apache::Status->menu_item ($name,$title,$statsub);
+	    $status_sub_defined{$name}++;
+	}
     }
 
-    my $interp = $self->interp;
+    #
+    # Create data subdirectories if necessary. mkpath will die on error.
+    #
+    foreach my $subdir (qw(debug preview)) {
+	my @newdirs = mkpath($interp->data_dir."/$subdir",0,0775);
+	$interp->push_files_written(@newdirs);
+    }
 
     #
     # Allow global $r in components
     #
-    $interp->compiler->add_allowed_globals('$r');
+    $interp->parser->allow_globals(qw($r));
 }
 
-# Generate HTML that describes ApacheHandler's current status.
-# This is used in things like Apache::Status reports.
+#
+# Generate an array that describes Interp's current status
+#
+sub interp_status
+{
+    my ($interp) = $_[0]->interp;
 
-sub status_as_html {
-    my ($self, %p) = @_;
+    my @strings;
+    push @strings,
+        qq(<DL><DT><FONT SIZE="+1"><B>Interp object properties</B></FONT>\n),
+        qq(<DT><B>Startup options</B>\n);
 
-    # Should I be scared about this?  =)
 
-    my $comp_source = <<'EOF';
-<h3>ApacheHandler properties:</h3>
-<blockquote>
- <tt>
-<table width="75%">
-<%perl>
-foreach my $property (sort keys %$ah) {
-    my $val = $ah->{$property};
-    my $default = ( defined $val && defined $valid{$property}{default} && $val eq $valid{$property}{default} ) || ( ! defined $val && exists $valid{$property}{default} && ! defined $valid{$property}{default} );
+    push @strings,
+        map {"<DD><TT>$_ = ".(defined($interp->{$_}) ? 
+                                $interp->{$_} : '<I>undef</I>'
+                             )."</TT>\n" 
+            } grep ! ref $interp->{$_}, sort keys %$interp;
 
-    my $display = $val;
-    if (ref $val) {
-        $display = '<font color="darkred">';
-        # only object can ->can, others die
-        my $is_object = eval { $val->can('anything'); 1 };
-        if ($is_object) {
-            $display .= ref $val . ' object';
-        } else {
-            if (UNIVERSAL::isa($val, 'ARRAY')) {
-                $display .= 'ARRAY reference - [ ';
-                $display .= join ', ', @$val;
-                $display .= '] ';
-            } elsif (UNIVERSAL::isa($val, 'HASH')) {
-                $display .= 'HASH reference - { ';
-                my @pairs;
-                while (my ($k, $v) = each %$val) {
-                   push @pairs, "$k => $v";
-                }
-                $display .= join ', ', @pairs;
-                $display .= ' }';
-            } else {
-                $display = ref $val . ' reference';
-            }
-        }
-        $display .= '</font>';
-    }
+    push @strings, '</DL>',
+            '<DL><DT><FONT SIZE="+1"><B>Cached components</B></FONT><DD>';
 
-    defined $display && $display =~ s,([\x00-\x1F]),'<font color="purple">control-' . chr( ord('A') + ord($1) - 1 ) . '</font>',eg; # does this work for non-ASCII?
-</%perl>
- <tr valign="top" cellspacing="10">
-  <td>
-    <% $property | h %>
-  </td>
-  <td>
-   <% defined $display ? $display : '<i>undef</i>' %>
-   <% $default ? '<font color=green>(default)</font>' : '' %>
-  </td>
- </tr>
-% }
-</table>
-  </tt>
-</blockquote>
+    if(my $cache = $interp->code_cache)
+    {
+	my $string;
+	foreach my $key (sort keys %$cache) {
+	    $string .= sprintf("<TT>%s (%s)</TT><BR>\n",$key,scalar(localtime($cache->{$key}->{lastmod})));
+	}
+	push (@strings, $string);
+    } else {
+        push @strings, '<I>None</I>';
+    }     
+    push @strings, '</DL>';
+    return @strings;
+}         
 
-<%args>
- $ah       # The ApacheHandler we'll elucidate
- %valid    # Contains default values for member data
-</%args>
-EOF
+#
+# Standard entry point for handling request
+#
+sub handle_request {
 
+    #
+    # Why do we use $apreq instead of $r here? A scoping bug in certain
+    # versions of Perl 5.005 was getting confused about $r being used
+    # in components, and the easiest workaround was to rename "$r" to
+    # something else in this routine.  Go figure...
+    # -jswartz 5/23
+    #
+    my ($self,$apreq) = @_;
+    my ($outsub, $retval);
+    my $outbuf = '';
     my $interp = $self->interp;
-    my $comp = $interp->make_component(comp_source => $comp_source);
-    my $out;
+    $self->{request_number}++;
 
-    $self->interp->make_request( comp => $comp,
-				 args => [ah => $self, valid => $interp->allowed_params],
-				 ah => $self,
-				 apache_req => $p{apache_req},
-				 out_method => \$out,
-			       )->exec;
-    return $out;
-}
-
-sub handle_request
-{
-    my ($self, $r) = @_;
-
-    my $req = $self->prepare_request($r);
-    return $req unless ref($req);
-    $req->exec;
-}
-
-sub prepare_request
-{
-    my ($self, $r) = @_;
-
-    if (lc($r->dir_config('Filter')) eq 'on') {
-	$r = $r->filter_register;
+    if (lc($apreq->dir_config('Filter')) eq 'on') {
+	$apreq = $apreq->filter_register;
     }
 
+    #
+    # Construct (and truncate if necessary) the request to log at start
+    #
+    if ($interp->system_log_event_check('REQ_START')) {
+	my $rstring = $apreq->server->server_hostname . $apreq->uri;
+	$rstring .= "?".scalar($apreq->args) if defined(scalar($apreq->args));
+	$rstring = substr($rstring,0,150).'...' if length($rstring) > 150;
+	$interp->write_system_log('REQ_START', $self->{request_number},
+				  $rstring);
+    }
+
+    #
+    # Determine debug file mode. Turn it off regardless if we are
+    # already operating from a debug file.
+    #
+    my $debugMode = $self->debug_mode;
+    $debugMode = 'none' if $HTML::Mason::IN_DEBUG_FILE;
+
+    #
+    # Capture debug state as early as possible, before we start messing with $apreq.
+    #
+    my $debug_state;
+    $debug_state = $self->capture_debug_state($apreq)
+	if ($debugMode eq 'all' or $debugMode eq 'error');
+
+    #
+    # Create an Apache-specific request with additional slots.
+    #
+    my $request = new HTML::Mason::Request::ApacheHandler
+	(ah=>$self,
+	 interp=>$interp,
+	 apache_req=>$apreq,
+	 );
+    
+    eval { $retval = $self->handle_request_1($apreq, $request, $debug_state) };
+    my $err = $@;
+    my $err_code = $request->error_code;
+    my $err_status = $err ? 1 : 0;
+
+    if ($err) {
+	#
+	# If first component was not found, return NOT_FOUND. In case
+	# of POST we must trick Apache into not reading POST content
+	# again. Wish there were a more standardized way to do this...
+	#
+	# This $err_code stuff is really only used to communicate found
+	# errors; it will be replaced with exceptions
+	#
+	if (defined($err_code) and $err_code eq 'top_not_found') {
+	    if ($apreq->method eq 'POST') {
+		$apreq->method('GET');
+		$apreq->headers_in->unset('Content-length');
+	    }
+	    
+	    # Log the error the same way that Apache does (taken from default_handler in http_core.c)
+	    $apreq->log_error("[Mason] File does not exist: ",$apreq->filename . ($apreq->path_info ? $apreq->path_info : ""));
+	    return NOT_FOUND;
+	}
+
+	#
+	# Do not process error at all in raw mode or if die handler was overriden.
+	#
+	my $raw_err = $err;
+	unless ($self->error_mode =~ /^raw_/ or $interp->die_handler_overridden) {
+	    $err = error_process ($err, $request);
+	}
+
+	#
+	# In fatal/raw_fatal mode, compress error to one line (for Apache logs) and die.
+	# In html/raw_html mode, call error_display_html and print result.
+	# The raw_ modes correspond to pre-1.02 error formats.
+	#
+	# [This is a load of spaghetti. It will be cleaned up in 1.2 when we lose
+	# debug mode and standardize error handling.]
+	#
+	if ($self->error_mode eq 'fatal') {
+	    unless ($interp->die_handler_overridden) {
+		$err =~ s/\n/\t/g;
+		$err =~ s/\t$//g;
+		$err .= "\n" if $err !~ /\n$/;
+	    }
+	    die $err;
+	} elsif ($self->error_mode eq 'raw_fatal') {
+	    die ("System error:\n$raw_err\n");	    
+	} elsif ($self->error_mode =~ /html$/) {
+	    unless ($interp->die_handler_overridden) {
+		my $debug_msg;
+		if ($debugMode eq 'error' or $debugMode eq 'all') {
+		    $debug_msg = $self->write_debug_file($apreq,$debug_state);
+		}
+		if ($self->error_mode =~ /^raw_/) {
+		    $err .= "$debug_msg\n" if $debug_msg;
+		    $err = "<h3>System error</h3><p><pre><font size=-1>$raw_err</font></pre>\n";
+		} else {
+		    $err .= "Debug info: $debug_msg\n" if $debug_msg;
+		    $err = error_display_html($err,$raw_err);
+		}
+	    }
+	    # Send HTTP headers if they have not been sent.
+	    if (!http_header_sent($apreq)) {
+		$apreq->content_type('text/html');
+		$apreq->send_http_header();
+	    }
+	    print($err);
+	}
+    } else {
+	if ($debugMode eq 'all') {
+	    my $debug_msg = $self->write_debug_file($apreq,$debug_state);
+	    print "\n<!--\n$debug_msg\n-->\n" if (http_header_sent($apreq) && !$apreq->header_only && $apreq->header_out("Content-type") =~ /text\/html/);
+	}
+    }
+    undef $request;  # ward off memory leak
+
+    $interp->write_system_log('REQ_END', $self->{request_number}, $err_status);
+    return ($err) ? &OK : (defined($retval)) ? $retval : &OK;
+}
+
+#
+# Shorthand for various data subdirectories and files.
+#
+sub debug_dir { return shift->interp->data_dir . "/debug" }
+sub preview_dir { return shift->interp->data_dir . "/preview" }
+
+sub write_debug_file
+{
+    my ($self, $r, $dref) = @_;
+    my $user = $r->connection->user || 'anon';
+    my $outFile = sprintf("%d",int(rand(20))+1);
+    my $outDir = $self->debug_dir . "/$user";
+    if (!-d $outDir) {
+	mkpath($outDir,0,0755) or die "cannot create debug directory '$outDir'";
+    }
+    my $out_path = "$outDir/$outFile";
+    my $outfh = make_fh();
+    unless ( open $outfh, ">$out_path" ) {
+	$r->warn("cannot open debug file '$out_path' for writing");
+	return;
+    }
+
+    my $d = new Data::Dumper ([$dref],['dref']);
+    my $o = '';
+    $o .= "#!".$self->debug_perl_binary."\n";
+    $o .= <<'PERL';
+# -----------------------------
+# Read command-line options for repeat counts (-rX) and profiling via
+# Devel::DProf (-p). As component runs in profile mode, component
+# coderefs are accumulated in %CODEREF_NAME
+# -----------------------------
+BEGIN {
+    use File::Copy;
+    use Getopt::Std;
+    getopt('r');   # r=repeat count, p=user profile req, P=re-entrant profile call
+    $opt_r ||= 1;
+    
+    if ($opt_p) {
+	print STDERR "Profiling request ...";
+	# re-enter with different option (no inf. loops, please)
+	system ("perl", "-d:DProf", $0, "-P", "-r$opt_r")
+            or die "Can't execute perl: $!";
+    
+# -----------------------------
+# When done, merge named coderefs in tmon.mason with those in tmon.out,
+# then run dprofpp
+# -----------------------------
+        my $fh = do { local *FH; *FH; };  # double *FH avoids warning
+        open $fh, '< ./tmon.mason' or die "Missing file: tmon.mason: $!";
+	foreach (<$fh>) { chomp;  my ($k,$v) = split(/\t/);  $::CODEREF_NAME{$k} = $v; }
+	close $fh or die "can't close file: tmon.mason: $!";
+    
+	my $tmonout = do { local *FH; *FH; };
+        open $tmonout, '< ./tmon.out' or die "Missing file: tmon.out: $!";
+	my $tmontmp = do { local *FH; *FH; };
+        open $tmontmp, '> ./tmon.tmp' or die "Couldn't write file: tmon.tmp: $!";
+	my $regex = quotemeta(join('|', keys %::CODEREF_NAME));
+	$regex =~ s/\\\|/|/g;   #un-quote the pipe chars
+	while (<$tmonout>) {
+	    s/HTML::Mason::Commands::($regex)/$::CODEREF_NAME{$1}/;
+	    print $tmontmp $_;
+	}
+	close $tmonout or die "can't close file: tmon.out: $!";
+        close $tmontmp or die "can't close file: tmon.tmp: $!";
+	copy('tmon.tmp' => 'tmon.out') or die "$!";
+	unlink('tmon.tmp') or warn "can't remove file: tmon.tmp: $!";
+        print STDERR "\nRunning dprofpp ...\n";
+	exec('dprofpp') or die "Couldn't execute dprofpp";
+    }
+}
+
+PERL
+    $o .= "BEGIN { \$HTML::Mason::IN_DEBUG_FILE = 1; require '".$self->debug_handler_script."' }\n\n";
+    $o .= <<'PERL';
+if ($opt_P) {
+    open SAVEOUT, ">&STDOUT" or die "Can't open &STDOUT: $!";    # stifle component output while profiling
+    open STDOUT, ">/dev/null" or die "Can't write to /dev/null: $!";
+}
+for (1 .. $opt_r) {
+print STDERR '.' if ($opt_P and $opt_r > 1);
+PERL
+    $o .= "my ";
+    $o .= dumper_method($d);
+    $o .= 'my $r = HTML::Mason::ApacheHandler::simulate_debug_request($dref);'."\n";
+    $o .= 'local %ENV = (%ENV,%{$dref->{ENV}});'."\n";
+    $o .= 'my $status = '.$self->debug_handler_proc."(\$r);\n";
+    $o .= 'print "return status: $status\n";'."\n}\n\n";
+    $o .= <<'PERL';
+if ($opt_P) {
+    my $fh = do { local *FH; *FH; };
+    open $fh, '>./tmon.mason' or die "Couldn't write to file: tmon.mason: $!";
+    print $fh map("$_\t$HTML::Mason::CODEREF_NAME{$_}\n", keys %HTML::Mason::CODEREF_NAME);
+    close $fh or die "Can't close file: tmon.mason: $!";
+}
+PERL
+    print $outfh $o;
+    close $outfh or die "can't close file: $out_path: $!";
+    chmod(0775,$out_path) or die "can't chmod file to 0775: $out_path: $!";
+
+    my $debug_msg = "Debug file is '$out_path'.";
+    return $debug_msg;
+}
+
+sub capture_debug_state
+{
+    my ($self, $r) = @_;
+    my (%d,$expr);
+
+    $expr = '';
+    foreach my $field (qw(allow_options auth_name auth_type bytes_sent no_cache content_encoding content_languages content_type document_root filename header_only method method_number path_info protocol proxyreq requires status status_line the_request uri as_string get_remote_host get_remote_logname get_server_port is_initial_req is_main)) {
+	$expr .= "\$d{$field} = \$r->$field;\n";
+    }
+    eval($expr);
+    warn "error creating debug file: $@\n" if $@;
+
+    if (pkg_installed('Apache::Table')) {
+	$expr = "my \$href;\n";
+	foreach my $field (qw(headers_in headers_out err_headers_out notes dir_config subprocess_env)) {
+	    $expr .= "\$href = scalar(\$r->$field); \$d{$field} = {\%\$href};\n";
+	}
+	eval($expr);
+	warn "error creating debug file: $@\n" if $@;
+    } else {
+	foreach my $field (qw(headers_in headers_out err_headers_out notes dir_config subprocess_env)) {
+	    $d{$field} = {};
+	}
+    }
+    
+    $d{'args@'} = [$r->args];
+    $d{'args$'} = scalar($r->args);
+    
+    $expr = '';
+    $d{server} = {};
+    foreach my $field (qw(server_admin server_hostname port is_virtual names)) {
+	$expr .= "\$d{server}->{$field} = \$r->server->$field;\n";
+    }
+    eval($expr);
+    
+    $expr = '';
+    $d{connection} = {};
+    foreach my $field (qw(remote_host remote_ip local_addr remote_addr remote_logname user auth_type aborted)) {
+	$expr .= "\$d{connection}->{$field} = \$r->connection->$field;\n";
+    }
+    eval($expr);
+
+    $d{ENV} = {%ENV};
+
+    return {%d};
+}
+
+sub handle_request_1
+{
+    my ($self,$r,$request,$debug_state) = @_;
     my $interp = $self->interp;
 
     #
@@ -678,31 +815,51 @@ sub prepare_request
     }
 
     #
+    # Append path_info if filename does not represent an existing file
+    # (mainly for dhandlers).
+    #
+    my $pathname = $r->filename;
+    $pathname .= $r->path_info unless $is_file;
+
+    #
     # Compute the component path via the resolver. Return NOT_FOUND on failure.
     #
-    my $comp_path = $interp->resolver->apache_request_to_comp_path($r);
+    my $comp_path = $interp->resolver->file_to_path($pathname,$interp);
     unless ($comp_path) {
-	#
-	# Append path_info if filename does not represent an existing file
-	# (mainly for dhandlers).
-	#
-	my $pathname = $r->filename;
-	$pathname .= $r->path_info unless $is_file;
-
 	$r->warn("[Mason] Cannot resolve file to component: $pathname (is file outside component root?)");
-	return $self->return_not_found($r);
+	return NOT_FOUND;
     }
 
     #
-    # Get arguments from Apache::Request or CGI.
+    # Return NOT_FOUND if file does not pass top level predicate.
     #
-    my (%args, $cgi_object);
-    if ($self->args_method eq 'mod_perl') {
-	$r = Apache::Request->new($r);
-	%args = $self->_mod_perl_args($r);
+    if ($is_file and defined($self->top_level_predicate) and !$self->top_level_predicate->($r->filename)) {
+	$r->warn("[Mason] File fails top level predicate: ".$r->filename);
+	return NOT_FOUND;
+    }
+
+    #
+    # Parse arguments. $ARGS_METHOD is set by the import subroutine
+    # (_cgi_args or _mod_perl_args).  We pass a reference to $r because
+    # _mod_perl_args upgrades $r to the Apache::Request object.
+    # 
+    # When inside debug file, get arguments from special saved hash.
+    # This circumvents POST content issues.
+    #
+    my %args;
+    die "ARGS_METHOD not defined! Did you 'use HTML::Mason::ApacheHandler'?" unless defined($ARGS_METHOD);
+    if ($HTML::Mason::IN_DEBUG_FILE) {
+	%args = %{$r->{args_hash}};
     } else {
-	$cgi_object = CGI->new;
-	%args = $self->_cgi_args($r, $cgi_object);
+	%args = $self->$ARGS_METHOD(\$r,$request);
+    }
+    $debug_state->{args_hash} = \%args if $debug_state;
+
+    #
+    # Deprecated output_mode parameter - just pass to request out_mode.
+    #
+    if (my $mode = $self->output_mode) {
+	$request->out_mode($mode);
     }
 
     #
@@ -711,53 +868,63 @@ sub prepare_request
     $interp->set_global(r=>$r);
 
     #
-    # Why this strangeness with taking a reference to Apache::print?
-    # See HTML::Mason::Request::ApacheHandler->exec, where a bit of
-    # funkiness is done to catch calls to print and $r->print inside
-    # components.  Without this, calling $m->flush_buffer can lead to
-    # a loop where the content disappears.
+    # Craft the out method for this request to handle automatic http
+    # headers.
     #
-    # By using the reference to the original function we ensure that
-    # we call the version of the sub that sends its output to the
-    # right place.
-    #
-    my $print = \&Apache::print;
-
-    # Craft the request's out method to handle http headers, content
-    # length, and HEAD requests.
-
-    # If someone is using a custom request class that doesn't accept
-    # 'ah' and 'apache_req' that's their problem.
-    #
-    my $request = $interp->make_request( comp => $comp_path,
-					 args => [%args],
-					 ah => $self,
-					 apache_req => $r,
-				       );
-
-    my $must_send_headers = $request->auto_send_headers;
-    my $out_method = sub {
-
-	# Send headers if they have not been sent by us or by user.
-	if ($must_send_headers) {
-	    unless (http_header_sent($r)) {
-		$r->send_http_header();
+    my $retval;
+    if ($self->auto_send_headers) {
+	my $headers_sent = 0;
+	my $delay_buf = '';
+	my $out_method = sub {
+	    # Check to see if the headers have been sent, first by fast
+	    # variable check, then by slightly slower $r check.
+	    unless ($headers_sent) {
+		unless (http_header_sent($r)) {
+		    # If header has not been sent, buffer initial whitespace
+		    # so as to delay headers.
+		    if ($_[0] !~ /\S/) {
+			$delay_buf .= $_[0];
+			return;
+		    } else {
+			$r->send_http_header();
+			
+			# If this is a HEAD request and our Mason request is
+			# still active, abort it.
+			if ($r->header_only) {
+			    $request->abort if $request->depth > 0;
+			    return;
+			}
+		    }
+		}
+		unless ($delay_buf eq '') {
+		    $interp->out_method->($delay_buf);
+		    $delay_buf = '';
+		}
+		$headers_sent = 1;
 	    }
-	    $must_send_headers = 0;
+	    $interp->out_method->($_[0]);
+
+	    # A hack, but good for efficiency in stream mode: change the
+	    # current sink of the request so all this is bypassed for the
+	    # remainder of this component and its children.
+	    $request->top_stack->{sink} = $interp->out_method if $request->out_mode eq 'stream' and $request->top_stack->{sink} eq $request->out_method;
+	};
+	$request->out_method($out_method);
+
+	$retval = $request->exec($comp_path, %args);
+
+	# On a success code, send headers and any buffered whitespace
+	# if it has not already been sent. On an error code, leave it
+	# to Apache to send the headers.
+	if (!$headers_sent and (!$retval or $retval==200)) {
+	    $r->send_http_header() unless http_header_sent($r);
+	    $interp->out_method->($delay_buf) unless $delay_buf eq '';
 	}
-
-	# Call $r->print. If request was HEAD, suppress output
-	# but allow the request to continue for consistency.
-	unless ($r->method eq 'HEAD') {
-	    $r->$print(grep {defined} @_);
-	}
-    };
-
-    $request->out_method($out_method);
-
-    $request->cgi_object($cgi_object) if $cgi_object;
-
-    return $request;
+    } else {
+	$retval = $request->exec($comp_path, %args);
+    }
+    undef $request; # ward off leak
+    return $retval;
 }
 
 #
@@ -765,29 +932,73 @@ sub prepare_request
 #
 sub _cgi_args
 {
-    my ($self, $r, $q) = @_;
+    my ($self, $rref, $request) = @_;
+
+    my $r = $$rref;
 
     # For optimization, don't bother creating a CGI object if request
     # is a GET with no query string
     return if $r->method eq 'GET' && !scalar($r->args);
 
-    return HTML::Mason::Utils::cgi_request_args($q, $r->method);
+    my $q = CGI->new;
+    my %args = cgi_request_args($q, $r->method);
+    $request->cgi_object($q);
+    return %args;
 }
 
 #
-# Get %args hash via Apache::Request package.
+# Get %args hash via Apache::Request package. As a side effect, assign the
+# new Apache::Request package back to $r, unless $r is already an Apache::Request.
 #
 sub _mod_perl_args
 {
-    my ($self, $apr, $request) = @_;
+    my ($self, $rref, $request) = @_;
+
+    my $apr = $$rref;
+    unless (UNIVERSAL::isa($apr, 'Apache::Request')) {
+	$apr = Apache::Request->new($apr);
+	$$rref = $apr;
+    }
+    
+    return unless $apr->param;
 
     my %args;
     foreach my $key ( $apr->param ) {
-	my @values = $apr->param($key);
-	$args{$key} = @values == 1 ? $values[0] : \@values;
+	foreach my $value ( $apr->param($key) ) {
+	    if (exists($args{$key})) {
+		if (ref($args{$key}) eq 'ARRAY') {
+		    push @{ $args{$key} }, $value;
+		} else {
+		    $args{$key} = [$args{$key}, $value];
+		}
+	    } else {
+		$args{$key} = $value;
+	    }
+	}
     }
 
     return %args;
+}
+
+sub simulate_debug_request
+{
+    my ($infoRef) = @_;
+    my %info = %$infoRef;
+    my $r = new HTML::Mason::FakeApache;
+
+    while (my ($key,$value) = each(%{$info{server}})) {
+	$r->{server}->{$key} = $value;
+    }
+    while (my ($key,$value) = each(%{$info{connection}})) {
+	$r->{connection}->{$key} = $value;
+    }
+    delete($info{server});
+    delete($info{connection});
+    while (my ($key,$value) = each(%info)) {
+	$r->{$key} = $value;
+    }
+    
+    return $r;
 }
 
 #
@@ -795,160 +1006,27 @@ sub _mod_perl_args
 #
 sub http_header_sent { shift->header_out("Content-type") }
 
-# Utility function to prepare $r before returning NOT_FOUND.
-sub return_not_found
-{
-    my ($self, $r) = @_;
-
-    if ($r->method eq 'POST') {
-	$r->method('GET');
-	$r->headers_in->unset('Content-length');
-    }
-    return NOT_FOUND;
-}
-
-
 #
 # PerlHandler HTML::Mason::ApacheHandler
 #
-sub handler ($$)
+sub handler
 {
-    my ($package, $r) = @_;
+    my $r = shift;
 
-    my $ah = $AH || $package->make_ah();
+    my $ah = _make_ah;
+    __PACKAGE__->import unless $ARGS_METHOD;
 
     return $ah->handle_request($r);
 }
 
+
+#----------------------------------------------------------------------
+#
+# APACHEHANDLER MASON COMMANDS
+#
+package HTML::Mason::Commands;
+use vars qw($m);
+# no longer needed
+sub mc_suppress_http_header {}
+
 1;
-
-__END__
-
-=head1 NAME
-
-HTML::Mason::ApacheHandler - Mason/mod_perl interface
-
-=head1 SYNOPSIS
-
-    use HTML::Mason::ApacheHandler;
-
-    my $ah = new HTML::Mason::ApacheHandler (..name/value params..);
-    ...
-    sub handler {
-        my $r = shift;
-        $ah->handle_request($r);
-    }
-
-=head1 DESCRIPTION
-
-The ApacheHandler object links Mason to mod_perl, running components in
-response to HTTP requests. It is controlled primarily through
-parameters to the new() constructor.
-
-handle_request() is not a user method, but rather is called from the
-HTML::Mason::handler() routine in handler.pl.
-
-=head1 PARAMETERS TO THE new() CONTRUCTOR
-
-=over
-
-=item apache_status_title
-
-Title that you want this ApacheHandler to appear as under
-Apache::Status.  Default is "HTML::Mason status".  This is useful if
-you create more than one ApacheHandler object and want them all
-visible via Apache::Status.
-
-=item args_method
-
-Method to use for unpacking GET and POST arguments. The valid options
-are 'CGI' and 'mod_perl'; these indicate that a CGI.pm or
-Apache::Request object (respectively) will be created for the purposes
-of argument handling.
-
-Apache::Request is the default and requires that you have installed
-this package.
-
-If the args_method is 'CGI', the Mason request object ($m) will have a
-method called C<cgi_object> available.  This method returns the CGI
-object used in the ApacheHandler code.
-
-If args_method is 'mod_perl', the $r global is upgraded to an
-Apache::Request object. This object inherits all Apache methods and
-adds a few of its own, dealing with parameters and file uploads.  See
-L<Apache::Request|Apache::Request> for more information.
-
-While Mason will load Apache::Request or CGI as needed at runtime, it
-is recommended that you preload the relevant module either in your
-httpd.conf or handler.pl file, as this will save some memory.
-
-=item decline_dirs
-
-Indicates whether Mason should decline directory requests, leaving
-Apache to serve up a directory index or a FORBIDDEN error as
-appropriate. Default is 1. See L<Allowing directory requests in the
-Admin manual|HTML::Mason::Admin/"Allowing directory requests"> for
-more information about handling directories with Mason.
-
-=item interp
-
-The only required parameter.  Specifies a Mason interpreter to use for
-handling requests.  The interpreter should be an instance of the
-C<HTML::Mason::Interp> class, or a subclass thereof.
-
-=back
-
-=head1 ACCESSOR METHODS
-
-All of the above properties have standard accessor methods of the
-same name: no arguments retrieves the value, and one argument sets it.
-For example:
-
-    my $ah = new HTML::Mason::ApacheHandler;
-    my $decline_dirs = $ah->decline_dirs;
-    $ah->decline_dirs(1);
-
-=head1 OTHER METHODS
-
-The ApacheHandler object has a few other publically accessible methods
-that may be of interest to end users.
-
-=over 4
-
-=item handle_request ($r)
-
-This method takes an Apache object representing a request and
-translates that request into a form Mason can understand.  It's return
-value is an Apache status code.
-
-=item prepare_request ($r)
-
-This method takes an Apache object representing a request and returns
-a new Mason request object or an Apache status code.  If it is a
-request object you can manipulate that object as you like, and then
-call the request object's C<exec> method to have it generate output.
-
-If this method returns an Apache status code, that means that it could
-not create a Mason request object.
-
-This method is useful if you would like to have a chance to decline a
-request based on properties of the Mason request object.  For example:
-
-    my $req = $ah->prepare_request($r);
-    # $req must be an Apache status code if it's not an object
-    return $req unless ref($req);
-
-    return DECLINED
-        unless $req->request_comp->source_file =~ /\.html$/;
-
-    $req->exec;
-
-=back
-
-=head1 SEE ALSO
-
-L<HTML::Mason|HTML::Mason>,
-L<HTML::Mason::Admin|HTML::Mason::Admin>,
-L<HTML::Mason::Interp|HTML::Mason::Interp>
-
-=cut

@@ -128,15 +128,14 @@ sub get_test_params {
 	}
     } until ($found);
     system "$Config{lns} $httpd t/httpd";
-    $conf{httpd} = $httpd;
 
     # Default: search for dynamic dependencies if mod_so is present, don't bother otherwise.
     my $default = (`t/httpd -l` =~ /mod_so\.c/ ? 'y' : 'n');
     if (lc _ask("Search existing config file for dynamic module dependencies?", $default) eq 'y') {
-	my %compiled = $pkg->get_compilation_params('t/httpd');
+	my %compiled = $pkg->_get_compilation_params('t/httpd');
 
-	$conf{config_file} = _ask("  Config file", $compiled{SERVER_CONFIG_FILE}, 1);
-	$conf{modules} = $pkg->_read_existing_conf($conf{config_file});
+	my $file = _ask("  Config file", $compiled{SERVER_CONFIG_FILE}, 1);
+	$conf{modules} = $pkg->_read_existing_conf($file);
     }
 
     # Get default user (apache doesn't like to run as root, special-case it)
@@ -151,7 +150,7 @@ sub get_test_params {
     return %conf;
 }
 
-sub get_compilation_params {
+sub _get_compilation_params {
     my ($self, $httpd) = @_;
 
     my %compiled;
@@ -259,7 +258,6 @@ sub _find_mod_perl_httpd {
     foreach ( '/usr/local/apache/bin/httpd',
 	      '/usr/local/apache_mp/bin/httpd',
 	      '/opt/apache/bin/httpd',
-	      '/usr/sbin/apache',
 	      $self->_which('httpd'),
 	      $self->_which('apache'),
 	    ) {
@@ -272,7 +270,7 @@ sub _httpd_has_mod_perl {
 
     return 1 if `$httpd -l` =~ /mod_perl\.c/;
 
-    my %compiled = $self->get_compilation_params($httpd);
+    my %compiled = $self->_get_compilation_params($httpd);
 
     if ($compiled{SERVER_CONFIG_FILE}) {
 	local *SERVER_CONF;
@@ -336,6 +334,24 @@ sub simple_fetch {
     $response->is_success;
 }
 
+#even if eval $mod fails, the .pm ends up in %INC
+#so the next eval $mod succeeds, when it shouldnot
+
+my %really_have = (
+   'Apache::Table' => sub { 
+       if ($ENV{MOD_PERL}) {
+	   return Apache::Table->can('TIEHASH');
+       }
+       else {
+	   return $net::callback_hooks{PERL_TABLE_API};
+       }
+   },
+);
+
+for (qw(Apache::Cookie Apache::Request)) {
+    $really_have{$_} = $really_have{'Apache::Table'};
+}
+
 sub have_module {
     my $mod = shift;
     my $v = shift;
@@ -366,6 +382,9 @@ sub have_module {
 	warn "$@\n";
     }
 
+    if (my $cv = $really_have{$mod}) {
+	return 0 unless $cv->();
+    }
 
     print "module $mod is installed\n" unless $ENV{MOD_PERL};
     

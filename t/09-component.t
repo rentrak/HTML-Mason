@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
+
 use HTML::Mason::Tests;
 
 my $tests = make_tests();
@@ -28,7 +29,7 @@ $useless=>17
 </%args>
 </%def>
 
-% my $anon = $m->interp->make_component(comp_source=>join("\n",'% my $adj = "flummoxed";','I am a <% $adj %> anonymous component.'),name=>'anonymous');
+% my $anon = $m->parser->make_component(script=>join("\n",'% my $adj = "flummoxed";','I am a <% $adj %> anonymous component.'));
 
 <% '-' x 60 %>
 
@@ -60,17 +61,20 @@ File-based:
 Declared args:
 @animals=>('lions','tigers')
 
+This is my first time.
 I am not a subcomponent.
 I am file-based.
 My short name is comp_obj.
 My directory is /component/comp_obj_test.
+I have run 1 time(s).
 I have 1 subcomponent(s).
 Including one called .subcomp.
 My title is /component/comp_obj_test/comp_obj.
 
+My cache file is /.../cache/component+2fcomp_obj_test+2fcomp_obj
 My object file is /.../obj/component/comp_obj_test/comp_obj
 My path is /component/comp_obj_test/comp_obj.
-My comp_id is /component/comp_obj_test/comp_obj.
+My fq_path is /component/comp_obj_test/comp_obj.
 My source file is /.../comps/component/comp_obj_test/comp_obj
 My source dir is /.../comps/component/comp_obj_test
 
@@ -80,20 +84,22 @@ My source dir is /.../comps/component/comp_obj_test
 
 Subcomponent:
 Declared args:
-$crucial
 $useless=>17
+$crucial
 
+This is my first time.
 I am a subcomponent.
 I am not file-based.
 My short name is .subcomp.
 My parent component is /component/comp_obj_test/comp_obj.
 My directory is /component/comp_obj_test.
+I have run 0 time(s).
 I have 0 subcomponent(s).
 My title is /component/comp_obj_test/comp_obj:.subcomp.
 
+My cache file is /.../cache/component+2fcomp_obj_test+2fcomp_obj
 My object file is /.../obj/component/comp_obj_test/comp_obj
 My path is /component/comp_obj_test/comp_obj:.subcomp.
-My comp_id is [subcomponent '.subcomp' of /component/comp_obj_test/comp_obj].
 
 
 
@@ -104,13 +110,14 @@ I am a flummoxed anonymous component.
 I am a flummoxed anonymous component.
 Declared args:
 
+This is not my first time.
 I am not a subcomponent.
 I am not file-based.
 My short name is [anon something].
+I have run 2 time(s).
 I have 0 subcomponent(s).
 My title is [anon something].
 
-My comp_id is [anon something].
 
 
 
@@ -137,7 +144,7 @@ Scalar:\
 <& .subcomp &>
 
 <%def .subcomp>
-% $m->print( wantarray ? ('an','array') : 'scalar' );
+% $m->out( wantarray ? ('an','array') : 'scalar' );
 </%def>
 EOF
 		      expect => <<'EOF',
@@ -183,6 +190,31 @@ EOF
 
 #------------------------------------------------------------
 
+    $group->add_test( name => 'STORE',
+		      description => 'Test STORE parameter to component call',
+		      component => <<'EOF',
+
+% my $buffy;
+% $m->comp('.subcomp', 1,2,3,4, STORE=>\$buffy);
+-----
+<% $buffy %>
+
+<%def .subcomp>
+ Hello, you say <% join '', @_ %>.
+</%def>
+EOF
+		      expect => <<'EOF',
+
+-----
+
+ Hello, you say 1234.
+
+
+EOF
+		    );
+
+#------------------------------------------------------------
+
     $group->add_test( name => 'mfu_count',
 		      description => 'Test mfu_count component method',
 		      component => <<'EOF',
@@ -198,134 +230,5 @@ EOF
 
 #------------------------------------------------------------
 
-    $group->add_test( name => 'store',
-                      description => 'Test store parameter to component call',
-                      component => <<'EOF',
-
-% my $buffy;
-% my $rtn;
-% $rtn = $m->comp({store => \$buffy}, '.subcomp', 1,2,3,4);
------
-<% $buffy %>
-returned <% $rtn %>
-
-<%def .subcomp>
- Hello, you say <% join '', @_ %>.
-% return 'foo';
-</%def>
-EOF
-                      expect => <<'EOF',
-
------
-
- Hello, you say 1234.
-
-returned foo
-
-EOF
-                    );
-
-#------------------------------------------------------------
-
-    $group->add_test( name => 'flush_clear',
-		      description => 'Flush then clear',
-		      component => <<'EOF',
-Foo
-% $m->flush_buffer;
-Bar
-% $m->clear_buffer;
-Baz
-EOF
-		      expect => <<'EOF',
-Foo
-Baz
-EOF
-		    );
-
-#------------------------------------------------------------
-
-    $group->add_test( name => 'flush_clear_scomp',
-		      description => 'Flush then clear inside scomp',
-		      component => <<'EOF',
-<%method s>
-Foo
-% $m->flush_buffer;
-Bar
-% $m->clear_buffer;
-Baz
-</%method>
-This is me
-----------
-This is scomp-ed output:
-<% $m->scomp('SELF:s') %>
-----------
-This is me again
-EOF
-		      expect => <<'EOF',
-This is me
-----------
-This is scomp-ed output:
-
-Foo
-Baz
-
-----------
-This is me again
-EOF
-		    );
-
-#------------------------------------------------------------
-
-    $group->add_support( path => 'flush_clear_filter_comp',
-			 component => <<'EOF',
-Foo
-% $m->flush_buffer;
-Bar
-% $m->clear_buffer;
-Baz
-<%filter>
-s/^/-/gm;
-</%filter>
-EOF
-		       );
-
-#------------------------------------------------------------
-
-    $group->add_test( name => 'flush_clear_filter',
-		      description => 'Flush then clear with filter section',
-		      component => <<'EOF',
-before
-<& flush_clear_filter_comp &>
-after
-EOF
-		      expect => <<'EOF',
-before
--Foo
--Baz
-
-after
-EOF
-		    );
-
-#------------------------------------------------------------
-
-    $group->add_test( name => 'attr_if_exists',
-		      description => 'Test attr_if_exists method',
-		      component => <<'EOF',
-have it: <% $m->base_comp->attr_if_exists('have_it') %>
-don't have it: <% $m->base_comp->attr_if_exists('don\'t have_it') %>
-<%attr>
-have_it => 1
-</%attr>
-EOF
-		      expect => <<'EOF',
-have it: 1
-don't have it: 0
-EOF
-		    );
-
-#------------------------------------------------------------
-
     return $group;
 }
-

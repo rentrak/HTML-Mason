@@ -97,6 +97,10 @@ EOF
 			 component => <<'EOF',
 dhandler = <% $m->current_comp->title %>
 dhandler arg = <% $m->dhandler_arg %>
+
+<%args>
+$decline=>0
+</%args>
 EOF
 		       );
 
@@ -107,27 +111,8 @@ EOF
 			 component => <<'EOF',
 % $m->decline if $m->dhandler_arg eq 'leaf3';
 % $m->decline if $m->dhandler_arg eq 'slashes';
-% $m->decline if $m->dhandler_arg eq 'buffers';
 dhandler = <% $m->current_comp->title %>
 dhandler arg = <% $m->dhandler_arg %>
-EOF
-		       );
-
-
-#------------------------------------------------------------
-
-    $group->add_support( path => '/dhandler_test/bar/dhandler',
-			 component => <<'EOF',
-dhandler = <% $m->current_comp->title %>
-dhandler arg = <% $m->dhandler_arg %>
-EOF
-		       );
-
-#------------------------------------------------------------
-
-    $group->add_support( path => '/dhandler_test/buff/dhandler',
-			 component => <<'EOF',
-Buffer stack size: <% scalar $m->buffer_stack %>
 EOF
 		       );
 
@@ -215,51 +200,5 @@ EOF
 
 #------------------------------------------------------------
 
-    $group->add_test( name => 'dhandler6',
-		      description => 'test that a dhandler more than one directory up is found',
-		      call_path => '/dhandler_test/bar/baz/quux/not_here',
-		      skip_component => 1,
-		      expect => <<'EOF',
-dhandler = /misc/dhandler_test/bar/dhandler
-dhandler arg = baz/quux/not_here
-
-EOF
-		    );
-
-#------------------------------------------------------------
-
-    $group->add_test( name => 'dhandler7',
-		      description => 'test that $m->decline does not leak buffer objects',
-		      call_path => '/dhandler_test/buff/buffers',
-		      component => <<'EOF',
-% $m->decline;
-I'm buffers
-EOF
-		      expect => <<'EOF',
-Buffer stack size: 2
-EOF
-		    );
-
-#------------------------------------------------------------
-
-    $group->add_test( name => 'accessor_validate',
-		      description => 'test accessor parameter validation',
-		      component => <<'EOF',
-% $m->interp->use_object_files([1]);
-EOF
-		      expect_error => qr/Parameter #1 to .*? was an 'arrayref'/,
-		    );
-
-#------------------------------------------------------------
-
-    $group->add_test( name => 'contained_accessor_validate',
-		      description => 'test contained accessor parameter validation',
-		      component => <<'EOF',
-% $m->interp->autoflush([1]);
-EOF
-		      expect_error => qr/Parameter #1 to .*? was an 'arrayref'/,
-		    );
-
-#------------------------------------------------------------
     return $group;
 }

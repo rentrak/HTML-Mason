@@ -144,36 +144,8 @@ Hello World!
 EOF
 			);
 
-#------------------------------------------------------------
-
-	$group->add_test( name => 'fake_percent',
-			  description => 'tests % in text section',
-			  component => 'some text, a %, and some text',
-			  expect =>    'some text, a %, and some text',
-			);
 
 #------------------------------------------------------------
-	$group->add_test( name => 'empty_percents',
-			  description => 'tests empty %-lines',
-			  component => <<'EOF',
-some text,
-%
-and some more
-EOF
-			  expect =>    "some text,\nand some more\n",
-			);
-#------------------------------------------------------------
-	$group->add_test( name => 'empty_percents2',
-			  description => 'tests empty %-lines followed by other %-lines',
-			  component => <<'EOF',
-some text,
-%
-% $m->print('foo, ');
-and some more
-EOF
-			  expect =>    "some text,\nfoo, and some more\n",
-			);
-
 
     return $group;
 }
