@@ -33,12 +33,15 @@ BEGIN
 	( ah         => { isa => 'HTML::Mason::ApacheHandler',
 			  descr => 'An ApacheHandler to handle web requests',
 			  public => 0 },
+
 	  apache_req => { isa => $ap_req_class, default => undef,
 			  descr => "An Apache request object",
 			  public => 0 },
+
 	  cgi_object => { isa => 'CGI',    default => undef,
 			  descr => "A CGI.pm request object",
 			  public => 0 },
+
 	  auto_send_headers => { parse => 'boolean', type => BOOLEAN, default => 1,
 				 descr => "Whether HTTP headers should be auto-generated" },
 	);
@@ -269,26 +272,34 @@ BEGIN
 {
     __PACKAGE__->valid_params
 	(
-	 apache_status_title   => { parse => 'string',  type => SCALAR,       default => 'HTML::Mason status',
-				    descr => "The title of the Apache::Status page" },
-	 args_method           => { parse => 'string',  type => SCALAR,       default => 'mod_perl',
-				    callbacks =>
-				    { "must be either 'CGI' or 'mod_perl'" =>
-				      sub { $_[0] =~ /^(?:CGI|mod_perl)$/ } },
-				    descr => "Whether to use CGI.pm or Apache::Request for parsing the incoming HTTP request",
-				  },
-	 decline_dirs          => { parse => 'boolean', type => BOOLEAN, default => 1,
-				    descr => "Whether Mason should decline to handle requests for directories" },
+	 apache_status_title =>
+         { parse => 'string', type => SCALAR, default => 'HTML::Mason status',
+           descr => "The title of the Apache::Status page" },
+
+	 args_method =>
+         { parse => 'string',  type => SCALAR,       default => 'mod_perl',
+           callbacks =>
+           { "must be either 'CGI' or 'mod_perl'" =>
+             sub { $_[0] =~ /^(?:CGI|mod_perl)$/ } },
+           descr => "Whether to use CGI.pm or Apache::Request for parsing the incoming HTTP request",
+         },
+
+	 decline_dirs =>
+         { parse => 'boolean', type => BOOLEAN, default => 1,
+           descr => "Whether Mason should decline to handle requests for directories" },
+
 	 # the only required param
-	 interp                => { isa => 'HTML::Mason::Interp',
-				    descr => "A Mason interpreter for processing components" },
+	 interp =>
+         { isa => 'HTML::Mason::Interp',
+           descr => "A Mason interpreter for processing components" },
 	);
 
     __PACKAGE__->contained_objects
 	(
-	 interp => { class => 'HTML::Mason::Interp',
-                     descr => 'The interp class coordinates multiple objects to handle request execution'
-                   },
+	 interp =>
+         { class => 'HTML::Mason::Interp',
+           descr => 'The interp class coordinates multiple objects to handle request execution'
+         },
 	);
 }
 
@@ -367,6 +378,8 @@ sub make_ah
 
     return $AH{$key} if exists $AH{$key};
 
+    # can't use hash_list for this one because it's _either_ a string
+    # or a hash_list
     if (exists $p{comp_root}) {
 	if (@{$p{comp_root}} == 1 && $p{comp_root}->[0] !~ /=>/) {
 	    $p{comp_root} = $p{comp_root}[0];  # Convert to a simple string
@@ -384,20 +397,6 @@ sub make_ah
 
             $p{comp_root} = \@roots;
 	}
-    }
-
-    if (exists $p{escape_flags}) {
-        my %escapes;
-        foreach my $pair (@{$p{escape_flags}}) {
-            my ($key, $val) = split /\s*=>\s*/, $pair, 2;
-            param_error "Configuration parameter MasonEscapeFlags must be a key/value pair ".
-                        "like 'foo => \&foo_escape'.  Invalid parameter:\n$pair"
-                unless defined $key && defined $val;
-
-            $escapes{$key} = $val;
-        }
-
-        $p{escape_flags} = \%escapes;
     }
 
     my $ah = $package->new(%p, $r);
@@ -514,6 +513,29 @@ sub _get_list_param
     }
 
     return \@val;
+}
+
+sub _get_hash_list_param
+{
+    my $self = shift;
+    my @val = $self->_get_val(@_);
+    if (@val == 1 && ! defined $val[0])
+    {
+        return {};
+    }
+
+    my %hash;
+    foreach my $pair (@val)
+    {
+        my ($key, $val) = split /\s*=>\s*/, $pair, 2;
+        param_error "Configuration parameter $_[0] must be a key/value pair ".
+                    qq|like "foo => 'bar'".  Invalid parameter:\n$pair|
+                unless defined $key && defined $val;
+
+        $hash{$key} = $val;
+    }
+
+    return \%hash;
 }
 
 use constant
@@ -760,7 +782,8 @@ sub handle_request
 
     my $req = $self->prepare_request($r);
     return $req unless ref($req);
-    $req->exec;
+
+    return $req->exec;
 }
 
 sub prepare_request
@@ -837,9 +860,8 @@ sub prepare_request
     my $out_method = sub {
 
 	# Send headers if they have not been sent by us or by user.
-
         # We use instance here because if we store $request we get a
-        # circular reference and a big memory leak
+        # circular reference and a big memory leak.
 	if (!$sent_headers and HTML::Mason::Request->instance->auto_send_headers) {
 	    unless (http_header_sent($new_r)) {
 		$new_r->send_http_header();
@@ -847,6 +869,12 @@ sub prepare_request
 	    $sent_headers = 1;
 	}
 
+	# We could perhaps install a new, faster out_method here that
+	# wouldn't have to keep checking whether headers have been
+	# sent and what the $r->method is.  That would require
+	# additions to the Request interface, though.
+
+	
 	# Call $new_r->print (using the real Apache method, not our
 	# overriden method). If request was HEAD, suppress output.
 	unless ($new_r->method eq 'HEAD') {
@@ -873,23 +901,23 @@ sub request_args
     # leak!
     my $apr;
 
-    my (%args, $cgi_object);
+    my ($args, $cgi_object);
     if ($self->args_method eq 'mod_perl') {
         $apr = ( UNIVERSAL::isa($r, 'Apache::Request') ?
                  $r :
-                 Apache::Request->new($r) );
+                 Apache::Request->instance($r) );
 
-	%args = $self->_mod_perl_args($apr);
+	$args = $self->_mod_perl_args($apr);
     } else {
         $apr = $r;
 	$cgi_object = CGI->new;
-	%args = $self->_cgi_args($r, $cgi_object);
+	$args = $self->_cgi_args($r, $cgi_object);
     }
-    return (\%args, $apr, $cgi_object);
+    return ($args, $apr, $cgi_object);
 }
 
 #
-# Get %args hash via CGI package
+# Get $args hashref via CGI package
 #
 sub _cgi_args
 {
@@ -897,13 +925,13 @@ sub _cgi_args
 
     # For optimization, don't bother creating a CGI object if request
     # is a GET with no query string
-    return if $r->method eq 'GET' && !scalar($r->args);
+    return {} if $r->method eq 'GET' && !scalar($r->args);
 
     return HTML::Mason::Utils::cgi_request_args($q, $r->method);
 }
 
 #
-# Get %args hash via Apache::Request package.
+# Get $args hashref via Apache::Request package.
 #
 sub _mod_perl_args
 {
@@ -915,7 +943,7 @@ sub _mod_perl_args
 	$args{$key} = @values == 1 ? $values[0] : \@values;
     }
 
-    return %args;
+    return \%args;
 }
 
 #
@@ -1036,7 +1064,7 @@ L<HTML::Mason::Interp|HTML::Mason::Interp>.
 
 =head1 ACCESSOR METHODS
 
-All of the above properties, except interp, have standard accessor
+All of the above properties, except interp_class, have standard accessor
 methods of the same name: no arguments retrieves the value, and one
 argument sets it, except for args_method, which is not settable.  For
 example:

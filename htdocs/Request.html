@@ -19,6 +19,7 @@
 	<li><A HREF="#parameters_to_the_new__construc">PARAMETERS TO THE <code>new()</code> CONSTRUCTOR</a></li>
 	<li><A HREF="#methods">METHODS</a></li>
 	<li><A HREF="#apacheonly_methods">APACHE-ONLY METHODS</a></li>
+	<li><A HREF="#cgionly_methods">CGI-ONLY METHODS</a></li>
 	<li><A HREF="#apache_or_cgionly_method">APACHE- OR CGI-ONLY METHOD</a></li>
 	<li><A HREF="#authors">AUTHORS</a></li>
 	<li><A HREF="#see_also">SEE ALSO</a></li>
@@ -688,6 +689,24 @@ manually.
 <dd>
 <p>See the <A HREF="Devel.html#sending_http_headers">sending HTTP headers</a> section of the developer's manual for more details about the automatic
 header feature.</p>
+</dd>
+<p></p></dl>
+<p>
+</p>
+<hr />
+<h1><A NAME="cgionly_methods">CGI-ONLY METHODS</a></h1>
+<p>This additional method is available when running Mason with the
+CGIHandler module.</p>
+<A NAME="item_cgi_request"></a><dl>
+<dt><strong><A NAME="item_cgi_request">cgi_request</a></strong><br />
+</dt>
+<dd>
+Returns the Apache request emulation object, which is available as
+<code>$r</code> inside components.
+</dd>
+<dd>
+<p>See the <A HREF="CGIHandler.html#_r_methods">CGIHandler docs</a> for
+more details.</p>
 </dd>
 <p></p></dl>
 <p>

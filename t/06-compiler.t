@@ -65,7 +65,7 @@ Explicitly HTML-escaped redundantly: <% $expr |hh %><p>
 Explicitly URL-escaped: <% $expr |u
 %><p>
 No flags: <% $expr %><p>
-No flags again: <% $expr | %><p>
+No flags again: <% $expr %><p>
 Explicitly not escaped: <% $expr | n%><p>
 <%init>
 my $expr = "<b><i>Hello there</i></b>.";
@@ -95,7 +95,7 @@ Explicitly HTML-escaped redundantly: <% $expr | h,h %><p>
 Explicitly URL-escaped: <% $expr |u
 %><p>
 No flags: <% $expr %><p>
-No flags again: <% $expr | %><p>
+No flags again: <% $expr %><p>
 Explicitly not escaped: <% $expr | n %><p>
 <%init>
 my $expr = "<b><i>Hello there</i></b>.";
@@ -125,7 +125,7 @@ Explicitly HTML-escaped redundantly: <% $expr |hh %><p>
 Explicitly URL-escaped: <% $expr |un
 %><p>
 No flags: <% $expr %><p>
-No flags again: <% $expr | %><p>
+No flags again: <% $expr %><p>
 Explicitly not escaped: <% $expr | n%><p>
 <%init>
 my $expr = "<b><i>Hello there</i></b>.";
@@ -156,7 +156,7 @@ Explicitly HTML-escaped redundantly: <% $expr | h , h %><p>
 Explicitly URL-escaped: <% $expr | u, n
 %><p>
 No flags: <% $expr %><p>
-No flags again: <% $expr | %><p>
+No flags again: <% $expr %><p>
 Explicitly not escaped: <% $expr | n %><p>
 <%init>
 my $expr = "<b><i>Hello there</i></b>.";
@@ -726,6 +726,46 @@ EOF
 </%shared>
 EOF
                           expect => 8,
+                        );
+
+#------------------------------------------------------------
+
+	$group->add_test( name => 'double_pipe_or',
+			  description => 'Make sure || works in a substitution',
+			  component => <<'EOF',
+Should be 1: <% 1 || 2 %>
+EOF
+                          expect => <<'EOF',
+Should be 1: 1
+EOF
+                        );
+
+#------------------------------------------------------------
+
+	$group->add_test( name => 'double_pipe_or_2',
+			  description => 'Make sure || works in a substitution (again)',
+			  component => <<'EOF',
+<%once>
+sub foo { 'foo!' }
+sub bar { 'bar!' }
+</%once>
+<% foo || bar %>
+EOF
+                          expect => <<'EOF',
+foo!
+EOF
+                        );
+
+#------------------------------------------------------------
+
+	$group->add_test( name => 'flags_regex',
+			  description => 'Make sure flags must start with alpha or underscore',
+			  component => <<'EOF',
+<% 1 | 1 %>
+EOF
+                          expect => <<'EOF',
+1
+EOF
                         );
 
 #------------------------------------------------------------

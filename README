@@ -27,11 +27,15 @@ Mason requires Perl 5.005 or greater, and the following CPAN modules:
 
 * File::Spec
 
+* Scalar::Util
+
 The following CPAN modules are optional for certain features, but not required:
 
 * Apache::Request
 
 * Cache::Cache
+
+* CGI.pm
 
 INSTALLATION
 
@@ -72,8 +76,9 @@ Mason is still strictly unsupported.
 
 The mod_perl PerlFreshRestart directive attempts to reload modules on
 restart in a very simplistic way. Mason cannot be reloaded this way.
-To reliably restart a server using Mason, you must actually stop and
-start the server.
+The Apache::Reload module from CPAN does a much better job, and
+appears to work with Mason.  However, the safest thing to do is to
+actually stop and start the server.
 
 GETTING HELP
 
@@ -85,6 +90,10 @@ The FAQ can be found at http://www.masonhq.com/docs/faq/.
 Several mailing lists exist for Mason users and developers. Full
 information can be found at
 http://www.masonhq.com/resources/mailing_lists.html.
+
+There is a book about Mason, _Embedding Perl in HTML with Mason_, by
+Dave Rolsky and Ken Williams.  This book is published by O'Reilly and
+Associates.  The book's home page is http://www.masonbook.com/.
 
 CODE EXAMPLES
 
@@ -137,3 +146,9 @@ AUTHOR
 
 Jonathan Swartz
 swartz@pobox.com
+
+Dave Rolsky
+autarch@urth.org
+
+Ken Williams
+ken@mathforum.org

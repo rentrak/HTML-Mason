@@ -11,6 +11,9 @@ use HTML::Mason::Tools qw(absolute_comp_path);
 use Params::Validate qw(:all);
 Params::Validate::validation_options( on_fail => sub { param_error join '', @_  } );
 
+# for weakrefs
+BEGIN { require Scalar::Util if $] >= 5.006 }
+
 use HTML::Mason::Exceptions( abbr => ['error'] );
 use HTML::Mason::MethodMaker
     ( read_only => [ qw( code
@@ -19,7 +22,6 @@ use HTML::Mason::MethodMaker
 			 declared_args
 			 inherit_path
 			 inherit_start_path
-                         interp
                          has_filter
 			 load_time
 			 object_size
@@ -79,7 +81,7 @@ sub new
 my $comp_count = 0;
 sub assign_runtime_properties {
     my ($self, $interp, $info) = @_;
-    $self->{interp} = $interp;
+    $self->interp($interp);
     $self->{comp_id} = defined $info->comp_id ? $info->comp_id : "[anon ". ++$comp_count . "]";
 
     $self->{path} = $info->comp_path;
@@ -117,33 +119,7 @@ sub run {
 
     $self->{mfu_count}++;
 
-    return $self->{code}->(@_) unless $self->has_filter;
-
-    my $req = HTML::Mason::Request->instance;
-
-    $req->push_filter_buffer( filter_from => $self );
-
-    my @r;
-
-    my $wantarray = wantarray;
-    my @result;
-    # Note: this must always preserve calling wantarray() context
-    eval {
-        if ($wantarray) {
-            @result = $self->{code}->(@_);
-        } elsif (defined $wantarray) {
-            $result[0] = $self->{code}->(@_);
-        } else {
-            $self->{code}->(@_);
-        }
-    };
-
-    $req->top_buffer->flush;
-    $req->pop_buffer_stack;
-
-    die $@ if $@;
-
-    return $wantarray ? @result : defined $wantarray ? $result[0] : undef;
+    return $self->{code}->(@_);
 }
 
 sub dynamic_subs_init {
@@ -327,6 +303,22 @@ sub parent {
     }
 
     return $comp;
+}
+
+sub interp {
+    my $self = shift;
+
+    if (@_) {
+        validate_pos( @_, { isa => 'HTML::Mason::Interp' } );
+
+        $self->{interp} = $_[0];
+
+        Scalar::Util::weaken( $self->{interp} ) if $] >= 5.006;
+    } elsif ( ! defined $self->{interp} ) {
+        die "The Interp object that this object contains has gone out of scope.\n";
+    }
+
+    return $self->{interp};
 }
 
 #

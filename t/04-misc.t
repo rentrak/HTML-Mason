@@ -2,6 +2,7 @@
 
 use strict;
 
+use File::Spec;
 use HTML::Mason::Tests;
 
 my $tests = make_tests();
@@ -276,5 +277,38 @@ EOF
 		    );
 
 #------------------------------------------------------------
+
+    # this is sneaky and bad!
+    my $updir = File::Spec->updir;
+    $group->add_support( path => "$updir/dhandler",
+			 component => <<'EOF',
+top-level dhandler
+EOF
+		       );
+
+#------------------------------------------------------------
+
+    $group->add_support( path => '/dhandler',
+			 component => <<'EOF',
+% $m->decline;
+EOF
+		       );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'top_level_dhandler',
+		      description => 'make sure dhandler at /dhandler is called correctly after decline from lower-level dhandler',
+                      path      => '/notused',
+                      call_path => '/nonexistent',
+		      component => <<'EOF',
+not ever used
+EOF
+		      expect => <<'EOF',
+top-level dhandler
+EOF
+		    );
+
+#------------------------------------------------------------
+
     return $group;
 }

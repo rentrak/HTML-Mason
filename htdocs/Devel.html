@@ -251,7 +251,7 @@ profile their performance.</p>
     % }</pre>
 <p>After 12 pm, the output of this component is:</p>
 <pre>
-    Hello world, good afternoon.</pre>
+    Hello World, good afternoon.</pre>
 <p>This short example demonstrates the three primary ``in-line'' Perl
 sections. In-line sections are generally embedded within HTML and
 execute in the order they appear. Other sections (<code>&lt;%init&gt;</code>, <code>&lt;
@@ -1189,6 +1189,11 @@ the item corresponding to the current page:</p>
 without <code>if</code> statements surrounding each link!  Note that the regular
 expression need not be very robust as long as you have control over what
 will appear in the body.</p>
+<p>It should be noted that a filter cannot rely on receiving all of a
+component's output at once, and so may be called multiple times with
+different chunks of output.  This can happen if autoflush is on, or if
+a filter-containing component, or the components it calls, call the
+<code>$m-&gt;flush_buffer()</code> method.</p>
 <p>You can use <A HREF="#component_calls_with_content">Component Calls with Content</a> if you want to filter specific parts of a component rather
 than the entire component.</p>
 <p>
@@ -1286,11 +1291,10 @@ ignored.</p>
 defined will cause an error when executing that component.</p>
 <p>One possible use for this feature is to override the built-in HTML
 escaping's assumption of the ISO-8859-1 character set.  You could
-override the 'h' flag in a top-level autohandler or a
-<A HREF="Admin.html#configuring_via_handler_script">handler.pl</a>
-script like this:</p>
+override the 'h' flag in a top-level autohandler or <A HREF="Admin.html#advanced_configuration">custom wrapper code</a> like this:</p>
 <pre>
-  $interp-&gt;set_escape( h =&gt; \&amp;escape_ISO_8859_2 );</pre>
+  $ah-&gt;interp-&gt;set_escape( h =&gt; \&amp;escape_ISO_8859_2 );</pre>
+<p>where <code>$ah</code> is an ApacheHandler object.</p>
 <p>Inside components, the Interpreter object is available via <code>&lt;
 $m-</code><code>interp()</code> &gt;&gt; so you would do this instead:</p>
 <pre>
@@ -1495,10 +1499,6 @@ given a component id (usually just the component path), returns the
 namespace.
 <p></p>
 <li></li>
-the username associated with the cache; this is ``mason'' unless it has
-been changed by the administrator.
-<p></p>
-<li></li>
 the cache_root, for file-based caches only. Defaults to the
 ``cache'' subdirectory under the Mason data directory.
 <p></p></ul>
@@ -1510,9 +1510,9 @@ and the cache subclass is <code>FileCache</code>:</p>
     use HTML::Mason::Utils qw(data_cache_namespace);</pre>
 <pre>
     my $cache = new Cache::FileCache
-        (namespace =&gt; data_cache_namespace(&quot;/foo/bar&quot;),
-         cache_root =&gt; &quot;/usr/local/www/mason/cache&quot;,
-         username =&gt; &quot;mason&quot;);
+        ( { namespace =&gt; data_cache_namespace(&quot;/foo/bar&quot;),
+            cache_root =&gt; &quot;/usr/local/www/mason/cache&quot; } );</pre>
+<pre>
     $cache-&gt;remove('key1');</pre>
 <p>
 </p>

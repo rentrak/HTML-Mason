@@ -50,42 +50,65 @@ BEGIN
 {
     __PACKAGE__->valid_params
 	(
-	 args  => { type => ARRAYREF, default => [],
-		    descr => "Array of arguments to initial component",
-		    public => 0 },
-	 autoflush  => { parse => 'boolean', default => 0, type => SCALAR,
-			 descr => "Whether output should be buffered or sent immediately" },
-	 comp  => { type => SCALAR | OBJECT, optional => 0,
-		    descr => "Initial component, either an absolute path or a component object",
-		    public => 0 },
-         data_cache_api => { parse => 'string', default => '1.1', type => SCALAR,
-			     callbacks => { "must be one of '1.0' or '1.1'" =>
-				sub { $_[0] eq '1.0' or $_[0] eq '1.1'; } },
-                             descr => "Data cache API to use: 1.0 or 1.1" },
-	 data_cache_defaults => { type => HASHREF|UNDEF, optional => 1,
-				  descr => "A hash of default parameters for Cache::Cache" },
-	 declined_comps => { type => HASHREF, optional=>1,
-			     descr => "Hash of components that have been declined in previous parent requests",
-			     public => 0 },
-	 dhandler_name => { parse => 'string',  default => 'dhandler', type => SCALAR,
-			    descr => "The filename to use for Mason's 'dhandler' capability" },
-	 interp     => { isa => 'HTML::Mason::Interp',
-			 descr => "An interpreter for Mason control functions",
-			 public => 0 },
-	 error_format => { parse => 'string', type => SCALAR, default => 'text',
-			   callbacks => { "HTML::Mason::Exception->can( method )'" =>
-					  sub { HTML::Mason::Exception->can("as_$_[0]"); } },
-			   descr => "How error conditions are returned to the caller (brief, text, line or html)" },
-	 error_mode => { parse => 'string', type => SCALAR, default => 'fatal',
-			 callbacks => { "must be one of 'output' or 'fatal'" =>
-					sub { $_[0] =~ /^(?:output|fatal)$/ } },
-			 descr => "How error conditions are manifest (output or fatal)" },
-	 max_recurse => { parse => 'string',  default => 32, type => SCALAR,
-			  descr => "The maximum recursion depth for component, inheritance, and request stack" },
-	 out_method => { parse => 'code',    type => CODEREF|SCALARREF,
-			 default => sub { print STDOUT grep {defined} @_ },
-			 descr => "A subroutine or scalar reference through which all output will pass" },
-    );
+	 args =>
+         { type => ARRAYREF, default => [],
+           descr => "Array of arguments to initial component",
+           public => 0 },
+
+	 autoflush =>
+         { parse => 'boolean', default => 0, type => SCALAR,
+           descr => "Whether output should be buffered or sent immediately" },
+
+	 comp =>
+         { type => SCALAR | OBJECT, optional => 0,
+           descr => "Initial component, either an absolute path or a component object",
+           public => 0 },
+
+         data_cache_api =>
+         { parse => 'string', default => '1.1', type => SCALAR,
+           callbacks => { "must be one of '1.0' or '1.1'" =>
+                          sub { $_[0] eq '1.0' or $_[0] eq '1.1'; } },
+           descr => "Data cache API to use: 1.0 or 1.1" },
+
+	 data_cache_defaults =>
+         { parse => 'hash_list', type => HASHREF|UNDEF, optional => 1,
+           descr => "A hash of default parameters for Cache::Cache" },
+
+	 declined_comps =>
+         { type => HASHREF, optional => 1,
+           descr => "Hash of components that have been declined in previous parent requests",
+           public => 0 },
+
+	 dhandler_name =>
+         { parse => 'string', default => 'dhandler', type => SCALAR,
+           descr => "The filename to use for Mason's 'dhandler' capability" },
+
+	 interp =>
+         { isa => 'HTML::Mason::Interp',
+           descr => "An interpreter for Mason control functions",
+           public => 0 },
+
+	 error_format =>
+         { parse => 'string', type => SCALAR, default => 'text',
+           callbacks => { "HTML::Mason::Exception->can( method )'" =>
+                          sub { HTML::Mason::Exception->can("as_$_[0]"); } },
+           descr => "How error conditions are returned to the caller (brief, text, line or html)" },
+
+	 error_mode =>
+         { parse => 'string', type => SCALAR, default => 'fatal',
+           callbacks => { "must be one of 'output' or 'fatal'" =>
+                          sub { $_[0] =~ /^(?:output|fatal)$/ } },
+           descr => "How error conditions are manifest (output or fatal)" },
+
+	 max_recurse =>
+         { parse => 'string', default => 32, type => SCALAR,
+           descr => "The maximum recursion depth for component, inheritance, and request stack" },
+
+	 out_method =>
+         { parse => 'code',type => CODEREF|SCALARREF,
+           default => sub { print STDOUT grep {defined} @_ },
+           descr => "A subroutine or scalar reference through which all output will pass" },
+        );
 
     __PACKAGE__->contained_objects
 	(
@@ -147,7 +170,7 @@ sub new
 # in the future this method may do something completely different but
 # for now this works just fine.
 sub instance {
-    return $HTML::Mason::Commands::m;
+    return $HTML::Mason::Commands::m; #; this comment fixes a parsing bug in Emacs cperl-mode
 }
 
 sub _initialize {
@@ -193,7 +216,8 @@ sub _initialize {
 		    $path = $request_comp->dir_path;
 		    unless ($path eq '/' and $request_comp->name eq $self->dhandler_name) {
 			if ($request_comp->name eq $self->dhandler_name) {
-			    $path =~ s/\/[^\/]+$//;
+			    $path =~ s:/[^\/]+$::;
+                            $path ||= '/';
 			}
 		    }
 		    redo search;
@@ -275,6 +299,7 @@ sub exec {
 	# Create initial buffer.
 	my $buffer = $self->create_delayed_object( 'buffer', sink => $self->out_method );
 	push @{ $self->{buffer_stack} }, $buffer;
+        push @{ $self->{buffer_stack} }, $buffer->new_child;
 
 	# If there was an error during request preparation, throw it now.
 	if (my $err = $self->{prepare_error}) {
@@ -323,6 +348,7 @@ sub exec {
     my $err = $@;
     if ($err and !$self->aborted($err)) {
 	pop @{ $self->{buffer_stack} };
+	pop @{ $self->{buffer_stack} };
 	$interp->purge_code_cache;
 	$self->_handle_error($err);
 	return;
@@ -330,6 +356,7 @@ sub exec {
 
     # Flush output buffer.
     $self->flush_buffer;
+    pop @{ $self->{buffer_stack} };
     pop @{ $self->{buffer_stack} };
 
     # Purge code cache if necessary. We do this at the end so as not
@@ -438,7 +465,6 @@ sub cache
     }
     $options{namespace}   ||= compress_path($self->current_comp->comp_id);
     $options{cache_root}  ||= $self->interp->cache_dir;
-    $options{username}      = "mason";
 
     # Determine cache_class, adding 'Cache::' in front of user's
     # specification if necessary.
@@ -664,13 +690,13 @@ sub cache_self {
         UNIVERSAL::can($@, 'rethrow') ? $@->rethrow : error $@;
     }
 
+    push @{ $self->{buffer_stack} }, $filter
+        if $filter;
+
     #
     # Print the component output.
     #
     $self->print($output);
-
-    push @{ $self->{buffer_stack} }, $filter
-        if $filter;
 
     #
     # Return the component return value in case the caller is interested,
@@ -968,10 +994,18 @@ sub comp {
                                           ignore_flush => 1,
                                           ignore_clear => 1,
                                         );
+
+        # This extra buffer is here so that flushes get passed through
+        # to the parent (storing buffer) but clears can be handled
+        # properly as well.
+        push @{ $self->{buffer_stack} }, $self->{buffer_stack}[-1]->new_child;
     }
-    # more common case optimizations
-    push @{ $self->{buffer_stack} },
-        $self->{buffer_stack}[-1]->new_child;
+
+    if ( $comp->has_filter )
+    {
+        push @{ $self->{buffer_stack} },
+            $self->{buffer_stack}[-1]->new_child( filter_from => $comp );
+    }
 
     my @result;
 
@@ -992,26 +1026,38 @@ sub comp {
         }
     };
 
-    #
-    # If an error occurred, pop stack and pass error down to next level.
-    #
-    if (my $err = $@) {
-	# any unflushed output is at $self->top_buffer->output
-	$self->flush_buffer if $self->aborted;
+    my $err = $@;
 
-	pop @{ $self->{stack} };
-	pop @{ $self->{buffer_stack} };
-	pop @{ $self->{buffer_stack} } if ($mods{store});
+    # any unflushed output is at $self->top_buffer->output
+    $self->flush_buffer if $self->aborted;
 
-	UNIVERSAL::can($err, 'rethrow') ? $err->rethrow : error $err;
+    if ( $comp->has_filter )
+    {
+        my $buffer = pop @{ $self->{buffer_stack} };
+
+        # we don't want to send output if there was a real error
+        unless ( $err && ! $self->aborted )
+        {
+            # have to catch errors from filter code too
+            $self->print( $buffer->output );
+        }
     }
 
-    # more common case optimizations
-    $self->{buffer_stack}[-1]->flush;
-
     pop @{ $self->{stack} };
-    pop @{ $self->{buffer_stack} };
-    pop @{ $self->{buffer_stack} } if ($mods{store});
+
+    if ( $mods{store} )
+    {
+        $self->flush_buffer;
+
+        pop @{ $self->{buffer_stack} };
+        pop @{ $self->{buffer_stack} };
+    }
+
+    if ($err)
+    {
+        UNIVERSAL::can($err, 'rethrow') ? $err->rethrow : error $err;
+    }
+
 
     return wantarray ? @result : $result[0];  # Will return undef in void context (correct)
 }
@@ -1024,13 +1070,6 @@ sub scomp {
     my $buf;
     $self->comp({store=>\$buf},@_);
     return $buf;
-}
-
-sub push_filter_buffer
-{
-    my $self = shift;
-
-    push @{ $self->{buffer_stack} }, $self->top_buffer->new_child(@_);
 }
 
 sub content {
@@ -1083,6 +1122,8 @@ sub request_args
 	return { @{$self->{request_args}} };
     }
 }
+
+# For backward compatibility:
 *top_args = \&request_args;
 *top_comp = \&request_comp;
 
@@ -1824,6 +1865,25 @@ manually.
 
 See the L<sending HTTP headers|HTML::Mason::Devel/sending HTTP headers> section of the developer's manual for more details about the automatic
 header feature.
+
+=back
+
+=head1 CGI-ONLY METHODS
+
+This additional method is available when running Mason with the
+CGIHandler module.
+
+=over
+
+=for html <a name="item_cgi_request"></a>
+
+=item cgi_request
+
+Returns the Apache request emulation object, which is available as
+C<$r> inside components.
+
+See the L<CGIHandler docs|HTML::Mason::CGIHandler/"$r Methods"> for
+more details.
 
 =back
 

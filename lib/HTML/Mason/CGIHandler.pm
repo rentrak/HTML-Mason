@@ -3,6 +3,7 @@ package HTML::Mason::CGIHandler;
 use strict;
 
 use HTML::Mason;
+use HTML::Mason::Utils;
 use CGI;
 use File::Spec;
 use Params::Validate qw(:all);
@@ -12,6 +13,16 @@ use base qw(Class::Container);
 
 use HTML::Mason::MethodMaker
     ( read_write => [ qw( interp ) ] );
+
+use vars qw($VERSION);
+
+# Why do we have a version?  I'm glad you asked.  See, dummy me
+# stupidly referenced it in the Subclassing docs _and_ the book.  It's
+# needed in order to dynamically have a request subclass change its
+# parent properly to work with CGIHandler or ApacheHandler.  It
+# doesn't really matter what the version is, as long as it's a true
+# value.  - dave
+$VERSION = '1.00';
 
 
 __PACKAGE__->valid_params
@@ -29,13 +40,16 @@ __PACKAGE__->contained_objects
 
 sub new {
     my $package = shift;
+
+    my %p = @_;
     my $self = $package->SUPER::new(comp_root => $ENV{DOCUMENT_ROOT},
 				    request_class => 'HTML::Mason::Request::CGI',
 				    error_mode => 'output',
 				    error_format => 'html',
-				    @_);
+				    %p);
 
-    $self->interp->out_method(\$self->{output});
+    $self->interp->out_method(\$self->{output})
+        unless exists $p{out_method};
     $self->interp->compiler->add_allowed_globals('$r');
     
     return $self;
@@ -94,6 +108,9 @@ package HTML::Mason::Request::CGI;
 
 use HTML::Mason::Request;
 use base qw(HTML::Mason::Request);
+
+use HTML::Mason::MethodMaker
+    ( read_only => [ 'cgi_request' ] );
 
 __PACKAGE__->valid_params( cgi_request => {isa => 'HTML::Mason::FakeApache'} );
 
@@ -178,9 +195,8 @@ sub http_header {
 
 sub params {
     my $self = shift;
-    my @input = map {$_, [$self->query->param($_)]} $self->query->param;
-    foreach (@input) {$_ = $_->[0] if ref($_) and @$_==1}  # Unwrap single-element array refs
-    return @input;
+
+    return HTML::Mason::Utils::cgi_request_args($self->query, $self->query->request_method);
 }
 
 1;
@@ -299,7 +315,7 @@ Interpreter lasts for the entire lifetime of the handler.
 
 =back
 
-=head2 C<$r> Methods
+=head2 $r Methods
 
 =over 4
 
@@ -351,7 +367,8 @@ sending to the client.
 
 This method returns a hash containing the parameters sent by the
 client.  Multiple parameters of the same name are represented by array
-references.
+references.  If both POST and query string arguments were submitted,
+these will be merged together.
 
 =back
 
@@ -375,6 +392,12 @@ Note that the ApacheHandler class (for using Mason under mod_perl)
 also provides a C<cgi_object()> method that does the same thing as
 this one.  This makes it easier to write components that function
 equally well under CGIHandler and ApacheHandler.
+
+=item * cgi_request
+
+Returns the object that is used to emulate Apache's request object.
+In other words, this is the object that C<$r> is set to when you use
+this class.
 
 =back
 

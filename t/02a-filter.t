@@ -182,6 +182,131 @@ subcomponent 2
 EOF
                     );
 
+#------------------------------------------------------------
+
+    $group->add_test( name => 'filter_and_flush',
+                      description => 'test that flush is respected with filter present',
+                      component => <<'EOF',
+foo
+% $m->flush_buffer;
+bar
+<%filter>
+s/(foo)\s+(\S+)/$2$1/;
+</%filter>
+EOF
+                      expect => <<'EOF',
+foo
+bar
+EOF
+                    );
+
+#------------------------------------------------------------
+
+    $group->add_support( path => 'clear_filter_comp',
+			 component => <<'EOF',
+Bar
+% $m->clear_buffer;
+Baz
+EOF
+		       );
+
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'clear_in_comp_called_with_filter',
+                      description => 'Test that clear_buffer clears _all_ buffers, even inside a filter',
+                      component => <<'EOF',
+Foo
+<& clear_filter_comp &>\
+<%filter>
+s/^/-/gm;
+</%filter>
+EOF
+                      expect => <<'EOF',
+-Baz
+EOF
+                    );
+
+#------------------------------------------------------------
+
+    $group->add_support( path => 'some_comp',
+			 component => <<'EOF',
+Some stuff
+EOF
+		       );
+
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'comp_call_in_filter',
+                      description => 'Test that calling another component from a filter section works',
+                      component => <<'EOF',
+Stuff
+<%filter>
+$_ .= $m->scomp( 'some_comp' );
+$_ = lc $_;
+</%filter>
+EOF
+                      expect => <<'EOF',
+stuff
+some stuff
+EOF
+                    );
+
+#------------------------------------------------------------
+
+    $group->add_support( path => '/auto_filter_die/dies',
+			 component => <<'EOF',
+% die "foo death";
+EOF
+		       );
+
+
+    $group->add_support( path => '/auto_filter_die/autohandler',
+			 component => <<'EOF',
+autohandler
+% $m->call_next;
+EOF
+		       );
+
+
+    $group->add_test( name => 'auto_filter_die/abort_comp_call_in_filter_with_autohandler',
+                      description => 'Test that calling another component that dies from a filter section in a component wrapped by an autohandler produces a proper error',
+                      component => <<'EOF',
+Stuff
+<%filter>
+$m->comp( 'dies' );
+</%filter>
+EOF
+                      expect_error => qr/foo death/,
+                    );
+
+#------------------------------------------------------------
+
+    $group->add_support( path => '/support/abort_in_filter',
+			 component => <<'EOF',
+Will not be seen
+<%filter>
+$m->abort;
+$_ = lc $_;
+</%filter>
+EOF
+		       );
+
+    $group->add_test( name => 'abort_in_filter',
+                      description => 'Test that abort in a filter causes no output',
+                      component => <<'EOF',
+Before the abort
+<& support/abort_in_filter &>
+After the abort - not seen
+EOF
+                      expect => <<'EOF',
+Before the abort
+EOF
+                    );
+
+#------------------------------------------------------------
+
         return $group;
 }
 

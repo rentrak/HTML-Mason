@@ -35,10 +35,10 @@
 <pre>
     PerlModule HTML::Mason::ApacheHandler</pre>
 <pre>
-    &lt;FilesMatch &quot;\.html$&quot;&gt;
+    &lt;Location /&gt;
         SetHandler perl-script
         PerlHandler HTML::Mason::ApacheHandler
-    &lt;/FilesMatch&gt;</pre>
+    &lt;/Location&gt;</pre>
 <p>
 </p>
 <hr />
@@ -108,29 +108,20 @@ mod_perl server. Relevant documentation is available at
 (mod_perl). The mod_perl mailing list, archive, and guide are also
 great resources.</p>
 <p>The simplest configuration of Mason requires a few lines in your
-httpd.conf. You can find an annotated version of these lines in
-<code>eg/httpd.conf</code> in your distribution.</p>
+httpd.conf:</p>
 <pre>
     PerlModule HTML::Mason::ApacheHandler</pre>
 <pre>
-    &lt;FilesMatch &quot;\.html$&quot;&gt;
+    &lt;Location /&gt;
         SetHandler perl-script
         PerlHandler HTML::Mason::ApacheHandler
-    &lt;/FilesMatch&gt;</pre>
+    &lt;/Location&gt;</pre>
 <p>The PerlModule directive simply ensures that the Mason code is loaded
 in the parent process before forking, which can save some memory when
 running mod_perl.</p>
-<p>The &lt;FilesMatch&gt; section routes all ``\.html$'' requests to the Mason
-handler. If you want all Mason pages to have a distinct extension like
-``.mcomp'', use that instead. If you wish to restrict Mason to one
-subdirectory at first, do this:</p>
-<pre>
-    &lt;Directory /path/to/subdirectory&gt;
-        &lt;FilesMatch &quot;\.html$&quot;&gt;
-            SetHandler perl-script
-            PerlHandler HTML::Mason::ApacheHandler
-        &lt;/FilesMatch&gt;
-    &lt;/Directory&gt;</pre>
+<p>The &lt;Location&gt; section routes all requests to the Mason handler, which
+is a simple way to try out Mason. A more refined setup is discussed
+in the <A HREF="Admin.html#controlling_access_via_filename_">Controlling Access via Filename Extension</a> section of the administrator's manual.</p>
 <p>Once you have added the configuration directives, restart the
 server. First, go to a standard URL on your site to make sure you
 haven't broken anything. If all goes well you should see the same page
@@ -148,24 +139,28 @@ reload this page and see a ``4'', Mason is working!</p>
 <hr />
 <h1><A NAME="documentation_roadmap">DOCUMENTATION ROADMAP</a></h1>
 <p>Once Mason is on its feet, the next step is to write a component or
-two. The <em>Mason Developer's Manual</em>
-(<a HREF="Devel.html">HTML::Mason::Devel</a>) is a complete tutorial for
-writing, using, and debugging components. A reference companion to the
-Developer's Manual is the Request API documentation,
-<a HREF="Request.html">HTML::Mason::Request</a>.</p>
+two. The <a HREF="Devel.html">Mason Developer's Manual</a> is a
+complete tutorial for writing, using, and debugging components. A
+reference companion to the Developer's Manual is the Request API
+documentation, <a HREF="Request.html">HTML::Mason::Request</a>.</p>
 <p>Whoever is responsible for setting up and tuning Mason should read the
-<em>Administrator's Manual</em> (<a HREF="Admin.html">HTML::Mason::Admin</a>),
-though developers might also benefit from reading it as well. This
-document covers more advanced configuration scenarios and performance
-optimization. The reference companion to the Administrator's manual
-is the <em>Parameters Reference</em>, which describes all the parameters you
-can use to configure Mason.</p>
+(<a HREF="Admin.html">Administrator's Manual</a>), though developers
+will also benefit from reading it as well. This document covers more
+advanced configuration scenarios and performance optimization. The
+reference companion to the Administrator's manual is the
+<a HREF="Params.html">Parameters Reference</a>, which describes all the
+parameters you can use to configure Mason.</p>
 <p>Most of this documentation assumes that you're running Mason on top of
 mod_perl, since that is the most common configuration.  If you would
 like to run Mason via a CGI script, refer to the
 <a HREF="CGIHandler.html">HTML::Mason::CGIHandler</a> documentation.
-If you are using Mason from a standalone program, refer to the
-STANDALONE MODE in <a HREF="Interp.html">HTML::Mason::Interp</a>.</p>
+If you are using Mason from a standalone program, refer to
+the <A HREF="Admin.html#using_mason_from_a_standalone_sc">Using Mason from a Standalone Script</a> section of the administrator's manual.</p>
+<p>There is also a book about Mason, <em>Embedding Perl in HTML with
+Mason</em>, by Dave Rolsky and Ken Williams, published by O'Reilly and
+Associates.  The book's website is at <a href="http://www.masonbook.com/.">http://www.masonbook.com/.</a>  This
+book goes into detail on a number of topics, and includes a chapter of
+recipes as well as a sample Mason-based website.</p>
 <p>
 </p>
 <hr />

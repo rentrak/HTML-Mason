@@ -124,7 +124,7 @@ Here is a simple component example:
 
 After 12 pm, the output of this component is:
 
-    Hello world, good afternoon.
+    Hello World, good afternoon.
 
 This short example demonstrates the three primary "in-line" Perl
 sections. In-line sections are generally embedded within HTML and
@@ -1173,6 +1173,12 @@ without C<if> statements surrounding each link!  Note that the regular
 expression need not be very robust as long as you have control over what
 will appear in the body.
 
+It should be noted that a filter cannot rely on receiving all of a
+component's output at once, and so may be called multiple times with
+different chunks of output.  This can happen if autoflush is on, or if
+a filter-containing component, or the components it calls, call the
+C<< $m->flush_buffer() >> method.
+
 You can use L<Component Calls with Content|"Component Calls with
 Content"> if you want to filter specific parts of a component rather
 than the entire component.
@@ -1286,11 +1292,12 @@ defined will cause an error when executing that component.
 
 One possible use for this feature is to override the built-in HTML
 escaping's assumption of the ISO-8859-1 character set.  You could
-override the 'h' flag in a top-level autohandler or a
-L<handler.pl|HTML::Mason::Admin/"CONFIGURING VIA HANDLER SCRIPT">
-script like this:
+override the 'h' flag in a top-level autohandler or L<custom wrapper
+code|HTML::Mason::Admin/"ADVANCED CONFIGURATION"> like this:
 
-  $interp->set_escape( h => \&escape_ISO_8859_2 );
+  $ah->interp->set_escape( h => \&escape_ISO_8859_2 );
+
+where C<$ah> is an ApacheHandler object.
 
 Inside components, the Interpreter object is available via C<<
 $m->interp() >> so you would do this instead:
@@ -1521,11 +1528,6 @@ namespace.
 
 =item *
 
-the username associated with the cache; this is "mason" unless it has
-been changed by the administrator.
-
-=item *
-
 the cache_root, for file-based caches only. Defaults to the
 "cache" subdirectory under the Mason data directory.
 
@@ -1539,9 +1541,9 @@ and the cache subclass is C<FileCache>:
     use HTML::Mason::Utils qw(data_cache_namespace);
 
     my $cache = new Cache::FileCache
-        (namespace => data_cache_namespace("/foo/bar"),
-	 cache_root => "/usr/local/www/mason/cache",
-	 username => "mason");
+        ( { namespace => data_cache_namespace("/foo/bar"),
+	    cache_root => "/usr/local/www/mason/cache" } );
+
     $cache->remove('key1');
 
 =head2 Mason 1.0x Cache API

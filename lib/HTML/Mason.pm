@@ -5,7 +5,7 @@ package HTML::Mason;
 
 use 5.005;
 
-$HTML::Mason::VERSION = '1.15';
+$HTML::Mason::VERSION = '1.16';
 
 use HTML::Mason::Interp;
 
@@ -26,10 +26,10 @@ Mason - High-performance, dynamic web site authoring system
 
     PerlModule HTML::Mason::ApacheHandler
 
-    <FilesMatch "\.html$">
+    <Location />
         SetHandler perl-script
         PerlHandler HTML::Mason::ApacheHandler
-    </FilesMatch>
+    </Location>
 
 =head1 DESCRIPTION
 
@@ -106,31 +106,22 @@ http://www.apache.org (Apache) and http://perl.apache.org
 great resources.
 
 The simplest configuration of Mason requires a few lines in your
-httpd.conf. You can find an annotated version of these lines in
-C<eg/httpd.conf> in your distribution.
+httpd.conf:
 
     PerlModule HTML::Mason::ApacheHandler
 
-    <FilesMatch "\.html$">
+    <Location />
         SetHandler perl-script
         PerlHandler HTML::Mason::ApacheHandler
-    </FilesMatch>
+    </Location>
 
 The PerlModule directive simply ensures that the Mason code is loaded
 in the parent process before forking, which can save some memory when
 running mod_perl.
 
-The <FilesMatch> section routes all "\.html$" requests to the Mason
-handler. If you want all Mason pages to have a distinct extension like
-".mcomp", use that instead. If you wish to restrict Mason to one
-subdirectory at first, do this:
-
-    <Directory /path/to/subdirectory>
-        <FilesMatch "\.html$">
-            SetHandler perl-script
-            PerlHandler HTML::Mason::ApacheHandler
-        </FilesMatch>
-    </Directory>
+The <Location> section routes all requests to the Mason handler, which
+is a simple way to try out Mason. A more refined setup is discussed
+in the L<Controlling Access via Filename Extension|HTML::Mason::Admin/Controlling Access via Filename Extension> section of the administrator's manual.
 
 Once you have added the configuration directives, restart the
 server. First, go to a standard URL on your site to make sure you
@@ -150,26 +141,31 @@ reload this page and see a "4", Mason is working!
 =head1 DOCUMENTATION ROADMAP
 
 Once Mason is on its feet, the next step is to write a component or
-two. The I<Mason Developer's Manual>
-(L<HTML::Mason::Devel|HTML::Mason::Devel>) is a complete tutorial for
-writing, using, and debugging components. A reference companion to the
-Developer's Manual is the Request API documentation,
-L<HTML::Mason::Request|HTML::Mason::Request>.
+two. The L<Mason Developer's Manual|HTML::Mason::Devel> is a
+complete tutorial for writing, using, and debugging components. A
+reference companion to the Developer's Manual is the Request API
+documentation, L<HTML::Mason::Request|HTML::Mason::Request>.
 
 Whoever is responsible for setting up and tuning Mason should read the
-I<Administrator's Manual> (L<HTML::Mason::Admin|HTML::Mason::Admin>),
-though developers might also benefit from reading it as well. This
-document covers more advanced configuration scenarios and performance
-optimization. The reference companion to the Administrator's manual
-is the I<Parameters Reference>, which describes all the parameters you
-can use to configure Mason.
+(L<Administrator's Manual|HTML::Mason::Admin>), though developers
+will also benefit from reading it as well. This document covers more
+advanced configuration scenarios and performance optimization. The
+reference companion to the Administrator's manual is the
+L<Parameters Reference|HTML::Mason::Params>, which describes all the
+parameters you can use to configure Mason.
 
 Most of this documentation assumes that you're running Mason on top of
 mod_perl, since that is the most common configuration.  If you would
 like to run Mason via a CGI script, refer to the
 L<HTML::Mason::CGIHandler|HTML::Mason::CGIHandler> documentation.
-If you are using Mason from a standalone program, refer to the
-STANDALONE MODE in L<HTML::Mason::Interp|HTML::Mason::Interp>.
+If you are using Mason from a standalone program, refer to
+the L<Using Mason from a Standalone Script|HTML::Mason::Admin/Using Mason from a Standalone Script> section of the administrator's manual.
+
+There is also a book about Mason, I<Embedding Perl in HTML with
+Mason>, by Dave Rolsky and Ken Williams, published by O'Reilly and
+Associates.  The book's website is at http://www.masonbook.com/.  This
+book goes into detail on a number of topics, and includes a chapter of
+recipes as well as a sample Mason-based website.
 
 =head1 AUTHORS
 

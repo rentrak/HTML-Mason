@@ -18,7 +18,7 @@
 	<ul>
 
 		<li><A HREF="#html_mason_cgihandler_methods"><code>HTML::Mason::CGIHandler</code> Methods</a></li>
-		<li><A HREF="#_r_methods"><code>$r</code> Methods</a></li>
+		<li><A HREF="#_r_methods">$r Methods</a></li>
 		<li><A HREF="#added__m_methods">Added <code>$m</code> methods</a></li>
 	</ul>
 
@@ -133,7 +133,7 @@ Interpreter lasts for the entire lifetime of the handler.
 <p></p></ul>
 <p>
 </p>
-<h2><A NAME="_r_methods"><code>$r</code> Methods</a></h2>
+<h2><A NAME="_r_methods">$r Methods</a></h2>
 <ul>
 <li><strong><A NAME="item_header_out"><code>header_out()</code></a></strong><br />
 </li>
@@ -177,7 +177,8 @@ sending to the client.
 </li>
 This method returns a hash containing the parameters sent by the
 client.  Multiple parameters of the same name are represented by array
-references.
+references.  If both POST and query string arguments were submitted,
+these will be merged together.
 <p></p></ul>
 <p>
 </p>
@@ -197,6 +198,12 @@ one (they may check the content length of the request, for example).
 also provides a <A HREF="#item_cgi_object"><code>cgi_object()</code></a> method that does the same thing as
 this one.  This makes it easier to write components that function
 equally well under CGIHandler and ApacheHandler.</p>
+<p></p>
+<li><strong><A NAME="item_cgi_request">cgi_request</a></strong><br />
+</li>
+Returns the object that is used to emulate Apache's request object.
+In other words, this is the object that <code>$r</code> is set to when you use
+this class.
 <p></p></ul>
 <p>
 </p>

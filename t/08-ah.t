@@ -24,6 +24,7 @@ use File::Basename;
 use File::Path;
 use File::Spec;
 use HTML::Mason::Tests;
+use Test;
 
 use lib 'lib', File::Spec->catdir('t', 'lib');
 
@@ -38,12 +39,13 @@ kill_httpd(1);
 test_load_apache();
 
 my $tests = 4; # multi conf tests
-$tests += 57 if my $have_libapreq = have_module('Apache::Request');
+$tests += 58 if my $have_libapreq = have_module('Apache::Request');
 $tests += 40 if my $have_cgi      = have_module('CGI');
 $tests += 15 if my $have_tmp      = (-d '/tmp' and -w '/tmp');
 $tests++ if $have_cgi && $mod_perl::VERSION >= 1.24;
 $tests++ if my $have_filter = have_module('Apache::Filter');
-print "1..$tests\n";
+
+plan( tests => $tests);
 
 print STDERR "\n";
 
@@ -54,7 +56,7 @@ if ($have_libapreq) {        # 57 tests
     apache_request_tests(1); # 22 tests
 
     cleanup_data_dir();
-    apache_request_tests(0); # 20 tests
+    apache_request_tests(0); # 21 tests
 
     cleanup_data_dir();
     no_config_tests();       # 15 tests
@@ -280,6 +282,12 @@ EOF
 <% 'upper case' | uc %>
 EOF
               );
+
+    write_comp( 'data_cache_defaults', <<'EOF',
+is memory: <% $m->cache->isa('Cache::MemoryCache') ? 1 : 0 %>
+namespace: <% $m->cache->get_namespace %>
+EOF
+              );
 }
 
 sub cgi_tests
@@ -414,6 +422,18 @@ Status code: 0
 EOF
 						   );
 	ok($success);
+
+	$response = Apache::test->fetch('/comps/data_cache_defaults');
+	$actual = filter_response($response, $with_handler);
+	$success = HTML::Mason::Tests->check_output( actual => $actual,
+						     expect => <<'EOF',
+X-Mason-Test: Initial value
+is memory: 1
+namespace: foo
+Status code: 0
+EOF
+						   );
+	ok($success);
     }
 
     kill_httpd(1);
@@ -538,7 +558,7 @@ EOF
     # error_mode is html so we get lots of stuff
     $response = Apache::test->fetch($path);
     $actual = filter_response($response, $with_handler);
-    ok( $actual =~ m|error while executing /die:\s+Mine heart is pierced|,
+    ok( $actual, qr{error.*Mine heart is pierced}s,
 	"Error should have said 'Mine heart is pierced'" );
 
     if ($with_handler)
@@ -546,7 +566,7 @@ EOF
 	# error_mode is fatal so we just get a 500
 	$response = Apache::test->fetch( "/ah=3/comps/die" );
 	$actual = filter_response($response, $with_handler);
-	ok( $actual =~ m|500 Internal Server Error|,
+	ok( $actual, qr{500 Internal Server Error},
 	    "die should have generated 500 error" );
     }
 
@@ -746,7 +766,7 @@ EOF
     $response = Apache::test->fetch($path);
     $actual = filter_response($response, $with_handler);
 
-    ok ( $actual =~ m,.*<b>error:</b>.*Error during compilation.*,s,
+    ok ( $actual, qr{<b>error:</b>.*Error during compilation}s,
          "bad code should cause an HTML error message" );
 
     my $expected_class = $with_handler ? 'My::Interp' : 'HTML::Mason::Interp';
@@ -804,7 +824,7 @@ EOF
 
     $response = Apache::test->fetch('/comps/multiconf2/dhandler_test');
     $actual = filter_response($response, 0);
-    ok( $actual =~ /404 not found/i,
+    ok( $actual, qr{404 not found}i,
 	"Attempt to request a non-existent component should not work with incorrect dhandler_name" );
 
     kill_httpd(1);

@@ -21,18 +21,29 @@ BEGIN
 {
     __PACKAGE__->valid_params
 	(
-	 allow_globals        => { parse => 'list',   type => ARRAYREF, default => [],
-				   descr => "An array of names of Perl variables that are allowed globally within components" },
-	 default_escape_flags => { parse => 'string', type => SCALAR | ARRAYREF,   default => [],
-				   descr => "Escape flags that will apply by default to all Mason tag output" },
-	 lexer                => { isa => 'HTML::Mason::Lexer',
-				   descr => "A Lexer object that will scan component text during compilation" },
-	 preprocess           => { parse => 'code',   type => CODEREF,  optional => 1,
-				   descr => "A subroutine through which all component text will be sent during compilation" },
-	 postprocess_perl     => { parse => 'code',   type => CODEREF,  optional => 1,
-				   descr => "A subroutine through which all Perl code will be sent during compilation" },
-	 postprocess_text     => { parse => 'code',   type => CODEREF,  optional => 1,
-				   descr => "A subroutine through which all plain text will be sent during compilation" },
+	 allow_globals =>
+         { parse => 'list', type => ARRAYREF, default => [],
+           descr => "An array of names of Perl variables that are allowed globally within components" },
+
+	 default_escape_flags =>
+         { parse => 'string', type => SCALAR|ARRAYREF, default => [],
+           descr => "Escape flags that will apply by default to all Mason tag output" },
+
+	 lexer =>
+         { isa => 'HTML::Mason::Lexer',
+           descr => "A Lexer object that will scan component text during compilation" },
+
+	 preprocess =>
+         { parse => 'code', type => CODEREF, optional => 1,
+           descr => "A subroutine through which all component text will be sent during compilation" },
+
+	 postprocess_perl =>
+         { parse => 'code', type => CODEREF, optional => 1,
+           descr => "A subroutine through which all Perl code will be sent during compilation" },
+
+	 postprocess_text =>
+         { parse => 'code', type => CODEREF, optional => 1,
+           descr => "A subroutine through which all plain text will be sent during compilation" },
 	);
 
     __PACKAGE__->contained_objects
@@ -168,21 +179,23 @@ sub default_escape_flags
 sub compile
 {
     my $self = shift;
-    my %p = validate( @_, { comp_source => { type => SCALAR },
+    my %p = validate( @_, { comp_source => { type => SCALAR|SCALARREF },
 			    name => { type => SCALAR },
+			    fh => { type => HANDLE, optional => 1 },
 			  } );
+    my $src = ref($p{comp_source}) ? $p{comp_source} : \$p{comp_source};
 
-    # Preprocess the script.  The preprocessor routine is handed a
-    # reference to the entire script.
+    # Preprocess the source.  The preprocessor routine is handed a
+    # reference to the entire source.
     if ($self->preprocess)
     {
-	eval { $self->preprocess->( \$p{comp_source} ) };
+	eval { $self->preprocess->( $src ) };
 	compiler_error "Error during custom preprocess step: $@" if $@;
     }
 
-    $self->lexer->lex( comp_source => $p{comp_source}, name => $p{name}, compiler => $self );
+    $self->lexer->lex( comp_source => $src, name => $p{name}, compiler => $self );
 
-    return $self->compiled_component;
+    return $self->compiled_component( exists($p{fh}) ? (fh => $p{fh}) : () );
 }
 
 sub start_component
@@ -295,7 +308,7 @@ sub text
 
     $$tref =~ s,(['\\]),\\$1,g;
 
-    $self->_add_body_code("\$m->print( '$$tref' );\n");
+    $self->_add_body_code("\$m->print( '", $$tref, "' );\n");
 }
 
 sub text_block
@@ -519,7 +532,7 @@ sub _add_body_code
 	$self->{current_comp}{body} .= "#line $line $file\n";
     }
 
-    $self->{current_comp}{body} .= $_[0];
+    $self->{current_comp}{body} .= $_ foreach @_;
 }
 
 sub dump
@@ -561,7 +574,7 @@ sub _dump_data
     }
 
     print "\n$indent  body\n";
-    print "$data->{body}\n";
+    print $data->{body}, "\n";
 }
 
 sub _blocks
@@ -639,7 +652,7 @@ The class to use when creating a lexer. Defaults to L<HTML::Mason::Lexer|HTML::M
 
 =item preprocess
 
-Sub reference that is called to preprocess each component before Parser does
+Sub reference that is called to preprocess each component before the compiler does
 it's magic.  The sub is called with a single parameter, a scalar reference
 to the script.  The sub is expected to process the script in-place.   This is
 one way to extend the HTML::Mason syntax with new tags, etc., although a much

@@ -6,30 +6,44 @@ package HTML::Mason::Compiler::ToObject;
 
 use strict;
 
-use Params::Validate qw(SCALAR);
-use HTML::Mason::Tools qw(make_fh);
+use Params::Validate qw(SCALAR validate);
+use HTML::Mason::Tools qw(make_fh taint_is_on);
 
 use HTML::Mason::Compiler;
 use base qw( HTML::Mason::Compiler );
 
-use HTML::Mason::Exceptions( abbr => [qw(wrong_compiler_error)] );
+use HTML::Mason::Exceptions( abbr => [qw(wrong_compiler_error system_error)] );
+
+use File::Path qw(mkpath rmtree);
+use File::Basename qw(dirname);
 
 BEGIN
 {
     __PACKAGE__->valid_params
 	(
-	 comp_class    => { parse => 'string',  type => SCALAR, default => 'HTML::Mason::Component',
-			    descr => "The class into which component objects will be blessed" },
-	 subcomp_class => { parse => 'string',  type => SCALAR, default => 'HTML::Mason::Component::Subcomponent',
-			    descr => "The class into which subcomponent objects will be blessed" },
-	 in_package => { parse => 'string',  type => SCALAR, default => 'HTML::Mason::Commands',
-			 descr => "The package in which component execution will take place" },
-	 preamble   => { parse => 'string',  type => SCALAR, default => '',
-			 descr => "A chunk of Perl code to add to the beginning of each compiled component" },
-	 postamble  => { parse => 'string',  type => SCALAR, default => '',
-			 descr => "A chunk of Perl code to add to the end of each compiled component" },
-	 use_strict => { parse => 'boolean', type => SCALAR, default => 1,
-			 descr => "Whether to turn on Perl's 'strict' pragma in components" },
+	 comp_class =>
+         { parse => 'string', type => SCALAR, default => 'HTML::Mason::Component',
+           descr => "The class into which component objects will be blessed" },
+
+	 subcomp_class =>
+         { parse => 'string', type => SCALAR, default => 'HTML::Mason::Component::Subcomponent',
+           descr => "The class into which subcomponent objects will be blessed" },
+
+	 in_package =>
+         { parse => 'string', type => SCALAR, default => 'HTML::Mason::Commands',
+           descr => "The package in which component execution will take place" },
+
+	 preamble =>
+         { parse => 'string', type => SCALAR, default => '',
+           descr => "A chunk of Perl code to add to the beginning of each compiled component" },
+
+	 postamble =>
+         { parse => 'string', type => SCALAR, default => '',
+           descr => "A chunk of Perl code to add to the end of each compiled component" },
+
+	 use_strict =>
+         { parse => 'boolean', type => SCALAR, default => 1,
+           descr => "Whether to turn on Perl's 'strict' pragma in components" },
 	);
 }
 
@@ -51,8 +65,56 @@ sub compile
     my $self = shift;
     my %p = @_;
 
-    local $self->{comp_class} = $p{comp_class} if exists $p{comp_class};
-    return $self->SUPER::compile( comp_source => $p{comp_source}, name => $p{name} );
+    local $self->{comp_class} = delete $p{comp_class} if exists $p{comp_class};
+    return $self->SUPER::compile( %p );
+}
+
+#
+# compile_to_file( source => ..., file => ... )
+# Save object text in an object file.
+#
+# We attempt to handle several cases in which a file already exists
+# and we wish to create a directory, or vice versa.  However, not
+# every case is handled; to be complete, mkpath would have to unlink
+# any existing file in its way.
+#
+sub compile_to_file
+{
+    my $self = shift;
+
+    my %p = validate( @_, {   file => { type => SCALAR },
+			    source => { isa => 'HTML::Mason::ComponentSource' } },
+		    );
+
+    my ($file, $source) = @p{qw(file source)};
+    my @newfiles = ($file);
+
+    if (defined $file && !-f $file) {
+	my ($dirname) = dirname($file);
+	if (!-d $dirname) {
+	    unlink($dirname) if (-e _);
+	    push @newfiles, mkpath($dirname, 0, 0775);
+	    system_error "Couldn't create directory $dirname: $!"
+		unless -d $dirname;
+	}
+	rmtree($file) if (-d $file);
+    }
+
+    ($file) = $file =~ /^(.*)/s if taint_is_on;  # Untaint blindly
+
+    my $fh = make_fh();
+    open $fh, "> $file"
+	or system_error "Couldn't create object file $file: $!";
+
+    $self->compile( comp_source => $source->comp_source_ref,
+		    name => $source->friendly_name,
+		    comp_class => $source->comp_class,
+		    fh => $fh );
+
+    close $fh 
+	or system_error "Couldn't close object file $file: $!";
+    
+    return \@newfiles;
 }
 
 sub object_id
@@ -64,20 +126,44 @@ sub object_id
     return $self->SUPER::object_id;
 }
 
+sub _output_chunk
+{
+    my ($self, $fh, $string) = (shift, shift, shift);
+    if ($fh)
+    {
+	print $fh (ref $_ ? $$_ : $_) foreach grep defined, @_;
+    }
+    else
+    {
+	$$string .= (ref $_ ? $$_ : $_) foreach @_;
+    }
+}
+
+# There are some really spooky relationships between the variables &
+# data members in the compiled_component() routine.
+
 sub compiled_component
 {
-    my $self = shift;
+    my ($self, %p) = @_;
+    my $obj_text = '';
 
     $self->{compiled_def} = $self->_compile_subcomponents if %{ $self->{def} };
     $self->{compiled_method} = $self->_compile_methods if %{ $self->{method} };
 
     $self->{current_comp} = $self;
 
-    my $header = $self->_make_main_header;
-    my $params = $self->_component_params;
-
+    # Create the file header to assert creatorship
     my $id = $self->object_id;
     $id =~ s,([\\']),\\$1,g;
+    $self->_output_chunk($p{fh}, \$obj_text, "# MASON COMPILER ID: $id\n");
+
+    # Some preamble stuff, including 'use strict', 'use vars', and <%once> block
+    my $header = $self->_make_main_header;
+    $self->_output_chunk($p{fh}, \$obj_text, $header);
+
+
+    my $params = $self->_component_params;
+
     $params->{compiler_id} = "'$id'";
     $params->{load_time} = time;
 
@@ -111,24 +197,22 @@ sub compiled_component
 		     );
     }
 
+    $self->_output_chunk($p{fh}, \$obj_text, $self->_subcomponents_footer);
+    $self->_output_chunk($p{fh}, \$obj_text, $self->_methods_footer);
+
+
+
     $params->{object_size} = 0;
     $params->{object_size} += length for ($header, %$params);
 
-    # This funky list subscript is just so that we can avoid making a
-    # copy of the returned string.  Otherwise we'd have to save it,
-    # then delete $self->{current_comp}, then return the string.
-    
-    return +(join('',
-		  "# MASON COMPILER ID: $id\n",
-		  $header,
-		  $self->_subcomponents_footer,
-		  $self->_methods_footer,
-		  $self->_constructor( $self->comp_class,
-				       $params ),
-		  ';',
-		 ),
-	     $self->{current_comp} = undef,
-	    )[0];
+    $self->_output_chunk($p{fh}, \$obj_text,
+			 $self->_constructor( $self->comp_class,
+					      $params ),
+			 ';',
+			);
+
+    delete $self->{current_comp};
+    return \$obj_text;
 }
 
 sub assert_creatorship

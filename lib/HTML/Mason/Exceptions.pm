@@ -93,6 +93,7 @@ sub import
     {
 	no strict 'refs';
 	*{"${caller}::isa_mason_exception"} = \&isa_mason_exception;
+	*{"${caller}::rethrow_exception"} = \&rethrow_exception;
     }
 }
 
@@ -109,6 +110,17 @@ sub isa_mason_exception
     } else {
 	return UNIVERSAL::isa($err, "HTML::Mason::Exception");
     }
+}
+
+sub rethrow_exception
+{
+    my ($err) = @_;
+    return unless $err;
+
+    if ( UNIVERSAL::can($err, 'rethrow') ) {
+	$err->rethrow;
+    }
+    HTML::Mason::Exception->throw(error => $err);
 }
 
 package HTML::Mason::Exception;
@@ -245,6 +257,14 @@ sub get_file_context
     return @context;
 }
 
+# basically the same as as_string in Exception::Class::Base
+sub raw_text
+{
+    my ($self) = @_;
+
+    return $self->full_message . "\n\n" . $self->trace->as_string;
+}
+
 sub as_string
 {
     my ($self) = @_;
@@ -290,6 +310,7 @@ sub as_html
 <%args>
  $msg
  $info
+ $error
 </%args>
 <%filter>
  s/(<td [^\>]+>)/$1<font face="Verdana, Arial, Helvetica, sans-serif" size="-2">/g;
@@ -300,23 +321,24 @@ sub as_html
 % $msg =~ s/\n/<br>/;
 
 <html><body>
+
 <p align="center"><font face="Verdana, Arial, Helvetica, sans-serif"><b>System error</b></font></p>
 <table border="0" cellspacing="0" cellpadding="1">
  <tr>
-  <td nowrap align="left" valign="top"><b>error:</b>&nbsp;</td>
-  <td align="left" valign="top" nowrap><% $msg %></td>
+  <td nowrap="nowrap" align="left" valign="top"><b>error:</b>&nbsp;</td>
+  <td align="left" valign="top"><% $msg %></td>
  </tr>
  <tr>
-  <td nowrap align="left" valign="top"><b>context:</b>&nbsp;</td>
-  <td align="left" valign="top" nowrap>
+  <td nowrap="nowrap" align="left" valign="top"><b>context:</b>&nbsp;</td>
+  <td align="left" valign="top" nowrap="nowrap">
    <table border="0" cellpadding="0" cellspacing="0">
 
 %   foreach my $entry (@{$info->{context}}) {
 %	my ($line_num, $line, $highlight) = @$entry;
 %	$line = '' unless defined $line;
     <tr>
-     <td nowrap align="left" valign="top"><b><% $line_num %></b>&nbsp;</td>
-     <td align="left" valign="top" nowrap><% $highlight ? "<font color=red>" : "" %><% $line |h %><% $highlight ? "</font>" : "" %></td>
+     <td nowrap="nowrap" align="left" valign="top"><b><% $line_num %></b>&nbsp;</td>
+     <td align="left" valign="top" nowrap="nowrap"><% $highlight ? "<font color=red>" : "" %><% $line |h %><% $highlight ? "</font>" : "" %></td>
     </tr>
 
 %    }
@@ -325,8 +347,8 @@ sub as_html
   </td>
  </tr>
  <tr>
-  <td align="left" valign="top" nowrap><b>code stack:</b>&nbsp;</td>
-  <td align="left" valign="top" nowrap>
+  <td align="left" valign="top" nowrap="nowrap"><b>code stack:</b>&nbsp;</td>
+  <td align="left" valign="top" nowrap="nowrap">
 %    foreach my $frame (@{$info->{frames}}) {
 	<% $frame->filename |h %>:<% $frame->line |h %><br>
 %    }
@@ -334,10 +356,54 @@ sub as_html
  </tr>
 </table>
 
+<a href="#raw">raw error</a><br>
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+% my $raw = $error->raw_text;
+% HTML::Mason::Escapes::basic_html_escape(\\$raw);
+% $raw =~ s/\t//g;
+
+<a name="raw"></a>
+
+<% $raw %>
+
 </body></html>
 EOF
 
-    $interp->exec($comp, msg => $self->full_message, info => $self->analyze_error);
+    $interp->exec($comp,
+                  msg => $self->full_message,
+                  info => $self->analyze_error,
+                  error => $self);
 
     return $out;
 }

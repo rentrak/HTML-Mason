@@ -61,10 +61,15 @@ sub lex
 {
     my $self = shift;
     my %p = validate(@_,
-		     {comp_source => SCALAR,
+		     {comp_source => SCALAR|SCALARREF,
 		      name => SCALAR,
 		      compiler => {isa => 'HTML::Mason::Compiler'}}
 		    );
+
+    # Note - we could improve memory usage here if we didn't make a
+    # copy of the scalarref, but that will take some more work to get
+    # it working
+    $p{comp_source} = ${$p{comp_source}} if ref $p{comp_source};
 
     # Holds information about the current lex.  Make it local() so
     # we're fully re-entrant.
@@ -97,11 +102,7 @@ sub lex
     # refs inside the compiler
     $current->{compiler}->end_component;
 
-    if ($@)
-    {
-	$@->rethrow if UNIVERSAL::can( $@, 'rethrow' );
-	error $@;
-    }
+    rethrow_exception($@);
 }
 
 sub object_id
@@ -368,13 +369,33 @@ sub match_named_block
     }
 }
 
+# starts with an alpha character or underscore, followed by any word
+# character
+my $flag;
+if ( $] >= 5.006 )
+{
+    # Unicode-friendly
+
+    # Use eval because 5.00503 complains even if it doesn't execute
+    # it.
+    eval '$flag = qr/[[:alpha:]_]\w*/;';
+}
+else
+{
+    # Like [\a-z\A-Z_] but respects locales
+    $flag = qr/[^\W\d]\w*/;
+}
+
+sub escape_flag_regex { $flag }
+
 sub match_substitute
 {
     my $self = shift;
 
     if ( $self->{current}{comp_source} =~ /\G<%/gcs )
     {
-	if ( $self->{current}{comp_source} =~ /\G(.+?)(\s*\|\s*([\w, \t]+)?\s*)?%>/igcs )
+	if ( $self->{current}{comp_source} =~
+             /\G(.+?)(\s*(?<!\|)\|\s*($flag(?:\s*,\s*$flag)*)\s*)?%>/igcs )
 	{
 	    my ($sub, $escape) = ($1, $3);
 	    $self->{current}{compiler}->substitution( substitution => $sub,

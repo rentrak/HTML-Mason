@@ -126,6 +126,9 @@ EOF
   PerlAddVar  MasonEscapeFlags "old_h2 => basic_html_escape"
   PerlAddVar  MasonEscapeFlags "uc => sub { \${\$_[0]} = uc \${\$_[0]}; }"
 
+  PerlSetVar  MasonDataCacheDefaults "cache_class => MemoryCache"
+  PerlAddVar  MasonDataCacheDefaults "namespace => foo"
+
   SetHandler  perl-script
   PerlModule  HTML::Mason::ApacheHandler
   PerlHandler HTML::Mason::ApacheHandler
@@ -256,7 +259,7 @@ my \@ah_params = ( {},
 my \@interp_params = ( {},
                        { autoflush => 1 },
                        {},
-                       { error_mode => 'fatal' },
+                       { error_mode => 'fatal', error_format => 'line' },
                      );
 
 my \@ah;

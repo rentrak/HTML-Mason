@@ -2,7 +2,7 @@
 #
 # A basic, fuctional Mason handler.pl.
 #
-package MyMason::MyApp;
+package MyApp::Mason;
 
 # Bring in Mason with Apache support.
 use HTML::Mason::ApacheHandler;
@@ -33,7 +33,7 @@ __END__
 In your httpd.conf, add something like this:
 
  PerlRequire /path/to/handler.pl
- <FilesMatch "\.html$">
+ <LocationMatch "\.html$">
    SetHandler perl-script
-   PerlHandler MyMason::MyApp
- </FilesMatch>
+   PerlHandler MyApp::Mason
+ </LocationMatch>

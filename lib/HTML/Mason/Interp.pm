@@ -29,30 +29,50 @@ BEGIN
     # Fields that can be set in new method, with defaults
     __PACKAGE__->valid_params
 	(
-	 autohandler_name             => { parse => 'string',  default => 'autohandler', type => SCALAR,
-					   descr => "The filename to use for Mason's 'autohandler' capability" },
-	 code_cache_max_size          => { parse => 'string',  default => 10*1024*1024, type => SCALAR,  # 10M
-					   descr => "The maximum size of the component code cache" },
-	 compiler                     => { isa => 'HTML::Mason::Compiler',
-					   descr => "A Compiler object for compiling components" },
-	 current_time                 => { parse => 'string', default => 'real', optional => 1,
-					   type => SCALAR, descr => "Current time (deprecated)" },
-	 data_dir                     => { parse => 'string', optional => 1, type => SCALAR,
-					   descr => "A directory for storing cache files and other state information" },
-         escape_flags                 => { parse => 'list', optional => 1, type => HASHREF,
-                                           descr => "A list of escape flags to set (as if calling the set_escape() method" },
-	 static_source                => { parse => 'boolean', default => 0, type => BOOLEAN,
-					   descr => "When true, we only compile source files once" },
+	 autohandler_name =>
+         { parse => 'string',  default => 'autohandler', type => SCALAR,
+           descr => "The filename to use for Mason's 'autohandler' capability" },
+
+	 code_cache_max_size =>
+         { parse => 'string',  default => 10*1024*1024, type => SCALAR,  # 10M
+           descr => "The maximum size of the component code cache" },
+
+	 compiler =>
+         { isa => 'HTML::Mason::Compiler',
+           descr => "A Compiler object for compiling components" },
+
+	 current_time =>
+         { parse => 'string', default => 'real', optional => 1,
+           type => SCALAR, descr => "Current time (deprecated)" },
+
+	 data_dir =>
+         { parse => 'string', optional => 1, type => SCALAR,
+           descr => "A directory for storing cache files and other state information" },
+
+         escape_flags =>
+         { parse => 'hash_list', optional => 1, type => HASHREF,
+           descr => "A list of escape flags to set (as if calling the set_escape() method" },
+
+	 static_source =>
+         { parse => 'boolean', default => 0, type => BOOLEAN,
+           descr => "When true, we only compile source files once" },
+
 	 # OBJECT cause qr// returns an object
-	 ignore_warnings_expr         => { parse => 'string',  type => SCALAR|OBJECT,
-					   default => qr/Subroutine .* redefined/i,
-					   descr => "A regular expression describing Perl warning messages to ignore" },
-	 preloads                     => { parse => 'list',    optional => 1, type => ARRAYREF,
-					   descr => "A list of components to load immediately when creating the Interpreter" },
-	 resolver                     => { isa => 'HTML::Mason::Resolver',
-					   descr => "A Resolver object for fetching components from storage" },
-	 use_object_files             => { parse => 'boolean', default => 1, type => BOOLEAN,
-					   descr => "Whether to cache component objects on disk" },
+	 ignore_warnings_expr =>
+         { parse => 'string',  type => SCALAR|OBJECT, default => qr/Subroutine .* redefined/i,
+           descr => "A regular expression describing Perl warning messages to ignore" },
+
+	 preloads =>
+         { parse => 'list', optional => 1, type => ARRAYREF,
+           descr => "A list of components to load immediately when creating the Interpreter" },
+
+	 resolver =>
+         { isa => 'HTML::Mason::Resolver',
+           descr => "A Resolver object for fetching components from storage" },
+
+	 use_object_files =>
+         { parse => 'boolean', default => 1, type => BOOLEAN,
+           descr => "Whether to cache component objects on disk" },
 	);
 
     __PACKAGE__->contained_objects
@@ -98,15 +118,30 @@ use HTML::Mason::MethodMaker
 			      },
       );
 
+BEGIN {
+    #
+    # We've found at least one generated component that for some
+    # reason never returns from eval-ing its object code.  For
+    # systems that provide alarm we can try to protect against
+    # this.
+    #
+    # This appears to be a Perl bug, fixed in 5.7.3+.  We'll skip
+    # this hack for versions where the bug is fixed.  To eliminate the
+    # checking penalty, we make it a compile-time constant.
+    #
+    if ( $Config{d_alarm} && $] < 5.007003 ) {
+	eval 'sub PERL_BUG_INFINITE_LOOP () { 1 }';
+    } else {
+	eval 'sub PERL_BUG_INFINITE_LOOP () { 0 }';
+    }
+}
+	
+
+
 sub new
 {
     my $class = shift;
     my $self = $class->SUPER::new(@_);
-    %$self = (%$self,
-		      code_cache => {},
-		      code_cache_current_size => 0,
-		      files_written => [],
-	     );
 
     $self->_initialize;
     return $self;
@@ -117,6 +152,7 @@ sub _initialize
     my ($self) = shift;
     $self->{code_cache} = {};
     $self->{code_cache_current_size} = 0;
+    $self->{files_written} = [];
 
     #
     # Check that data_dir is absolute.
@@ -131,7 +167,7 @@ sub _initialize
     # Create data subdirectories if necessary. mkpath will die on error.
     #
     if ($self->data_dir) {
-	foreach my $subdir ( qw(obj cache etc) ) {
+	foreach my $subdir ( qw(obj cache) ) {
 	    my @newdirs = mkpath( File::Spec->catdir( $self->data_dir, $subdir ) , 0, 0775 );
 	    $self->push_files_written(@newdirs);
 	}
@@ -242,10 +278,14 @@ sub load {
 
     #
     # If code cache contains an up to date entry for this path, use
-    # the cached sub.  Always use the cached sub in static_source mode.
+    # the cached comp.  Always use the cached comp in static_source
+    # mode.
     #
-    return $code_cache->{$comp_id}->{comp}
-	if exists($code_cache->{$comp_id}) and ( $self->static_source || $code_cache->{$comp_id}->{lastmod} >= $srcmod );
+    if ( exists $code_cache->{$comp_id} &&
+         ( $self->static_source || $code_cache->{$comp_id}->{lastmod} >= $srcmod )
+       ) {
+        return $code_cache->{$comp_id}->{comp};
+    }
 
     if ($self->{use_object_files}) {
 	$objfile = $self->comp_id_to_objfile($comp_id);
@@ -277,8 +317,7 @@ sub load {
 	do
 	{
 	    if ($objfilemod < $srcmod) {
-		my $object_code = $source->object_code( compiler => $self->compiler );
-		$self->write_object_file( object_code => \$object_code, object_file => $objfile );
+		$self->compiler->compile_to_file( file => $objfile, source => $source);
 	    }
 	    $comp = eval { $self->eval_object_code( object_file => $objfile ) };
 
@@ -295,7 +334,7 @@ sub load {
 	# Not using object files. Load component directly into memory.
 	#
 	my $object_code = $source->object_code( compiler => $self->compiler );
-	$comp = eval { $self->eval_object_code( object_code => \$object_code ) };
+	$comp = eval { $self->eval_object_code( object_code => $object_code ) };
 	$self->_compilation_error( $source->friendly_name, $@ ) if $@;
     }
     $comp->assign_runtime_properties($self, $source);
@@ -307,7 +346,7 @@ sub load {
     $self->delete_from_code_cache($comp_id);
 
     if ($comp->object_size <= $self->code_cache_max_elem) {
-	$code_cache->{$comp_id} = {lastmod=>$srcmod, comp=>$comp, type=>'physical'};
+	$code_cache->{$comp_id} = { lastmod => $srcmod, comp => $comp };
 	$self->{code_cache_current_size} += $comp->object_size;
     }
     return $comp;
@@ -327,6 +366,14 @@ sub comp_id_to_objfile {
     my ($self, $comp_id) = @_;
 
     return File::Spec->catfile( $self->object_dir, split /\//, $comp_id );
+}
+
+# User method for emptying code cache - useful for preventing memory leak
+sub flush_code_cache {
+    my $self = shift;
+
+    $self->{code_cache} = {};
+    $self->{code_cache_current_size} = 0;
 }
 
 #
@@ -387,7 +434,7 @@ sub make_component {
 
     my $object_code = $source->object_code( compiler => $self->compiler);
 
-    my $comp = eval { $self->eval_object_code( object_code => \$object_code ) };
+    my $comp = eval { $self->eval_object_code( object_code => $object_code ) };
     $self->_compilation_error( $p{name}, $@ ) if $@;
 
     $comp->assign_runtime_properties($self, $source);
@@ -492,16 +539,7 @@ sub eval_object_code
 	      sub { $warnstr .= $_[0] if $_[0] !~ /$ignore_expr/ } :
 	      sub { $warnstr .= $_[0] } );
 
-	#
-	# We've found at least one generated component that for some
-	# reason never returns from the string eval below.  For
-	# systems that provide alarm we can try to protect against
-	# this.
-	#
-	# This appears to be a Perl bug, fixed in 5.7.3+.  We'll skip
-	# this hack for versions where the bug is fixed.
-	#
-	if ( $Config{d_alarm} && $] < 5.007003 )
+	if ( PERL_BUG_INFINITE_LOOP )
 	{
            local $SIG{ALRM} = sub { die $warnstr };
            alarm 5;
@@ -554,56 +592,6 @@ sub _do_or_eval
 
 	return eval ${$p->{object_code}};
     }
-}
-
-#
-# write_object_file
-#   (object_code=>..., object_file=>..., files_written=>...)
-# Save object text in an object file.
-#
-# We attempt to handle several cases in which a file already exists
-# and we wish to create a directory, or vice versa.  However, not
-# every case is handled; to be complete, mkpath would have to unlink
-# any existing file in its way.
-#
-#
-# I think this belongs in the comp storage mechanism - Dave
-#
-sub write_object_file
-{
-    my $self = shift;
-
-    my %p = validate( @_, { object_code => { type => SCALARREF },
-			    object_file => { type => SCALAR },
-			    files_written => { type => ARRAYREF, optional => 1 } },
-		    );
-
-    my ($object_code, $object_file, $files_written) =
-	@p{qw(object_code object_file files_written)};
-
-    my @newfiles = ($object_file);
-
-    if (defined $object_file && !-f $object_file) {
-	my ($dirname) = dirname($object_file);
-	if (!-d $dirname) {
-	    unlink($dirname) if (-e $dirname);
-	    push(@newfiles,mkpath($dirname,0,0775));
-	    system_error "Couldn't create directory $dirname: $!"
-		unless -d $dirname;
-	}
-	rmtree($object_file) if (-d $object_file);
-    }
-
-    ($object_file) = $object_file =~ /^(.*)/s if taint_is_on;
-
-    my $fh = make_fh();
-    open $fh, ">$object_file"
-	or system_error "Couldn't write object file $object_file: $!";
-    print $fh $$object_code
-	or system_error "Couldn't write object file $object_file: $!";
-    close $fh 
-	or system_error "Couldn't close object file $object_file: $!";
-    @$files_written = @newfiles if (defined($files_written))
 }
 
 sub _compilation_error {
@@ -723,8 +711,10 @@ sub set_escape
 
     while ( my ($name, $sub) = each %p )
     {
+        my $flag_regex = $self->compiler->lexer->escape_flag_regex;
+
         param_error "Invalid escape name ($name)"
-            if $name !~ /^[\w-]+$/ || $name =~ /^n$/;
+            if $name !~ /^$flag_regex$/ || $name =~ /^n$/;
 
         my $coderef;
         if ( ref $sub )
@@ -888,7 +878,7 @@ when the interpreter initializes. e.g.
 
 Default is the empty list.  For maximum performance, this should only
 be used for components that are frequently viewed and rarely updated.
-See the L<preloading|HTML::Mason::Admin/preloading> section of the administrator's manual for further details.
+See the L<preloading components|HTML::Mason::Admin/preloading components> section of the administrator's manual for further details.
 
 As mentioned in the developer's manual, a component's C<< <%once> >>
 section is executed when it is loaded.  For preloaded components, this
@@ -951,24 +941,24 @@ sets and returns the value.  For example:
 The following properties can be queried but not modified: data_dir,
 preloads.
 
-=head1 OTHER METHODS
+=head1 ESCAPE FLAG METHODS
 
 =over
 
-=for html <a name="item_exec"></a>
+=for html <a name="item_apply_escapes"></a>
 
-=item exec (comp, args...)
+=item apply_escapes ($text, $flags, [more flags...])
 
-Creates a new HTML::Mason::Request object for the given I<comp> and
-I<args>, and executes it. The return value is the return value of
-I<comp>, if any.
+This method applies a one or more escapes to a piece of text.  The
+escapes are specified by giving their flag.  Each escape is applied to
+the text in turn, after which the now-modified text is returned.
 
-This is useful for running Mason outside of a web environment.
-See L<HTML::Mason::Admin/Using Mason from a standalone script>
-for examples.
+=for html <a name="item_remove_escape"></a>
 
-This method isn't generally useful in a mod_perl environment; see
-L<subrequests|HTML::Mason::Devel/Subrequests> instead.
+=item remove_escape ($name)
+
+Given an escape name, this removes that escape from the interpreter's
+known escapes.  If the name is not recognized, it is simply ignored.
 
 =for html <a name="item_set_escape"></a>
 
@@ -976,7 +966,8 @@ L<subrequests|HTML::Mason::Devel/Subrequests> instead.
 
 This method is called to add an escape flag to the list of known
 escapes for the interpreter.  The flag may only consist of the
-characters matching C<\w> and the dash (-).
+characters matching C<\w> and the dash (-).  It must start with an
+alpha character or an underscore (_).
 
 The right hand side may be one of several things.  It can be a
 subroutine reference.  It can also be a string match C</^\w+$/>, in
@@ -992,20 +983,83 @@ configuration file, you can set them like this:
   PerlSetVar  MasonEscapeFlags  "uc    => sub { ${$_[0]} = uc ${$_[0]}; }"
   PerlAddVar  MasonEscapeFlags  "thing => other_thing"
 
-=for html <a name="item_remove_escape"></a>
+=back
 
-=item remove_escape ($name)
+=head1 OTHER METHODS
 
-Given an escape name, this removes that escape from the interpreter's
-known escapes.  If the name is not recognized, it is simply ignored.
+=over
 
-=for apply_escapes <a name="item_apply_escapes"></a>
+=for html <a name="item_comp_exists"></a>
 
-=item apply_escapes ($text, $flags, [more flags...])
+=item comp_exists (path)
 
-This method applies a one or more escapes to a piece of text.  The
-escapes are specified by giving their flag.  Each escape is applied to
-the text in turn, after which the now-modified text is returned.
+Given an I<absolute> component path, this method returns a boolean
+value indicating whether or not a component exists for that path.
+
+=for html <a name="item_comp_root"></a>
+
+=item comp_root (comp_root)
+
+This is a convenience method which simply calls the C<comp_root>
+method in the resolver object.  Obviously, if you are using a custom
+resolver class which does not have a C<comp_root> method, then this
+convenience method will not work.
+
+=for html <a name="item_exec"></a>
+
+=item exec (comp, args...)
+
+Creates a new HTML::Mason::Request object for the given I<comp> and
+I<args>, and executes it. The return value is the return value of
+I<comp>, if any.
+
+This is useful for running Mason outside of a web environment.
+See L<HTML::Mason::Admin/using Mason from a standalone script>
+for examples.
+
+This method isn't generally useful in a mod_perl environment; see
+L<subrequests|HTML::Mason::Devel/Subrequests> instead.
+
+=for html <a name="flush_code_cache"></a>
+
+=item flush_code_cache
+
+Empties the component cache. When using Perl 5.00503 or earlier, you
+should call this when finished with an interpreter, in order to remove
+circular references that would prevent the interpreter from being
+destroyed.
+
+=for html <a name="item_load"></a>
+
+=item load (path)
+
+Returns the component object corresponding to an absolute component
+C<path>, or undef if none exists.
+
+=for html <a name="item_make_component"></a>
+
+=item make_component (comp_source => ... )
+
+=item make_component (comp_file => ... )
+
+This method compiles Mason component source code and returns a
+Component object.  The source may be passed in as a string in C<comp_source>,
+or as a filename in C<comp_file>.  When using C<comp_file>, the
+filename is specified as a path on the file system, not as a path
+relative to Mason's component root (see 
+L<$m-E<gt>fetch_comp|HTML::Mason::Request/item_fetch_comp> for that).
+
+If Mason encounters an error during processing, an exception will be thrown.
+
+Example of usage:
+
+    # Make an anonymous component
+    my $anon_comp =
+      eval { $interp->make_component
+               ( comp_source => '<%perl>my $name = "World";</%perl>Hello <% $name %>!' ) };
+    die $@ if $@;
+
+    $m->comp($anon_comp);
 
 =for html <a name="item_set_global"></a>
 
@@ -1037,55 +1091,16 @@ Any global that you set should also be registered with the
 L<allow_globals|HTML::Mason::Params/allow_globals> parameter; otherwise you'll get warnings from
 C<strict>.
 
-=for html <a name="item_comp_exists"></a>
-
-=item comp_exists (path)
-
-Given an I<absolute> component path, this method returns a boolean
-value indicating whether or not a component exists for that path.
-
-=for html <a name="item_make_component"></a>
-
-=item make_component (comp_source => ... )
-
-=item make_component (comp_file => ... )
-
-This method compiles Mason component source code and returns a
-Component object.  The source may be passed in as a string in C<comp_source>,
-or as a filename in C<comp_file>.  When using C<comp_file>, the
-filename is specified as a path on the file system, not as a path
-relative to Mason's component root (see 
-L<$m-E<gt>fetch_comp|HTML::Mason::Request/item_fetch_comp> for that).
-
-If Mason encounters an error during processing, an exception will be thrown.
-
-Example of usage:
-
-    # Make an anonymous component
-    my $anon_comp =
-      eval { $interp->make_component
-               ( comp_source => '<%perl>my $name = "World";</%perl>Hello <% $name %>!' ) };
-    die $@ if $@;
-
-    $m->comp($anon_comp);
-
-=for html <a name="item_load"></a>
-
-=item load (path)
-
-Returns the component object corresponding to an absolute component
-C<path>, or undef if none exists.
-
-=for html <a name="item_comp_root"></a>
-
-=item comp_root (comp_root)
-
-This is a convenience method which simply calls the C<comp_root>
-method in the resolver object.  Obviously, if you are using a custom
-resolver class which does not have a C<comp_root> method, then this
-convenience method will not work.
-
 =back
+
+=head1 MEMORY LEAK WARNING
+
+When using Perl 5.00503 or earlier, using the code cache creates a
+circular reference between Interp and component objects.  This means
+that Interp objects will not be destroyed unless you call
+L<flush_code_cache|HTML::Mason::Interp/flush_code_cache>.  If you are
+using Perl 5.6.0 or greater, Mason uses weak references to prevent
+this problem.
 
 =head1 SEE ALSO
 

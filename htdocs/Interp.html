@@ -17,7 +17,9 @@
 	<li><A HREF="#description">DESCRIPTION</a></li>
 	<li><A HREF="#parameters_to_the_new__construc">PARAMETERS TO THE <code>new()</code> CONSTRUCTOR</a></li>
 	<li><A HREF="#accessor_methods">ACCESSOR METHODS</a></li>
+	<li><A HREF="#escape_flag_methods">ESCAPE FLAG METHODS</a></li>
 	<li><A HREF="#other_methods">OTHER METHODS</a></li>
+	<li><A HREF="#memory_leak_warning">MEMORY LEAK WARNING</a></li>
 	<li><A HREF="#see_also">SEE ALSO</a></li>
 </ul>
 <!-- INDEX END -->
@@ -145,7 +147,7 @@ when the interpreter initializes. e.g.
 <dd>
 <p>Default is the empty list.  For maximum performance, this should only
 be used for components that are frequently viewed and rarely updated.
-See the <A HREF="Admin.html#preloading">preloading</a> section of the administrator's manual for further details.</p>
+See the <A HREF="Admin.html#preloading_components">preloading components</a> section of the administrator's manual for further details.</p>
 </dd>
 <dd>
 <p>As mentioned in the developer's manual, a component's <code>&lt;%once&gt;</code>
@@ -223,23 +225,21 @@ preloads.</p>
 <p>
 </p>
 <hr />
-<h1><A NAME="other_methods">OTHER METHODS</a></h1>
-<A NAME="item_exec"></a><dl>
-<dt><strong><A NAME="item_exec">exec (comp, args...)</a></strong><br />
+<h1><A NAME="escape_flag_methods">ESCAPE FLAG METHODS</a></h1>
+<A NAME="item_apply_escapes"></a><dl>
+<dt><strong><A NAME="item_apply_escapes">apply_escapes ($text, $flags, [more flags...])</a></strong><br />
 </dt>
 <dd>
-Creates a new HTML::Mason::Request object for the given <em>comp</em> and
-<em>args</em>, and executes it. The return value is the return value of
-<em>comp</em>, if any.
+This method applies a one or more escapes to a piece of text.  The
+escapes are specified by giving their flag.  Each escape is applied to
+the text in turn, after which the now-modified text is returned.
 </dd>
+<A NAME="item_remove_escape"></a><p></p>
+<dt><strong><A NAME="item_remove_escape">remove_escape ($name)</a></strong><br />
+</dt>
 <dd>
-<p>This is useful for running Mason outside of a web environment.
-See <A HREF="Admin.html#using_mason_from_a_standalone_sc">Using Mason from a standalone script in the HTML::Mason::Admin manpage</a>
-for examples.</p>
-</dd>
-<dd>
-<p>This method isn't generally useful in a mod_perl environment; see
-<A HREF="Devel.html#subrequests">subrequests</a> instead.</p>
+Given an escape name, this removes that escape from the interpreter's
+known escapes.  If the name is not recognized, it is simply ignored.
 </dd>
 <A NAME="item_set_escape"></a><p></p>
 <dt><strong><A NAME="item_set_escape">set_escape ($name =&gt; see below])</a></strong><br />
@@ -247,7 +247,8 @@ for examples.</p>
 <dd>
 This method is called to add an escape flag to the list of known
 escapes for the interpreter.  The flag may only consist of the
-characters matching <code>\w</code> and the dash (-).
+characters matching <code>\w</code> and the dash (-).  It must start with an
+alpha character or an underscore (_).
 </dd>
 <dd>
 <p>The right hand side may be one of several things.  It can be a
@@ -267,20 +268,90 @@ configuration file, you can set them like this:</p>
   PerlSetVar  MasonEscapeFlags  &quot;uc    =&gt; sub { ${$_[0]} = uc ${$_[0]}; }&quot;
   PerlAddVar  MasonEscapeFlags  &quot;thing =&gt; other_thing&quot;</pre>
 </dd>
-<A NAME="item_remove_escape"></a><p></p>
-<dt><strong><A NAME="item_remove_escape">remove_escape ($name)</a></strong><br />
+<p></p></dl>
+<p>
+</p>
+<hr />
+<h1><A NAME="other_methods">OTHER METHODS</a></h1>
+<A NAME="item_comp_exists"></a><dl>
+<dt><strong><A NAME="item_comp_exists">comp_exists (path)</a></strong><br />
 </dt>
 <dd>
-Given an escape name, this removes that escape from the interpreter's
-known escapes.  If the name is not recognized, it is simply ignored.
+Given an <em>absolute</em> component path, this method returns a boolean
+value indicating whether or not a component exists for that path.
 </dd>
-<p></p>
-<dt><strong><A NAME="item_apply_escapes">apply_escapes ($text, $flags, [more flags...])</a></strong><br />
+<A NAME="item_comp_root"></a><p></p>
+<dt><strong><A NAME="item_comp_root">comp_root (comp_root)</a></strong><br />
 </dt>
 <dd>
-This method applies a one or more escapes to a piece of text.  The
-escapes are specified by giving their flag.  Each escape is applied to
-the text in turn, after which the now-modified text is returned.
+This is a convenience method which simply calls the <A HREF="#item_comp_root"><code>comp_root</code></a>
+method in the resolver object.  Obviously, if you are using a custom
+resolver class which does not have a <A HREF="#item_comp_root"><code>comp_root</code></a> method, then this
+convenience method will not work.
+</dd>
+<A NAME="item_exec"></a><p></p>
+<dt><strong><A NAME="item_exec">exec (comp, args...)</a></strong><br />
+</dt>
+<dd>
+Creates a new HTML::Mason::Request object for the given <em>comp</em> and
+<em>args</em>, and executes it. The return value is the return value of
+<em>comp</em>, if any.
+</dd>
+<dd>
+<p>This is useful for running Mason outside of a web environment.
+See <A HREF="Admin.html#using_mason_from_a_standalone_sc">using Mason from a standalone script in the HTML::Mason::Admin manpage</a>
+for examples.</p>
+</dd>
+<dd>
+<p>This method isn't generally useful in a mod_perl environment; see
+<A HREF="Devel.html#subrequests">subrequests</a> instead.</p>
+</dd>
+<A NAME="flush_code_cache"></a><p></p>
+<dt><strong><A NAME="item_flush_code_cache">flush_code_cache</a></strong><br />
+</dt>
+<dd>
+Empties the component cache. When using Perl 5.00503 or earlier, you
+should call this when finished with an interpreter, in order to remove
+circular references that would prevent the interpreter from being
+destroyed.
+</dd>
+<A NAME="item_load"></a><p></p>
+<dt><strong><A NAME="item_load">load (path)</a></strong><br />
+</dt>
+<dd>
+Returns the component object corresponding to an absolute component
+<code>path</code>, or undef if none exists.
+</dd>
+<A NAME="item_make_component"></a><p></p>
+<dt><strong><A NAME="item_make_component">make_component (comp_source =&gt; ... )</a></strong><br />
+</dt>
+<dt><strong>make_component (comp_file =&gt; ... )</strong><br />
+</dt>
+<dd>
+This method compiles Mason component source code and returns a
+Component object.  The source may be passed in as a string in <code>comp_source</code>,
+or as a filename in <code>comp_file</code>.  When using <code>comp_file</code>, the
+filename is specified as a path on the file system, not as a path
+relative to Mason's component root (see 
+<A HREF="Request.html#item_fetch_comp">$m-&gt;fetch_comp</a> for that).
+</dd>
+<dd>
+<p>If Mason encounters an error during processing, an exception will be thrown.</p>
+</dd>
+<dd>
+<p>Example of usage:</p>
+</dd>
+<dd>
+<pre>
+    # Make an anonymous component
+    my $anon_comp =
+      eval { $interp-&gt;make_component
+               ( comp_source =&gt; '&lt;%perl&gt;my $name = &quot;World&quot;;&lt;/%perl&gt;Hello &lt;% $name %&gt;!' ) };
+    die $@ if $@;</pre>
+</dd>
+<dd>
+<pre>
+    $m-&gt;comp($anon_comp);</pre>
 </dd>
 <A NAME="item_set_global"></a><p></p>
 <dt><strong><A NAME="item_set_global">set_global ($varname, [values...])</a></strong><br />
@@ -321,61 +392,17 @@ The lines above, for example, are equivalent to:</p>
 <A HREF="Params.html#allow_globals">allow_globals</a> parameter; otherwise you'll get warnings from
 <code>strict</code>.</p>
 </dd>
-<A NAME="item_comp_exists"></a><p></p>
-<dt><strong><A NAME="item_comp_exists">comp_exists (path)</a></strong><br />
-</dt>
-<dd>
-Given an <em>absolute</em> component path, this method returns a boolean
-value indicating whether or not a component exists for that path.
-</dd>
-<A NAME="item_make_component"></a><p></p>
-<dt><strong><A NAME="item_make_component">make_component (comp_source =&gt; ... )</a></strong><br />
-</dt>
-<dt><strong>make_component (comp_file =&gt; ... )</strong><br />
-</dt>
-<dd>
-This method compiles Mason component source code and returns a
-Component object.  The source may be passed in as a string in <code>comp_source</code>,
-or as a filename in <code>comp_file</code>.  When using <code>comp_file</code>, the
-filename is specified as a path on the file system, not as a path
-relative to Mason's component root (see 
-<A HREF="Request.html#item_fetch_comp">$m-&gt;fetch_comp</a> for that).
-</dd>
-<dd>
-<p>If Mason encounters an error during processing, an exception will be thrown.</p>
-</dd>
-<dd>
-<p>Example of usage:</p>
-</dd>
-<dd>
-<pre>
-    # Make an anonymous component
-    my $anon_comp =
-      eval { $interp-&gt;make_component
-               ( comp_source =&gt; '&lt;%perl&gt;my $name = &quot;World&quot;;&lt;/%perl&gt;Hello &lt;% $name %&gt;!' ) };
-    die $@ if $@;</pre>
-</dd>
-<dd>
-<pre>
-    $m-&gt;comp($anon_comp);</pre>
-</dd>
-<A NAME="item_load"></a><p></p>
-<dt><strong><A NAME="item_load">load (path)</a></strong><br />
-</dt>
-<dd>
-Returns the component object corresponding to an absolute component
-<code>path</code>, or undef if none exists.
-</dd>
-<A NAME="item_comp_root"></a><p></p>
-<dt><strong><A NAME="item_comp_root">comp_root (comp_root)</a></strong><br />
-</dt>
-<dd>
-This is a convenience method which simply calls the <A HREF="#item_comp_root"><code>comp_root</code></a>
-method in the resolver object.  Obviously, if you are using a custom
-resolver class which does not have a <A HREF="#item_comp_root"><code>comp_root</code></a> method, then this
-convenience method will not work.
-</dd>
 <p></p></dl>
+<p>
+</p>
+<hr />
+<h1><A NAME="memory_leak_warning">MEMORY LEAK WARNING</a></h1>
+<p>When using Perl 5.00503 or earlier, using the code cache creates a
+circular reference between Interp and component objects.  This means
+that Interp objects will not be destroyed unless you call
+<A HREF="Interp.html#flush_code_cache">flush_code_cache</a>.  If you are
+using Perl 5.6.0 or greater, Mason uses weak references to prevent
+this problem.</p>
 <p>
 </p>
 <hr />

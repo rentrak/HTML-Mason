@@ -39,7 +39,7 @@ use HTML::Mason::Tests;
 
 	my $comp = $self->SUPER::compiled_component(@_);
 
-	$comp =~ s/!!BAZ!!/$self->{baz_val}/g;
+	$$comp =~ s/!!BAZ!!/$self->{baz_val}/g;
 
 	return $comp;
     }
@@ -92,9 +92,12 @@ EOF
 
 #------------------------------------------------------------
 
+    # We don't use object files, because we want to catch the output
+    # of compiled_component() instead of writing it to a file
     $group->add_test( name => 'compiler_subclass',
 		      description => 'use a HTML::Mason::Compiler subclass',
 		      interp_params => { compiler_class => 'HTML::Mason::Compiler::ToObject::Test',
+					 use_object_files => 0,
 					 baz_val => 75 },
 		      component => <<'EOF',
 baz is !!BAZ!!

@@ -48,6 +48,10 @@ my %prereq = ( 'File::Spec' => {version => 0.8,
 				  where => "CPAN/modules/by-authors/id/D/DC/DCLINTON/Cache-Cache-x.x.tar.gz"},
                'Class::Container' => {version => 0.07,
 				      where => "CPAN/modules/by-authors/id/K/KW/KWILLIAMS/Class-Container-x.x.tar.gz"},
+               'Scalar::Util' => {version => 1.01,
+                                  where => "CPAN/modules/by-authors/id/G/GB/GBARR/Scalar-List-Utils-x.x.tar.gz"},
+               'CGI' => {version => 2.46,
+                         where => "CPAN/modules/by-authors/id/G/GB/GBARR/CGI.pm-x.x.tar.gz"},
 	     );
 
 foreach (keys %prereq) {
@@ -59,15 +63,17 @@ foreach (keys %prereq) {
 }
 
 eval { require mod_perl };
-unless ( $@ || $^O =~ /mac|darwin/ )
+my $has_only_mp2 = $@ && eval { require Apache2 };
+
+unless ( ( $@ || $^O =~ /mac|darwin/ ) || $has_only_mp2 )
 {
-    chk_version('Apache::Request' => '0.31') or
+    chk_version('Apache::Request' => '0.32') or
 	warn  "\n"
 	    . "*** If you plan to use Mason with mod_perl,\n"
-	    . "    Mason requires version 0.31, or later, of Apache::Request\n"
+	    . "    Mason requires version 0.32, or later, of Apache::Request\n"
 	    . "    from CPAN/modules/by-module/Apache/Apache-Request-x.x.tar.gz\n\n";
 
-    $prereq{'Apache::Request'} = 0.31;
+    $prereq{'Apache::Request'} = 0.32;
 }
 
 setup_mod_perl_tests() if is_maintainer() && ! $opts{'no-prompts'};
@@ -164,8 +170,10 @@ sub test
     # This works for older MakeMakers
     $test =~ s/(runtests \@ARGV;)/\$\$ENV{MASON_VERBOSE} == \$(TEST_VERBOSE) ? \$(TEST_VERBOSE) : \$\$ENV{MASON_VERBOSE}; \$\$ENV{PORT}=$port; \$\$ENV{APACHE_DIR}=q^$MY::APACHE{apache_dir}^; \$\$ENV{MASON_MAINTAINER}=$is_maintainer; $1/;
 
+    my $bs = $^O =~ /Win32/i ? '' : '\\';
+
     # This works for newer MakeMakers (5.48_01 +)
-    $test =~ s/("-MExtUtils::Command::MM" "-e" ")(test_harness\(\$\(TEST_VERBOSE\).*?\)" \$\(TEST_FILES\))/$1 \\\$\$ENV{MASON_VERBOSE} == \$(TEST_VERBOSE) ? \$(TEST_VERBOSE) : \\\$\$ENV{MASON_VERBOSE}; \\\$\$ENV{PORT}=$port; \\\$\$ENV{APACHE_DIR}=q^$MY::APACHE{apache_dir}^; \\\$\$ENV{MASON_MAINTAINER}=$is_maintainer; $2/;
+    $test =~ s/("-MExtUtils::Command::MM" "-e" ")(test_harness\(\$\(TEST_VERBOSE\).*?\)" \$\(TEST_FILES\))/$1 $bs\$\$ENV{MASON_VERBOSE} == \$(TEST_VERBOSE) ? \$(TEST_VERBOSE) : $bs\$\$ENV{MASON_VERBOSE}; $bs\$\$ENV{PORT}=$port; $bs\$\$ENV{APACHE_DIR}=q^$MY::APACHE{apache_dir}^; $bs\$\$ENV{MASON_MAINTAINER}=$is_maintainer; $2/;
 
     return $test;
 }

@@ -8,7 +8,7 @@ use strict;
 
 use Cwd;
 use File::Spec;
-use HTML::Mason::Tools qw(read_file paths_eq);
+use HTML::Mason::Tools qw(read_file_ref paths_eq);
 use Params::Validate qw(:all);
 
 use HTML::Mason::ComponentSource;
@@ -80,13 +80,13 @@ sub get_info {
                       comp_path => $path,
                       comp_class => 'HTML::Mason::Component::FileBased',
                       extra => { comp_root => $key },
-                      source_callback => sub { read_file($srcfile) },
+                      source_callback => sub { read_file_ref($srcfile) },
                     );
     }
 
     # see if path corresponds to real filesystem path, a common new user mistake
     my $fs_path = File::Spec->catfile( split /\//, $path );
-    if ( -e $fs_path )
+    if ( defined $fs_path && -e $fs_path )
     {
         warn "Your component path ($path) matches a real file on disk ($fs_path).  Have you read about the component root in the Administrator's Manual (HTML::Mason::Admin)?";
     }
