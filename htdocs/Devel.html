@@ -162,7 +162,7 @@ performance tuning, component caching, and so on.
 
 <P>
 
-I strongly suggest that you have a working Mason to play with as you work
+We strongly suggest that you have a working Mason to play with as you work
 through these examples. Other component examples can be found in the <CODE>samples/</CODE> directory.
 
 
@@ -173,8 +173,8 @@ through these examples. Other component examples can be found in the <CODE>sampl
 <H1><A NAME="how_to_use_this_manual">HOW TO USE THIS MANUAL
 
 </A></H1>
-If you are just learning Mason and want to get started quickly, I recommend
-the following sections:
+If you are just learning Mason and want to get started quickly, we
+recommend the following sections:
 
 
 <P>
@@ -1126,24 +1126,31 @@ can be accessed in two ways.
 
 <PRE>    # another comment
     $d=&gt;5
-    @e=&gt;('foo','baz')
-    %f=&gt;(joe=&gt;1,bob=&gt;2)
+    $e=&gt;$d*2
+    @f=&gt;('foo','baz')
+    %g=&gt;(joe=&gt;1,bob=&gt;2)
     &lt;/%args&gt;
 </PRE>
 
 <P>
 
-Here, $a, @b, and <CODE>%c</CODE> are required arguments; the component
-generates an error if the caller leaves them unspecified. $d, @e, and
-<CODE>%f</CODE> are optional arguments; they are assigned the specified
-default values if unspecified. All the arguments are available as lexically
-scoped (``my'') variables in the rest of the component.
+Here, <EM>$a</EM>, <EM>@b</EM>, and <EM>%c</EM> are required arguments; the component generates an error if the caller
+leaves them unspecified. <EM>$d</EM>, <EM>$e</EM>, <EM>@f</EM> and <EM>%g</EM> are optional arguments; they are assigned the specified default values if
+unspecified. All the arguments are available as lexically scoped (``my'')
+variables in the rest of the component.
 
 
 <P>
 
 Arguments are separated by one or more newlines. Comments may be used at
 the end of a line or on their own line.
+
+
+<P>
+
+Default expressions are evaluated in top-to-bottom order, and one
+expression may reference an earlier one (as <CODE>$e</CODE> references
+<CODE>$d</CODE> above).
 
 
 <P>
@@ -1231,7 +1238,10 @@ parameters.
     $grades, then $grades will equal {Alice =&gt; 92, Bob =&gt; 87}
     @grades, then @grades will equal ('Alice', 92, 'Bob', 87)
     %grades, then %grades will equal (Alice =&gt; 92, Bob =&gt; 87)
-  In addition, $ARGS{grades} will equal {Alice =&gt; 92, Bob =&gt; 87}.
+  In addition, $ARGS{grades} will equal ['Alice',92,'Bob',87] in the
+    URL case, or {Alice =&gt; 92, Bob =&gt; 87} in the component call case.
+    (The discrepancy exists because, in a query string, there is no detectable
+    difference between a list or hash.)
 </PRE>
 
 <P>

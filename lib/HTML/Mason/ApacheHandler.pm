@@ -104,8 +104,6 @@ use HTML::Mason::MethodMaker
 
 # use() params. Assign defaults, in case ApacheHandler is only require'd.
 use vars qw($LOADED $ARGS_METHOD);
-$LOADED = 0;
-$ARGS_METHOD = undef;
 
 my @used = ($HTML::Mason::IN_DEBUG_FILE);
 
@@ -160,7 +158,6 @@ sub new
 {
     my $class = shift;
     my $self = {
-	_permitted => \%fields,
 	request_number => 0,
 	%fields,
     };
@@ -247,7 +244,7 @@ sub interp_status
         map {"<DD><TT>$_ = ".(defined($interp->{$_}) ? 
                                 $interp->{$_} : '<I>undef</I>'
                              )."</TT>\n" 
-            } grep ref $interp->{$_} eq '', sort keys %{$interp->{_permitted}};
+            } grep ! ref $interp->{$_}, sort keys %$interp;
 
     push @strings, '</DL>',
             '<DL><DT><FONT SIZE="+1"><B>Cached components</B></FONT><DD>';

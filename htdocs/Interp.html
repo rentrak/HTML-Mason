@@ -261,8 +261,18 @@ parser with default parameters.
 <DT><STRONG><A NAME="item_preloads">preloads
 
 </A></STRONG><DD>
-A set of component paths and/or component directories to load when the
-interpreter initializes. This should only be used for components that are
+A list of component paths, optionally with glob wildcards, to load when the
+interpreter initializes. e.g.
+
+
+<P>
+
+<PRE>    preloads =&gt; ['/foo/index.html','/bar/*.pl']
+</PRE>
+
+<P>
+
+Default is the empty list. This should only be used for components that are
 frequently viewed and rarely updated. See the <A HREF="././Admin.html#preloading">preloading</A>
 section of the <EM>Admin Guide</EM> for further details.
 
@@ -272,9 +282,9 @@ section of the <EM>Admin Guide</EM> for further details.
 <DT><STRONG><A NAME="item_static_file_root">static_file_root
 
 </A></STRONG><DD>
-Absolute path to prepend to relative filenames passed to <CODE>$m-</CODE><CODE>file()>.</CODE> Does not require a trailing slash. For example, if
-the file root is '/foo/bar', then <CODE>$m-</CODE><CODE>file('baz/bap')></CODE> will read the file '/foo/bar/baz/bap'.
-Undefined by default; if left undefined, relative path names to <CODE>$m-</CODE><CODE>file()></CODE> are prepended with the current component directory.
+Absolute path to prepend to relative filenames passed to <CODE>$m-&gt;file()</CODE>. Does not require a trailing slash. For example, if the file root is
+'/foo/bar', then <CODE>$m-&gt;file('baz/bap')</CODE> will read the file '/foo/bar/baz/bap'. Undefined by default; if left
+undefined, relative path names to <CODE>$m-&gt;file()</CODE> are prepended with the current component directory.
 
 
 <P>
@@ -461,9 +471,8 @@ where <EM>comp</EM> is a component path or component object.
 <P>
 
 Component parameters are given as a series of name/value pairs, just as
-they are with <CODE>$m-</CODE>comp&gt;. exec returns the return value of the component. Component output
-is sent to standard output by default, but you can change this by
-specifying <A HREF="././Interp.html#item_out_method">out_method</A>.
+they are with <CODE>$m-&gt;comp</CODE>. exec returns the return value of the component. Component output is sent
+to standard output by default, but you can change this by specifying <A HREF="././Interp.html#item_out_method">out_method</A>.
 
 
 <P>
@@ -481,7 +490,7 @@ file:
                                           data_dir=&gt;'&lt;data directory&gt;',
                                           out_method=&gt;\$outbuf);
     my $retval = $interp-&gt;exec('&lt;component path&gt;',&lt;args&gt;...);
-    open(F,&quot;mason.out&quot;);
+    open(F,&quot;&gt;mason.out&quot;);
     print F $outbuf;
     close(F);
     print &quot;return value of component was: $retval\n&quot;;

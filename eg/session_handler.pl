@@ -10,6 +10,8 @@
 #        returns its error conditions, or upgrade to Perl 5.6.0 or
 #        greater, which has its own bugs.
 
+package HTML::Mason;
+
 # Bring in main Mason package.
 use HTML::Mason;
 
@@ -31,7 +33,7 @@ use strict;
    # Replace this if you want to use a different storage method.  Also
    # see Apache::Session::Flex in Apache::Session 1.50+ for a way to
    # specify this at run time.
-   use Apache::Session::File;
+   use Apache::Session::File 1.50;
 }
 
 # Create Mason objects
@@ -88,7 +90,7 @@ sub handler
 
     # Always send the cookie out as there is no reason not to.
     my $cookie = new CGI::Cookie(-name=>'AF_SID', -value=>$HTML::Mason::Commands::session{_session_id}, -path => '/',);
-    $r->header_out('Set-Cookie', => $cookie);
+    $r->header_out('Set-Cookie' => $cookie);
 
     my $status = $ah->handle_request($r);
 
