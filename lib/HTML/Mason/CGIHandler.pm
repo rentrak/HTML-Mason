@@ -16,7 +16,7 @@ use HTML::Mason::MethodMaker
 
 __PACKAGE__->valid_params
     (
-     interp   => {isa => 'HTML::Mason::Interp'},
+     interp => { isa => 'HTML::Mason::Interp' },
     );
 
 __PACKAGE__->contained_objects
@@ -68,7 +68,9 @@ sub _handler {
 
     $self->interp->delayed_object_params('request', cgi_request => $r);
 
-    $self->interp->exec($p->{comp}, $r->params);
+    my %args = $self->request_args($r);
+
+    $self->interp->exec($p->{comp}, %args);
 
     if (@_) {
 	# This is a secret feature, and should stay secret (or go away) because it's just a hack for the test suite.
@@ -77,6 +79,13 @@ sub _handler {
 	print $r->http_header;
 	print $self->{output};
     }
+}
+
+# This is broken out in order to make subclassing easier.
+sub request_args {
+    my ($self, $r) = @_;
+
+    return $r->params;
 }
 
 ###########################################################
@@ -108,6 +117,7 @@ sub redirect {
 ###########################################################
 package HTML::Mason::FakeApache;
 # Analogous to Apache request object $r (but not an actual Apache subclass)
+# In the future we'll probably want to switch this to Apache::Fake or similar
 
 use HTML::Mason::MethodMaker(read_write => [qw(query headers)]);
 
@@ -228,7 +238,9 @@ components, similar to the Apache request object under
 C<HTML::Mason::ApacheHandler>, but limited in functionality.  Please
 note that we aim to replicate the C<mod_perl> functionality as closely
 as possible - if you find differences, do I<not> depend on them to
-stay different.  We may fix them in a future release.
+stay different.  We may fix them in a future release.  Also, if you
+need some missing functionality in C<$r>, let us know, we might be
+able to provide it.
 
 Finally, this module alters the C<HTML::Mason::Request> object C<$m> to
 provide direct access to the CGI query, should such access be necessary.
@@ -273,6 +285,13 @@ module with CGI::Fast.
 
 The component path will be the value of the CGI object's
 C<path_info()> method.
+
+=item * request_args()
+
+Given an C<HTML::Mason::FakeApache> object, this method is expected to
+return a hash containing the arguments to be passed to the component.
+It is a separate method in order to make it easily overrideable in a
+subclass.
 
 =item * interp()
 
@@ -323,6 +342,17 @@ already been set is undefined - currently it returns C<undef>.
 
 If no content type is set during the request, the default MIME type
 C<text/html> will be used.
+
+=item * http_header()
+
+This method returns the outgoing headers as a string, suitable for
+sending to the client.
+
+=item * params()
+
+This method returns a hash containing the parameters sent by the
+client.  Multiple parameters of the same name are represented by array
+references.
 
 =back
 

@@ -94,7 +94,8 @@ yourself.  The interpreter should be an instance of the
 <H1><A NAME="accessor methods">ACCESSOR METHODS</A></H1>
 <P>All of the above properties, except interp, have standard accessor
 methods of the same name: no arguments retrieves the value, and one
-argument sets it.  For example:</P>
+argument sets it, except for args_method, which is not settable.  For
+example:</P>
 <PRE>
     my $ah = new HTML::Mason::ApacheHandler;
     my $decline_dirs = $ah-&gt;decline_dirs;
@@ -135,7 +136,7 @@ object.  For example:</P>
 <DT><STRONG><A NAME="item_request_args">request_args ($r)</A></STRONG><BR>
 <DD>
 Given an Apache request object, this method returns a three item list.
-The first item, is a hash reference containing the arguments passed by
+The first item is a hash reference containing the arguments passed by
 the client's request.
 <P>The second is an Apache request object, possibly the one originally
 passed to the method.</P>

@@ -159,7 +159,7 @@ preloads.</P>
 <P>
 <HR>
 <H1><A NAME="other methods">OTHER METHODS</A></H1>
-<a name="item_set_global"><DL>
+<a name="item_set_global"></a><DL>
 <DT><STRONG><A NAME="item_set_global">set_global ($varname, [values...])</A></STRONG><BR>
 <DD>
 This method sets a global to be used in components. <CODE>varname</CODE> is a
@@ -184,12 +184,12 @@ The lines above, for example, are equivalent to:</P>
 <P>Any global that you set should also be registered with the
 <A HREF="Compiler.html#allow_globals">Compiler's allow_globals</A>
 parameter; otherwise you'll get warnings from <CODE>strict</CODE>.</P>
-<a name="item_comp_exists"><P></P>
+<a name="item_comp_exists"></a><P></P>
 <DT><STRONG><A NAME="item_comp_exists">comp_exists (path)</A></STRONG><BR>
 <DD>
 Given an <EM>absolute</EM> component path, this method returns a boolean
 value indicating whether or not a component exists for that path.
-<a name="item_make_component"><P></P>
+<a name="item_make_component"></a><P></P>
 <DT><STRONG><A NAME="item_make_component">make_component (comp_source =&gt; ... )</A></STRONG><BR>
 <DD>
 <DT><STRONG>make_component (comp_file =&gt; ... )</STRONG><BR>
@@ -210,12 +210,12 @@ relative to Mason's component root (see
     die $@ if $@;</PRE>
 <PRE>
     $m-&gt;comp($anon_comp);</PRE>
-<a name="item_load"><P></P>
+<a name="item_load"></a><P></P>
 <DT><STRONG><A NAME="item_load">load (path)</A></STRONG><BR>
 <DD>
 Returns the component object corresponding to an absolute component
 <CODE>path</CODE>, or undef if none exists.
-<a name="item_comp_root"><P></P>
+<a name="item_comp_root"></a><P></P>
 <DT><STRONG><A NAME="item_comp_root">comp_root (comp_root)</A></STRONG><BR>
 <DD>
 This is a convenience method which simply calls the <A HREF="#item_comp_root"><CODE>comp_root</CODE></A>

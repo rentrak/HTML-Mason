@@ -6,9 +6,6 @@ package HTML::Mason::Buffer;
 
 use strict;
 
-use Class::Container;
-use base qw(Class::Container);
-
 use HTML::Mason::Exceptions( abbr => ['param_error'] );
 
 use Params::Validate qw(:all);
@@ -21,6 +18,10 @@ use HTML::Mason::MethodMaker
 			 ignore_flush
 		       ) ],
     );
+
+=pod
+
+=begin for later reference
 
 __PACKAGE__->valid_params
     (
@@ -38,14 +39,22 @@ __PACKAGE__->valid_params
 		       public => 0 },
     );
 
+=end
+
+=cut
+
 sub new
 {
     my $class = shift;
-    my $self = $class->SUPER::new(@_);
+    my $self = bless { ignore_flush => 0, @_ }, $class;
     $self->_initialize;
     return $self;
 }
 
+# we set the {sink_is_scalar} flag as an optimization for sinks which
+# are scalarrefs, the commonest case.  This lets us optimize the
+# receive() method to simply concatenate onto the string rather than
+# always calling a sub reference.
 sub _initialize
 {
     my $self = shift;
@@ -54,17 +63,16 @@ sub _initialize
     {
 	if ( UNIVERSAL::isa( $self->{sink}, 'SCALAR' ) )
 	{
-	    # convert scalarref to a coderef for efficiency
-	    my $b = $self->{buffer} = $self->{sink};
-	    $self->{sink} = sub { for (@_) { $$b .= $_ if defined } };
+            $self->{buffer} = delete $self->{sink};
+	    $self->{sink_is_scalar} = 1;
 	}
     }
     else
     {
 	# create an empty string to use as buffer
 	my $buf = '';
-	my $b = $self->{buffer} = \$buf;
-	$self->{sink} = sub { for (@_) { $$b .= $_ if defined } };
+	$self->{buffer} = \$buf;
+        $self->{sink_is_scalar} = 1;
     }
 
     $self->{ignore_flush} = 1 unless $self->{parent};
@@ -79,7 +87,18 @@ sub new_child
 sub receive
 {
     my $self = shift;
-    $self->sink->(@_) if @_;
+
+    return unless @_;
+
+    if ( $self->{sink_is_scalar} )
+    {
+        # grep { defined } is marginally faster than local $^W;
+        ${ $self->{buffer} } .= join '', grep { defined } @_;
+    }
+    else
+    {
+        $self->{sink}->(@_);
+    }
 }
 
 sub flush
@@ -90,7 +109,7 @@ sub flush
     my $output = $self->output;
     return unless defined $output && $output ne '';
 
-    $self->parent->receive( $output ) if $self->parent;
+    $self->{parent}->receive( $output ) if $self->{parent};
     $self->clear;
 }
 
@@ -106,8 +125,15 @@ sub output
     my $self = shift;
     return unless exists $self->{buffer};
     my $output = ${$self->{buffer}};
-    return $self->filter->( $output ) if $self->filter;
+    return $self->{filter}->( $output ) if $self->{filter};
     return $output;
+}
+
+sub buffer
+{
+    my $self = shift;
+
+    return $self->{buffer} if $self->{sink_is_scalar};
 }
 
 1;

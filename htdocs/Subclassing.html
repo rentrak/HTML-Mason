@@ -30,6 +30,8 @@
 	<LI><A HREF="#compiler">Compiler</A></LI>
 	<LI><A HREF="#buffer">Buffer</A></LI>
 	<LI><A HREF="#apachehandler">ApacheHandler</A></LI>
+	<LI><A HREF="#cgihandler">CGIHandler</A></LI>
+	<LI><A HREF="#using subclasses">USING SUBCLASSES</A></LI>
 </UL>
 <!-- INDEX END -->
 
@@ -149,18 +151,18 @@ CGIHandler class provides its own request subclass,
 <P>It is impossible to know which one of these to subclass at compile
 time, since it is possible that your subclass will be loaded before
 either ApacheHandler or CGIHandler.</P>
-<P>To handle this, simply set <CODE>@ISA</CODE> in your constructor, like this:</P>
+<P>To handle this, simply call the <CODE>alter_superclass()</CODE> method in your
+constructor, like this:</P>
 <PRE>
   sub new
   {
-      @ISA = 
-          ( $HTML::Mason::ApacheHandler::VERSION ?
-            'HTML::Mason::Request::ApacheHandler' :
-            $HTML::Mason::CGIHandler::VERSION ?
-            'HTML::Mason::Request::CGI' :
-            'HTML::Mason::Request' );</PRE>
-<PRE>
       my $class = shift;</PRE>
+<PRE>
+      $class-&gt;alter_superclass( $HTML::Mason::ApacheHandler::VERSION ?
+                                'HTML::Mason::Request::ApacheHandler' :
+                                $HTML::Mason::CGIHandler::VERSION ?
+                                'HTML::Mason::Request::CGI' :
+                                'HTML::Mason::Request' );</PRE>
 <PRE>
       my $self = $class-&gt;SUPER::new(@_);</PRE>
 <PRE>
@@ -169,7 +171,12 @@ either ApacheHandler or CGIHandler.</P>
       return $self;
   }</PRE>
 <P>It is quite important that you do this as these handler-specific
-subclasses provide important functionality.</P>
+subclasses provide important functionality.  The <CODE>alter_superclass()</CODE>
+method is implemented in the
+<A HREF="Request.html"><A HREF="#item_HTML%3A%3AMason%3A%3ARequest"><CODE>HTML::Mason::Request</CODE></A></A> base class, and will
+do the right thing even in cases of multiple inheritance.  It also
+cooperates with <CODE>Class::Container</CODE> to make sure that it sees changes
+to the inheritance hierarchy.</P>
 <P>
 <H2><A NAME="the exec() method">The <CODE>exec()</CODE> method</A></H2>
 <P>The <CODE>exec</CODE> method is called in order to execute a request, and is the
@@ -238,7 +245,7 @@ for details on what methods the lexer can call.</P>
 <P>
 <HR>
 <H1><A NAME="compiler">Compiler</A></H1>
-<P>See the <CODE>Compiler class|HTML::Mason::Compiler</CODE> documentation for
+<P>See the <A HREF="Compiler.html">Compiler class</A> documentation for
 details on what methods a subclass of this class needs to provide.</P>
 <P>
 <HR>
@@ -256,12 +263,64 @@ subclass of the <A HREF="#item_HTML%3A%3AMason%3A%3ABuffer"><CODE>HTML::Mason::B
 <P>
 <HR>
 <H1><A NAME="apachehandler">ApacheHandler</A></H1>
-<P>The methods that you are mostly to want to subclass are documented in
-the <A HREF="ApacheHandler.html"><CODE>ApacheHandler class</CODE></A>
+<P>The methods that you are most likely to want to subclass are
+documented in the <A HREF="ApacheHandler.html"><CODE>ApacheHandler class</CODE></A>
 documentation.</P>
 <P>Providing an ApacheHandler subclass gives you a chance to do your own
 client parameter parsing, as well as the capability of providing a
 different way of handling requests.</P>
+<P>
+<HR>
+<H1><A NAME="cgihandler">CGIHandler</A></H1>
+<P>Like the ApacheHandler, you could subclass this module in order to
+provide your own argument processing or to step in and provide a
+different way to handle requests.</P>
+<P>
+<HR>
+<H1><A NAME="using subclasses">USING SUBCLASSES</A></H1>
+<P>When using your custom subclasses, we recommend that you take
+advantage of Mason's ability to construct subclassed object on the
+fly.</P>
+<P>For example, if you're subclassed the Interp object, you can still let
+the ApacheHandler object create the Interp object for you, as long as
+you give it the appropriate <CODE>interp_class</CODE> parameter.  This is
+important because Mason may internally set up certain defaults for
+contained objects.  For example, the ApacheHandler, by default, will
+tell the Interp object to use the
+<CODE>HTML::Mason::Request::ApacheHandler</CODE> Request subclass.  If you
+create an Interp object manually and you want to use that Interp
+object with ApacheHandler, you'll have to specify the same Request
+class.</P>
+<P>For example:</P>
+<PRE>
+  my $interp =
+      My::Interp-&gt;new
+          ( request_class  =&gt; 'HTML::Mason::Request::ApacheHandler',
+            resolver_class =&gt; 'HTML::Mason::Resolver::File::ApacheHandler',
+            my_new_interp_param =&gt; 42,
+          );</PRE>
+<PRE>
+  my $ah = HTML::Mason::ApacheHandler-&gt;new( interp =&gt; $interp );</PRE>
+<P>It is far easier to simply do this:</P>
+<PRE>
+  my $ah =
+      HTML::Mason::ApacheHandler-&gt;new
+          ( interp_class =&gt; 'My::Interp',
+            my_new_interp_param =&gt; 42,
+          );</PRE>
+<P>Your new parameter, <CODE>my_new_interp_param</CODE>, will still be passed to
+the <CODE>My::Interp</CODE> constructor, but this also gives ApacheHandler a
+chance to set various parameters for the Interp object.  Of course,
+you can still override these defaults explicitly:</P>
+<PRE>
+  my $ah =
+      HTML::Mason::ApacheHandler-&gt;new
+          ( interp_class =&gt; 'My::Interp',
+            resolver_class =&gt; 'My::Resolver'.
+            my_new_interp_param =&gt; 42,
+          );</PRE>
+<P>If you need access to the interp object's methods directly, it will be
+always be available via <CODE>$ah-&gt;interp</CODE>.</P>
 
 </BODY>
 

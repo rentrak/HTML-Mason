@@ -261,7 +261,7 @@ A regular expression describing Perl warning messages to ignore
 
 Type:               regex
 
-Default:            /Subroutine .* redefined/i
+Default:            qr/Subroutine .* redefined/i
 
 Name in httpd.conf: MasonIgnoreWarningsExpr
 
@@ -293,7 +293,7 @@ This object is created only once by its container.
 
 =item * interp_class
 
-A Mason interpreter for processing components
+
 
 Type:               string
 
@@ -317,7 +317,7 @@ This object is created only once by its container.
 
 =item * lexer_class
 
-A Lexer object that will scan component text during compilation
+
 
 Type:               string
 

@@ -238,7 +238,7 @@ if ( $mod_perl::VERSION < 1.99 )
 
 use vars qw($VERSION);
 
-$VERSION = sprintf '%2d.%02d', q$Revision: 1.229 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf '%2d.%02d', q$Revision: 1.240 $ =~ /(\d+)\.(\d+)/;
 
 use Class::Container;
 use base qw(Class::Container);
@@ -269,38 +269,31 @@ BEGIN
 }
 
 use HTML::Mason::MethodMaker
-    ( read_write => [ map { [ $_ => __PACKAGE__->validation_spec->{$_} ] }
+    ( read_only  => [ 'args_method' ],
+      read_write => [ map { [ $_ => __PACKAGE__->validation_spec->{$_} ] }
 		      qw( apache_status_title
-                          args_method
 			  decline_dirs
 			  interp ) ]
     );
 
-use vars qw($AH);
+use vars qw($AH $STARTED);
 
 # hack to let the make_params_pod.pl script work
-_startup() unless $::MakeParams;
+__PACKAGE__->_startup() if Apache->server;
 sub _startup
 {
-    # This is not really ideal cause if someone loads a subclass we
-    # won't know about it.  Oh well.
-    my $pack = __PACKAGE__;
+    my $pack = shift;
+    return if $STARTED++; # Allows a subclass to call us, without running twice
 
     if ( my $args_method = $pack->get_param('ArgsMethod') )
     {
 	if ($args_method eq 'CGI')
 	{
-	    unless (defined $CGI::VERSION)
-	    {
-		require CGI;
-	    }
+	    require CGI unless defined $CGI::VERSION;
 	}
 	elsif ($args_method eq 'mod_perl')
 	{
-	    unless (defined $Apache::Request::VERSION)
-	    {
-		require Apache::Request;
-	    }
+	    require Apache::Request unless defined $Apache::Request::VERSION;
 	}
 
 	# if we are in a simple conf file (meaning one without
@@ -311,10 +304,9 @@ sub _startup
 }
 
 #
-# This is my best guess as to whether we are being configured via the
-# conf file without multiple configs.  Without a comp root it will
-# blow up sooner or later anyway.  This may not be the case in the
-# future though.
+# This is our best guess as to whether we are being configured via the
+# conf file without multiple configs.  It's flawed, because simple
+# configurations don't require an explicit component root to be set.
 #
 sub _in_simple_conf_file
 {
@@ -335,12 +327,7 @@ sub make_ah
     # them all together in a string that we use to determine whether
     # or not we've seen this particular set of config values before.
     #
-    my $key = '';
-    foreach my $k (sort keys %$vals)
-    {
-	$key .= $k;
-	$key .= $vals->{$k};
-    }
+    my $key = join $;, map "$_$;$vals->{$_}", sort keys %$vals;
 
     #
     # If the user has virtual hosts, each with a different document
@@ -351,7 +338,7 @@ sub make_ah
     # comp root), we append the document root for the current request
     # to the key.
     #
-    $key .= $r->document_root if $r;
+    $key .= $; . $r->document_root if $r;
 
     return $AH{$key} if exists $AH{$key};
 
@@ -361,8 +348,9 @@ sub make_ah
 	} else {
 	    foreach my $root (@{$p{comp_root}}) {
 		$root = [ split /\s*=>\s*/, $root, 2 ];
-		param_error "Configuration parameter MasonCompRoot must be either a single string value ".
-			    "or multiple key/value pairs like 'foo => /home/mason/foo'" 
+		param_error "Configuration parameter MasonCompRoot must be either ".
+                            "a single string value or multiple key/value pairs ".
+                            "like 'foo => /home/mason/foo'"
 		    unless defined $root->[1];
 	    }
 	}
@@ -416,10 +404,10 @@ sub _get_mason_params
     }
 
     return ( \%vals,
-	     map { $_ =>
-                   scalar $self->get_param( $_, \%vals, \%candidates, $r )
-	         }
-	     keys %candidates );
+             map { $_ =>
+                       scalar $self->get_param( $_, \%vals, \%candidates, $r )
+                   }
+             keys %candidates );
 }
 
 sub get_param {
@@ -429,7 +417,6 @@ sub get_param {
 
     $key = $self->calm_form($key);
 
-    # If we weren't given a spec, try to locate one in our own class.
     my $spec = $self->allowed_params( $params || {} )->{$key}
         or error "Unknown config item '$key'";
 
@@ -509,13 +496,15 @@ sub new
     # get $r off end of params if its there
     my $r = pop if @_ % 2 == 1;
 
-    my $allowed_params = $class->allowed_params(@_);
+    my %defaults = ( request_class  => 'HTML::Mason::Request::ApacheHandler',
+                     resolver_class => 'HTML::Mason::Resolver::File::ApacheHandler',
+                   );
+    my $allowed_params = $class->allowed_params(%defaults, @_);
 
-    my %defaults;
-    if ( exists $allowed_params->{comp_root} &&
-	 ( $r ||  Apache->request ) )
+    if ( exists $allowed_params->{comp_root} and
+	 my $req = $r || Apache->request )  # DocumentRoot is only available inside requests
     {
-	$defaults{comp_root} = $r ? $r->document_root : Apache->request->document_root;
+	$defaults{comp_root} = $req->document_root;
     }
 
     if (exists $allowed_params->{data_dir})
@@ -523,9 +512,6 @@ sub new
 	# constructs path to <server root>/mason
 	$defaults{data_dir} = Apache->server_root_relative('mason');
     }
-
-    $defaults{request_class}  = 'HTML::Mason::Request::ApacheHandler';
-    $defaults{resolver_class} = 'HTML::Mason::Resolver::File::ApacheHandler';
 
     # Set default error_format based on error_mode
     my %params = @_;
@@ -538,23 +524,31 @@ sub new
 
     # Push $r onto default allow_globals
     if (exists $allowed_params->{allow_globals}) {
-	if ( $defaults{allow_globals} ) {
-	    push @{ $defaults{allow_globals} }, '$r';
+	if ( $params{allow_globals} ) {
+	    push @{ $params{allow_globals} }, '$r';
 	} else {
 	    $defaults{allow_globals} = ['$r'];
 	}
     }
 
     # Don't allow resolver to get created without comp_root, if it needs one
-    if ( exists $allowed_params->{comp_root} && !$defaults{comp_root} && !$params{comp_root} ) {
-	die "No comp_root specified and cannot determine DocumentRoot. Please provide comp_root manually.";
+    if ( exists $allowed_params->{comp_root} &&
+         ! $defaults{comp_root} &&
+         ! $params{comp_root} )
+    {
+	die "No comp_root specified and cannot determine DocumentRoot." .
+            " Please provide comp_root explicitly.";
     }
 
-    my $self = $class->SUPER::new(%defaults, @_);
+    my $self = $class->SUPER::new(%defaults, %params);
 
     unless ( $self->interp->resolver->can('apache_request_to_comp_path') )
     {
-	error "The resolver class your Interp object uses does not implement the 'apache_request_to_comp_path' method.  This means that ApacheHandler cannot resolve requests.  Are you using a handler.pl file created before version 1.10?  Please see the handler.pl sample that comes with the latest version of Mason.";
+	error "The resolver class your Interp object uses does not implement " .
+              "the 'resolve_backwards' method.  This means that ApacheHandler " .
+              "cannot resolve requests.  Are you using a handler.pl file created ".
+	      "before version 1.10?  Please see the handler.pl sample " .
+              "that comes with the latest version of Mason.";
     }
 
     # If we're running as superuser, change file ownership to http user & group
@@ -585,12 +579,16 @@ sub _initialize {
 
     if ($self->args_method eq 'mod_perl') {
 	unless (defined $Apache::Request::VERSION) {
-	    warn "Loading Apache::Request at runtime.  You could increase shared memory between Apache processes by preloading it in your httpd.conf or handler.pl file\n";
+	    warn "Loading Apache::Request at runtime.  You could " .
+                 "increase shared memory between Apache processes by ".
+                 "preloading it in your httpd.conf or handler.pl file\n";
 	    require Apache::Request;
 	}
     } else {
 	unless (defined $CGI::VERSION) {
-	    warn "Loading CGI at runtime.  You could increase shared memory between Apache processes by preloading it in your httpd.conf or handler.pl file\n";
+	    warn "Loading CGI at runtime.  You could increase shared ".
+                 "memory between Apache processes by preloading it in ".
+                 "your httpd.conf or handler.pl file\n";
 
 	    require CGI;
 	}
@@ -715,23 +713,6 @@ sub handle_request
     $req->exec;
 }
 
-sub request_args
-{
-    my ($self, $r) = @_;
-    #
-    # Get arguments from Apache::Request or CGI.
-    #
-    my (%args, $cgi_object);
-    if ($self->args_method eq 'mod_perl') {
-	$r = Apache::Request->new($r) unless UNIVERSAL::isa($r, 'Apache::Request');
-	%args = $self->_mod_perl_args($r);
-    } else {
-	$cgi_object = CGI->new;
-	%args = $self->_cgi_args($r, $cgi_object);
-    }
-    return (\%args, $r, $cgi_object);
-}
-
 sub prepare_request
 {
     my ($self, $r) = @_;
@@ -773,16 +754,20 @@ sub prepare_request
 	my $pathname = $r->filename;
 	$pathname .= $r->path_info unless $is_file;
 
-	$r->warn("[Mason] Cannot resolve file to component: $pathname (is file outside component root?)");
+	$r->warn("[Mason] Cannot resolve file to component: " .
+                 "$pathname (is file outside component root?)");
 	return $self->return_not_found($r);
     }
 
-    (my $args, $r, my $cgi_object) = $self->request_args($r);
+    # Assigning $r to a new variable here is _crucial_ to avoid a
+    # memory leak if we create an Apache::Request object in
+    # request_args().
+    my ($args, $new_r, $cgi_object) = $self->request_args($r);
 
     #
     # Set up interpreter global variables.
     #
-    $interp->set_global(r=>$r);
+    $interp->set_global( r => $new_r );
 
     # If someone is using a custom request class that doesn't accept
     # 'ah' and 'apache_req' that's their problem.
@@ -790,7 +775,7 @@ sub prepare_request
     my $request = $interp->make_request( comp => $comp_path,
 					 args => [%$args],
 					 ah => $self,
-					 apache_req => $r,
+					 apache_req => $new_r,
 				       );
 
     # Craft the request's out method to handle http headers, content
@@ -799,18 +784,20 @@ sub prepare_request
     my $out_method = sub {
 
 	# Send headers if they have not been sent by us or by user.
-	if (!$sent_headers and $request->auto_send_headers) {
-	    unless (http_header_sent($r)) {
-		$r->send_http_header();
+
+        # We use instance here because if we store $request we get a
+        # circular reference and a big memory leak
+	if (!$sent_headers and HTML::Mason::Request->instance->auto_send_headers) {
+	    unless (http_header_sent($new_r)) {
+		$new_r->send_http_header();
 	    }
 	    $sent_headers = 1;
 	}
 
-	# Call $r->print (using the real Apache method, not our
-	# overriden method). If request was HEAD, suppress output but
-	# allow the request to continue for consistency.
-	unless ($r->method eq 'HEAD') {
-	    $r->$real_apache_print(grep {defined} @_);
+	# Call $new_r->print (using the real Apache method, not our
+	# overriden method). If request was HEAD, suppress output.
+	unless ($new_r->method eq 'HEAD') {
+	    $new_r->$real_apache_print(grep {defined} @_);
 	}
     };
 
@@ -819,6 +806,30 @@ sub prepare_request
     $request->cgi_object($cgi_object) if $cgi_object;
 
     return $request;
+}
+
+sub request_args
+{
+    my ($self, $r) = @_;
+
+    #
+    # Get arguments from Apache::Request or CGI.
+    #
+
+    # put Apache::Request object here.  Overwriting $r causes a memory
+    # leak!
+    my $apr;
+
+    my (%args, $cgi_object);
+    if ($self->args_method eq 'mod_perl') {
+	$apr = Apache::Request->new($r) unless UNIVERSAL::isa($r, 'Apache::Request');
+	%args = $self->_mod_perl_args($apr);
+    } else {
+        $apr = $r;
+	$cgi_object = CGI->new;
+	%args = $self->_cgi_args($r, $cgi_object);
+    }
+    return (\%args, $apr, $cgi_object);
 }
 
 #
@@ -873,32 +884,17 @@ sub return_not_found
 #
 BEGIN
 {
-    if ( $mod_perl::VERSION < 1.99 )
-    {
-        eval <<'EOF';
-sub handler ($$)
+    # A method handler is prototyped differently in mod_perl 1.x than in 2.x
+    my $handler_code = sprintf <<'EOF', $mod_perl::VERSION >= 1.99 ? ': method' : '($$)';
+sub handler %s
 {
     my ($package, $r) = @_;
-
     my $ah = $AH || $package->make_ah($r);
-
     return $ah->handle_request($r);
 }
 EOF
-    }
-    else
-    {
-        eval <<'EOF';
-sub handler : method
-{
-    my ($package, $r) = @_;
-
-    my $ah = $AH || $package->make_ah($r);
-
-    return $ah->handle_request($r);
-}
-EOF
-    }
+    eval $handler_code;
+    die $@ if $@;
 }
 
 1;
@@ -984,7 +980,8 @@ C<HTML::Mason::Interp> class, or a subclass thereof.
 
 All of the above properties, except interp, have standard accessor
 methods of the same name: no arguments retrieves the value, and one
-argument sets it.  For example:
+argument sets it, except for args_method, which is not settable.  For
+example:
 
     my $ah = new HTML::Mason::ApacheHandler;
     my $decline_dirs = $ah->decline_dirs;
@@ -1029,7 +1026,7 @@ object.  For example:
 =item request_args ($r)
 
 Given an Apache request object, this method returns a three item list.
-The first item, is a hash reference containing the arguments passed by
+The first item is a hash reference containing the arguments passed by
 the client's request.
 
 The second is an Apache request object, possibly the one originally

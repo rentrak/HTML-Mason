@@ -4,10 +4,15 @@ MANIFEST			This list of files
 Makefile.PL
 README
 UPGRADE
+benchmarks/bench.pl
+benchmarks/comps/comp.mas
+benchmarks/comps/comp_helper.mas
+benchmarks/comps/print.mas
 bin/convert0.6.README
 bin/convert0.6.pl
 bin/convert0.8.README
 bin/convert0.8.pl
+bin/mason.pl
 eg/handler.pl
 eg/httpd.conf
 eg/session_handler.pl

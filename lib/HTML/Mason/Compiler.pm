@@ -93,6 +93,7 @@ sub object_id
               $self->{$k} );
     }
 
+    local $^W; # ignore undef warnings
     # unpack('%32C*', $x) computes the 32-bit checksum of $x
     return join '!', $self->lexer->object_id, unpack('%32C*', join "\0", @vals);
 }
@@ -193,7 +194,7 @@ sub end_component
     my $self = shift;
 
     $self->lexer->throw_syntax_error("Not enough component-with-content ending tags found")
-	if @{ $self->{comp_with_content_stack} };
+	if $self->{comp_with_content_stack} && @{ $self->{comp_with_content_stack} };
 
     $self->{current_comp} = undef;
 }
@@ -595,7 +596,7 @@ to keep track of the nesting of different kinds of blocks within each
 other.  The type of block ("init", "once", etc.) is passed via the
 "block_type" parameter.
 
-=item start_block(block_type => <string>)
+=item end_block(block_type => <string>)
 
 This method is called by the Lexer when it encounters a closing Mason
 block tag like C<< </%perl> >> or C<< </%args> >>.  Like

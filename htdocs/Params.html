@@ -193,7 +193,7 @@ How error conditions are manifest (output or fatal)
 
 A regular expression describing Perl warning messages to ignore
 <P>Type:               regex</P>
-<P>Default:            /Subroutine .* redefined/i</P>
+<P>Default:            qr/Subroutine .* redefined/i</P>
 <P>Name in httpd.conf: MasonIgnoreWarningsExpr</P>
 <P>Belongs to:         <A HREF="Interp.html">HTML::Mason::Interp</A></P>
 <P></P>
@@ -215,8 +215,7 @@ A Mason interpreter for processing components
 <P></P>
 <LI><STRONG><A NAME="item_interp_class">interp_class</A></STRONG><BR>
 
-A Mason interpreter for processing components
-<P>Type:               string</P>
+Type:               string
 <P>Name in httpd.conf: MasonInterpClass</P>
 <P>Belongs to:         <A HREF="ApacheHandler.html">HTML::Mason::ApacheHandler</A></P>
 <P>This object is created only once by its container.</P>
@@ -231,8 +230,7 @@ A Lexer object that will scan component text during compilation
 <P></P>
 <LI><STRONG><A NAME="item_lexer_class">lexer_class</A></STRONG><BR>
 
-A Lexer object that will scan component text during compilation
-<P>Type:               string</P>
+Type:               string
 <P>Name in httpd.conf: MasonLexerClass</P>
 <P>Belongs to:         <A HREF="Compiler.html">HTML::Mason::Compiler</A></P>
 <P>This object is created only once by its container.</P>

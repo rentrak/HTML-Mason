@@ -76,7 +76,9 @@ components, similar to the Apache request object under
 <CODE>HTML::Mason::ApacheHandler</CODE>, but limited in functionality.  Please
 note that we aim to replicate the <CODE>mod_perl</CODE> functionality as closely
 as possible - if you find differences, do <EM>not</EM> depend on them to
-stay different.  We may fix them in a future release.</P>
+stay different.  We may fix them in a future release.  Also, if you
+need some missing functionality in <CODE>$r</CODE>, let us know, we might be
+able to provide it.</P>
 <P>Finally, this module alters the <CODE>HTML::Mason::Request</CODE> object <CODE>$m</CODE> to
 provide direct access to the CGI query, should such access be necessary.</P>
 <P>
@@ -113,6 +115,13 @@ as its parameter.  This can be quite useful if you want to use this
 module with CGI::Fast.
 <P>The component path will be the value of the CGI object's
 <CODE>path_info()</CODE> method.</P>
+<P></P>
+<LI><STRONG><A NAME="item_request_args"><CODE>request_args()</CODE></A></STRONG><BR>
+
+Given an <CODE>HTML::Mason::FakeApache</CODE> object, this method is expected to
+return a hash containing the arguments to be passed to the component.
+It is a separate method in order to make it easily overrideable in a
+subclass.
 <P></P>
 <LI><STRONG><A NAME="item_interp"><CODE>interp()</CODE></A></STRONG><BR>
 
@@ -154,6 +163,17 @@ call to <A HREF="#item_content_type"><CODE>content_type()</CODE></A>.  The behav
 already been set is undefined - currently it returns <CODE>undef</CODE>.</P>
 <P>If no content type is set during the request, the default MIME type
 <CODE>text/html</CODE> will be used.</P>
+<P></P>
+<LI><STRONG><A NAME="item_http_header"><CODE>http_header()</CODE></A></STRONG><BR>
+
+This method returns the outgoing headers as a string, suitable for
+sending to the client.
+<P></P>
+<LI><STRONG><A NAME="item_params"><CODE>params()</CODE></A></STRONG><BR>
+
+This method returns a hash containing the parameters sent by the
+client.  Multiple parameters of the same name are represented by array
+references.
 <P></P></UL>
 <P>
 <H2><A NAME="added $m methods">Added <CODE>$m</CODE> methods</A></H2>

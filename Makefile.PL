@@ -40,10 +40,10 @@ EOF
 # These are required modules.
 
 my %prereq = ( 'File::Spec' => 0.8,
-	       'Params::Validate' => 0.18,
+	       'Params::Validate' => 0.24,
 	       'Exception::Class' => 1.01,
 	       'Cache::Cache' => 1.00,
-               'Class::Container' => 0.02,
+               'Class::Container' => 0.07,
 	     );
 
 chk_version('File::Spec' => '0.8') or
@@ -51,9 +51,9 @@ chk_version('File::Spec' => '0.8') or
 	. "*** Mason requires version 0.8, or later, of File::Spec\n"
 	. "    from CPAN/modules/by-module/File/File-Spec-x.x.tar.gz\n\n";
 
-chk_version('Params::Validate' => '0.18') or
+chk_version('Params::Validate' => '0.24') or
     warn  "\n"
-	. "*** Mason requires version 0.18, or later, of Params::Validate\n"
+	. "*** Mason requires version 0.24, or later, of Params::Validate\n"
 	. "    from CPAN/modules/by-authors/id/D/DR/DROLSKY/Params-Validate-x.x.tar.gz\n\n";
 
 eval { require mod_perl };
@@ -79,9 +79,9 @@ chk_version('Cache::Cache' => '1.00') or
         . "    Mason requires version 1.00, or later, of Cache::Cache\n"
 	. "    from CPAN/modules/by-authors/id/D/DC/DCLINTON/Cache-Cache-x.x.tar.gz\n\n";
 
-chk_version('Class::Container' => '0.02') or
+chk_version('Class::Container' => '0.07') or
     warn  "\n"
-	. "*** Mason requires version 0.02, or later, of Class::Container\n"
+	. "*** Mason requires version 0.07, or later, of Class::Container\n"
 	. "    from CPAN/modules/by-authors/id/K/KW/KWILLIAMS/Class-Container-x.x.tar.gz\n\n";
 
 setup_mod_perl_tests() unless $opts{'no-prompts'};
@@ -167,10 +167,10 @@ sub test
     $MY::APACHE{apache_dir} ||= '';
 
     # This works for older MakeMakers
-    $test =~ s/(runtests \@ARGV;)/\$\$ENV{MASON_VERBOSE} = \$(TEST_VERBOSE) ? \$(TEST_VERBOSE) : \$\$ENV{MASON_VERBOSE}; \$\$ENV{PORT}=$port; \$\$ENV{APACHE_DIR}=q^$MY::APACHE{apache_dir}^; $1/;
+    $test =~ s/(runtests \@ARGV;)/\$\$ENV{MASON_VERBOSE} == \$(TEST_VERBOSE) ? \$(TEST_VERBOSE) : \$\$ENV{MASON_VERBOSE}; \$\$ENV{PORT}=$port; \$\$ENV{APACHE_DIR}=q^$MY::APACHE{apache_dir}^; $1/;
 
     # This works for newer MakeMakers (5.48_01 +)
-    $test =~ s/("-MExtUtils::Command::MM" "-e" ")(test_harness\(\$\(TEST_VERBOSE\).*?\)" \$\(TEST_FILES\))/$1 \\\$\$ENV{MASON_VERBOSE} = \$(TEST_VERBOSE) ? \$(TEST_VERBOSE) : \\\$\$ENV{MASON_VERBOSE}; \\\$\$ENV{PORT}=$port; \\\$\$ENV{APACHE_DIR}=q^$MY::APACHE{apache_dir}^; $2/;
+    $test =~ s/("-MExtUtils::Command::MM" "-e" ")(test_harness\(\$\(TEST_VERBOSE\).*?\)" \$\(TEST_FILES\))/$1 \\\$\$ENV{MASON_VERBOSE} == \$(TEST_VERBOSE) ? \$(TEST_VERBOSE) : \\\$\$ENV{MASON_VERBOSE}; \\\$\$ENV{PORT}=$port; \\\$\$ENV{APACHE_DIR}=q^$MY::APACHE{apache_dir}^; $2/;
 
     return $test;
 }

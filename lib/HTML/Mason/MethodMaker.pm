@@ -23,6 +23,12 @@ sub import
 	}
     }
 
+    #
+    # The slight weirdness to avoid calling shift in these rw subs is
+    # _intentional_.  These subs get called a lot simply to read the
+    # value, and optimizing this common case actually does achieve
+    # something.
+    #
     if ($p{read_write})
     {
 	foreach my $rw ( ref $p{read_write} ? @{ $p{read_write} } : $p{read_write} )
@@ -32,19 +38,26 @@ sub import
 		my ($name, $spec) = @$rw;
 		no strict 'refs';
 		*{"$caller\::$name"} =
-		    sub { my $s = shift;
-			  if (@_)
+		    sub { if (@_ > 1)
 			  {
+                              my $s = shift;
 			      validate_pos(@_, $spec);
 			      $s->{$name} = shift;
+                              return $s->{$name};
 			  }
-			  return $s->{$name};
+			  return $_[0]->{$name};
 		        };
 	    }
 	    else
 	    {
 		no strict 'refs';
-		*{"$caller\::$rw"} = sub { my $s = shift; $s->{$rw} = shift if @_; return $s->{$rw}; };
+		*{"$caller\::$rw"} =
+                    sub { if (@_ > 1)
+                          {
+                              $_[0]->{$rw} = $_[1];
+                          }
+                          return $_[0]->{$rw};
+                        };
 	    }
 	}
     }

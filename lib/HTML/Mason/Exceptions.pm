@@ -4,7 +4,7 @@ use strict;
 
 use vars qw($VERSION);
 
-$VERSION = sprintf '%2d.%02d', q$Revision: 1.41 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf '%2d.%02d', q$Revision: 1.42 $ =~ /(\d+)\.(\d+)/;
 
 my %e;
 
@@ -308,8 +308,8 @@ sub as_html
  </tr>
  <tr>
   <td nowrap align="left" valign="top"><b>context:</b>&nbsp;</td>
-  <td align="left" valign="top" nowrap><table border="0" cellpadding="0" cellspacing="0">
-   <table>
+  <td align="left" valign="top" nowrap>
+   <table border="0" cellpadding="0" cellspacing="0">
 
 %   foreach my $entry (@{$info->{context}}) {
 %	my ($line_num, $line, $highlight) = @$entry;
@@ -326,12 +326,10 @@ sub as_html
  </tr>
  <tr>
   <td align="left" valign="top" nowrap><b>code stack:</b>&nbsp;</td>
-  <td align="left" valign="top" nowrap><table border="0" cellpadding="0" cellspacing="0">
-
+  <td align="left" valign="top" nowrap>
 %    foreach my $frame (@{$info->{frames}}) {
 	<% $frame->filename |h %>:<% $frame->line |h %><br>
 %    }
-
   </td>
  </tr>
 </table>

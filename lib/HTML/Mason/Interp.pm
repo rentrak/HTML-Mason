@@ -84,6 +84,8 @@ use HTML::Mason::MethodMaker
 				[ [ autoflush => { type => BOOLEAN } ],
 				  [ data_cache_defaults => { type => HASHREF } ],
 				  [ dhandler_name => { type => SCALAR } ],
+				  [ error_format => { type => SCALAR } ],
+				  [ error_mode => { type => SCALAR } ],
 				  [ max_recurse => { type => SCALAR } ],
 				  [ out_method => { type => SCALARREF | CODEREF } ],
 				]
@@ -116,7 +118,7 @@ sub _initialize
     foreach my $field (qw(data_dir)) {
 	if ($self->{$field}) {
 	    $self->{$field} = File::Spec->canonpath( $self->{$field} );
-	    param_error "$field '".$self->{$field}."' must be an absolute directory"
+	    param_error "$field '$self->{$field}' must be an absolute directory"
 		unless File::Spec->file_name_is_absolute( $self->{$field} );
 	}
     }
@@ -855,7 +857,7 @@ preloads.
 
 =over
 
-=for html <a name="item_set_global">
+=for html <a name="item_set_global"></a>
 
 =item set_global ($varname, [values...])
 
@@ -885,14 +887,14 @@ Any global that you set should also be registered with the
 L<Compiler's allow_globals|HTML::Mason::Compiler/allow_globals>
 parameter; otherwise you'll get warnings from C<strict>.
 
-=for html <a name="item_comp_exists">
+=for html <a name="item_comp_exists"></a>
 
 =item comp_exists (path)
 
 Given an I<absolute> component path, this method returns a boolean
 value indicating whether or not a component exists for that path.
 
-=for html <a name="item_make_component">
+=for html <a name="item_make_component"></a>
 
 =item make_component (comp_source => ... )
 
@@ -917,14 +919,14 @@ Example of usage:
 
     $m->comp($anon_comp);
 
-=for html <a name="item_load">
+=for html <a name="item_load"></a>
 
 =item load (path)
 
 Returns the component object corresponding to an absolute component
 C<path>, or undef if none exists.
 
-=for html <a name="item_comp_root">
+=for html <a name="item_comp_root"></a>
 
 =item comp_root (comp_root)
 

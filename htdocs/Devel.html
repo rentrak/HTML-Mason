@@ -592,7 +592,7 @@ you can change this.</P>
 <P>Here are some examples:</P>
 <PRE>
   &lt;%perl&gt;
-   my $req = $m-&gt;make_subrequest( comp =&gt; '/somp/comp', args =&gt; [ id =&gt; 172 ] );
+   my $req = $m-&gt;make_subrequest( comp =&gt; '/some/comp', args =&gt; [ id =&gt; 172 ] );
    $req-&gt;exec;
   &lt;/%perl&gt;</PRE>
 <P>If you want to capture the subrequest's output in a scalar, you can
@@ -602,7 +602,7 @@ simply pass an <CODE>out_method</CODE> parameter to <CODE>$m-&gt;make_subrequest
    my $buffer;
    my $req =
        $m-&gt;make_subrequest
-           ( comp =&gt; '/somp/comp', args =&gt; [ id =&gt; 172 ], out_method =&gt; \$buffer );
+           ( comp =&gt; '/some/comp', args =&gt; [ id =&gt; 172 ], out_method =&gt; \$buffer );
    $req-&gt;exec;
   &lt;/%perl&gt;</PRE>
 <P>Now <CODE>$buffer</CODE> contains all the output from that call to <EM>/some/comp</EM>.</P>
@@ -974,6 +974,10 @@ and its variables last only til the end of the request.</P>
 <P>Useful for initializing variables needed in, say, the main body and
 one more subcomponents or methods. See <A HREF="#objectoriented techniques">Object-Oriented Techniques</A> for an example of
 usage.</P>
+<P>It's important to realize that you do not have access to the <CODE>%ARGS</CODE>
+hash or variables created via an <CODE>&lt;%args&gt;</CODE> block inside a shared
+section.  However, you can access arguments via the <CODE>&lt;
+$m-</CODE>request_args &gt;&gt; method, documented in the <A HREF="Request.html#request_args">Request docs</A>.</P>
 <P>Avoid using <CODE>&lt;%shared&gt;</CODE> for side-effect code that needs to run at a
 predictable time during page generation. You may assume only that
 <CODE>&lt;%shared&gt;</CODE> runs just before the first code that needs it and runs at
