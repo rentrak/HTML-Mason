@@ -339,7 +339,7 @@ The httpd PerlModule directive:
     PerlModule LWP</pre>
 <p></p>
 <li></li>
-In the &lt;%once&gt; section of the <code>component(s)</code> that use the module.
+In the <code>&lt;%once&gt;</code> section of the <code>component(s)</code> that use the module.
 <pre>
     &lt;%once&gt;
     use CGI ':standard';
@@ -734,8 +734,8 @@ the <A HREF="Params.html#allow_globals">allow_globals</a> parameter.</p>
 <p>Since all components run in the same package, you'll be able to set
 the global in one component and access it in all the others.</p>
 <p>Autohandlers are common places to assign values to globals.  Use the
-&lt;tt&gt;&amp;lt;%once&amp;gt;&lt;/tt&gt; section if the global only needs to be
-initialized at load time, or the &lt;tt&gt;&amp;lt;%init&amp;gt;&lt;/tt&gt; section if it
+<code>&lt;%once&gt;</code> section if the global only needs to be
+initialized at load time, or the <code>&lt;%init&gt;</code> section if it
 needs to be initialized every request.</p>
 <p>
 </p>
@@ -1039,7 +1039,7 @@ output to the browser.</p>
     #!/usr/bin/perl
     use HTML::Mason::CGIHandler;</pre>
 <pre>
-    my $h = new HTML::Mason::CGIHandler
+    my $h = HTML::Mason::CGIHandler-&gt;new
      (
       data_dir  =&gt; '/home/jethro/code/mason_data',
      );</pre>

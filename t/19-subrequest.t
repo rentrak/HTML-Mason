@@ -8,8 +8,8 @@ $tests->run;
 
 sub make_tests
 {
-    my $group = HTML::Mason::Tests->new( name => 'subrequest',
-					 description => 'subrequest-related features' );
+    my $group = HTML::Mason::Tests->tests_class->new( name => 'subrequest',
+						      description => 'subrequest-related features' );
 
 #------------------------------------------------------------
 
@@ -280,6 +280,32 @@ EOF
 Before subreq
 More output
 After subreq
+EOF
+		    );
+
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'relative_path_call',
+		      description => 'call subrequest with relative path',
+		      component => <<'EOF',
+% $m->subexec( 'support/output' );
+EOF
+		      expect => <<'EOF',
+More output
+EOF
+		    );
+
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'comp_object_call',
+		      description => 'call subrequest with component object',
+		      component => <<'EOF',
+% $m->subexec( $m->interp->load('/subrequest/support/output') );
+EOF
+		      expect => <<'EOF',
+More output
 EOF
 		    );
 

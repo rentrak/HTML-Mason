@@ -8,8 +8,8 @@ $tests->run;
 
 sub make_tests
 {
-    my $group = HTML::Mason::Tests->new( name => 'request',
-					 description => 'request object functionality' );
+    my $group = HTML::Mason::Tests->tests_class->new( name => 'request',
+						      description => 'request object functionality' );
 
 
 #------------------------------------------------------------
@@ -509,20 +509,44 @@ EOF
 #------------------------------------------------------------
 
     $group->add_test( name => 'abort_and_filter',
-		      description => 'Test that an abort in a filtered component still generates _some_ output',
+		      description => 'Test that an abort in a filtered component still generates _some_ output, and that filter is run only once',
 		      component => <<'EOF',
 filter
 
 % eval { $m->comp('support/abort_test') };
 <%filter>
-return uc $_;
+$_ = uc $_;
+$_ =~ s/\s+$//;
+$_ .= "\nfilter ran once";
 </%filter>
 EOF
 		      expect => <<'EOF',
 FILTER
 
 SOME MORE TEXT
+filter ran once
+EOF
+		    );
 
+#------------------------------------------------------------
+
+    $group->add_test( name => 'abort_and_filter_2',
+		      description => 'Test that $m->aborted can be checked in a filter section',
+		      component => <<'EOF',
+filter
+
+% $m->abort;
+<%filter>
+unless ( $m->aborted )
+{
+    $_ = uc $_;
+    $_ =~ s/\s+$//;
+    $_ .= "\nfilter ran once";
+}
+</%filter>
+EOF
+		      expect => <<'EOF',
+filter
 EOF
 		    );
 

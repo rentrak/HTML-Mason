@@ -10,8 +10,8 @@ my $tests = make_tests();
 $tests->run;
 
 sub make_tests {
-    my $group = HTML::Mason::Tests->new( name => 'compiler',
-					 description => 'compiler and lexer object functionality' );
+    my $group = HTML::Mason::Tests->tests_class->new( name => 'compiler',
+						      description => 'compiler and lexer object functionality' );
 
 
 #------------------------------------------------------------
@@ -496,6 +496,41 @@ EOF
 
 #------------------------------------------------------------
 
+    $group->add_test( name => 'attr_flag_block_comment',
+		      description => 'test comment lines in attr and flags blocks',
+		      component => <<'EOF',
+<%attr>
+# this is a comment
+  # another comment
+ key => 'foo'
+# one last comment
+</%attr>
+<%flags>
+# this is a comment
+  # another comment
+inherit => undef
+# one last comment
+</%flags>
+compiled
+EOF
+		      expect => 'compiled',
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'attr_flag_block_empty',
+		      description => 'test empty attr and flags blocks',
+		      component => <<'EOF',
+<%attr></%attr>
+<%flags>
+</%flags>
+compiled
+EOF
+		      expect => 'compiled',
+		    );
+
+#------------------------------------------------------------
+
     my $error =
 	$] >= 5.006 ? qr/Unterminated <>/ : qr/Bareword "subcomp" not allowed/;
 
@@ -602,28 +637,6 @@ foo
 EOF
 		      expect_error => qr/Invalid method name:.*/
 		    );
-
-#------------------------------------------------------------
-
-    if ( $Config{d_alarm} || $] >= 5.007003 )
-    {
-	$group->add_test( name => 'infinite_loop',
-			  description => 'this code hangs when Interp.pm attempts to eval it.',
-			  component => <<'EOF',
-<%args>
- $prev
- $next
- $i
-</%args>
-% (my $p = $r->uri) =~ s,/[^/]+$,/,;
-  <% $p %>"><% $dir %>
-  <% $i->{fileroot} %>
-  <% "foo">large</a
- <% $i->{comment} %>
-EOF
-			  expect_error => qr/Global symbol "\$r"/,
-			);
-    }
 
 #------------------------------------------------------------
 

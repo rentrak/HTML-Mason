@@ -89,7 +89,7 @@ t/14-cgi.t
 t/15-subclass.t
 t/16-live_cgi.t
 t/17-print.t
-t/18-interp_leak.t
+t/18-leak.t
 t/19-subrequest.t
 t/lib/Apache/test.pm
 t/live_server_lib.pl

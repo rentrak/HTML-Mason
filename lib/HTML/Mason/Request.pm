@@ -397,6 +397,12 @@ sub make_subrequest
     my ($self, %params) = @_;
     my $interp = $self->interp;
 
+    # Coerce a string 'comp' parameter into an absolute path.  Don't
+    # create it if it's missing, though - it's required, but for
+    # consistency we let exceptions be thrown later.
+    $params{comp} = absolute_comp_path($params{comp}, $self->current_comp->dir_path)
+	if exists $params{comp} && !ref($params{comp});
+
     # Give subrequest the same values as parent request for read/write params
     my %defaults = map { ($_, $self->$_()) } $self->_properties;
 
@@ -1059,9 +1065,6 @@ sub comp {
 
     my $err = $@;
 
-    # any unflushed output is at $self->top_buffer->output
-    $self->flush_buffer if $self->aborted;
-
     if ( $comp->has_filter )
     {
         my $buffer = pop @{ $self->{buffer_stack} };
@@ -1097,6 +1100,11 @@ sub scomp {
     my $buf;
     $self->comp({store=>\$buf},@_);
     return $buf;
+}
+
+sub has_content {
+    my $self = shift;
+    return defined($self->top_stack->{content});
 }
 
 sub content {
@@ -1745,6 +1753,15 @@ current component, and returns the resulting text.
 
 Returns undef if there is no content.
 
+=for html <a name="has_content"></a>
+
+=item has_content
+
+Returns true if the component was called with content (i.e. with <&|
+comp &> and </&> tags instead of a single <& comp &> tag). This is
+generally better than checking the defined'ness of C<< $m->content >>
+because it will not try to evaluate the content.
+
 =for html <a name="item_count"></a>
 
 =item count
@@ -1877,8 +1894,9 @@ This method creates a new Request object which inherits its parent's
 settable properties, such as L<autoflush|HTML::Mason::Params/autoflush> and L<out_method|HTML::Mason::Params/out_method>.  These
 values may be overridden by passing parameters to this method.
 
-The "comp" parameter is required, while all other parameters are
-optional.
+The C<comp> parameter is required, while all other parameters are
+optional.  It may be specified as an absolute path or as a path
+relative to the current component.
 
 See the L<subrequests|HTML::Mason::Devel/subrequests> section of the developer's manual for more information about subrequests.
 

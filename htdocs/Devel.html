@@ -121,6 +121,11 @@
 
 		<li><A HREF="#sending_http_headers">Sending HTTP Headers</a></li>
 		<li><A HREF="#returning_http_status">Returning HTTP Status</a></li>
+		<ul>
+
+			<li><A HREF="#filters_and__m_abort">Filters and $m-&gt;abort</a></li>
+		</ul>
+
 		<li><A HREF="#external_redirects">External Redirects</a></li>
 		<li><A HREF="#internal_redirects">Internal Redirects</a></li>
 	</ul>
@@ -255,8 +260,8 @@ profile their performance.</p>
     Hello World, good afternoon.</pre>
 <p>This short example demonstrates the three primary ``in-line'' Perl
 sections. In-line sections are generally embedded within HTML and
-execute in the order they appear. Other sections (<code>&lt;%init&gt;</code>, <code>&lt;
-&lt;%args</code> &gt;&gt;, etc.) are tied to component events like initialization,
+execute in the order they appear. Other sections (<code>&lt;%init&gt;</code>,
+<code>&lt;%args&gt;</code>, etc.) are tied to component events like initialization,
 cleanup, and argument definition.</p>
 <p>The parsing rules for these Perl sections are as follows:</p>
 <ol>
@@ -488,10 +493,14 @@ in a site-level autohandler.</p>
    local $_ = $m-&gt;content;
    my ($text) = m{&lt;$lang&gt;(.*?)&lt;/$lang&gt;};
    &lt;/%init&gt;</pre>
-<p>If a filter component is called like a normal component (e.g. &lt;&amp; itext
-&amp;&gt;), <A HREF="#item_content"><code>$m-&gt;content</code></a> will return undef.  If a normal component
-which does not call <A HREF="#item_content"><code>$m-&gt;content</code></a> is called with content, the
-content will not be output.</p>
+<p>You can explicitly check whether a component has passed content by
+checking the boolean <code>$m-&gt;has_content</code>.  This allows you to write
+a component that will do different things depending on whether it was
+passed content. However, before overloading a component in this way,
+consider whether splitting the behavior into two distinct components
+would work as well.</p>
+<p>If a normal component which does not call <A HREF="#item_content"><code>$m-&gt;content</code></a> is called
+with content, the content will not be output.</p>
 <p>If you wrap a filtering component call around the entire component,
 the result will be functionally similar to a <code>&lt;%filter&gt;</code> section.
 See also <A HREF="#filtering">Filtering</a>.</p>
@@ -934,8 +943,8 @@ In Mason 1.21 and beyond, this unnecessary copying was eliminated and
 regular Perl subroutines. For example, if a component updates $_[0],
 the corresponding argument is updated (or an error occurs if it is not
 updatable).</p>
-<p>Most users won't notice this change because &lt;%args&gt; variables and the
-%ARGS hash always contain copies of arguments.</p>
+<p>Most users won't notice this change because <code>&lt;%args&gt;</code> variables
+and the <code>%ARGS</code> hash always contain copies of arguments.</p>
 <p>See perlsub for more information on @_ aliasing.</p>
 <p>
 </p>
@@ -1223,6 +1232,8 @@ component's output at once, and so may be called multiple times with
 different chunks of output.  This can happen if autoflush is on, or if
 a filter-containing component, or the components it calls, call the
 <code>$m-&gt;flush_buffer()</code> method.</p>
+<p>You should never call Perl's <code>return()</code> function inside a filter
+section, or you will not see any output at all.</p>
 <p>You can use <A HREF="#component_calls_with_content">Component Calls with Content</a> if you want to filter specific parts of a component rather
 than the entire component.</p>
 <p>
@@ -1615,7 +1626,7 @@ autohandlers.)</p>
 <pre>
    $m-&gt;clear_buffer;
    $m-&gt;abort($status);</pre>
-<p><code>$m-&gt;abort</code> bypasses the component stack and ensure that
+<p><code>$m-&gt;abort</code> bypasses the component stack and ensures that
 <code>$status</code> is returned from the top-most component. It works by
 throwing an exception. If you wrapped this code (directly or
 indirectly) in an eval, you must take care to rethrow the exception,
@@ -1631,6 +1642,18 @@ or the status will not make it out:</p>
    }</pre>
 <p>
 </p>
+<h3><A NAME="filters_and__m_abort">Filters and $m-&gt;abort</a></h3>
+<p>A filter section will still be called after a component aborts with
+<code>$m-&gt;abort</code>.  You can always check <code>$m-&gt;aborted</code> in your
+<code>&lt;%filter&gt;</code> block if you don't want to run the filter after an abort.</p>
+<pre>
+  &lt;%filter&gt;
+  unless ( $m-&gt;aborted ) {
+      $_ .= ' filter stuff';
+  }
+  &lt;/%filter&gt;</pre>
+<p>
+</p>
 <h2><A NAME="external_redirects">External Redirects</a></h2>
 <p>Because it is so commonly needed, Mason provides an external redirect
 method:</p>
@@ -1638,6 +1661,16 @@ method:</p>
     $m-&gt;redirect($url);    # Redirects with 302 status</pre>
 <p>This method uses the clear_buffer/abort technique mentioned above,
 so the same warnings apply regarding evals.</p>
+<p>Also, if you generate any output <em>after</em> calling <code>$m-&gt;redirect</code>,
+then this output will be sent, and will break the redirect.  For
+example:</p>
+<pre>
+  % eval { $m-&gt;comp('redirect', ...) };</pre>
+<pre>
+  % die $@ if $@;</pre>
+<p>The blank line between the two Perl lines is new output generated
+after the redirect.  Either remove it or call <code>$m-&gt;clear_buffer</code>
+immediately before calling <code>die()</code>.</p>
 <p>
 </p>
 <h2><A NAME="internal_redirects">Internal Redirects</a></h2>

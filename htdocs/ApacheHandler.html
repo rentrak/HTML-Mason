@@ -34,7 +34,7 @@
 <pre>
     use HTML::Mason::ApacheHandler;</pre>
 <pre>
-    my $ah = new HTML::Mason::ApacheHandler (..name/value params..);
+    my $ah = HTML::Mason::ApacheHandler-&gt;new (..name/value params..);
     ...
     sub handler {
         my $r = shift;
@@ -124,7 +124,7 @@ methods of the same name: no arguments retrieves the value, and one
 argument sets it, except for args_method, which is not settable.  For
 example:</p>
 <pre>
-    my $ah = new HTML::Mason::ApacheHandler;
+    my $ah = HTML::Mason::ApacheHandler-&gt;new;
     my $decline_dirs = $ah-&gt;decline_dirs;
     $ah-&gt;decline_dirs(1);</pre>
 <p>

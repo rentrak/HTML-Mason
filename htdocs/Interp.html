@@ -34,7 +34,7 @@
 <hr />
 <h1><A NAME="synopsis">SYNOPSIS</a></h1>
 <pre>
-    my $i = new HTML::Mason::Interp (data_dir=&gt;'/usr/local/mason',
+    my $i = HTML::Mason::Interp-&gt;new (data_dir=&gt;'/usr/local/mason',
                                      comp_root=&gt;'/usr/local/www/htdocs/',
                                      ...other params...);</pre>
 <p>
@@ -218,7 +218,7 @@ should be left alone.
 name. In general, no arguments retrieves the value, and one argument
 sets and returns the value.  For example:</p>
 <pre>
-    my $interp = new HTML::Mason::Interp (...);
+    my $interp = HTML::Mason::Interp-&gt;new (...);
     my $c = $interp-&gt;compiler;
     $interp-&gt;code_cache_max_size(20 * 1024 * 1024);</pre>
 <p>The following properties can be queried but not modified: data_dir,

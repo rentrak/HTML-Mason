@@ -9,8 +9,8 @@ $tests->run;
 
 sub make_tests
 {
-    my $group = HTML::Mason::Tests->new( name => 'filters',
-					 description => 'Filter Component' );
+    my $group = HTML::Mason::Tests->tests_class->new( name => 'filters',
+						      description => 'Filter Component' );
 
 
 #------------------------------------------------------------
@@ -400,6 +400,33 @@ EOF
 		      expect => <<'EOF',
 should do nothing
 so both should appear
+EOF
+		    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'has_content',
+		      description => 'Test $m->has_content',
+		      component => <<'EOF',
+<& .show_content &>\
+-----
+<&| .show_content &>\
+This is the content
+</&>
+<%def .show_content>\
+% if ($m->has_content) {
+My content is: 
+<% $m->content %>
+% } else { 
+I have no content.
+% }
+</%def>
+EOF
+		      expect => <<'EOF',
+I have no content.
+-----
+My content is: 
+This is the content
 EOF
 		    );
 

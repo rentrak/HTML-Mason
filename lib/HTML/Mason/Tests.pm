@@ -91,14 +91,55 @@ EOF
             },
 	  );
 
+#
+# Get command options here so that we read tests_class before user
+# calls new().
+#
+my %cmd_options;
+GetOptions( 'create' => \$cmd_options{create},
+	    'tests-to-run=s' => \$cmd_options{tests_to_run},
+	    'tests-to-skip=s' => \$cmd_options{tests_to_skip},
+	    'tests-class=s' => \$cmd_options{tests_class},
+	    );
+
+#
+# Allow options to be passed in the environment as well.
+#
+$cmd_options{tests_to_run} = $ENV{MASON_TESTS_TO_RUN}
+    if !defined($cmd_options{tests_to_run}) and defined($ENV{MASON_TESTS_TO_RUN});
+$cmd_options{tests_to_skip} = $ENV{MASON_TESTS_TO_SKIP}
+    if !defined($cmd_options{tests_to_skip}) and defined($ENV{MASON_TESTS_TO_SKIP});
+$cmd_options{tests_class} = $ENV{MASON_TESTS_CLASS}
+    if !defined($cmd_options{tests_class}) and defined($ENV{MASON_TESTS_CLASS});
+
+# If user specifies tests_class, load that package; otherwise,
+# default it to this package.
+if (defined($cmd_options{tests_class})) {
+    eval "use $cmd_options{tests_class}";
+} else {
+    $cmd_options{tests_class} = __PACKAGE__;
+}
+
+my %tests_to_run;
+if ($cmd_options{tests_to_run}) {
+    for ($cmd_options{tests_to_run}) { s/^\s+//; s/\s+$// }
+    my @tests_to_run = sort { $a <=> $b } split(/\s*,\s*/, $cmd_options{tests_to_run});
+    %tests_to_run = map { ($_, 1) } @tests_to_run;
+    printf ("Running only test%s %s\n", @tests_to_run == 1 ? "" : "s", join(", ", @tests_to_run));
+}
+
+my %tests_to_skip;
+if ($cmd_options{tests_to_skip}) {
+    for ($cmd_options{tests_to_skip}) { s/^\s+//; s/\s+$// }
+    my @tests_to_skip = split(/\s*,\s*/, $cmd_options{tests_to_skip});
+    %tests_to_skip = map { ($_, 1) } @tests_to_skip;
+    printf ("Skipping test%s %s\n", @tests_to_skip == 1 ? "" : "s", join(", ", @tests_to_skip));
+}
+
 sub new
 {
     my $class = shift;
-    my %p = @_;
-
-    GetOptions( 'create' => \$p{create},
-		'tests-to-run=s' => \$p{tests_to_run},
-	      );
+    my %p = (@_, %cmd_options);
 
     die "No group name provided\n"
 	unless exists $p{name};
@@ -109,15 +150,17 @@ sub new
     $p{pre_test_cleanup} = 1
         unless exists $p{pre_test_cleanup};
 
-    $p{tests_to_run} = $ENV{TESTS_TO_RUN}
-        if !defined($p{tests_to_run}) and defined($ENV{TESTS_TO_RUN});
- 
     return bless {
-		  interp_class => 'HTML::Mason::Interp',
 		  %p,
 		  support => [],
 		  tests => [],
 		 }, $class;
+}
+
+# Returns the tests class to use for class methods - defaults to this package.
+sub tests_class
+{
+    return $cmd_options{tests_class};
 }
 
 sub add_support
@@ -142,6 +185,9 @@ sub add_test
     die "no name provided for test\n"
 	unless exists $p{name};
 
+    $self->{test_count}++;
+    
+    
     unless ( exists $p{path} )
     {
 	$p{path} = $p{call_path} || $p{name};
@@ -353,14 +399,6 @@ sub _run_tests
 {
     my $self = shift;
 
-    my %tests_to_run;
-    if ($self->{tests_to_run}) {
-	my @tests_to_run = sort { $a <=> $b } split(/\s*,\s*/, $self->{tests_to_run});
-	die "tests_to_run must be a list of numbers separated by commas" if grep(!/\d+/, @tests_to_run);
-	%tests_to_run = map { ($_, 1) } @tests_to_run;
-	printf ("Running only test%s %s\n", @tests_to_run == 1 ? "" : "s", join(", ", @tests_to_run));
-    }
-    
     my $count = scalar @{ $self->{tests} };
     print "\n1..$count\n";
 
@@ -372,15 +410,44 @@ sub _run_tests
     my $x = 1;
     foreach my $test ( @{ $self->{tests} } )
     {
-	if (!%tests_to_run or $tests_to_run{$x}) {
-	    print "Running $test->{name} (#$x): $test->{description}\n"
-		if $VERBOSE;
-	    
-	    $self->{current_test} = $test;
-	    $self->_make_component unless $test->{skip_component};
-	    $self->_run_test;
+	$self->{current_test} = $test;
+	
+	#
+	# If tests_to_run or tests_to_skip were specified in the
+	# environment or command line, check them to see whether to
+	# run the test.
+	#
+	if (%tests_to_run or %tests_to_skip) {
+
+	    # Look for any of the specs [test_file_name:](test_number|test_name|*)
+	    my $wildcard_name = join(":", $self->{name}, "*");
+	    my $full_name = join(":", $self->{name}, $test->{name});
+	    my $full_number = join(":", $self->{name}, $x);
+	    my @all_specs = ($x, $test->{name}, $full_name, $full_number, $wildcard_name);
+
+	    # If our test isn't mentioned in %tests_to_run or is
+	    # mentioned in %tests_to_skip, skip it.
+	    #
+	    if ((%tests_to_run and !(grep { $tests_to_run{$_} } @all_specs))
+		or (%tests_to_skip and (grep { $tests_to_skip{$_} } @all_specs))) {
+
+		# Use presence of PERL_DL_NONLAZY to decide if we are
+		# running inside "make test", and if so, actually
+		# print the appropriate skip response to comply with the
+		# Test::Harness standard. If the user is running the
+		# test by hand, this would just be clutter.
+		#
+		# Checking PERL_DL_NONLAZY is a hack but I don't
+		# know of a better detection method.
+		#
+		$self->_skip if ($ENV{PERL_DL_NONLAZY});
+		$x++;
+		next;
+	    }
 	}
-	    
+	print "Running $test->{name} (#$x): $test->{description}\n" if $VERBOSE;
+	$self->_make_component unless $test->{skip_component};
+	$self->_run_test;
 	$x++;
     }
 }
@@ -392,7 +459,7 @@ sub _make_component
     $self->_write_test_comp;
 }
 
-sub _make_interp
+sub _make_main_interp
 {
     my $self = shift;
     my $test = $self->{current_test};
@@ -411,10 +478,16 @@ sub _make_interp
 	}
     }
 
-    return $self->{interp_class}->new( comp_root => $self->comp_root,
-				       data_dir  => $self->data_dir,
-				       %interp_params,
-				     );
+    return $self->_make_interp ( comp_root => $self->comp_root,
+				 data_dir  => $self->data_dir,
+				 %interp_params );
+}
+
+sub _make_interp
+{
+    my ($class, %interp_params) = @_;
+
+    return HTML::Mason::Interp->new( %interp_params );
 }
 
 sub _run_test
@@ -423,7 +496,7 @@ sub _run_test
     my $test = $self->{current_test};
 
     $self->{buffer} = '';
-    my $interp = $self->_make_interp;
+    my $interp = $self->_make_main_interp;
     $interp->out_method( sub { for (@_) { $self->{buffer} .= $_ if defined $_ } } );
 
     eval { $self->_execute($interp) };
@@ -530,6 +603,17 @@ sub _success
     print "Result for $self->{name}: $test->{name}\nok $self->{test_count}\n";
 }
 
+sub _skip
+{
+    my $self = shift;
+    my $test = $self->{current_test};
+
+    $self->{test_count}++;
+
+    die "no test name for " . $self->{test_count} unless $test->{name};
+    print "Result for $self->{name}: $test->{name}\nok $self->{test_count}  # skip Skipped by user\n";
+}
+
 #
 # We use our own rm_tree, rather than File::Path::rmtree, so that we
 # can silently fail to entirely remove directories. On some systems
@@ -622,10 +706,6 @@ The name of the entire group of tests.
 =item * description (required)
 
 What this group tests.
-
-=item * interp_class (optional, default='HTML::Mason::Interp')
-
-Specifies an alternate class for creating the Interpreter.
 
 =item * pre_test_cleanup (optional, default=1)
 
@@ -798,14 +878,45 @@ the test harness will simply output its results.  This allows you to
 cut and paste these results back into the test file (assuming they are
 correct!).
 
-=head2 Running selected tests
+=head2 Running and/or skipping selected tests
 
-You can run just some of a test file with the '--tests-to-run' flag,
-or by setting the TESTS_TO_RUN environment variable. In either case
-the value is a comma-separated list of test numbers.  e.g.
+You can run just some of a test file with the '--tests-to-run' flag or
+the MASON_TESTS_TO_RUN environment variable. Similarly you can skip
+specific tests with the '--tests-to-skip' flag or the
+MASON_TESTS_TO_SKIP environment variable.
+
+The value of either flag is a comma-separated list of one or more of
+
+   [test_file_name:](test_number|test_name|*)
+
+e.g.
 
     perl ./01-syntax.t --tests-to-run=3,5
-    TESTS_TO_RUN=3,5 perl ./01-syntax.t
+    MASON_TESTS_TO_SKIP=fake_percent,empty_percents perl ./01-syntax.t
+    MASON_TESTS_TO_RUN="misc:autohandler, request:*, interp:private1" make test
+
+=head2 Subclassing this module
+
+You can run tests with your own Tests.pm subclass using the
+'--tests-class' flag or the MASON_TESTS_CLASS environment variable.
+The value is a fully qualified package name that will be loaded before
+each test file is run.  e.g.
+
+    perl ./01-syntax.t --tests-class=HTML::Mason::Tests::MyTests
+    MASON_TESTS_CLASS=HTML::Mason::Tests::MyTests make test
+
+For example, if you have created your own lexer subclass and want
+to make sure that tests still pass with it, create a Tests subclass
+that overrides the _make_interp method to use your subclass:
+
+    sub _make_interp
+    {
+        my ($self, %interp_params) = @_;
+        
+        return HTML::Mason::Interp->new
+	    ( lexer_class => HTML::Mason::MyLexer,
+	      %interp_params );
+    }
 
 =head1 SEE ALSO
 

@@ -5,6 +5,38 @@ available at http://www.masonhq.com/code/history.html.
 
 ** denotes an incompatible change
 
+1.22  July 14, 2003
+
+    [ ENHANCEMENTS ]
+
+    - Added $m->has_content to check for content without evaluating it.
+    - Comments are now allowed on separate lines inside <%attr> and
+      <%flags> blocks.  Task id #475.
+    - $m->subexec and $m->make_subrequest now accept relative paths which
+      are interpreted relative to the current component directory, like
+      $m->comp.
+    - Documented potential problems if call to $m->redirect is trapped in
+      an eval block, and then output is generated before the exception is
+      rethrown.  Task id #477.
+
+    [ BUG FIXES ]
+
+    - If a component with a filter section called abort, the filter was
+      run twice.  Task id #473.
+    - If an exception was thrown when creating a request, memory was
+      leaked.  This can happen when the top-level component cannot be
+      found (e.g. 404) or if there is an error in compiling the top-level
+      component. Task id #478. Reported by Doug Treder.
+    - Removed the use of alarm() and SIG{ALRM} to trap rare infinite loops
+      inside the compilation of components. It interfered with Mason
+      environments that use alarm() for their own purposes, and the
+      associated test would crash in certain Perl environments. If you find
+      that Mason sometimes enters an infinite loop, see the
+      "Hanging Processes: Detection and Diagnostics" section of the mod_perl
+      guide for hints on diagnosing the problem.  Task id #472.
+    - Mason allowed a component to define two subcomponents or methods
+      with the same name.  Task id #476.  Reported by John Michael Mars.
+
 1.21  June 4, 2003
 
     [ INCOMPATIBLE CHANGES ]
@@ -28,7 +60,7 @@ available at http://www.masonhq.com/code/history.html.
       "auto", should work with all existing Mason components.  See the
       HTML::Mason::Compiler::ToObject docs for details.  Task id #464.
       Suggested by Doug Treder.
-    - Add more details about subclassing the compiler to the Subclassing
+    - Added more details about subclassing the compiler to the Subclassing
       documentation.
     - There is now a compiler parameter called "use_source_line_numbers",
       which can be used to turn off line numbering based on the source file.
@@ -47,8 +79,8 @@ available at http://www.masonhq.com/code/history.html.
     - A bad interaction between the XS version of Params::Validate, Perl
       5.00503 and taint mode has been "fixed" by requiring Params::Validate
       0.59, where the problem is fixed.  Task id #470.
-    - The test suite now runs the taint mode tests is no longer skipped on
-      earlier versions of Perl.  Task id #471.
+    - The test suite now runs the taint mode tests with earlier versions
+      of Perl.  Task id #471.
     - The ApacheHandler module would go into an infinite memory-eating
       loop when run in taint mode with Perl 5.6.1.  Task id #469.  Reported
       by William McKee.

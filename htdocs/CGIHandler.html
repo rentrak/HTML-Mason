@@ -46,7 +46,7 @@
    #!/usr/bin/perl
    use HTML::Mason::CGIHandler;
    
-   my $h = new HTML::Mason::CGIHandler
+   my $h = HTML::Mason::CGIHandler-&gt;new
     (
      data_dir  =&gt; '/home/jethro/code/mason_data',
      allow_globals =&gt; [qw(%session $u)],

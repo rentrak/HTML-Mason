@@ -190,8 +190,14 @@ sub compile
 			  } );
     my $src = ref($p{comp_source}) ? $p{comp_source} : \$p{comp_source};
 
+    # The current compile - initially the main component, then each subcomponent/method
     local $self->{current_compile} = {};
-    local $self->{paused_compiles} = []; # So we're re-entrant in subcomps
+    
+    # Useful for implementing features that affect both main body and methods/subcomps
+    local $self->{main_compile} = $self->{current_compile};
+
+    # So we're re-entrant in subcomps
+    local $self->{paused_compiles} = [];
 
     # Preprocess the source.  The preprocessor routine is handed a
     # reference to the entire source.
@@ -382,13 +388,22 @@ sub start_named_block
     my $c = $self->{current_compile};
     my %p = @_;
 
+    # Error if defining one def or method inside another
     $self->lexer->throw_syntax_error
 	("Cannot define a $p{block_type} block inside a method or subcomponent")
 	    unless $c->{in_main};
 
+    # Error for invalid character in name
     $self->lexer->throw_syntax_error("Invalid $p{block_type} name: $p{name}")
 	if $p{name} =~ /[^.\w-]/;
 
+    # Error if two defs or two methods defined with same name
+    $self->lexer->throw_syntax_error
+        (sprintf("Duplicate definition of %s '%s'",
+		 $p{block_type} eq 'def' ? 'subcomponent' : 'method', $p{name}))
+            if exists $c->{$p{block_type}}{ $p{name} };
+    
+    # Error if def and method defined with same name
     my $other_type = $p{block_type} eq 'def' ? 'method' : 'def';
     $self->lexer->throw_syntax_error
         ("Cannot define a method and subcomponent with the same name ($p{name}")
@@ -400,12 +415,14 @@ sub start_named_block
     $self->_init_comp_data( $c->{ $p{block_type} }{ $p{name} } );
     push @{$self->{paused_compiles}}, $c;
     $self->{current_compile} = $c->{ $p{block_type} }{ $p{name} };
+    $self->{current_compile}->{in_named_block} = {block_type => $p{block_type}, name => $p{name}};
 }
 
 sub end_named_block
 {
     my $self = shift;
 
+    delete $self->{current_compile}->{in_named_block};
     $self->{current_compile} = pop @{$self->{paused_compiles}};
     $self->{current_compile}{in_main}++;
 }

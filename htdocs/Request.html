@@ -537,6 +537,15 @@ current component, and returns the resulting text.
 <dd>
 <p>Returns undef if there is no content.</p>
 </dd>
+<A NAME="has_content"></a><p></p>
+<dt><strong><A NAME="item_has_content">has_content</a></strong><br />
+</dt>
+<dd>
+Returns true if the component was called with content (i.e. with &lt;&amp;|
+comp &amp;&gt; and &lt;/&amp;&gt; tags instead of a single &lt;&amp; comp &amp;&gt; tag). This is
+generally better than checking the defined'ness of <A HREF="#item_content"><code>$m-&gt;content</code></a>
+because it will not try to evaluate the content.
+</dd>
 <A NAME="item_count"></a><p></p>
 <dt><strong><A NAME="item_count">count</a></strong><br />
 </dt>
@@ -675,8 +684,9 @@ settable properties, such as <A HREF="Params.html#autoflush">autoflush</a> and <
 values may be overridden by passing parameters to this method.
 </dd>
 <dd>
-<p>The ``comp'' parameter is required, while all other parameters are
-optional.</p>
+<p>The <A HREF="#item_comp"><code>comp</code></a> parameter is required, while all other parameters are
+optional.  It may be specified as an absolute path or as a path
+relative to the current component.</p>
 </dd>
 <dd>
 <p>See the <A HREF="Devel.html#subrequests">subrequests</a> section of the developer's manual for more information about subrequests.</p>
