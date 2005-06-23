@@ -137,9 +137,13 @@ that may be of interest to end users.</p>
 <dt><strong><A NAME="item_handle_request">handle_request ($r)</a></strong><br />
 </dt>
 <dd>
-This method takes an Apache object representing a request and
-translates that request into a form Mason can understand.  It's return
-value is an Apache status code.
+This method takes an Apache or Apache::Request object representing a
+request and translates that request into a form Mason can understand.
+Its return value is an Apache status code.
+</dd>
+<dd>
+<p>Passing an Apache::Request object is useful if you want to set
+Apache::Request parameters, such as POST_MAX or DISABLE_UPLOADS.</p>
 </dd>
 <p></p>
 <dt><strong><A NAME="item_prepare_request">prepare_request ($r)</a></strong><br />

@@ -82,7 +82,7 @@ execution.  Its context has the following read-only methods:
 </dd>
 <dd>
 <pre>
-    request # the current request
+    request # the current request ($m)
     args    # arguments the request was called with</pre>
 </dd>
 <dd>
@@ -115,7 +115,7 @@ exits. Its context has the following read-only methods:
 </dd>
 <dd>
 <pre>
-    request     # the current request
+    request     # the current request ($m)
     args        # arguments the request was called with
     output      # reference to the contents of the output buffer
     wantarray   # value of wantarray the request was called with
@@ -142,7 +142,7 @@ executing. Its context has the following read-only methods:
 </dd>
 <dd>
 <pre>
-    request     # the current request
+    request     # the current request ($m)
     comp        # the component object
     args        # arrayref of arguments the component was called with</pre>
 </dd>
@@ -158,7 +158,7 @@ completed. Its context has the following read-only methods:
 </dd>
 <dd>
 <pre>
-    request     # the current request
+    request     # the current request ($m)
     comp        # the component object
     args        # arrayref of arguments the component was called with
     wantarray   # value of wantarray the component was called with

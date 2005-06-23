@@ -158,7 +158,8 @@ discussed here with your own custom subclasses.</p>
 <h1><A NAME="basic_configuration_via_httpd_co">BASIC CONFIGURATION VIA httpd.conf DIRECTIVES</a></h1>
 <p>The absolutely most minimal configuration looks like this:</p>
 <pre>
-    PerlModule HTML::Mason::ApacheHandler</pre>
+    PerlModule HTML::Mason::ApacheHandler
+    # PerlModule Apache2::compat - if using Apache 2</pre>
 <pre>
     &lt;Location /&gt;
       SetHandler   perl-script

@@ -1599,8 +1599,8 @@ normally and its output and return value cached.</p>
 <p>It is typically used right at the top of an <code>&lt;%init&gt;</code> section:</p>
 <pre>
     &lt;%init&gt;
-    return if $m-&gt;cache_self([key =&gt; 'fookey', expires_in =&gt; '3 hours',
-                             ... &lt;other cache options&gt; ... ]);
+    return if $m-&gt;cache_self(key =&gt; 'fookey', expires_in =&gt; '3 hours',
+                             ... &lt;other cache options&gt; ...);
      ... &lt;rest of init&gt; ...
     &lt;/%init&gt;</pre>
 <p>A full list of parameters and examples are available in the

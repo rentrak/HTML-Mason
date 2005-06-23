@@ -221,6 +221,11 @@ sub _initialize {
     local $SIG{'__DIE__'} = \&rethrow_exception;
 
     eval {
+	# Check the static_source touch file, if it exists, before the
+	# first component is loaded.
+	#
+	$self->interp->check_static_source_touch_file();
+
 	# request_comp can be an absolute path or component object.  If a path,
 	# load into object.
 	my $request_comp = $self->{request_comp};
@@ -380,10 +385,6 @@ sub exec {
     #
     error "subrequest depth > " . $self->max_recurse . " (infinite subrequest loop?)"
 	if $self->request_depth > $self->max_recurse;
-
-    # Check the static_source touch file, if it exists.
-    #
-    $self->interp->check_static_source_touch_file();
 
     #
     # $m is a dynamically scoped global containing this
@@ -981,6 +982,7 @@ sub fetch_comp
 {
     my ($self, $path, $current_comp, $error, $exists_only) = @_;
 
+    return undef unless defined($path);
     $current_comp ||= $self->{top_stack}->[STACK_COMP];
 
     if ($self->{use_internal_component_caches}) {
@@ -1397,7 +1399,7 @@ sub current_args { return $_[0]->{top_stack}->[STACK_ARGS] }
 sub base_comp {
     my ($self) = @_;
     unless (defined($self->{top_stack}->[STACK_BASE_COMP])) {
-	return $self->compute_base_comp_for_frame_($self->{top_stack}->[STACK_DEPTH] - 1);
+	return $self->compute_base_comp_for_frame($self->{top_stack}->[STACK_DEPTH] - 1);
     }
     return $self->{top_stack}->[STACK_BASE_COMP];
 }
@@ -1406,7 +1408,7 @@ sub base_comp {
 # Determine the base_comp for a stack frame. See the user
 # documentation for base_comp for a description of these rules.
 #
-sub compute_base_comp_for_frame_ {
+sub compute_base_comp_for_frame {
     my ($self, $frame_num) = @_;
     my $frame = $self->{stack}->[$frame_num];
 
@@ -1421,7 +1423,7 @@ sub compute_base_comp_for_frame_ {
 	} elsif (!$path ||
 		 $path =~ m/^(?:SELF|PARENT|REQUEST)(?:\:..*)?$/ ||
 		 ($comp->is_subcomp && !$comp->is_method)) {
-	    $base_comp = $self->compute_base_comp_for_frame_($frame_num-1);
+	    $base_comp = $self->compute_base_comp_for_frame($frame_num-1);
 	} elsif ($path =~ m/(.*):/) {
 	    my $calling_comp = $self->{stack}->[$frame_num-1]->[STACK_COMP];
 	    $base_comp = $self->fetch_comp($1, $calling_comp);
@@ -1703,13 +1705,13 @@ component to component.
 =over
 
 =item * At the beginning of a request, the base component is
-initialized to the requested component (C<< $m->request_comp >>.
+initialized to the requested component (C<< $m->request_comp >>).
 
-=item * When a component call is made to a regular component via a
-path, the base component changes to the called component.
+=item * When you call a regular component via a path, the base
+component changes to the called component.
 
-=item * When a component call is made to a component method via a path
-(/foo/bar:baz), the base component changes to the method's owner.
+=item * When you call a component method via a path (/foo/bar:baz),
+the base component changes to the method's owner.
 
 =item * The base component does not change when:
 

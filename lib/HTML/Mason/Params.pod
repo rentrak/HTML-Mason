@@ -81,7 +81,7 @@ L<make_subrequest|HTML::Mason::Request/item_make_subrequest>.
 
 =item * Perl name:           allow_globals
 
-=item * Apache name:         AllowGlobals
+=item * Apache name:         MasonAllowGlobals
 
 =item * Type in httpd.conf:  list
 
@@ -111,7 +111,7 @@ added to this list.
 
 =item * Perl name:           apache_status_title
 
-=item * Apache name:         ApacheStatusTitle
+=item * Apache name:         MasonApacheStatusTitle
 
 =item * Type in httpd.conf:  string
 
@@ -136,7 +136,7 @@ visible via Apache::Status.
 
 =item * Perl name:           args_method
 
-=item * Apache name:         ArgsMethod
+=item * Apache name:         MasonArgsMethod
 
 =item * Type in httpd.conf:  string
 
@@ -177,7 +177,7 @@ F<httpd.conf> or F<handler.pl> file, as this will save some memory.
 
 =item * Perl name:           auto_send_headers
 
-=item * Apache name:         AutoSendHeaders
+=item * Apache name:         MasonAutoSendHeaders
 
 =item * Type in httpd.conf:  boolean
 
@@ -210,7 +210,7 @@ C<$r-E<gt>send_http_header> is no longer needed.
 
 =item * Perl name:           autoflush
 
-=item * Apache name:         Autoflush
+=item * Apache name:         MasonAutoflush
 
 =item * Type in httpd.conf:  boolean
 
@@ -241,7 +241,7 @@ as well.
 
 =item * Perl name:           autohandler_name
 
-=item * Apache name:         AutohandlerName
+=item * Apache name:         MasonAutohandlerName
 
 =item * Type in httpd.conf:  string
 
@@ -266,7 +266,7 @@ autohandlers are turned off entirely.
 
 =item * Perl name:           buffer_preallocate_size
 
-=item * Apache name:         BufferPreallocateSize
+=item * Apache name:         MasonBufferPreallocateSize
 
 =item * Type in httpd.conf:  string
 
@@ -293,7 +293,7 @@ components add to the output buffer.
 
 =item * Perl name:           code_cache_max_size
 
-=item * Apache name:         CodeCacheMaxSize
+=item * Apache name:         MasonCodeCacheMaxSize
 
 =item * Type in httpd.conf:  string
 
@@ -322,7 +322,7 @@ section of the administrator's manual for further details.
 
 =item * Perl name:           comp_class
 
-=item * Apache name:         CompClass
+=item * Apache name:         MasonCompClass
 
 =item * Type in httpd.conf:  string
 
@@ -345,7 +345,7 @@ L<HTML::Mason::Component|HTML::Mason::Component>.
 
 =item * Perl name:           comp_root
 
-=item * Apache name:         CompRoot
+=item * Apache name:         MasonCompRoot
 
 =item * Type in httpd.conf:  list
 
@@ -426,7 +426,7 @@ invalid if the associated paths were to change.
 
 =item * Perl name:           compiler_class
 
-=item * Apache name:         CompilerClass
+=item * Apache name:         MasonCompilerClass
 
 =item * Type in httpd.conf:  string
 
@@ -449,7 +449,7 @@ L<HTML::Mason::Compiler|HTML::Mason::Compiler>.
 
 =item * Perl name:           data_cache_api
 
-=item * Apache name:         DataCacheApi
+=item * Apache name:         MasonDataCacheApi
 
 =item * Type in httpd.conf:  string
 
@@ -475,7 +475,7 @@ from older versions of Mason, but will not be supported indefinitely.
 
 =item * Perl name:           data_cache_defaults
 
-=item * Apache name:         DataCacheDefaults
+=item * Apache name:         MasonDataCacheDefaults
 
 =item * Type in httpd.conf:  hash_list
 
@@ -504,7 +504,7 @@ C<$m-E<gt>cache> calls.
 
 =item * Perl name:           data_dir
 
-=item * Apache name:         DataDir
+=item * Apache name:         MasonDataDir
 
 =item * Type in httpd.conf:  string
 
@@ -539,7 +539,7 @@ C<MemoryCache> instead of C<FileCache>.
 
 =item * Perl name:           decline_dirs
 
-=item * Apache name:         DeclineDirs
+=item * Apache name:         MasonDeclineDirs
 
 =item * Type in httpd.conf:  boolean
 
@@ -564,7 +564,7 @@ for more information about handling directories with Mason.
 
 =item * Perl name:           default_escape_flags
 
-=item * Apache name:         DefaultEscapeFlags
+=item * Apache name:         MasonDefaultEscapeFlags
 
 =item * Type in httpd.conf:  string
 
@@ -596,7 +596,7 @@ given as a reference to an array of flags.
 
 =item * Perl name:           define_args_hash
 
-=item * Apache name:         DefineArgsHash
+=item * Apache name:         MasonDefineArgsHash
 
 =item * Type in httpd.conf:  string
 
@@ -628,7 +628,7 @@ arguments, which can save memory and slightly improve execution speed.
 
 =item * Perl name:           dhandler_name
 
-=item * Apache name:         DhandlerName
+=item * Apache name:         MasonDhandlerName
 
 =item * Type in httpd.conf:  string
 
@@ -652,7 +652,7 @@ are turned off entirely.
 
 =item * Perl name:           dynamic_comp_root
 
-=item * Apache name:         DynamicCompRoot
+=item * Apache name:         MasonDynamicCompRoot
 
 =item * Type in httpd.conf:  boolean
 
@@ -677,7 +677,7 @@ should only set this to true if you actually need it.
 
 =item * Perl name:           enable_autoflush
 
-=item * Apache name:         EnableAutoflush
+=item * Apache name:         MasonEnableAutoflush
 
 =item * Type in httpd.conf:  boolean
 
@@ -702,7 +702,7 @@ mode, so you should set this to 0 if you can.
 
 =item * Perl name:           error_format
 
-=item * Apache name:         ErrorFormat
+=item * Apache name:         MasonErrorFormat
 
 =item * Type in httpd.conf:  string
 
@@ -755,7 +755,7 @@ the built-in methods.
 
 =item * Perl name:           error_mode
 
-=item * Apache name:         ErrorMode
+=item * Apache name:         MasonErrorMode
 
 =item * Type in httpd.conf:  string
 
@@ -784,7 +784,7 @@ I<fatal>.
 
 =item * Perl name:           escape_flags
 
-=item * Apache name:         EscapeFlags
+=item * Apache name:         MasonEscapeFlags
 
 =item * Type in httpd.conf:  hash_list
 
@@ -808,7 +808,7 @@ method|HTML::Mason::Interp/item_set_escape> for more details.
 
 =item * Perl name:           ignore_warnings_expr
 
-=item * Apache name:         IgnoreWarningsExpr
+=item * Apache name:         MasonIgnoreWarningsExpr
 
 =item * Type in httpd.conf:  regex
 
@@ -842,7 +842,7 @@ an error when the component is reloaded.
 
 =item * Perl name:           in_package
 
-=item * Apache name:         InPackage
+=item * Apache name:         MasonInPackage
 
 =item * Type in httpd.conf:  string
 
@@ -865,7 +865,7 @@ historical reasons, this defaults to C<HTML::Mason::Commands>.
 
 =item * Perl name:           interp_class
 
-=item * Apache name:         InterpClass
+=item * Apache name:         MasonInterpClass
 
 =item * Type in httpd.conf:  string
 
@@ -888,7 +888,7 @@ L<HTML::Mason::Interp|HTML::Mason::Interp>.
 
 =item * Perl name:           lexer_class
 
-=item * Apache name:         LexerClass
+=item * Apache name:         MasonLexerClass
 
 =item * Type in httpd.conf:  string
 
@@ -910,7 +910,7 @@ The class to use when creating a lexer. Defaults to L<HTML::Mason::Lexer|HTML::M
 
 =item * Perl name:           max_recurse
 
-=item * Apache name:         MaxRecurse
+=item * Apache name:         MasonMaxRecurse
 
 =item * Type in httpd.conf:  string
 
@@ -934,7 +934,7 @@ maximum is exceeded.  Default is 32.
 
 =item * Perl name:           object_file_extension
 
-=item * Apache name:         ObjectFileExtension
+=item * Apache name:         MasonObjectFileExtension
 
 =item * Type in httpd.conf:  string
 
@@ -956,7 +956,7 @@ Extension to add to the end of object files. Default is ".obj".
 
 =item * Perl name:           out_method
 
-=item * Apache name:         OutMethod
+=item * Apache name:         MasonOutMethod
 
 =item * Type in httpd.conf:  code
 
@@ -989,7 +989,7 @@ redirected to C<< $r->print >>.
 
 =item * Perl name:           plugins
 
-=item * Apache name:         Plugins
+=item * Apache name:         MasonPlugins
 
 =item * Type in httpd.conf:  arrayref
 
@@ -1013,7 +1013,7 @@ details.
 
 =item * Perl name:           postamble
 
-=item * Apache name:         Postamble
+=item * Apache name:         MasonPostamble
 
 =item * Type in httpd.conf:  string
 
@@ -1037,7 +1037,7 @@ C<$m> in postamble code.
 
 =item * Perl name:           postprocess_perl
 
-=item * Apache name:         PostprocessPerl
+=item * Apache name:         MasonPostprocessPerl
 
 =item * Type in httpd.conf:  code
 
@@ -1064,7 +1064,7 @@ L<preprocess|HTML::Mason::Params/preprocess> and L<postprocess_text|HTML::Mason:
 
 =item * Perl name:           postprocess_text
 
-=item * Apache name:         PostprocessText
+=item * Apache name:         MasonPostprocessText
 
 =item * Type in httpd.conf:  code
 
@@ -1091,7 +1091,7 @@ L<preprocess|HTML::Mason::Params/preprocess> and L<postprocess_perl|HTML::Mason:
 
 =item * Perl name:           preamble
 
-=item * Apache name:         Preamble
+=item * Apache name:         MasonPreamble
 
 =item * Type in httpd.conf:  string
 
@@ -1116,7 +1116,7 @@ code.
 
 =item * Perl name:           preloads
 
-=item * Apache name:         Preloads
+=item * Apache name:         MasonPreloads
 
 =item * Type in httpd.conf:  list
 
@@ -1151,7 +1151,7 @@ C<< <%once> >> section will fail.
 
 =item * Perl name:           preprocess
 
-=item * Apache name:         Preprocess
+=item * Apache name:         MasonPreprocess
 
 =item * Type in httpd.conf:  code
 
@@ -1178,7 +1178,7 @@ L<postprocess_text|HTML::Mason::Params/postprocess_text> and L<postprocess_perl|
 
 =item * Perl name:           request_class
 
-=item * Apache name:         RequestClass
+=item * Apache name:         MasonRequestClass
 
 =item * Type in httpd.conf:  string
 
@@ -1201,7 +1201,7 @@ L<HTML::Mason::Request|HTML::Mason::Request>.
 
 =item * Perl name:           resolver_class
 
-=item * Apache name:         ResolverClass
+=item * Apache name:         MasonResolverClass
 
 =item * Type in httpd.conf:  string
 
@@ -1224,7 +1224,7 @@ L<HTML::Mason::Resolver::File|HTML::Mason::Resolver::File>.
 
 =item * Perl name:           static_source
 
-=item * Apache name:         StaticSource
+=item * Apache name:         MasonStaticSource
 
 =item * Type in httpd.conf:  boolean
 
@@ -1260,7 +1260,7 @@ possible, if performance is of any concern.
 
 =item * Perl name:           static_source_touch_file
 
-=item * Apache name:         StaticSourceTouchFile
+=item * Apache name:         MasonStaticSourceTouchFile
 
 =item * Type in httpd.conf:  string
 
@@ -1291,7 +1291,7 @@ every component file when static_source=0.
 
 =item * Perl name:           subcomp_class
 
-=item * Apache name:         SubcompClass
+=item * Apache name:         MasonSubcompClass
 
 =item * Type in httpd.conf:  string
 
@@ -1314,7 +1314,7 @@ to L<HTML::Mason::Component::Subcomponent|HTML::Mason::Component::Subcomponent>.
 
 =item * Perl name:           use_object_files
 
-=item * Apache name:         UseObjectFiles
+=item * Apache name:         MasonUseObjectFiles
 
 =item * Type in httpd.conf:  boolean
 
@@ -1339,7 +1339,7 @@ should be left alone.
 
 =item * Perl name:           use_source_line_numbers
 
-=item * Apache name:         UseSourceLineNumbers
+=item * Apache name:         MasonUseSourceLineNumbers
 
 =item * Type in httpd.conf:  boolean
 
@@ -1366,7 +1366,7 @@ may be more appropriate for in-depth debugging sessions.
 
 =item * Perl name:           use_strict
 
-=item * Apache name:         UseStrict
+=item * Apache name:         MasonUseStrict
 
 =item * Type in httpd.conf:  boolean
 

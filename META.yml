@@ -1,9 +1,8 @@
---- #YAML:1.0
+---
 name: HTML-Mason
-version: 1.29_01
+version: 1.29_02
 author: ~
-abstract: |-
-  High-performance, dynamic web site authoring system
+abstract: 'High-performance, dynamic web site authoring system'
 license: perl
 requires:
   Apache::Request: 0.32
@@ -27,7 +26,7 @@ provides:
     version: 0.09
   HTML::Mason:
     file: lib/HTML/Mason.pm
-    version: 1.29_01
+    version: 1.29_02
   HTML::Mason::ApacheHandler:
     file: lib/HTML/Mason/ApacheHandler.pm
   HTML::Mason::CGIHandler:
@@ -108,4 +107,4 @@ provides:
     file: lib/HTML/Mason/Utils.pm
   Tie::Handle::Mason:
     file: lib/HTML/Mason/Request.pm
-generated_by: Module::Build version 0.2607
+generated_by: Module::Build version 0.261
