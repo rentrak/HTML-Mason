@@ -5,6 +5,27 @@ available at http://www.masonhq.com/code/history.html.
 
 ** denotes an incompatible change
 
+1.30
+
+    [ INCOMPATIBLE CHANGES ]
+
+    - ** Under mod_perl2, MasonArgsMethod will default to "CGI", since
+      libapreq2 is still in development.  If you have successfully installed
+      libapreq2, just set MasonArgsMethod to "mod_perl" to use it.
+
+    [ ENHANCEMENTS ]
+
+    - Some doc tweaks to clarify that Mason should work out of the box
+      with both mod_perl 1 and 2.
+    - Added "use warnings" to all modules and made sure all tests ran
+      warnings-free.
+
+    [ BUG FIXES ]
+
+    - Silence a warning when HTML::Mason::ApacheHandler was loaded outside
+      of mod_perl.
+    - Support renamed Apache2::Status module.
+
 1.29_02  June 22, 2005
 
     [ ENHANCEMENTS ]
@@ -20,6 +41,8 @@ available at http://www.masonhq.com/code/history.html.
       Submitted by Brian Phillips. Task id #584.
     - Put "Mason" prefix back in Params.pod. Task id #575.
     - Fixed fetch_comp(undef) to not return an empty hash. Task id #578.
+    - static_source_touch_file did not take effect until after one request
+      for a top-level component.  Reported by Lai Zit Seng. Task id #576.
 
 1.29_01  January 25, 2005
 

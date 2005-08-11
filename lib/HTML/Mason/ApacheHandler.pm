@@ -5,6 +5,7 @@
 # under the same terms as Perl itself.
 
 use strict;
+use warnings;
 
 package HTML::Mason::ApacheHandler;
 
@@ -16,19 +17,19 @@ BEGIN
     {
         require mod_perl2;
     }
-    else
+    elsif ( $ENV{MOD_PERL} )
     {
         require mod_perl;
     }
 
-    my $mpver = ($mod_perl2::VERSION || $mod_perl::VERSION);
+    my $mpver = ($mod_perl2::VERSION || $mod_perl::VERSION || 0);
 
     # This is the version that introduced PerlAddVar
-    if ($mpver < 1.24)
+    if ($mpver && $mpver < 1.24)
     {
         die "mod_perl VERSION >= 1.24 required";
     }
-    if ($mpver >= 1.99 && $mpver < 1.999022)
+    elsif ($mpver >= 1.99 && $mpver < 1.999022)
     {
         die "mod_perl-1.99 is not supported; upgrade to 2.00";
     }
@@ -49,7 +50,7 @@ use base qw(HTML::Mason::Request);
 
 use HTML::Mason::Exceptions( abbr => [qw(param_error error)] );
 
-use constant APACHE2	=> ($mod_perl2::VERSION || $mod_perl::VERSION) >= 1.999022;
+use constant APACHE2	=> ($mod_perl2::VERSION || $mod_perl::VERSION || 0) >= 1.999022;
 use constant OK         => 0;
 use constant DECLINED   => -1;
 use constant NOT_FOUND  => 404;
@@ -152,6 +153,7 @@ sub exec
 	no strict 'refs';
 
         my $req_class = ref $r;
+        no warnings 'redefine';
 	local *{"$req_class\::print"} = sub {
 	    my $local_r = shift;
 	    return $self->print(@_) if $local_r eq $r;
@@ -172,7 +174,8 @@ sub exec
 	$r->send_http_header();
     }
 
-    return defined($retval) ? $retval : OK;
+    # mod_perl-1 treats 200 and OK the same, but mod_perl-2 does not.
+    return defined($retval) && $retval!=200 ? $retval : OK;
 }
 
 #
@@ -219,13 +222,14 @@ use HTML::Mason::Utils;
 use Params::Validate qw(:all);
 Params::Validate::validation_options( on_fail => sub { param_error( join '', @_ ) } );
 
-use constant APACHE2	=> ($mod_perl2::VERSION || $mod_perl::VERSION) >= 1.999022;
+use constant APACHE2	=> ($mod_perl2::VERSION || $mod_perl::VERSION || 0) >= 1.999022;
 use constant OK         => 0;
 use constant DECLINED   => -1;
 use constant NOT_FOUND  => 404;
 use constant REDIRECT	=> 302;
 
 BEGIN {
+   if ($ENV{MOD_PERL}) {
         if (APACHE2) {
             require Apache2::RequestRec;
             require Apache2::RequestIO;
@@ -237,6 +241,7 @@ BEGIN {
             require Apache;
             Apache->import();
         }
+    }
 }
 
 unless ( APACHE2 )
@@ -266,7 +271,8 @@ BEGIN
            descr => "The title of the Apache::Status page" },
 
 	 args_method =>
-         { parse => 'string',  type => SCALAR,       default => 'mod_perl',
+         { parse => 'string',  type => SCALAR,
+	   default => APACHE2 ? 'CGI' : 'mod_perl',
            regex => qr/^(?:CGI|mod_perl)$/,
            descr => "Whether to use CGI.pm or Apache::Request for parsing the incoming HTTP request",
          },
@@ -320,7 +326,7 @@ sub _startup
 	    eval { require CGI unless defined CGI->VERSION; };
 	    # mod_perl2 does not warn about this, so somebody should
 	    if (APACHE2 && CGI->VERSION < 3.08) {
-		warn("CGI version 3.08 is required to support mod_perl2 API");
+		die "CGI version 3.08 is required to support mod_perl2 API";
 	    }
 	    die $@ if $@;
 	}
@@ -335,9 +341,10 @@ sub _startup
 # Register with Apache::Status at module startup.  Will get replaced
 # with a more informative status once an interpreter has been created.
 my $status_name = 'mason0001';
-if ( load_pkg('Apache::Status') )
+my $apstat_module = APACHE2 ? 'Apache2::Status' : 'Apache::Status';
+if ( load_pkg($apstat_module) )
 {
-    Apache::Status->menu_item
+    $apstat_module->menu_item
 	($status_name => __PACKAGE__->allowed_params->{apache_status_title}{default},
          sub { ["<b>(no interpreters created in this child yet)</b>"] });
 }
@@ -684,7 +691,8 @@ sub _initialize {
     }
 
     # Add an HTML::Mason menu item to the /perl-status page.
-    if (defined Apache::Status->VERSION) {
+    my $apstat_module = APACHE2 ? 'Apache2::Status' : 'Apache::Status';
+    if (defined $apstat_module->VERSION) {
 	# A closure, carries a reference to $self
 	my $statsub = sub {
 	    my ($r,$q) = @_; # request and CGI objects
@@ -699,7 +707,7 @@ sub _initialize {
 		    $self->interp->status_as_html(ah => $self, apache_req => $r)];
 	};
 	local $^W = 0; # to avoid subroutine redefined warnings
-	Apache::Status->menu_item($status_name, $self->apache_status_title, $statsub);
+	$apstat_module->menu_item($status_name, $self->apache_status_title, $statsub);
     }
 
     my $interp = $self->interp;
@@ -1089,12 +1097,9 @@ HTML::Mason::ApacheHandler - Mason/mod_perl interface
 
 =head1 DESCRIPTION
 
-The ApacheHandler object links Mason to mod_perl, running components in
-response to HTTP requests. It is controlled primarily through
-parameters to the new() constructor.
-
-handle_request() is not a user method, but rather is called from the
-HTML::Mason::handler() routine in handler.pl.
+The ApacheHandler object links Mason to mod_perl (version 1 or 2),
+running components in response to HTTP requests. It is controlled
+primarily through parameters to the new() constructor.
 
 =head1 PARAMETERS TO THE new() CONSTRUCTOR
 
@@ -1114,8 +1119,9 @@ are 'CGI' and 'mod_perl'; these indicate that a C<CGI.pm> or
 C<Apache::Request> object (respectively) will be created for the
 purposes of argument handling.
 
-'mod_perl' is the default and requires that you have installed the
-C<Apache::Request> package.
+'mod_perl' is the default under mod_perl-1 and requires that you have 
+installed the C<Apache::Request> package.  Under mod_perl-2, the default
+is 'CGI' because C<Apache2::Request> is still in development.
 
 If args_method is 'mod_perl', the C<$r> global is upgraded to an
 Apache::Request object. This object inherits all Apache methods and

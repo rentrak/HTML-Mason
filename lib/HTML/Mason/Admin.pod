@@ -13,10 +13,11 @@ the mod_perl website at http://perl.apache.org/.
 
 =head1 SITE CONFIGURATION METHODS
 
-Mason includes module specifically designed to integrate Mason and
-mod_perl, C<HTML::Mason::ApacheHandler>.  By telling mod_perl to hand
-content requests to this module, you can use Mason to generate web
-pages.  There are two ways to configure Mason under mod_perl.
+Mason includes a module specifically designed to integrate Mason and
+mod_perl (1 and 2), C<HTML::Mason::ApacheHandler>.  By telling
+mod_perl to hand content requests to this module, you can use Mason to
+generate web pages.  There are two ways to configure Mason under
+mod_perl.
 
 =over 4
 
@@ -54,7 +55,6 @@ discussed here with your own custom subclasses.
 The absolutely most minimal configuration looks like this:
 
     PerlModule HTML::Mason::ApacheHandler
-    # PerlModule Apache2::compat - if using Apache 2
 
     <Location />
       SetHandler   perl-script
@@ -420,17 +420,23 @@ as a content handler.  The file that defines the C<handler()>
 subroutine can be a module, or you can simply load a simple file that
 contains this subroutine definition.  The latter solution was, for a
 long time, the I<only> way to configure Mason, and the file used was
-traditionally called F<handler.pl>.  This file was usually placed in
-the Apache configuration directory and was loaded like this:
+traditionally called F<handler.pl>.
 
-  PerlRequire  handler.pl
+Nowadays, we recommend that you create a custom module in the
+appropriate namespace and define your C<handler()> subroutine there.
+The advantage to this approach is that it uses well-known techniques
+for creating and installing modules, but it does require a bit more
+work than simply dropping a script file into the Apache configuration
+directory.  But because the process is better defined, it may "feel"
+more solid to some folks than the script approach.
 
 The F<eg/> directory of the Mason distribution contains a couple
-sample F<handler.pl> scripts.  Let's assume that your script, like the
-example script, defines a handler in the package C<MyApp::Mason>.  In
-this case, your Apache configuration would look like this:
+sample modules that define C<handler()> subroutines.  Let's assume
+that your module, like the example, defines a C<handler()> in the
+package C<MyApp::Mason>.  In this case, your Apache configuration
+would look like this:
 
-  PerlRequire  handler.pl
+  PerlModule  MyApp::Mason
 
   <LocationMatch ...>
     SetHandler   perl-script
@@ -441,27 +447,25 @@ You may still see references to a F<handler.pl> file in the Mason
 users list archives, as well as the FAQ.  These references will
 generally be applicable to any custom code wrapping Mason.
 
+=head3 Wrappers and PerlSetVar-style configuration
+
+Sometimes people attempt to write a wrapper I<and> configure Mason
+with C<PerlSetVar> directives in their Apache configuration file.
+B<This does not work>.  When you give mod_perl this configuration:
+
+  PerlHandler HTML::Mason::ApacheHandler
+
+it will dispatch directly to the C<<
+HTML::Mason::ApacheHandler->handler() >> method, without ever
+executing your wrapper code.  However, you can mix the two methods.
+See L<Mixing httpd.conf Configuration with a Wrapper|"Mixing
+httpd.conf Configuration with a Wrapper">
+
 =head2 Wrapping with a <Perl> block
 
 You can also put your wrapper code in a C<< <Perl> >> block as part of
 your F<httpd.conf> file.  The result is no different than loading a
 file via the C<PerlRequire> directive.
-
-=head2 Wrapping with a Module
-
-Remember, this wrapper code doesn't I<have> to be in a file
-F<handler.pl>.  You could just as easily create an actual module
-called C<MyApp::Mason>, install it just like any other module, and
-load it with:
-
-  PerlModule  MyApp::Mason
-
-The advantage to this approach is that it uses well-known techniques
-for creating and installing modules, but it does require a bit more
-work than simply dropping a F<handler.pl> file into the Apache
-configuration directory.  But because the process is better defined,
-it may "feel" more solid to some folks than the F<handler.pl>
-approach.
 
 =head2 The Wrapper Code
 

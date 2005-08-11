@@ -42,8 +42,12 @@
 	<ul>
 
 		<li><A HREF="#writing_a_wrapper">Writing a Wrapper</a></li>
+		<ul>
+
+			<li><A HREF="#wrappers_and_perlsetvarstyle_con">Wrappers and PerlSetVar-style configuration</a></li>
+		</ul>
+
 		<li><A HREF="#wrapping_with_a__perl__block">Wrapping with a &lt;Perl&gt; block</a></li>
-		<li><A HREF="#wrapping_with_a_module">Wrapping with a Module</a></li>
 		<li><A HREF="#the_wrapper_code">The Wrapper Code</a></li>
 		<li><A HREF="#external_modules_revisited">External Modules Revisited</a></li>
 		<ul>
@@ -122,10 +126,11 @@ the mod_perl website at <a href="http://perl.apache.org/.">http://perl.apache.or
 </p>
 <hr />
 <h1><A NAME="site_configuration_methods">SITE CONFIGURATION METHODS</a></h1>
-<p>Mason includes module specifically designed to integrate Mason and
-mod_perl, <code>HTML::Mason::ApacheHandler</code>.  By telling mod_perl to hand
-content requests to this module, you can use Mason to generate web
-pages.  There are two ways to configure Mason under mod_perl.</p>
+<p>Mason includes a module specifically designed to integrate Mason and
+mod_perl (1 and 2), <code>HTML::Mason::ApacheHandler</code>.  By telling
+mod_perl to hand content requests to this module, you can use Mason to
+generate web pages.  There are two ways to configure Mason under
+mod_perl.</p>
 <ul>
 <li><strong><A NAME="item_basic">Basic</a></strong><br />
 </li>
@@ -158,8 +163,7 @@ discussed here with your own custom subclasses.</p>
 <h1><A NAME="basic_configuration_via_httpd_co">BASIC CONFIGURATION VIA httpd.conf DIRECTIVES</a></h1>
 <p>The absolutely most minimal configuration looks like this:</p>
 <pre>
-    PerlModule HTML::Mason::ApacheHandler
-    # PerlModule Apache2::compat - if using Apache 2</pre>
+    PerlModule HTML::Mason::ApacheHandler</pre>
 <pre>
     &lt;Location /&gt;
       SetHandler   perl-script
@@ -489,16 +493,21 @@ as a content handler.  The file that defines the <code>handler()</code>
 subroutine can be a module, or you can simply load a simple file that
 contains this subroutine definition.  The latter solution was, for a
 long time, the <em>only</em> way to configure Mason, and the file used was
-traditionally called <em>handler.pl</em>.  This file was usually placed in
-the Apache configuration directory and was loaded like this:</p>
-<pre>
-  PerlRequire  handler.pl</pre>
+traditionally called <em>handler.pl</em>.</p>
+<p>Nowadays, we recommend that you create a custom module in the
+appropriate namespace and define your <code>handler()</code> subroutine there.
+The advantage to this approach is that it uses well-known techniques
+for creating and installing modules, but it does require a bit more
+work than simply dropping a script file into the Apache configuration
+directory.  But because the process is better defined, it may ``feel''
+more solid to some folks than the script approach.</p>
 <p>The <em>eg/</em> directory of the Mason distribution contains a couple
-sample <em>handler.pl</em> scripts.  Let's assume that your script, like the
-example script, defines a handler in the package <code>MyApp::Mason</code>.  In
-this case, your Apache configuration would look like this:</p>
+sample modules that define <code>handler()</code> subroutines.  Let's assume
+that your module, like the example, defines a <code>handler()</code> in the
+package <code>MyApp::Mason</code>.  In this case, your Apache configuration
+would look like this:</p>
 <pre>
-  PerlRequire  handler.pl</pre>
+  PerlModule  MyApp::Mason</pre>
 <pre>
   &lt;LocationMatch ...&gt;
     SetHandler   perl-script
@@ -509,25 +518,22 @@ users list archives, as well as the FAQ.  These references will
 generally be applicable to any custom code wrapping Mason.</p>
 <p>
 </p>
+<h3><A NAME="wrappers_and_perlsetvarstyle_con">Wrappers and PerlSetVar-style configuration</a></h3>
+<p>Sometimes people attempt to write a wrapper <em>and</em> configure Mason
+with <code>PerlSetVar</code> directives in their Apache configuration file.
+<strong>This does not work</strong>.  When you give mod_perl this configuration:</p>
+<pre>
+  PerlHandler HTML::Mason::ApacheHandler</pre>
+<p>it will dispatch directly to the <code>&lt;
+HTML::Mason::ApacheHandler-</code><code>handler()</code> &gt;&gt; method, without ever
+executing your wrapper code.  However, you can mix the two methods.
+See <A HREF="#mixing_httpd_conf_configuration_">Mixing httpd.conf Configuration with a Wrapper</a></p>
+<p>
+</p>
 <h2><A NAME="wrapping_with_a__perl__block">Wrapping with a &lt;Perl&gt; block</a></h2>
 <p>You can also put your wrapper code in a <code>&lt;Perl&gt;</code> block as part of
 your <em>httpd.conf</em> file.  The result is no different than loading a
 file via the <code>PerlRequire</code> directive.</p>
-<p>
-</p>
-<h2><A NAME="wrapping_with_a_module">Wrapping with a Module</a></h2>
-<p>Remember, this wrapper code doesn't <em>have</em> to be in a file
-<em>handler.pl</em>.  You could just as easily create an actual module
-called <code>MyApp::Mason</code>, install it just like any other module, and
-load it with:</p>
-<pre>
-  PerlModule  MyApp::Mason</pre>
-<p>The advantage to this approach is that it uses well-known techniques
-for creating and installing modules, but it does require a bit more
-work than simply dropping a <em>handler.pl</em> file into the Apache
-configuration directory.  But because the process is better defined,
-it may ``feel'' more solid to some folks than the <em>handler.pl</em>
-approach.</p>
 <p>
 </p>
 <h2><A NAME="the_wrapper_code">The Wrapper Code</a></h2>

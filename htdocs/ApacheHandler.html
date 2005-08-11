@@ -44,11 +44,9 @@
 </p>
 <hr />
 <h1><A NAME="description">DESCRIPTION</a></h1>
-<p>The ApacheHandler object links Mason to mod_perl, running components in
-response to HTTP requests. It is controlled primarily through
-parameters to the <code>new()</code> constructor.</p>
-<p><A HREF="#item_handle_request"><code>handle_request()</code></a> is not a user method, but rather is called from the
-HTML::Mason::handler() routine in handler.pl.</p>
+<p>The ApacheHandler object links Mason to mod_perl (version 1 or 2),
+running components in response to HTTP requests. It is controlled
+primarily through parameters to the <code>new()</code> constructor.</p>
 <p>
 </p>
 <hr />
@@ -72,8 +70,9 @@ are 'CGI' and 'mod_perl'; these indicate that a <code>CGI.pm</code> or
 purposes of argument handling.
 </dd>
 <dd>
-<p>'mod_perl' is the default and requires that you have installed the
-<code>Apache::Request</code> package.</p>
+<p>'mod_perl' is the default under mod_perl-1 and requires that you have 
+installed the <code>Apache::Request</code> package.  Under mod_perl-2, the default
+is 'CGI' because <code>Apache2::Request</code> is still in development.</p>
 </dd>
 <dd>
 <p>If args_method is 'mod_perl', the <code>$r</code> global is upgraded to an

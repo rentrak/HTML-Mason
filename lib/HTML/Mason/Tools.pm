@@ -11,6 +11,7 @@
 package HTML::Mason::Tools;
 
 use strict;
+use warnings;
 
 use Cwd;
 use File::Spec;
@@ -27,13 +28,9 @@ use vars qw(@ISA @EXPORT_OK);
 #
 BEGIN
 {
-    my $can_weaken = 0;
-    if ( $] >= 5.006 )
-    {
-        require Scalar::Util;
+    require Scalar::Util;
 
-        $can_weaken = defined &Scalar::Util::weaken;
-    }
+    my $can_weaken = defined &Scalar::Util::weaken ? 1 : 0;
 
     sub can_weaken () { $can_weaken }
 }

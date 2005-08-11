@@ -33,6 +33,7 @@
 package HTML::Mason::Request;
 
 use strict;
+use warnings;
 
 use File::Spec;
 use HTML::Mason::Plugin::Context;
@@ -115,7 +116,7 @@ BEGIN
            descr => "The maximum recursion depth for component, inheritance, and request stack" },
 
 	 out_method =>
-         { parse => 'code',type => CODEREF|SCALARREF,
+         { parse => 'code' ,type => CODEREF|SCALARREF,
            default => sub { print STDOUT $_[0] },
            descr => "A subroutine or scalar reference through which all output will pass" },
 
@@ -127,7 +128,7 @@ BEGIN
          },
 
  	 plugins =>
-         { parse => 'arrayref', default => [],
+         { parse => 'arrayref', default => [], type => ARRAYREF,
  	   descr => 'List of plugin classes or objects to run hooks around components and requests' },
 
          # Only used when creating subrequests
@@ -296,11 +297,13 @@ sub _initialize {
 		unless ($plugin_loaded{$plugin}) {
 		    # Load plugin package if it isn't already loaded.
 		    #
-		    { no strict 'refs';
-		      unless (defined(%{$plugin . "::"})) {
-			  eval "use $plugin;";
-			  die $@ if $@;
-		      }}
+		    {
+                        no strict 'refs';
+                        unless (defined(%{$plugin . "::"})) {
+                            eval "use $plugin;";
+                            die $@ if $@;
+                        }
+                    }
 		    $plugin_loaded{$plugin} = 1;
 		}
  	        $plugin_instance = $plugin->new();
@@ -435,7 +438,7 @@ sub exec {
 	    tie *SELECTED, 'Tie::Handle::Mason';
 
 	    my $old = select SELECTED;
-	    my $mods = {base_comp=>$request_comp, store=>\ ($self->{request_buffer})};
+	    my $mods = {base_comp => $request_comp, store => \($self->{request_buffer})};
 
 	    if ($self->{has_plugins}) {
 		my $context = bless

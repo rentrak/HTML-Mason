@@ -6,9 +6,9 @@ bin/mason.pl
 Build.PL
 Changes
 CREDITS
-eg/handler.pl
 eg/httpd.conf
-eg/session_handler.pl
+eg/MyApp/Mason.pm
+eg/MyApp/MasonWithSession.pm
 htdocs/index.html
 inc/Mason/Build.pm
 inc/params.mtxt

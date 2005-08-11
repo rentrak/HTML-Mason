@@ -192,8 +192,9 @@ visible via Apache::Status.</p>
 are 'CGI' and 'mod_perl'; these indicate that a <code>CGI.pm</code> or
 <code>Apache::Request</code> object (respectively) will be created for the
 purposes of argument handling.</p>
-<p>'mod_perl' is the default and requires that you have installed the
-<code>Apache::Request</code> package.</p>
+<p>'mod_perl' is the default under mod_perl-1 and requires that you have 
+installed the <code>Apache::Request</code> package.  Under mod_perl-2, the default
+is 'CGI' because <code>Apache2::Request</code> is still in development.</p>
 <p>If args_method is 'mod_perl', the <code>$r</code> global is upgraded to an
 Apache::Request object. This object inherits all Apache methods and
 adds a few of its own, dealing with parameters and file uploads.  See
