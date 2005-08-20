@@ -193,8 +193,18 @@ parameter is _not_ required when running in <A HREF="#additional_run_modes">Crea
 <p></p>
 <li><strong><A NAME="item_expect_error">expect_error</a></strong><br />
 </li>
-A regex containing that will be matched against the error returned
-from the component execution.
+A regex that will be matched against the error returned from the
+component execution.
+<p></p>
+<li><strong><A NAME="item_no_warnings">no_warnings</a></strong><br />
+</li>
+If true, this means that the test expects to run without generating
+any warnings.  If warnings are generated, the test fails.
+<p></p>
+<li><strong><A NAME="item_expect_warnings">expect_warnings</a></strong><br />
+</li>
+A regex that will be matched against any warnings output when running
+the component.
 <p></p>
 <li><strong><A NAME="item_skip_expect">skip_expect</a></strong><br />
 </li>
@@ -298,8 +308,8 @@ that overrides the _make_interp method to use your subclass:</p>
 <pre>
     sub _make_interp
     {
-        my ($self, %interp_params) = @_;
-        
+        my ($self, %interp_params) = @_;</pre>
+<pre>
         return HTML::Mason::Interp-&gt;new
             ( lexer_class =&gt; HTML::Mason::MyLexer,
               %interp_params );

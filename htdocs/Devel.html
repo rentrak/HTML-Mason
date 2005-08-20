@@ -807,16 +807,16 @@ override arguments passed in the URL.</p>
 <p>Here is an autohandler that adds a common header and footer to each
 page underneath its directory:</p>
 <pre>
-    &lt;HTML&gt;
-    &lt;HEAD&gt;&lt;TITLE&gt;McHuffy Incorporated&lt;/TITLE&gt;&lt;/HEAD&gt;
-    &lt;BODY BGCOLOR=&quot;salmon&quot;&gt;</pre>
+    &lt;html&gt;
+    &lt;head&gt;&lt;title&gt;McHuffy Incorporated&lt;/title&gt;&lt;/head&gt;
+    &lt;body style=&quot;background-color: pink&quot;&gt;</pre>
 <pre>
     % $m-&gt;call_next;</pre>
 <pre>
-    &lt;HR&gt;
+    &lt;hr /&gt;
     Copyright 1999 McHuffy Inc.
-    &lt;/BODY&gt;
-    &lt;/HTML&gt;</pre>
+    &lt;/body&gt;
+    &lt;/html&gt;</pre>
 <p>Same idea, using components for the header/footer:</p>
 <pre>
     &lt;&amp; /shared/header &amp;&gt;
@@ -1020,11 +1020,12 @@ HTML without getting distracted or discouraged by Perl code. For example:</p>
     &lt;head&gt;&lt;title&gt;&lt;% $headline %&gt;&lt;/title&gt;&lt;/head&gt;
     &lt;body&gt;
     &lt;h2&gt;&lt;% $headline %&gt;&lt;/h2&gt;
-    By &lt;% $author %&gt;, &lt;% $date %&gt;&lt;p&gt;</pre>
+    &lt;p&gt;By &lt;% $author %&gt;, &lt;% $date %&gt;&lt;/p&gt;</pre>
 <pre>
     &lt;% $body %&gt;</pre>
 <pre>
-    &lt;/body&gt;&lt;/html&gt;</pre>
+    &lt;/body&gt;
+    &lt;/html&gt;</pre>
 <pre>
     &lt;%init&gt;
     # Fetch article from database
@@ -1161,9 +1162,8 @@ section to declare variables visible from both scopes.</p>
 standardized hyperlink:</p>
 <pre>
     &lt;%def .link&gt;
-    &lt;font size=&quot;4&quot; face=&quot;Verdana,Arial,Helvetica&quot;&gt;
-    &lt;a href=&quot;<a href="http://www.&lt;%">http://www.&lt;%</a> $site %&gt;.com&quot;&gt;&lt;% $label %&gt;&lt;/a&gt;
-    &lt;/font&gt;&lt;br&gt;
+    &lt;a href=&quot;<a href="http://www.&lt;%">http://www.&lt;%</a> $site %&gt;.com&quot;&gt;&lt;% $label %&gt;&lt;/a&gt;</pre>
+<pre>
     &lt;%args&gt;
     $site
     $label=&gt;ucfirst($site)
@@ -1172,9 +1172,9 @@ standardized hyperlink:</p>
 <pre>
     Visit these sites:
     &lt;ul&gt;
-    &lt;li&gt;&lt;&amp; .link, site=&gt;'yahoo' &amp;&gt;&lt;br&gt;
-    &lt;li&gt;&lt;&amp; .link, site=&gt;'cmp', label=&gt;'CMP Media' &amp;&gt;&lt;br&gt;
-    &lt;li&gt;&lt;&amp; .link, site=&gt;'excite' &amp;&gt;
+     &lt;li&gt;&lt;&amp; .link, site=&gt;'yahoo' &amp;&gt;&lt;/li&gt;
+     &lt;li&gt;&lt;&amp; .link, site=&gt;'cmp', label=&gt;'CMP Media' &amp;&gt;&lt;/li&gt;
+     &lt;li&gt;&lt;&amp; .link, site=&gt;'excite' &amp;&gt;&lt;/li&gt;
     &lt;/ul&gt;</pre>
 <p>
 </p>
@@ -1979,7 +1979,7 @@ in a single request.</p>
 <pre>
     &lt;%method lefttoc&gt;
     &lt;i&gt;&lt;% $full_name %&gt;&lt;/i&gt;
-    (&lt;a href=&quot;logout.html&quot;&gt;Log out&lt;/a&gt;)&lt;br&gt;
+    (&lt;a href=&quot;logout.html&quot;&gt;Log out&lt;/a&gt;)&lt;br /&gt;
     ...
     &lt;/%method&gt;</pre>
 <pre>
@@ -2011,13 +2011,13 @@ number of standard methods and attributes for each page:</p>
     &lt;head&gt;
     &lt;title&gt;&lt;&amp; SELF:title &amp;&gt;&lt;/title&gt;
     &lt;/head&gt;
-    &lt;body bgcolor=&quot;&lt;% $self-&gt;attr('bgcolor') %&gt;&quot;&gt;
-    &lt;&amp; SELF:header &amp;&gt;
-    &lt;table&gt;&lt;tr&gt;&lt;td&gt;</pre>
+    &lt;body style=&quot;&lt;% $self-&gt;attr('body_style') %&gt;&quot;&gt;
+    &lt;&amp; SELF:header &amp;&gt;</pre>
 <pre>
-    % $m-&gt;call_next;</pre>
+    &lt;div id=&quot;main&quot;&gt;
+    % $m-&gt;call_next;
+    &lt;/div&gt;</pre>
 <pre>
-    &lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
     &lt;&amp; SELF:footer &amp;&gt;
     &lt;/body&gt;</pre>
 <pre>
@@ -2027,7 +2027,7 @@ number of standard methods and attributes for each page:</p>
     &lt;/%init&gt;</pre>
 <pre>
     &lt;%attr&gt;
-    bgcolor =&gt; 'white'
+    body_style =&gt; 'standard'
     &lt;/%attr&gt;</pre>
 <pre>
     &lt;%method title&gt;
@@ -2035,7 +2035,7 @@ number of standard methods and attributes for each page:</p>
     &lt;/%method&gt;</pre>
 <pre>
     &lt;%method header&gt;
-    &lt;h2&gt;&lt;&amp; SELF:title &amp;&gt;&lt;/h2&gt;&lt;p&gt;
+    &lt;h2&gt;&lt;&amp; SELF:title &amp;&gt;&lt;/h2&gt;
     &lt;/%method&gt;</pre>
 <pre>
     &lt;%method footer&gt;
@@ -2045,7 +2045,7 @@ number of standard methods and attributes for each page:</p>
 <em>/products</em> section of the site.</p>
 <pre>
     &lt;%attr&gt;
-    bgcolor =&gt; 'beige'
+    body_style =&gt; 'plain'
     &lt;/%attr&gt;
     &lt;%method title&gt;
     McGuffey Inc.: Products

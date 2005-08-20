@@ -363,7 +363,8 @@ destroyed.</p>
 <dt><strong><A NAME="item_load">load (path)</a></strong><br />
 </dt>
 <A NAME="item_load"></a><p>Returns the component object corresponding to an absolute component
-<code>path</code>, or undef if none exists.</p>
+<code>path</code>, or undef if none exists. Dies with an error if the component
+fails to load because of a syntax error.</p>
 <dt><strong><A NAME="item_make_component">make_component (comp_source =&gt; ... )</a></strong><br />
 </dt>
 <dt><strong>make_component (comp_file =&gt; ... )</strong><br />
