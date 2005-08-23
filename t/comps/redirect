@@ -1,0 +1,3 @@
+<%init>
+$m->redirect('/comps/basic');
+</%init>

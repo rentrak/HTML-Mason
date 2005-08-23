@@ -1,0 +1,20 @@
+package HTML::Mason::Commands;
+use strict;
+use vars qw($m $r);
+HTML::Mason::Component::FileBased->new(
+'code' => sub {
+$m->debug_hook( $m->current_comp->path ) if ( HTML::Mason::Compiler::IN_PERL_DB() );
+
+#line 1 /home/autarch/mason/Mason/t/comps/print
+$m->print( 'This is first.
+' );
+#line 2 /home/autarch/mason/Mason/t/comps/print
+ print "This is second.\n";
+$m->print( 'This is third.
+' );
+;return;
+},
+'load_time' => 1124810228,
+
+)
+;

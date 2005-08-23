@@ -1,0 +1,4 @@
+The number is <% $foo %>.
+<%args>
+$foo
+</%args>

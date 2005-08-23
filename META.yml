@@ -1,9 +1,11 @@
 ---
 name: HTML-Mason
-version: 1.31
-author: ~
+version: 1.3101
+author: []
 abstract: 'High-performance, dynamic web site authoring system'
 license: perl
+resources:
+  license: http://dev.perl.org/licenses/
 requires:
   Apache::Request: 1.05
   CGI: 2.46
@@ -26,7 +28,7 @@ provides:
     version: 0.09
   HTML::Mason:
     file: lib/HTML/Mason.pm
-    version: 1.31
+    version: 1.3101
   HTML::Mason::ApacheHandler:
     file: lib/HTML/Mason/ApacheHandler.pm
     version: 1.69
@@ -51,13 +53,10 @@ provides:
     file: lib/HTML/Mason/Escapes.pm
   HTML::Mason::Exception:
     file: lib/HTML/Mason/Exceptions.pm
-    version: 1.43
   HTML::Mason::Exception::Compilation:
     file: lib/HTML/Mason/Exceptions.pm
-    version: 1.43
   HTML::Mason::Exception::Syntax:
     file: lib/HTML/Mason/Exceptions.pm
-    version: 1.43
   HTML::Mason::Exceptions:
     file: lib/HTML/Mason/Exceptions.pm
     version: 1.43
@@ -91,10 +90,8 @@ provides:
     file: lib/HTML/Mason/Request.pm
   HTML::Mason::Request::ApacheHandler:
     file: lib/HTML/Mason/ApacheHandler.pm
-    version: 1.69
   HTML::Mason::Request::CGI:
     file: lib/HTML/Mason/CGIHandler.pm
-    version: 1.00
   HTML::Mason::Resolver:
     file: lib/HTML/Mason/Resolver.pm
   HTML::Mason::Resolver::File:
@@ -109,4 +106,4 @@ provides:
     file: lib/HTML/Mason/Utils.pm
   Tie::Handle::Mason:
     file: lib/HTML/Mason/Request.pm
-generated_by: Module::Build version 0.2611
+generated_by: Module::Build version 0.2702

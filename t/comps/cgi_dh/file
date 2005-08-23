@@ -1,0 +1,3 @@
+file
+dhandler_arg = <% $m->dhandler_arg %>
+path_info = <% $ENV{PATH_INFO} %>

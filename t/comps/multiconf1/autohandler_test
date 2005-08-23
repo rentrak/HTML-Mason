@@ -1,0 +1,4 @@
+<%args>
+$autohandler => 'misnamed'
+</%args>
+autohandler is <% $autohandler %>

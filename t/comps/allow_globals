@@ -1,0 +1,4 @@
+% $foo = 1;
+% @bar = ( qw( a b c ) );
+$foo is <% $foo %>
+@bar is <% @bar %>

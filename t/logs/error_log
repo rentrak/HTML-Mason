@@ -1,0 +1,168 @@
+[Tue Aug 23 10:16:23 2005] [notice] Apache/1.3.33 (Debian GNU/Linux) mod_perl/1.29 configured -- resuming normal operations
+[Tue Aug 23 10:16:23 2005] [notice] Accept mutex: sysvsem (Default: sysvsem)
+[Tue Aug 23 10:16:26 2005] [notice] caught SIGTERM, shutting down
+Subroutine make_request redefined at /home/autarch/mason/Mason/t/mason_handler_mod_perl.pl line 15.
+Constant subroutine HTML::Mason::REDIRECT redefined at /usr/share/perl/5.8/constant.pm line 103.
+Subroutine handler redefined at /home/autarch/mason/Mason/t/mason_handler_mod_perl.pl line 105.
+[Tue Aug 23 10:16:27 2005] [notice] Apache/1.3.33 (Debian GNU/Linux) mod_perl/1.29 configured -- resuming normal operations
+[Tue Aug 23 10:16:27 2005] [notice] Accept mutex: sysvsem (Default: sysvsem)
+[Tue Aug 23 10:16:28 2005] [error] Mine heart is pierced at /home/autarch/mason/Mason/t/comps/die line 1.\t\tStack: [/home/autarch/mason/Mason/t/comps/die:1]\n
+[Tue Aug 23 10:16:28 2005] [notice] caught SIGTERM, shutting down
+Subroutine HTML::Mason::Request::ApacheHandler::ah redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/MethodMaker.pm line 51.
+Subroutine HTML::Mason::Request::ApacheHandler::apache_req redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/MethodMaker.pm line 51.
+Subroutine HTML::Mason::Request::ApacheHandler::auto_send_headers redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/MethodMaker.pm line 51.
+Subroutine _properties redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 91.
+Subroutine new redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 94.
+Subroutine cgi_object redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 111.
+Subroutine exec redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 135.
+Subroutine _handle_error redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 191.
+Subroutine redirect redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 205.
+Subroutine HTML::Mason::ApacheHandler::args_method redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/MethodMaker.pm line 23.
+Subroutine HTML::Mason::ApacheHandler::apache_status_title redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/MethodMaker.pm line 51.
+Subroutine HTML::Mason::ApacheHandler::decline_dirs redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/MethodMaker.pm line 51.
+Subroutine HTML::Mason::ApacheHandler::interp redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/MethodMaker.pm line 51.
+Subroutine _get_apache_server redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 309.
+Subroutine _startup redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 319.
+Subroutine make_ah redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 356.
+Subroutine calm_form redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 411.
+Subroutine studly_form redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 419.
+Subroutine _get_mason_params redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 427.
+Subroutine _get_param redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 456.
+Subroutine _get_string_param redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 479.
+Subroutine _get_boolean_param redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 485.
+Subroutine _get_code_param redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 491.
+Subroutine _get_list_param redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 507.
+Subroutine _get_hash_list_param redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 519.
+Subroutine _get_val redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 542.
+Subroutine new redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 570.
+Subroutine get_uid_gid redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 655.
+Subroutine _initialize redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 675.
+Subroutine status_as_html redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 731.
+Subroutine handle_request redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 811.
+Subroutine prepare_request redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 821.
+Subroutine _apache_request_object redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 898.
+Subroutine _request_fs_type redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 931.
+Subroutine request_args redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 951.
+Subroutine _cgi_args redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 973.
+Subroutine _mod_perl_args redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 987.
+Subroutine http_header_sent redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 1002.
+Subroutine _set_mason_req_out_method redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 1005.
+Subroutine return_not_found redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 1051.
+Subroutine handler redefined at (eval 60) line 2.
+[Tue Aug 23 10:16:29 2005] [notice] Apache/1.3.33 (Debian GNU/Linux) mod_perl/1.29 configured -- resuming normal operations
+[Tue Aug 23 10:16:29 2005] [notice] Accept mutex: sysvsem (Default: sysvsem)
+[Tue Aug 23 10:16:30 2005] [notice] caught SIGTERM, shutting down
+[Tue Aug 23 10:16:31 2005] [notice] Apache/1.3.33 (Debian GNU/Linux) mod_perl/1.29 configured -- resuming normal operations
+[Tue Aug 23 10:16:31 2005] [notice] Accept mutex: sysvsem (Default: sysvsem)
+[Tue Aug 23 10:16:31 2005] [notice] caught SIGTERM, shutting down
+[Tue Aug 23 10:16:32 2005] [notice] Apache/1.3.33 (Debian GNU/Linux) mod_perl/1.29 configured -- resuming normal operations
+[Tue Aug 23 10:16:32 2005] [notice] Accept mutex: sysvsem (Default: sysvsem)
+[Tue Aug 23 10:16:33 2005] [notice] caught SIGTERM, shutting down
+[Tue Aug 23 10:16:34 2005] [notice] Apache/1.3.33 (Debian GNU/Linux) mod_perl/1.29 configured -- resuming normal operations
+[Tue Aug 23 10:16:34 2005] [notice] Accept mutex: sysvsem (Default: sysvsem)
+[Tue Aug 23 10:16:36 2005] [notice] caught SIGTERM, shutting down
+Constant subroutine CGI::XHTML_DTD redefined at /usr/share/perl/5.8/constant.pm line 103.
+Subroutine make_request redefined at /home/autarch/mason/Mason/t/mason_handler_CGI.pl line 15.
+Constant subroutine HTML::Mason::REDIRECT redefined at /usr/share/perl/5.8/constant.pm line 103.
+Subroutine handler redefined at /home/autarch/mason/Mason/t/mason_handler_CGI.pl line 105.
+[Tue Aug 23 10:16:37 2005] [notice] Apache/1.3.33 (Debian GNU/Linux) mod_perl/1.29 configured -- resuming normal operations
+[Tue Aug 23 10:16:37 2005] [notice] Accept mutex: sysvsem (Default: sysvsem)
+[Tue Aug 23 10:16:38 2005] [error] Mine heart is pierced at /home/autarch/mason/Mason/t/comps/die line 1.\t\tStack: [/home/autarch/mason/Mason/t/comps/die:1]\n
+[Tue Aug 23 10:16:39 2005] [notice] caught SIGTERM, shutting down
+Constant subroutine CGI::XHTML_DTD redefined at /usr/share/perl/5.8/constant.pm line 103.
+Subroutine HTML::Mason::Request::ApacheHandler::ah redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/MethodMaker.pm line 51.
+Subroutine HTML::Mason::Request::ApacheHandler::apache_req redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/MethodMaker.pm line 51.
+Subroutine HTML::Mason::Request::ApacheHandler::auto_send_headers redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/MethodMaker.pm line 51.
+Subroutine _properties redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 91.
+Subroutine new redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 94.
+Subroutine cgi_object redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 111.
+Subroutine exec redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 135.
+Subroutine _handle_error redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 191.
+Subroutine redirect redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 205.
+Subroutine HTML::Mason::ApacheHandler::args_method redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/MethodMaker.pm line 23.
+Subroutine HTML::Mason::ApacheHandler::apache_status_title redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/MethodMaker.pm line 51.
+Subroutine HTML::Mason::ApacheHandler::decline_dirs redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/MethodMaker.pm line 51.
+Subroutine HTML::Mason::ApacheHandler::interp redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/MethodMaker.pm line 51.
+Subroutine _get_apache_server redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 309.
+Subroutine _startup redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 319.
+Subroutine make_ah redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 356.
+Subroutine calm_form redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 411.
+Subroutine studly_form redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 419.
+Subroutine _get_mason_params redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 427.
+Subroutine _get_param redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 456.
+Subroutine _get_string_param redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 479.
+Subroutine _get_boolean_param redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 485.
+Subroutine _get_code_param redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 491.
+Subroutine _get_list_param redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 507.
+Subroutine _get_hash_list_param redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 519.
+Subroutine _get_val redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 542.
+Subroutine new redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 570.
+Subroutine get_uid_gid redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 655.
+Subroutine _initialize redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 675.
+Subroutine status_as_html redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 731.
+Subroutine handle_request redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 811.
+Subroutine prepare_request redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 821.
+Subroutine _apache_request_object redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 898.
+Subroutine _request_fs_type redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 931.
+Subroutine request_args redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 951.
+Subroutine _cgi_args redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 973.
+Subroutine _mod_perl_args redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 987.
+Subroutine http_header_sent redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 1002.
+Subroutine _set_mason_req_out_method redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 1005.
+Subroutine return_not_found redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 1051.
+Subroutine handler redefined at (eval 71) line 2.
+[Tue Aug 23 10:16:40 2005] [notice] Apache/1.3.33 (Debian GNU/Linux) mod_perl/1.29 configured -- resuming normal operations
+[Tue Aug 23 10:16:40 2005] [notice] Accept mutex: sysvsem (Default: sysvsem)
+[Tue Aug 23 10:16:40 2005] [notice] caught SIGTERM, shutting down
+Subroutine HTML::Mason::Request::ApacheHandler::ah redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/MethodMaker.pm line 51.
+Subroutine HTML::Mason::Request::ApacheHandler::apache_req redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/MethodMaker.pm line 51.
+Subroutine HTML::Mason::Request::ApacheHandler::auto_send_headers redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/MethodMaker.pm line 51.
+Subroutine _properties redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 91.
+Subroutine new redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 94.
+Subroutine cgi_object redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 111.
+Subroutine exec redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 135.
+Subroutine _handle_error redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 191.
+Subroutine redirect redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 205.
+Subroutine HTML::Mason::ApacheHandler::args_method redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/MethodMaker.pm line 23.
+Subroutine HTML::Mason::ApacheHandler::apache_status_title redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/MethodMaker.pm line 51.
+Subroutine HTML::Mason::ApacheHandler::decline_dirs redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/MethodMaker.pm line 51.
+Subroutine HTML::Mason::ApacheHandler::interp redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/MethodMaker.pm line 51.
+Subroutine _get_apache_server redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 309.
+Subroutine _startup redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 319.
+Subroutine make_ah redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 356.
+Subroutine calm_form redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 411.
+Subroutine studly_form redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 419.
+Subroutine _get_mason_params redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 427.
+Subroutine _get_param redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 456.
+Subroutine _get_string_param redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 479.
+Subroutine _get_boolean_param redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 485.
+Subroutine _get_code_param redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 491.
+Subroutine _get_list_param redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 507.
+Subroutine _get_hash_list_param redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 519.
+Subroutine _get_val redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 542.
+Subroutine new redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 570.
+Subroutine get_uid_gid redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 655.
+Subroutine _initialize redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 675.
+Subroutine status_as_html redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 731.
+Subroutine handle_request redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 811.
+Subroutine prepare_request redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 821.
+Subroutine _apache_request_object redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 898.
+Subroutine _request_fs_type redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 931.
+Subroutine request_args redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 951.
+Subroutine _cgi_args redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 973.
+Subroutine _mod_perl_args redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 987.
+Subroutine http_header_sent redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 1002.
+Subroutine _set_mason_req_out_method redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 1005.
+Subroutine return_not_found redefined at /home/autarch/mason/Mason/blib/lib/HTML/Mason/ApacheHandler.pm line 1051.
+Subroutine handler redefined at (eval 60) line 2.
+[Tue Aug 23 10:16:41 2005] [notice] Apache/1.3.33 (Debian GNU/Linux) mod_perl/1.29 configured -- resuming normal operations
+[Tue Aug 23 10:16:41 2005] [notice] Accept mutex: sysvsem (Default: sysvsem)
+[Tue Aug 23 10:16:42 2005] [error] [Mason] File does not exist: /home/autarch/mason/Mason/t/comps/multiconf2/dhandler_test
+[Tue Aug 23 10:16:44 2005] [warn] child process 16836 still did not exit, sending a SIGTERM
+[Tue Aug 23 10:16:48 2005] [notice] caught SIGTERM, shutting down
+[Tue Aug 23 10:17:07 2005] [notice] Apache/1.3.33 (Debian GNU/Linux) mod_perl/1.29 configured -- resuming normal operations
+[Tue Aug 23 10:17:07 2005] [notice] Accept mutex: sysvsem (Default: sysvsem)
+[Tue Aug 23 10:17:07 2005] [notice] caught SIGTERM, shutting down
+[Tue Aug 23 10:17:08 2005] [notice] Apache/1.3.33 (Debian GNU/Linux) mod_perl/1.29 configured -- resuming normal operations
+[Tue Aug 23 10:17:08 2005] [notice] Accept mutex: sysvsem (Default: sysvsem)
+[Tue Aug 23 10:17:11 2005] [notice] caught SIGTERM, shutting down
