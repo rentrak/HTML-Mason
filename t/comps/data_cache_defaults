@@ -1,2 +1,0 @@
-is memory: <% $m->cache->isa('Cache::MemoryCache') ? 1 : 0 %>
-namespace: <% $m->cache->get_namespace %>

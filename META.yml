@@ -1,7 +1,8 @@
 ---
 name: HTML-Mason
-version: 1.3101
-author: []
+version: 1.32
+author:
+  - 'Jonathan Swartz <swartz@pobox.com>, Dave Rolsky <autarch@urth.org>, Ken Williams <ken@mathforum.org>, John Williams <williams@tni.com>'
 abstract: 'High-performance, dynamic web site authoring system'
 license: perl
 resources:
@@ -28,7 +29,7 @@ provides:
     version: 0.09
   HTML::Mason:
     file: lib/HTML/Mason.pm
-    version: 1.3101
+    version: 1.32
   HTML::Mason::ApacheHandler:
     file: lib/HTML/Mason/ApacheHandler.pm
     version: 1.69
@@ -106,4 +107,4 @@ provides:
     file: lib/HTML/Mason/Utils.pm
   Tie::Handle::Mason:
     file: lib/HTML/Mason/Request.pm
-generated_by: Module::Build version 0.2702
+generated_by: Module::Build version 0.2703

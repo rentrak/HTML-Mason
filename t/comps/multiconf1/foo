@@ -1,2 +1,0 @@
-I am foo in multiconf1
-comp root is <% $m->interp->comp_root =~ m,/comps/multiconf1$, ? 'multiconf1' : $m->interp->comp_root %>

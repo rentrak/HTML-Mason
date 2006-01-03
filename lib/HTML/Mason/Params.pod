@@ -992,7 +992,7 @@ redirected to C<< $r->print >>.
 
 =item * Apache name:         MasonPlugins
 
-=item * Type in httpd.conf:  arrayref
+=item * Type in httpd.conf:  list
 
 =item * Default:             []
 

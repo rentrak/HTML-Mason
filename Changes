@@ -5,7 +5,37 @@ available at http://www.masonhq.com/code/history.html.
 
 ** denotes an incompatible change
 
-1.1301  August 23, 2005
+1.32  January 3, 2006
+
+    [ BUG FIXES ]
+
+    - Under mod_perl 1.x with error_mode set to output, the headers were
+      sent after the content when a compilation error occurred.  Reported by
+      Gareth Kirwan.  Task id #592.
+
+    - URI-escape utf8 characters the same way that CGI::escape and
+      URI::Escape::uri_escape_utf8 do.  Patch by Denis Shaposhnikov.
+
+    - On startup Mason creates a file named ".__obj_create_marker" in the
+      object directory.  Under mod_perl, Mason was not chmod'ing the file
+      when Apache was started as root. This led to permission errors in
+      environments where the Interp is created anew every request.  Task id
+      #593.
+
+    - Treat the return value of component execution as a string in
+      ApacheHandler.  This prevent warnings about comparing the empty string
+      to a number when a component return "".  Reported by Benjamin Franz.
+
+    - Setting a MasonPlugins Apache parameter caused a fatal error.  Patch
+      by David Jack Olrik.
+
+    - Calling base_comp() on the Request object inside a plugin's
+      start_request_hook method caused an infinite recursion in Mason.
+      Reported by Jesse Vincent.
+
+1.3101  August 23, 2005
+
+    [ BUG FIXES ]
 
     - One last fix for CGIHandler.  If you provided your own out_method it
       was ignoring it and using its own.  Reported by David Glasser.

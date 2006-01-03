@@ -1,3 +1,0 @@
-% if ($r->isa('Apache::Request') || $r->isa('Apache2::Request')) {
-Apache::Request
-% }

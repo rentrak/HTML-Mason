@@ -53,7 +53,7 @@ use constant STACK_BASE_COMP    => 6;
 use constant STACK_IN_CALL_SELF => 7;
 
 # HTML::Mason::Exceptions always exports rethrow_exception() and isa_mason_exception()
-use HTML::Mason::Exceptions( abbr => [qw(param_error syntax_error
+use HTML::Mason::Exceptions( abbr => [qw(error param_error syntax_error
                                          top_level_not_found_error error)] );
 
 use Params::Validate qw(:all);
@@ -128,7 +128,7 @@ BEGIN
          },
 
          plugins =>
-         { parse => 'arrayref', default => [], type => ARRAYREF,
+         { parse => 'list', default => [], type => ARRAYREF,
            descr => 'List of plugin classes or objects to run hooks around components and requests' },
 
          # Only used when creating subrequests
@@ -217,7 +217,6 @@ my %plugin_loaded;
 
 sub _initialize {
     my ($self) = @_;
-    my $interp = $self->interp;
 
     local $SIG{'__DIE__'} = \&rethrow_exception;
 
@@ -243,7 +242,7 @@ sub _initialize {
 
                 # If path was not found, check for dhandler.
                 unless ($request_comp) {
-                    if ( $request_comp = $interp->find_comp_upwards($path, $self->dhandler_name) ) {
+                    if ( $request_comp = $self->interp->find_comp_upwards($path, $self->dhandler_name) ) {
                         my $parent_path = $request_comp->dir_path;
                         ($self->{dhandler_arg} = $self->{top_path}) =~ s{^$parent_path/?}{};
                     }
@@ -369,7 +368,6 @@ sub alter_superclass
 
 sub exec {
     my ($self) = @_;
-    my $interp = $self->interp;
 
     # If the request failed to initialize, the error has already been handled
     # at the bottom of _initialize(); just return.
@@ -487,7 +485,7 @@ sub exec {
     };
 
     # Purge code cache if necessary.
-    $interp->purge_code_cache;
+    $self->interp->purge_code_cache;
 
     # Handle errors.
     my $err = $@;
@@ -929,12 +927,12 @@ sub callers
 {
     my ($self, $levels_back) = @_;
     if (defined($levels_back)) {
-        my $frame = $self->stack_frame($levels_back);
+        my $frame = $self->_stack_frame($levels_back);
         return unless defined $frame;
         return $frame->[STACK_COMP];
     } else {
         my $depth = $self->depth;
-        return map($_->[STACK_COMP], $self->stack_frames);
+        return map($_->[STACK_COMP], $self->_stack_frames);
     }
 }
 
@@ -946,7 +944,7 @@ sub caller_args
     my ($self, $levels_back) = @_;
     param_error "caller_args expects stack level as argument" unless defined $levels_back;
 
-    my $frame = $self->stack_frame($levels_back);
+    my $frame = $self->_stack_frame($levels_back);
     return unless $frame;
     my $args = $frame->[STACK_ARGS];
     return wantarray ? @$args : { @$args };
@@ -981,11 +979,9 @@ sub decline
 #
 sub depth
 {
-    my ($self) = @_;
-
     # direct access for speed because this method is called on every
     # call to $m->comp
-    return $self->{top_stack}->[STACK_DEPTH];
+    return $_[0]->{top_stack}->[STACK_DEPTH];
 }
 
 #
@@ -1003,32 +999,32 @@ sub fetch_comp
     return undef unless defined($path);
     $current_comp ||= $self->{top_stack}->[STACK_COMP];
 
-    if ($self->{use_internal_component_caches}) {
-        my $fetch_comp_cache = $current_comp->{fetch_comp_cache};
-        unless (defined($fetch_comp_cache->{$path})) {
+    return $self->_fetch_comp($path, $current_comp, $error)
+        unless $self->{use_internal_component_caches};
 
-            # Cache the component objects associated with
-            # uncanonicalized paths like ../foo/bar.html.  SELF and
-            # REQUEST are dynamic and cannot be cached. Weaken the
-            # references in this cache so that we don't hang on to the
-            # coponent if it disappears from the main code cache.
-            #
-            # See Interp::_initialize for the definition of
-            # use_internal_component_caches and the conditions under
-            # which we can create this cache safely.
-            #
-            if ($path =~ /^(?:SELF|REQUEST)/) {
-                return $self->_fetch_comp($path, $current_comp, $error);
-            } else {
-                $fetch_comp_cache->{$path} =
-                    $self->_fetch_comp($path, $current_comp, $error);
-                Scalar::Util::weaken($fetch_comp_cache->{$path}) if can_weaken;
-            }
+    my $fetch_comp_cache = $current_comp->{fetch_comp_cache};
+    unless (defined($fetch_comp_cache->{$path})) {
+
+        # Cache the component objects associated with
+        # uncanonicalized paths like ../foo/bar.html.  SELF and
+        # REQUEST are dynamic and cannot be cached. Weaken the
+        # references in this cache so that we don't hang on to the
+        # coponent if it disappears from the main code cache.
+        #
+        # See Interp::_initialize for the definition of
+        # use_internal_component_caches and the conditions under
+        # which we can create this cache safely.
+        #
+        if ($path =~ /^(?:SELF|REQUEST)/) {
+            return $self->_fetch_comp($path, $current_comp, $error);
+        } else {
+            $fetch_comp_cache->{$path} =
+                $self->_fetch_comp($path, $current_comp, $error);
+            Scalar::Util::weaken($fetch_comp_cache->{$path}) if can_weaken;
         }
-        return $fetch_comp_cache->{$path};
-    } else {
-        return $self->_fetch_comp($path, $current_comp, $error);
     }
+
+    return $fetch_comp_cache->{$path};
 }
 
 sub _fetch_comp
@@ -1182,7 +1178,6 @@ sub print
 #
 sub comp {
     my $self = shift;
-    my $top_stack = $self->{top_stack};
 
     # Get modifiers: optional hash reference passed in as first argument.
     # Merge multiple hash references to simplify user and internal usage.
@@ -1205,6 +1200,7 @@ sub comp {
     
     # Increment depth and check for maximum recursion. Depth starts at 1.
     #
+    my $top_stack = $self->{top_stack};
     my $depth = defined($top_stack) ? $top_stack->[STACK_DEPTH] + 1 : 1;
     error ($depth-1 . " levels deep in component stack (infinite recursive call?)\n")
         if ($depth > $self->{max_recurse});
@@ -1392,7 +1388,7 @@ sub debug_hook
 # Return the stack frame $levels down from the top of the stack.
 # If $levels is negative, count from the bottom of the stack.
 # 
-sub stack_frame {
+sub _stack_frame {
     my ($self, $levels) = @_;
     my $depth = $self->{top_stack}->[STACK_DEPTH];
     my $index;
@@ -1407,7 +1403,7 @@ sub stack_frame {
 
 # Return all stack frames, in order from the top of the stack to the
 # initial frame.
-sub stack_frames {
+sub _stack_frames {
     my ($self) = @_;
     my $depth = $self->{top_stack}->[STACK_DEPTH];
     return reverse map { $self->{stack}->[$_] } (0..$depth-1);
@@ -1421,8 +1417,11 @@ sub current_args { return $_[0]->{top_stack}->[STACK_ARGS] }
 
 sub base_comp {
     my ($self) = @_;
-    unless (defined($self->{top_stack}->[STACK_BASE_COMP])) {
-        return $self->compute_base_comp_for_frame($self->{top_stack}->[STACK_DEPTH] - 1);
+
+    return unless $self->{top_stack};
+
+    unless ( defined $self->{top_stack}->[STACK_BASE_COMP] ) {
+        $self->_compute_base_comp_for_frame($self->{top_stack}->[STACK_DEPTH] - 1);
     }
     return $self->{top_stack}->[STACK_BASE_COMP];
 }
@@ -1431,8 +1430,10 @@ sub base_comp {
 # Determine the base_comp for a stack frame. See the user
 # documentation for base_comp for a description of these rules.
 #
-sub compute_base_comp_for_frame {
+sub _compute_base_comp_for_frame {
     my ($self, $frame_num) = @_;
+    die "Invalid frame number: $frame_num" if $frame_num < 0;
+
     my $frame = $self->{stack}->[$frame_num];
 
     unless (defined($frame->[STACK_BASE_COMP])) {
@@ -1446,7 +1447,7 @@ sub compute_base_comp_for_frame {
         } elsif (!$path ||
                  $path =~ m/^(?:SELF|PARENT|REQUEST)(?:\:..*)?$/ ||
                  ($comp->is_subcomp && !$comp->is_method)) {
-            $base_comp = $self->compute_base_comp_for_frame($frame_num-1);
+            $base_comp = $self->_compute_base_comp_for_frame($frame_num-1);
         } elsif ($path =~ m/(.*):/) {
             my $calling_comp = $self->{stack}->[$frame_num-1]->[STACK_COMP];
             $base_comp = $self->fetch_comp($1, $calling_comp);
@@ -1719,8 +1720,7 @@ to a temporary variable.
 
 =for html <a name="item_base_comp"></a>
 
-Returns the current base component for method and attributes.
-This is the component referred to by SELF:.
+Returns the current base component.
 
 Here are the rules that determine base_comp as you move from
 component to component.
@@ -1728,7 +1728,7 @@ component to component.
 =over
 
 =item * At the beginning of a request, the base component is
-initialized to the requested component (C<< $m->request_comp >>).
+initialized to the requested component (C<< $m->request_comp() >>).
 
 =item * When you call a regular component via a path, the base
 component changes to the called component.
@@ -1749,6 +1749,11 @@ the base component changes to the method's owner.
 =back
 
 =back
+
+This may return nothing if the base component is not yet known, for
+example inside a plugin's C<start_request_hook()> method, where we
+have created a request but it does not yet know anything about the
+component being called.
 
 =item cache (cache_class=>'...', [cache_options])
 

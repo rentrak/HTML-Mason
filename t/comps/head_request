@@ -1,7 +1,0 @@
-<%init>
-my $x = 1;
-foreach (sort keys %ARGS) {
-  $r->headers_out->{'X-Mason-HEAD-Test' . $x++} = "$_: " . (ref $ARGS{$_} ? 'is a ref' : 'not a ref' );
-}
-</%init>
-We should never see this.

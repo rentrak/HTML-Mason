@@ -15,7 +15,7 @@ $VERSION = 1.69;
 
 
 # PerlAddVar was introduced in mod_perl-1.24
-# Support for 1.99 <= modperl < 2.00 was removed due to API changes
+# Support for modperl2 < 1.999022 was removed due to API changes
 BEGIN
 {
     if ( $ENV{MOD_PERL} && $ENV{MOD_PERL} =~ /1\.99|2\.0/ )
@@ -57,6 +57,7 @@ use HTML::Mason::Exceptions( abbr => [qw(param_error error)] );
 
 use constant APACHE2    => ($mod_perl2::VERSION || $mod_perl::VERSION || 0) >= 1.999022;
 use constant OK         => 0;
+use constant HTTP_OK    => 200;
 use constant DECLINED   => -1;
 use constant NOT_FOUND  => 404;
 use constant REDIRECT   => 302;
@@ -175,12 +176,12 @@ sub exec
         and !APACHE2
         and $self->auto_send_headers
         and !HTML::Mason::ApacheHandler::http_header_sent($r)
-        and (!$retval or $retval==200)) {
+        and (!$retval or $retval eq HTTP_OK)) {
         $r->send_http_header();
     }
 
-    # mod_perl-1 treats 200 and OK the same, but mod_perl-2 does not.
-    return defined($retval) && $retval!=200 ? $retval : OK;
+    # mod_perl 1 treats HTTP_OK and OK the same, but mod_perl-2 does not.
+    return defined $retval && $retval ne HTTP_OK ? $retval : OK;
 }
 
 #
@@ -196,6 +197,13 @@ sub _handle_error
     } else {
         if ( $self->error_format eq 'html' ) {
             $self->apache_req->content_type('text/html');
+            # We need to explicitly send the headers here under mp1,
+            # because otherwise the default out_method will check
+            # http_header_sent(), which will return true because there
+            # is a content_type.  This means that headers will _never_
+            # be sent properly unless we do it here.
+            $self->apache_req->send_http_header
+                unless APACHE2;
         }
         $self->SUPER::_handle_error($err);
     }
@@ -229,6 +237,7 @@ Params::Validate::validation_options( on_fail => sub { param_error( join '', @_ 
 
 use constant APACHE2    => ($mod_perl2::VERSION || $mod_perl::VERSION || 0) >= 1.999022;
 use constant OK         => 0;
+use constant HTTP_OK    => 200;
 use constant DECLINED   => -1;
 use constant NOT_FOUND  => 404;
 use constant REDIRECT   => 302;
@@ -874,10 +883,10 @@ sub prepare_request
         my $retval = ( isa_mason_exception($err, 'Abort')   ? $err->aborted_value  :
                        isa_mason_exception($err, 'Decline') ? $err->declined_value :
                        rethrow_exception $err );
-        $retval = OK if $retval == 200;
+        $retval = OK if defined $retval && $retval eq HTTP_OK;
         unless ($retval) {
             unless (APACHE2) {
-                unless ($r->headers_out->{"Content-type"}) { 
+                unless (http_header_sent($r)) {
                     $r->send_http_header();
                 }
             }

@@ -27,7 +27,7 @@ use lib 'inc';
       chdir $cwd or die "Cannot chdir() back to $cwd: $!";
     }
     eval "use Module::Build::Compat 0.02; 1" or die $@;
-    use lib '_build/lib';
+    use lib '/home/autarch/projects/mason/Mason/inc';
     Module::Build::Compat->run_build_pl(args => \@ARGV);
     require Mason::Build;
     Module::Build::Compat->write_makefile(build_class => 'Mason::Build');

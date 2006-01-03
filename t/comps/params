@@ -1,3 +1,0 @@
-% foreach (sort keys %ARGS) {
-<% $_ %>: <% ref $ARGS{$_} ? join ', ', sort @{ $ARGS{$_} }, 'array' : $ARGS{$_} %>
-% }
