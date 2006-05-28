@@ -18,11 +18,6 @@ sub get_source {
     return;
 }
 
-# Returns everything get_info() returns, plus the component source in a 'comp_source' entry.
-sub resolve {
-    return;
-}
-
 sub comp_class {
     return 'HTML::Mason::Component';
 }
@@ -55,8 +50,8 @@ of them do anything.
 This means that if you use this method things like C<< $interp->exec >>
 will simply not work at all.
 
-However, if you just want to make an component with an interepreter
-and execute it then it can be useful.  For example:
+However, if you just want to make a component with an interepreter and
+execute that component it can be useful.  For example:
 
   my $interp = HTML::Mason::Interp->new( resolver_class => 'HTML::Mason::Resolver::Null',
                                          data_dir => '/tmp' );
@@ -67,7 +62,8 @@ Hello, <% $var %>!
 EOF
 
   my $buffer;
-  my $output = $interp->make_request( out_method => \$var )->comp($comp);
+  my $request = $interp->make_request( out_method => \$buffer, comp => $comp );
+  $request->exec;
 
   print $buffer;
 

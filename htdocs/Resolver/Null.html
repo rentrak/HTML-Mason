@@ -41,8 +41,8 @@ and you never plan to interact with the filesystem.</p>
 of them do anything.</p>
 <p>This means that if you use this method things like <code>$interp-&gt;exec</code>
 will simply not work at all.</p>
-<p>However, if you just want to make an component with an interepreter
-and execute it then it can be useful.  For example:</p>
+<p>However, if you just want to make a component with an interepreter and
+execute that component it can be useful.  For example:</p>
 <pre>
   my $interp = HTML::Mason::Interp-&gt;new( resolver_class =&gt; 'HTML::Mason::Resolver::Null',
                                          data_dir =&gt; '/tmp' );</pre>
@@ -53,7 +53,8 @@ Hello, &lt;% $var %&gt;!
 EOF</pre>
 <pre>
   my $buffer;
-  my $output = $interp-&gt;make_request( out_method =&gt; \$var )-&gt;comp($comp);</pre>
+  my $request = $interp-&gt;make_request( out_method =&gt; \$buffer, comp =&gt; $comp );
+  $request-&gt;exec;</pre>
 <pre>
   print $buffer;</pre>
 <p>

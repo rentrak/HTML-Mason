@@ -1,9 +1,38 @@
-Revision history for HTML::Mason.
+evision history for HTML::Mason.
 
 An HTML version of this file, complete with links to documentation, is
 available at http://www.masonhq.com/code/history.html.
 
 ** denotes an incompatible change
+
+1.33  May 28, 2006
+
+    [ BUG FIXES ]
+
+    - If $m->flush_buffer() was called when there was a filter somewhere
+      in the component chain, the flush did nothing. Task id #596. Reported
+      by Shane McCarron.
+
+    - Added several tests for $m->flush_buffer() and $m->clear_buffer(),
+      which will hopefully avoid more bugs in this part of the code.
+
+    - On Win32, a test failed when Mason tried to use rename to move a dir
+      into an existing dir. Patch by Shane McCarron. Task id #594 and RT
+      #17828.
+
+    - Trying to load HTML::Mason::ApacheHandler outside of mod_perl caused
+      an error "like Undefined subroutine &Apache::perl_hook called at
+      /usr/local/share/perl/5.8.7/HTML/Mason/ApacheHandler.pm line
+      257". While it will never _run_ outside of mod_perl, it should at
+      least load.
+
+    - Fixed test in 14a-fake_apache.t that failed with CGI.pm >= 3.16.
+
+    - The example code in the HTML::Mason::Resolver::Null code was
+      just wrong. Fixed by John Siracusa.
+
+    - Fixed a test failure in 06-compile.t when using bleadperl. RT
+      #17118.
 
 1.32  January 3, 2006
 
@@ -1012,7 +1041,7 @@ available at http://www.masonhq.com/code/history.html.
     - The component requested and the arguments it was passed are now
       properties of the Request object.
 
-1.05  April 30, 2001
+1.05  April 30, 2002
 
     - Fixed improper handling of parameters for non-GET/POST
       request. (submitted by Radu Greab)

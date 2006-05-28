@@ -501,6 +501,59 @@ EOF
 
 #------------------------------------------------------------
 
+    $group->add_test( name => 'flush_filter',
+                      description => 'Test $m->flush_buffer in presence of filter',
+                      component => <<'EOF',
+one
+% $m->flush_buffer;
+% $m->clear_buffer;
+two
+<%filter>
+$_ .= $_;
+</%filter>
+EOF
+                      expect => <<'EOF',
+one
+one
+two
+two
+EOF
+                    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'clear_buffer',
+                      description => 'Test $m->clear_buffer in a normal component',
+                      component => <<'EOF',
+one
+% $m->clear_buffer;
+two
+EOF
+                      expect => <<'EOF',
+two
+EOF
+                    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'clear_filter',
+                      description => 'Test $m->clear_buffer in presence of filter',
+                      component => <<'EOF',
+one
+% $m->clear_buffer;
+two
+<%filter>
+$_ .= $_;
+</%filter>
+EOF
+                      expect => <<'EOF',
+two
+two
+EOF
+                    );
+
+#------------------------------------------------------------
+
     $group->add_test( name => 'autoflush_disabled',
                       description => 'Using autoflush when disabled generates an error',
                       interp_params => { autoflush => 1, enable_autoflush => 0 },
