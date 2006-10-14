@@ -1,7 +1,9 @@
+<?xml version="1.0" ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <title>HTML::Mason::ApacheHandler - Mason/mod_perl interface</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rev="made" href="mailto:root@localhost" />
 </head>
 
@@ -52,22 +54,22 @@ primarily through parameters to the <code>new()</code> constructor.</p>
 <hr />
 <h1><A NAME="parameters_to_the_new___construc">PARAMETERS TO THE <code>new()</code> CONSTRUCTOR</a></h1>
 <dl>
-<dt><strong><A NAME="item_apache_status_title">apache_status_title</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_apache_status_title">apache_status_title</a></strong>
+
 <dd>
-Title that you want this ApacheHandler to appear as under
+<p>Title that you want this ApacheHandler to appear as under
 Apache::Status.  Default is ``HTML::Mason status''.  This is useful if
 you create more than one ApacheHandler object and want them all
-visible via Apache::Status.
+visible via Apache::Status.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_args_method">args_method</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_args_method">args_method</a></strong>
+
 <dd>
-Method to use for unpacking GET and POST arguments. The valid options
+<p>Method to use for unpacking GET and POST arguments. The valid options
 are 'CGI' and 'mod_perl'; these indicate that a <code>CGI.pm</code> or
 <code>Apache::Request</code> object (respectively) will be created for the
-purposes of argument handling.
+purposes of argument handling.</p>
 </dd>
 <dd>
 <p>'mod_perl' is the default under mod_perl-1 and requires that you have 
@@ -90,30 +92,31 @@ object used for argument processing.</p>
 is recommended that you preload the relevant module either in your
 <em>httpd.conf</em> or <em>handler.pl</em> file, as this will save some memory.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_decline_dirs">decline_dirs</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_decline_dirs">decline_dirs</a></strong>
+
 <dd>
-True or false, default is true. Indicates whether Mason should decline
+<p>True or false, default is true. Indicates whether Mason should decline
 directory requests, leaving Apache to serve up a directory index or a
 <code>FORBIDDEN</code> error as appropriate. See the <A HREF="Admin.html#allowing_directory_requests">allowing directory requests</a> section of the administrator's manual
-for more information about handling directories with Mason.
+for more information about handling directories with Mason.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_interp">interp</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_interp">interp</a></strong>
+
 <dd>
-The interpreter object to associate with this compiler. By default a
-new object of the specified <A HREF="Params.html#interp_class">interp_class</a> will be created.
+<p>The interpreter object to associate with this compiler. By default a
+new object of the specified <A HREF="Params.html#interp_class">interp_class</a> will be created.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_interp_class">interp_class</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_interp_class">interp_class</a></strong>
+
 <dd>
-The class to use when creating a interpreter. Defaults to
-<a HREF="Interp.html">HTML::Mason::Interp</a>.
+<p>The class to use when creating a interpreter. Defaults to
+<a HREF="Interp.html">HTML::Mason::Interp</a>.</p>
 </dd>
-<p></p></dl>
+</li>
+</dl>
 <p>
 </p>
 <hr />
@@ -133,25 +136,25 @@ example:</p>
 <p>The ApacheHandler object has a few other publically accessible methods
 that may be of interest to end users.</p>
 <dl>
-<dt><strong><A NAME="item_handle_request">handle_request ($r)</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_handle_request">handle_request ($r)</a></strong>
+
 <dd>
-This method takes an Apache or Apache::Request object representing a
+<p>This method takes an Apache or Apache::Request object representing a
 request and translates that request into a form Mason can understand.
-Its return value is an Apache status code.
+Its return value is an Apache status code.</p>
 </dd>
 <dd>
 <p>Passing an Apache::Request object is useful if you want to set
 Apache::Request parameters, such as POST_MAX or DISABLE_UPLOADS.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_prepare_request">prepare_request ($r)</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_prepare_request">prepare_request ($r)</a></strong>
+
 <dd>
-This method takes an Apache object representing a request and returns
+<p>This method takes an Apache object representing a request and returns
 a new Mason request object or an Apache status code.  If it is a
 request object you can manipulate that object as you like, and then
-call the request object's <code>exec</code> method to have it generate output.
+call the request object's <code>exec</code> method to have it generate output.</p>
 </dd>
 <dd>
 <p>If this method returns an Apache status code, that means that it could
@@ -177,13 +180,13 @@ object.  For example:</p>
 <pre>
     $req-&gt;exec;</pre>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_request_args">request_args ($r)</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_request_args">request_args ($r)</a></strong>
+
 <dd>
-Given an Apache request object, this method returns a three item list.
+<p>Given an Apache request object, this method returns a three item list.
 The first item is a hash reference containing the arguments passed by
-the client's request.
+the client's request.</p>
 </dd>
 <dd>
 <p>The second is an Apache request object.  This is returned for
@@ -194,7 +197,8 @@ turning a plain Apache object into an Apache::Request object.</p>
 <p>The third item may be a CGI.pm object or <code>undef</code>, depending on the
 value of the <A HREF="Params.html#args_method">args_method</a> parameter.</p>
 </dd>
-<p></p></dl>
+</li>
+</dl>
 <p>
 </p>
 <hr />

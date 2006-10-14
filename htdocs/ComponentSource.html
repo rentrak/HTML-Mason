@@ -1,7 +1,9 @@
+<?xml version="1.0" ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <title>HTML::Mason::ComponentSource - represents information about an component</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rev="made" href="mailto:root@localhost" />
 </head>
 
@@ -41,25 +43,25 @@ source component, one that has yet to be compiled.</p>
 <hr />
 <h1><A NAME="methods">METHODS</a></h1>
 <dl>
-<dt><strong><A NAME="item_new">new</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_new">new</a></strong>
+
 <dd>
-This method takes the following arguments:
+<p>This method takes the following arguments:</p>
 </dd>
 <ul>
-<li><strong><A NAME="item_comp_path">comp_path</a></strong><br />
+<li><strong><A NAME="item_comp_path">comp_path</a></strong>
+
+<p>The component's component path.</p>
 </li>
-The component's component path.
-<p></p>
-<li><strong><A NAME="item_last_modified">last_modified</a></strong><br />
+<li><strong><A NAME="item_last_modified">last_modified</a></strong>
+
+<p>This is the last modificatoin time for the component, in Unix time
+(seconds since the epoch).</p>
 </li>
-This is the last modificatoin time for the component, in Unix time
-(seconds since the epoch).
-<p></p>
-<li><strong><A NAME="item_comp_id">comp_id</a></strong><br />
-</li>
-This is a unique id for the component used to distinguish two
-components with the same name in different component roots.
+<li><strong><A NAME="item_comp_id">comp_id</a></strong>
+
+<p>This is a unique id for the component used to distinguish two
+components with the same name in different component roots.</p>
 <p>If your resolver does not support multiple component roots, this can
 simply be the same as the ``comp_path'' key or it can be any other id
 you wish.</p>
@@ -71,69 +73,71 @@ filesystem-specific path separator.</p>
 some forward slashes in them or also <strong>all</strong> of your generated object
 files will end up in a single directory, which could affect
 performance.</p>
-<p></p>
-<li><strong><A NAME="item_comp_class">comp_class</a></strong><br />
 </li>
-The component class into which this particular component should be
+<li><strong><A NAME="item_comp_class">comp_class</a></strong>
+
+<p>The component class into which this particular component should be
 blessed when it is created.  This must be a subclass of
-<code>HTML::Mason::Component</code>, which is the default.
-<p></p>
-<li><strong><A NAME="item_friendly_name">friendly_name</a></strong><br />
+<code>HTML::Mason::Component</code>, which is the default.</p>
 </li>
-This is used when displaying error messages related to the component,
+<li><strong><A NAME="item_friendly_name">friendly_name</a></strong>
+
+<p>This is used when displaying error messages related to the component,
 like parsing errors.  This should be something that will help whoever
 sees the message identify the component.  For example, for component
 stored on the filesystem, this should be the absolute path to the
-component.
-<p></p>
-<li><strong><A NAME="item_source_callback">source_callback</a></strong><br />
+component.</p>
 </li>
-This is a subroutine reference which, when called, returns the
-component source.
+<li><strong><A NAME="item_source_callback">source_callback</a></strong>
+
+<p>This is a subroutine reference which, when called, returns the
+component source.</p>
 <p>The reasoning behind using this parameter is that it helps avoid a
 profusion of tiny little <code>HTML::Mason::ComponentSource</code> subclasses that
 don't do very much.</p>
-<p></p>
-<li><strong><A NAME="item_extra">extra</a></strong><br />
 </li>
-This optional parameter should be a hash reference.  It is used to
-pass information from the resolver to the component class.
+<li><strong><A NAME="item_extra">extra</a></strong>
+
+<p>This optional parameter should be a hash reference.  It is used to
+pass information from the resolver to the component class.</p>
 <p>This is needed since a
 <a HREF="Resolver.html"><code>HTML::Mason::Resolver</code></a> subclass and a
 <a HREF="Component.html"><code>HTML::Mason::Component</code></a> subclass can be
 rather tightly coupled, but they must communicate with each through
 the interpreter (this may change in the future).</p>
-<p></p></ul>
-<dt><strong>comp_path</strong><br />
-</dt>
-<dt><strong>last_modified</strong><br />
-</dt>
-<dt><strong>comp_id</strong><br />
-</dt>
-<dt><strong>comp_class</strong><br />
-</dt>
-<dt><strong>friendly_name</strong><br />
-</dt>
-<dt><strong>extra</strong><br />
-</dt>
+</li>
+</ul>
+<dt><strong>comp_path</strong>
+
+<dt><strong>last_modified</strong>
+
+<dt><strong>comp_id</strong>
+
+<dt><strong>comp_class</strong>
+
+<dt><strong>friendly_name</strong>
+
+<dt><strong>extra</strong>
+
 <dd>
-These are all simple accessors that return the value given to the
-constructor.
+<p>These are all simple accessors that return the value given to the
+constructor.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_comp_source">comp_source</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_comp_source">comp_source</a></strong>
+
 <dd>
-Returns the source of the component.
+<p>Returns the source of the component.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_object_code">object_code ( compiler =&gt; $compiler )</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_object_code">object_code ( compiler =&gt; $compiler )</a></strong>
+
 <dd>
-Given a compiler, this method returns the object code for the
-component.
+<p>Given a compiler, this method returns the object code for the
+component.</p>
 </dd>
-<p></p></dl>
+</li>
+</dl>
 <p><a HREF="Mason.html">HTML::Mason</a>,
 <a HREF="Admin.html">HTML::Mason::Admin</a>,
 <a HREF="Component.html">HTML::Mason::Component</a></p>

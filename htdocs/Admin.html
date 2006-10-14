@@ -1,7 +1,9 @@
+<?xml version="1.0" ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <title>HTML::Mason::Admin - Mason Administrator's Manual</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rev="made" href="mailto:root@localhost" />
 </head>
 
@@ -132,23 +134,24 @@ mod_perl to hand content requests to this module, you can use Mason to
 generate web pages.  There are two ways to configure Mason under
 mod_perl.</p>
 <ul>
-<li><strong><A NAME="item_basic">Basic</a></strong><br />
-</li>
-Mason provides reasonable default behavior under mod_perl, so using
+<li><strong><A NAME="item_basic">Basic</a></strong>
+
+<p>Mason provides reasonable default behavior under mod_perl, so using
 Mason can be as simple as adding two directives to your Apache
 configuration file.  Throughout this document, we will assume that
 your Apache configuration file is called <em>httpd.conf</em>.  By adding
 more configuration parameters to this file you can implement more
-complex behaviors.
-<p></p>
-<li><strong><A NAME="item_advanced">Advanced</a></strong><br />
+complex behaviors.</p>
 </li>
-If the basic method does not provide enough flexibility for you, you
+<li><strong><A NAME="item_advanced">Advanced</a></strong>
+
+<p>If the basic method does not provide enough flexibility for you, you
 can wrap Mason in a custom mod_perl handler.  The wrapper code you
 write can create its own Mason objects, or it can take advantage of
 <em>httpd.conf</em> configuration parameters and let Mason create the
-objects it needs by itself.
-<p></p></ul>
+objects it needs by itself.</p>
+</li>
+</ul>
 <p>We recommend that you start with the basic method and work your way
 forward as the need for flexibility arises.</p>
 <p>Mason is very flexible, and you can replace parts of it by creating
@@ -185,19 +188,20 @@ rest of the document for further possibilities.</p>
 <p>As it turns out, serving every URL through Mason is a bad idea for two
 reasons:</p>
 <ol>
-<li></li>
-Mason should be prevented from handling images, tarballs, and other
+<li>
+<p>Mason should be prevented from handling images, tarballs, and other
 binary files. Not only will performance suffer, but binary files may
 inadvertently contain a Mason character sequence such as ``&lt;%''. These
-files should be instead served by Apache's default content handler.
-<p></p>
-<li></li>
-Mason should be prevented from serving private (non-top-level) Mason
+files should be instead served by Apache's default content handler.</p>
+</li>
+<li>
+<p>Mason should be prevented from serving private (non-top-level) Mason
 components to users. For example, if you used a utility component for
 performing arbitrary sql queries, you wouldn't want external users to
 be able to access it via a URL. Requests for private components should
-simply result in a 404 NOT_FOUND.
-<p></p></ol>
+simply result in a 404 NOT_FOUND.</p>
+</li>
+</ol>
 <p>The easiest way to distinguish between different types of files is
 with filename extensions. While many naming schemes are possible, we
 suggest using ``normal'' extensions for top-level components and
@@ -243,48 +247,49 @@ and <code>PerlAddVar</code> directives.  Though these parameters are all strings
 in your <em>httpd.conf</em> file, Mason treats different directives as
 containing different types of values:</p>
 <ul>
-<li><strong><A NAME="item_string">string</a></strong><br />
-</li>
-The variable's value is simply taken literally and used.  The string
+<li><strong><A NAME="item_string">string</a></strong>
+
+<p>The variable's value is simply taken literally and used.  The string
 should be surrounded by quotes if the it contains whitespace.  The
 quotes will be automatically removed by Apache before Mason sees the
-variable.
-<p></p>
-<li><strong><A NAME="item_boolean">boolean</a></strong><br />
+variable.</p>
 </li>
-The variable's value is used as a boolean, and is subject to Perl's
+<li><strong><A NAME="item_boolean">boolean</a></strong>
+
+<p>The variable's value is used as a boolean, and is subject to Perl's
 rules on truth/falseness.  It is recommended that you use 0 (false) or
-1 (true) for these arguments.
-<p></p>
-<li><strong><A NAME="item_code">code</a></strong><br />
+1 (true) for these arguments.</p>
 </li>
-The string is treated as a piece of code and <code>eval</code>'ed.  This is used
+<li><strong><A NAME="item_code">code</a></strong>
+
+<p>The string is treated as a piece of code and <code>eval</code>'ed.  This is used
 for parameters that expect subroutine references.  For example, an
-anonymous subroutine might look like:
+anonymous subroutine might look like:</p>
 <pre>
  PerlSetVar  MasonOutMode  &quot;sub { ... }&quot;</pre>
 <p>A named subroutine reference would look like this:</p>
 <pre>
  PerlSetVar  MasonOutMode  &quot;\&amp;Some::Module::handle_output&quot;</pre>
-<p></p>
-<li><strong><A NAME="item_list">list</a></strong><br />
 </li>
-To set a list parameter, use <code>PerlAddVar</code> for the values, like this:
+<li><strong><A NAME="item_list">list</a></strong>
+
+<p>To set a list parameter, use <code>PerlAddVar</code> for the values, like this:</p>
 <pre>
  PerlAddVar  MasonPreloads  /foo/bar/baz.comp
  PerlAddVar  MasonPreloads  /foo/bar/quux.comp</pre>
-<p></p>
-<li><strong><A NAME="item_hash_list">hash_list</a></strong><br />
 </li>
-Just like a list parameter, use <code>PerlAddVar</code> for the values.
+<li><strong><A NAME="item_hash_list">hash_list</a></strong>
+
+<p>Just like a list parameter, use <code>PerlAddVar</code> for the values.
 However, in the case of a hash_list, each element should be a
-key/value pair separated by ``=&gt;'':
+key/value pair separated by ``=&gt;'':</p>
 <pre>
  PerlAddVar  MasonDataCacheDefaults  &quot;cache_class =&gt; MemoryCache&quot;
  PerlAddVar  MasonDataCacheDefaults  &quot;namespace =&gt; foo&quot;</pre>
 <p>Take note that the right hand side of the each pair should <em>not</em> be
 quoted.</p>
-<p></p></ul>
+</li>
+</ul>
 <p>See <a HREF="Params.html">HTML::Mason::Params</a> for a full list
 of parameters, and their associated types.</p>
 <p>
@@ -336,20 +341,21 @@ permissions according to the web server User/Group.</p>
 <p>Components will often need access to external Perl modules. There are
 several ways to load them.</p>
 <ul>
-<li></li>
-The httpd PerlModule directive:
+<li>
+<p>The httpd PerlModule directive:</p>
 <pre>
     PerlModule CGI
     PerlModule LWP</pre>
-<p></p>
-<li></li>
-In the <code>&lt;%once&gt;</code> section of the <code>component(s)</code> that use the module.
+</li>
+<li>
+<p>In the <code>&lt;%once&gt;</code> section of the <code>component(s)</code> that use the module.</p>
 <pre>
     &lt;%once&gt;
     use CGI ':standard';
     use LWP;
     &lt;/%once&gt;</pre>
-<p></p></ul>
+</li>
+</ul>
 <p>Each method has its own trade-offs:</p>
 <p>The first method ensures that the module will be loaded by the Apache
 parent process at startup time, saving time and memory.  The second
@@ -758,24 +764,24 @@ module.  For full understanding of this section you should read the
 documentation for <code>Cache::Cache</code> as well as for relevant subclasses
 (e.g. <code>Cache::FileCache</code>).</p>
 <dl>
-<dt><strong><A NAME="item_cache_files">Cache files</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_cache_files">Cache files</a></strong>
+
 <dd>
-By default, <code>Cache::FileCache</code> is the subclass used for data caching,
+<p>By default, <code>Cache::FileCache</code> is the subclass used for data caching,
 although this may be overriden by the developer. <code>Cache::FileCache</code>
 creates a separate subdirectory for every component that uses caching,
 and one file some number of levels underneath that subdirectory for
 each cached item.  The root of the cache tree is
 <A HREF="Params.html#data_dir">data_dir</a>/<code>cache</code>. The name of the cache subdirectory for a component
-is determined by the function <code>HTML::Mason::Utils::data_cache_namespace</code>.
+is determined by the function <code>HTML::Mason::Utils::data_cache_namespace</code>.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_default_constructor_options">Default constructor options</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_default_constructor_options">Default constructor options</a></strong>
+
 <dd>
-Ordinarily, when <code>$m-&gt;cache</code> is called, Mason passes to the cache
+<p>Ordinarily, when <code>$m-&gt;cache</code> is called, Mason passes to the cache
 constructor the <code>namespace</code>, and <code>cache_root</code> options, along with
-any other options given in the <code>$m-&gt;cache</code> method.
+any other options given in the <code>$m-&gt;cache</code> method.</p>
 </dd>
 <dd>
 <p>You may specify other default constructor options with the
@@ -791,15 +797,16 @@ any other options given in the <code>$m-&gt;cache</code> method.
 <p>Any options passed to individual <code>$m-&gt;cache</code> calls override these
 defaults.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_disabling_data_caching">Disabling data caching</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_disabling_data_caching">Disabling data caching</a></strong>
+
 <dd>
-If for some reason you want to disable data caching entirely, set the
+<p>If for some reason you want to disable data caching entirely, set the
 default <code>cache_class</code> to ``NullCache''.  This subclass faithfully
-implements the cache API but never stores data.
+implements the cache API but never stores data.</p>
 </dd>
-<p></p></dl>
+</li>
+</dl>
 <p>
 </p>
 <hr />
@@ -851,12 +858,12 @@ source file changes.</p>
 <ul>
 <li><strong><A NAME="item_the_compiler_object_id_7cht">the compiler <A HREF="Compiler.html#item_object_id">object_id</a> -
 this prevents different versions of Mason or compilers from using the same
-object file, such as after an upgrade</a></strong><br />
-</li>
-<li><strong><A NAME="item_the_component_path">the component path</a></strong><br />
-</li>
-<li><strong><A NAME="item_object_file_extension_7chtm"><A HREF="Params.html#object_file_extension">object_file_extension</a>, by default ``.obj''</a></strong><br />
-</li>
+object file, such as after an upgrade</a></strong>
+
+<li><strong><A NAME="item_the_component_path">the component path</a></strong>
+
+<li><strong><A NAME="item_object_file_extension_7chtm"><A HREF="Params.html#object_file_extension">object_file_extension</a>, by default ``.obj''</a></strong>
+
 </ul>
 <p>Besides improving performance, object files can be useful for
 debugging.  If you feel the need to see what your source has been
@@ -907,21 +914,22 @@ process, rather than loading them on demand, using the <A HREF="Params.html#prel
 parameter.  Each child server will start with those components loaded
 in the memory cache. The trade-offs are:</p>
 <dl>
-<dt><strong><A NAME="item_time">time</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_time">time</a></strong>
+
 <dd>
-a small one-time startup cost, but children save time by not
-having to load the components
+<p>a small one-time startup cost, but children save time by not
+having to load the components</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_memory">memory</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_memory">memory</a></strong>
+
 <dd>
-a fatter initial server, but the memory for preloaded components are
+<p>a fatter initial server, but the memory for preloaded components are
 shared by all children.  This is similar to the advantage of using
-modules only in the parent process.
+modules only in the parent process.</p>
 </dd>
-<p></p></dl>
+</li>
+</dl>
 <p>Try to preload components that are used frequently and do not change
 often.  (If a preloaded component changes, all the children will have
 to reload it from scratch.)</p>
@@ -937,13 +945,14 @@ number of reallocations Perl performs as components output text.</p>
 <h1><A NAME="error_reporting_and_exceptions">ERROR REPORTING AND EXCEPTIONS</a></h1>
 <p>When an error occurs, Mason can respond by:</p>
 <ul>
-<li></li>
-showing a detailed error message in the browser in HTML.
-<p></p>
-<li></li>
-die'ing, which sends a 500 status to the browser and lets the error
-message go to the error logs.
-<p></p></ul>
+<li>
+<p>showing a detailed error message in the browser in HTML.</p>
+</li>
+<li>
+<p>die'ing, which sends a 500 status to the browser and lets the error
+message go to the error logs.</p>
+</li>
+</ul>
 <p>The first behavior is ideal for development, where you want immediate
 feedback on the error.  The second behavior is usually desired for
 production so that users are not exposed to messy error messages.  You

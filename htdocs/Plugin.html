@@ -1,7 +1,9 @@
+<?xml version="1.0" ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <title>HTML::Mason::Plugin - Plugin Base class for Mason</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rev="made" href="mailto:root@localhost" />
 </head>
 
@@ -74,11 +76,11 @@ and <em>end_component_hook</em>.</p>
 <p>Every hook receives two arguments: the plugin object itself,
 and a context object with various methods.</p>
 <dl>
-<dt><strong><A NAME="item_start_request_hook">start_request_hook</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_start_request_hook">start_request_hook</a></strong>
+
 <dd>
-<A HREF="#item_start_request_hook"><code>start_request_hook</code></a> is called before the Mason request begins
-execution.  Its context has the following read-only methods:
+<p><A HREF="#item_start_request_hook"><code>start_request_hook</code></a> is called before the Mason request begins
+execution.  Its context has the following read-only methods:</p>
 </dd>
 <dd>
 <pre>
@@ -111,12 +113,12 @@ subrequests by checking <code>is_subrequest</code> on <em>request</em>. e.g.</p>
 requested component is available, so you cannot call methods like
 <code>base_comp()</code> or <code>request_args()</code> on the Request object.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_end_request_hook">end_request_hook</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_end_request_hook">end_request_hook</a></strong>
+
 <dd>
-<A HREF="#item_end_request_hook"><code>end_request_hook</code></a> is called before the Mason request
-exits. Its context has the following read-only methods:
+<p><A HREF="#item_end_request_hook"><code>end_request_hook</code></a> is called before the Mason request
+exits. Its context has the following read-only methods:</p>
 </dd>
 <dd>
 <pre>
@@ -138,12 +140,12 @@ return value is the the first element of that array. The plugin may
 modify <em>output</em> to affect what the request outputs, and 
 <em>result</em> and <em>error</em> to affect what the request returns.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_start_component_hook">start_component_hook</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_start_component_hook">start_component_hook</a></strong>
+
 <dd>
-<A HREF="#item_start_component_hook"><code>start_component_hook</code></a> is called before a component begins
-executing. Its context has the following read-only methods:
+<p><A HREF="#item_start_component_hook"><code>start_component_hook</code></a> is called before a component begins
+executing. Its context has the following read-only methods:</p>
 </dd>
 <dd>
 <pre>
@@ -154,12 +156,12 @@ executing. Its context has the following read-only methods:
 <dd>
 <p>The plugin may NOT modify <em>args</em> currently.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_end_component_hook">end_component_hook</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_end_component_hook">end_component_hook</a></strong>
+
 <dd>
-<A HREF="#item_end_component_hook"><code>end_component_hook()</code></a> is called after a component has
-completed. Its context has the following read-only methods:
+<p><A HREF="#item_end_component_hook"><code>end_component_hook()</code></a> is called after a component has
+completed. Its context has the following read-only methods:</p>
 </dd>
 <dd>
 <pre>
@@ -181,7 +183,8 @@ returns.</p>
 output as well as its return value, but this is currently impossible
 because output from multiple components combine into a single buffer.</p>
 </dd>
-<p></p></dl>
+</li>
+</dl>
 <p>
 </p>
 <hr />

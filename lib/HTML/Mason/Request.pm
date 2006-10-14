@@ -52,6 +52,7 @@ use constant STACK_DEPTH        => 5;
 use constant STACK_BASE_COMP    => 6;
 use constant STACK_IN_CALL_SELF => 7;
 use constant STACK_BUFFER_IS_FLUSHABLE => 8;
+use constant STACK_HIDDEN_BUFFER => 9;
 
 # HTML::Mason::Exceptions always exports rethrow_exception() and isa_mason_exception()
 use HTML::Mason::Exceptions( abbr => [qw(error param_error syntax_error
@@ -912,7 +913,7 @@ sub call_next {
     my ($self,@extra_args) = @_;
     my $comp = $self->fetch_next
         or error "call_next: no next component to invoke";
-    return $self->comp($comp, @{$self->current_args}, @extra_args);
+    return $self->comp({base_comp=>$self->request_comp}, $comp, @{$self->current_args}, @extra_args);
 }
 
 sub caller
@@ -1284,8 +1285,12 @@ sub comp {
         }
     }
 
+    # This is very important in order to avoid memory leaks, since we
+    # stick the arguments on the stack. If we don't pop the stack,
+    # they don't get cleaned up until the component exits.
+    pop @{ $self->{stack} };
+
     # Repropagate error if one occurred, otherwise return result.
-    # 
     rethrow_exception $error if $error;
     return $wantarray ? @result : $result[0];
 }
@@ -1315,10 +1320,13 @@ sub content {
     #
     my $buffer;
     my $save_frame = $self->{top_stack};
-    { local $self->{top_stack} = $self->{stack}->[$self->{top_stack}->[STACK_DEPTH]-2];
-      local $self->{top_stack}->[STACK_BUFFER] = \$buffer;
-      local $self->{top_stack}->[STACK_BUFFER_IS_FLUSHABLE] = 0;
-      $content->(); }
+    {
+        local $self->{top_stack} = $self->_stack_frame(1);
+        local $self->{top_stack}->[STACK_BUFFER] = \$buffer;
+        local $self->{top_stack}->[STACK_BUFFER_IS_FLUSHABLE] = 0;
+        local $self->{top_stack}->[STACK_HIDDEN_BUFFER] = $save_frame->[STACK_BUFFER];
+        $content->();
+    }
     $self->{top_stack} = $save_frame;
 
     # Return the output from the content routine.
@@ -1343,6 +1351,8 @@ sub clear_buffer
     foreach my $frame (@{$self->{stack}}) {
         my $bufref = $frame->[STACK_BUFFER];
         $$bufref = '';
+        $bufref = $frame->[STACK_HIDDEN_BUFFER];
+        $$bufref = '' if $bufref;
     }
 }
 

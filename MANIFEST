@@ -82,6 +82,8 @@ t/18-leak.t
 t/19-subrequest.t
 t/20-plugins.t
 t/21-escapes.t
+t/22-path-security.t
+t/23-leak2.t
 t/99-pod.t
 t/lib/Apache/test.pm
 t/live_server_lib.pl

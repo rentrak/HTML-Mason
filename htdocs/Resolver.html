@@ -1,7 +1,9 @@
+<?xml version="1.0" ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <title>HTML::Mason::Resolver - Component path resolver base class</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rev="made" href="mailto:root@localhost" />
 </head>
 
@@ -65,36 +67,37 @@ do not need to subclass it yourself.</p>
 <p>If you are interested in creating a resolver subclass, you must
 implement the following methods.</p>
 <dl>
-<dt><strong><A NAME="item_new">new</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_new">new</a></strong>
+
 <dd>
-This method is optional.  The new method included in this class is
+<p>This method is optional.  The new method included in this class is
 simply inherited from <code>Class::Container</code>.
 If you need something more complicated done in your new method you
-will need to override it in your subclass.
+will need to override it in your subclass.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_get_info">get_info</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_get_info">get_info</a></strong>
+
 <dd>
-Takes three arguments: an absolute component path, a component root key,
+<p>Takes three arguments: an absolute component path, a component root key,
 and a component root path. Returns a new
-<a HREF="ComponentSource.html">HTML::Mason::ComponentSource</a> object.
+<a HREF="ComponentSource.html">HTML::Mason::ComponentSource</a> object.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_glob_path">glob_path</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_glob_path">glob_path</a></strong>
+
 <dd>
-Takes two arguments: a path glob pattern, something
+<p>Takes two arguments: a path glob pattern, something
 like ``/foo/*'' or ``/foo/*/bar'', and a component root path. Returns
-a list of component paths for components which match this glob pattern.
+a list of component paths for components which match this glob pattern.</p>
 </dd>
 <dd>
 <p>For example, the filesystem resolver simply appends this pattern to
 the component root path and calls the Perl <code>glob()</code> function to
 find matching files on the filesystem.</p>
 </dd>
-<p></p></dl>
+</li>
+</dl>
 <p>
 </p>
 <h2><A NAME="using_a_resolver_with_html__maso">Using a Resolver with HTML::Mason::ApacheHandler</a></h2>
@@ -102,18 +105,19 @@ find matching files on the filesystem.</p>
 <a HREF="ApacheHandler.html">HTML::Mason::ApacheHandler</a> module, then
 you must implement the following method as well.</p>
 <dl>
-<dt><strong><A NAME="item_apache_request_to_comp_path">apache_request_to_comp_path ($r, @comp_root_array)</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_apache_request_to_comp_path">apache_request_to_comp_path ($r, @comp_root_array)</a></strong>
+
 <dd>
-This method, given an Apache object and a list of component root pairs,
+<p>This method, given an Apache object and a list of component root pairs,
 should return a component path or undef if none exists.
 This method is used by the
 <a HREF="ApacheHandler.html">HTML::Mason::ApacheHandler</a> class to
 translate web requests into component paths.  You can omit this method
 if your resolver subclass will never be used in conjunction with
-<a HREF="ApacheHandler.html">HTML::Mason::ApacheHandler</a>.
+<a HREF="ApacheHandler.html">HTML::Mason::ApacheHandler</a>.</p>
 </dd>
-<p></p></dl>
+</li>
+</dl>
 <p>
 </p>
 <hr />

@@ -1,7 +1,9 @@
+<?xml version="1.0" ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <title>HTML::Mason::Devel - Mason Developer's Manual</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rev="made" href="mailto:root@localhost" />
 </head>
 
@@ -274,23 +276,24 @@ execute in the order they appear. Other sections (<code>&lt;%init&gt;</code>,
 cleanup, and argument definition.</p>
 <p>The parsing rules for these Perl sections are as follows:</p>
 <ol>
-<li></li>
-Blocks of the form &lt;% xxx %&gt; are replaced with the result of
+<li>
+<p>Blocks of the form &lt;% xxx %&gt; are replaced with the result of
 evaluating xxx as a single Perl expression.  These are often used for
-variable replacement. such as 'Hello, &lt;% $name %&gt;!'.
-<p></p>
-<li></li>
-Lines beginning with a '%' character are treated as Perl.
-<p></p>
-<li></li>
-Multiline blocks of Perl code can be inserted with the <code>&lt;%perl&gt;</code>
+variable replacement. such as 'Hello, &lt;% $name %&gt;!'.</p>
+</li>
+<li>
+<p>Lines beginning with a '%' character are treated as Perl.</p>
+</li>
+<li>
+<p>Multiline blocks of Perl code can be inserted with the <code>&lt;%perl&gt;</code>
 .. <code>&lt;/%perl&gt;</code> tag. The enclosed text is executed as Perl and the return
-value, if any, is discarded.
+value, if any, is discarded.</p>
 <p>The <code>&lt;%perl&gt;</code> tag, like all block tags in Mason, is
 case-insensitive. It may appear anywhere in the text, and may span any
 number of lines. <code>&lt;%perl&gt;</code> blocks cannot be nested inside one
 another.</p>
-<p></p></ol>
+</li>
+</ol>
 <p>
 </p>
 <h2><A NAME="examples_and_recommended_usage">Examples and Recommended Usage</a></h2>
@@ -415,21 +418,22 @@ multiple components that call each other in a hierarchical fashion.</p>
 <pre>
     &lt;&amp; comp_path, [name=&gt;value, ...] &amp;&gt;</pre>
 <dl>
-<dt><strong><A NAME="item_comp_path_3a">comp_path:</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_comp_path_3a">comp_path:</a></strong>
+
 <dd>
-The component path. With a leading '/', the path is relative to the
+<p>The component path. With a leading '/', the path is relative to the
 component root (<A HREF="Params.html#comp_root">comp_root</a>). Otherwise, it is relative to the
-location of the calling component.
+location of the calling component.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_name__3d_3e_value_pairs_3a">name =&gt; value pairs:</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_name__3d_3e_value_pairs_3a">name =&gt; value pairs:</a></strong>
+
 <dd>
-Parameters are passed as one or more <code>name =&gt; value</code> pairs,
-e.g. <code>player&nbsp;=&gt;&nbsp;'M.&nbsp;Jordan'</code>.
+<p>Parameters are passed as one or more <code>name =&gt; value</code> pairs,
+e.g. <code>player&nbsp;=&gt;&nbsp;'M.&nbsp;Jordan'</code>.</p>
 </dd>
-<p></p></dl>
+</li>
+</dl>
 <p>comp_path may be a literal string (quotes optional) or a Perl expression
 that evaluates to a string. To eliminate the need for quotes in most
 cases, Mason employs some magic parsing: If the first character is
@@ -617,20 +621,21 @@ components may also be used to return values.</p>
 to put code like this in modules instead.  There are several reasons
 why this is a good idea:</p>
 <ul>
-<li></li>
-You can re-use this code outside of Mason.
-<p></p>
-<li></li>
-It is easy to preload module code when running under mod_perl, which
-can lower memory usage.
-<p></p>
-<li></li>
-Using Mason components as subroutines is slower than just using
-modules to do the same thing.
-<p></p>
-<li></li>
-It's easier to regression test module code.
-<p></p></ul>
+<li>
+<p>You can re-use this code outside of Mason.</p>
+</li>
+<li>
+<p>It is easy to preload module code when running under mod_perl, which
+can lower memory usage.</p>
+</li>
+<li>
+<p>Using Mason components as subroutines is slower than just using
+modules to do the same thing.</p>
+</li>
+<li>
+<p>It's easier to regression test module code.</p>
+</li>
+</ul>
 <p>With that being said, there are times when you may want to write a
 component which returns a value.</p>
 <p>As an example, you might have a component <code>is_netscape</code> that analyzes
@@ -1339,17 +1344,18 @@ recomend this for comments per se, it is a useful notation for
 <code>&lt;!-- --&gt;</code>. Note two important differences with these comments versus the
 above comments:</p>
 <ul>
-<li></li>
-They will be sent to the client and appear in the source of the page.
-<p></p>
-<li></li>
-They do not block component calls and other code from running,
-so don't try to use them to comment out code!
+<li>
+<p>They will be sent to the client and appear in the source of the page.</p>
+</li>
+<li>
+<p>They do not block component calls and other code from running,
+so don't try to use them to comment out code!</p>
 <pre>
    &lt;!-- Oops, the code below will still run
       &lt;&amp; /shared/expensive.mhtml &amp;&gt;
    --&gt;</pre>
-<p></p></ul>
+</li>
+</ul>
 <p>
 </p>
 <hr />
@@ -1380,23 +1386,24 @@ escape flags (plus arbitrary whitespace), separated by commas:</p>
     &lt;% $file_data |h %&gt;</pre>
 <p>The current valid flags are:</p>
 <ul>
-<li><strong><A NAME="item_h">h</a></strong><br />
-</li>
-Escape HTML ('&lt;' =&gt; '&amp;lt;', etc.) using <code>HTML::Entities::encode()</code>.
+<li><strong><A NAME="item_h">h</a></strong>
+
+<p>Escape HTML ('&lt;' =&gt; '&amp;lt;', etc.) using <code>HTML::Entities::encode()</code>.
 Before Perl 5.8.0 this module assumes that text is in the ISO-8859-1
 character set; see <A HREF="Devel.html#userdefined_escapes">the next section</a> for how to override this escaping. After 5.8.0, the encoding
-assumes that text is in Unicode.
-<p></p>
-<li><strong><A NAME="item_u">u</a></strong><br />
+assumes that text is in Unicode.</p>
 </li>
-Escape a URL query string (':' =&gt; '%3A', etc.) - all but
-[a-zA-Z0-9_.-]
-<p></p>
-<li><strong><A NAME="item_n">n</a></strong><br />
+<li><strong><A NAME="item_u">u</a></strong>
+
+<p>Escape a URL query string (':' =&gt; '%3A', etc.) - all but
+[a-zA-Z0-9_.-]</p>
 </li>
-This is a special flag indicating that the default escape flags should
-<em>not</em> be used for this substitution.
-<p></p></ul>
+<li><strong><A NAME="item_n">n</a></strong>
+
+<p>This is a special flag indicating that the default escape flags should
+<em>not</em> be used for this substitution.</p>
+</li>
+</ul>
 <p>The administrator may specify a set of default escape flags via the
 <A HREF="Params.html#default_escape_flags">default_escape_flags</a> parameter. For example, if the administrator
 sets <A HREF="Params.html#default_escape_flags">default_escape_flags</a> to <code>['h']</code>, then all &lt;% %&gt; expressions
@@ -1645,16 +1652,17 @@ components with the <A HREF="Params.html#data_cache_defaults">data_cache_default
 <p>To access a component's cache from outside the component (e.g. in an
 external Perl script), you'll need have the following information:</p>
 <ul>
-<li></li>
-the namespace associated with the component. The function
+<li>
+<p>the namespace associated with the component. The function
 <code>HTML::Mason::Utils::data_cache_namespace</code>,
 given a component id (usually just the component path), returns the
-namespace.
-<p></p>
-<li></li>
-the cache_root, for file-based caches only. Defaults to the
-``cache'' subdirectory under the Mason data directory.
-<p></p></ul>
+namespace.</p>
+</li>
+<li>
+<p>the cache_root, for file-based caches only. Defaults to the
+``cache'' subdirectory under the Mason data directory.</p>
+</li>
+</ul>
 <p>Given this information you can get a handle on the component's cache.
 For example, the following code removes a cache item for component
 <em>/foo/bar</em>, assuming the data directory is <em>/usr/local/www/mason</em>
@@ -1911,19 +1919,20 @@ component.  Whenever a component call is executed, the base component
 may become the component that was called.  The base component will
 change for all component calls <strong>except</strong> in the following cases:</p>
 <ul>
-<li></li>
-A component is called via its component object rather than its path,
-for example:
+<li>
+<p>A component is called via its component object rather than its path,
+for example:</p>
 <pre>
   &lt;&amp; $m-&gt;fetch_comp('/some/comp'), foo =&gt; 1 &amp;&gt;</pre>
-<p></p>
-<li></li>
-A subcomponent (defined with <code>&lt;%def&gt;</code>) is called.
-<p></p>
-<li></li>
-A method is called via the use of <code>SELF:</code>, <code>PARENT:</code>, or
-<code>REQUEST:</code>.  These are covered in more detail below.
-<p></p></ul>
+</li>
+<li>
+<p>A subcomponent (defined with <code>&lt;%def&gt;</code>) is called.</p>
+</li>
+<li>
+<p>A method is called via the use of <code>SELF:</code>, <code>PARENT:</code>, or
+<code>REQUEST:</code>.  These are covered in more detail below.</p>
+</li>
+</ul>
 <p>In all other cases, the base component is the called component or the
 called component's owner component if that called component is a
 method.</p>
@@ -2062,13 +2071,13 @@ a primary section for the body.</p>
 <hr />
 <h1><A NAME="common_traps">COMMON TRAPS</a></h1>
 <dl>
-<dt><strong><A NAME="item_content">Do not call $r-&gt;content or ``new CGI''</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_content">Do not call $r-&gt;content or ``new CGI''</a></strong>
+
 <dd>
-Mason calls <A HREF="#item_content"><code>$r-&gt;content</code></a> itself to read request input, emptying
+<p>Mason calls <A HREF="#item_content"><code>$r-&gt;content</code></a> itself to read request input, emptying
 the input buffer and leaving a trap for the unwary: subsequent calls
 to <A HREF="#item_content"><code>$r-&gt;content</code></a> hang the server. This is a mod_perl ``feature'' that
-may be fixed in an upcoming release.
+may be fixed in an upcoming release.</p>
 </dd>
 <dd>
 <p>For the same reason you should not create a CGI object like</p>
@@ -2094,7 +2103,8 @@ initialize the object from %ARGS:</p>
 <pre>
   my $query = new CGI (\%ARGS);</pre>
 </dd>
-<p></p></dl>
+</li>
+</dl>
 <p>
 </p>
 <hr />

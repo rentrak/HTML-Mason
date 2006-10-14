@@ -1,7 +1,9 @@
+<?xml version="1.0" ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <title>HTML::Mason::Interp - Mason Component Interpreter</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rev="made" href="mailto:root@localhost" />
 </head>
 
@@ -50,31 +52,31 @@ the only user method is the <code>new()</code> constructor.</p>
 <hr />
 <h1><A NAME="parameters_to_the_new___construc">PARAMETERS TO THE <code>new()</code> CONSTRUCTOR</a></h1>
 <dl>
-<dt><strong><A NAME="item_autohandler_name">autohandler_name</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_autohandler_name">autohandler_name</a></strong>
+
 <dd>
-File name used for
+<p>File name used for
 <A HREF="Devel.html#autohandlers">autohandlers</a>. Default is
 ``autohandler''.  If this is set to an empty string (``'') then
-autohandlers are turned off entirely.
+autohandlers are turned off entirely.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_buffer_preallocate_size">buffer_preallocate_size</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_buffer_preallocate_size">buffer_preallocate_size</a></strong>
+
 <A NAME="item_buffer_preallocate_size"></a><p>Number of bytes to preallocate in the output buffer for each request.
 Defaults to 0. Setting this to, say, your maximum page size (or close
 to it) can reduce the number of reallocations Perl performs as
 components add to the output buffer.</p>
-<dt><strong><A NAME="item_code_cache_max_size">code_cache_max_size</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_code_cache_max_size">code_cache_max_size</a></strong>
+
 <A NAME="item_code_cache_max_size"></a><p>Specifies the maximum number of components that should be held in the
 in-memory code cache. The default is 'unlimited', meaning no
 components will ever be discarded; Mason can perform certain
 optimizations in this mode. Setting this to zero disables the code
 cache entirely. See the <A HREF="Admin.html#code_cache">code cache</a>
 section of the administrator's manual for further details.</p>
-<dt><strong><A NAME="item_comp_root">comp_root</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_comp_root">comp_root</a></strong>
+
 <A NAME="item_comp_root"></a><p>The component root marks the top of your component hierarchy and
 defines how component paths are translated into real file paths. For
 example, if your component root is <em>/usr/local/httpd/docs</em>, a component
@@ -124,27 +126,27 @@ if the initial component root is</p>
 already-used key/path pair. The reason for this restriction is that
 the interpreter maintains a component cache per key that would become
 invalid if the associated paths were to change.</p>
-<dt><strong><A NAME="item_compiler">compiler</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_compiler">compiler</a></strong>
+
 <dd>
-The Compiler object to associate with this Interpreter.  By default a
-new object of class <A HREF="Params.html#compiler_class">compiler_class</a> will be created.
+<p>The Compiler object to associate with this Interpreter.  By default a
+new object of class <A HREF="Params.html#compiler_class">compiler_class</a> will be created.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_compiler_class">compiler_class</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_compiler_class">compiler_class</a></strong>
+
 <dd>
-The class to use when creating a compiler. Defaults to
-<a HREF="Compiler.html">HTML::Mason::Compiler</a>.
+<p>The class to use when creating a compiler. Defaults to
+<a HREF="Compiler.html">HTML::Mason::Compiler</a>.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_data_dir">data_dir</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_data_dir">data_dir</a></strong>
+
 <dd>
-The data directory is a writable directory that Mason uses for various
+<p>The data directory is a writable directory that Mason uses for various
 features and optimizations: for example, component object files and
 data cache files. Mason will create the directory on startup, if necessary, and set its
-permissions according to the web server User/Group.
+permissions according to the web server User/Group.</p>
 </dd>
 <dd>
 <p>Under <a HREF="ApacheHandler.html">Apache</a>, data_dir defaults to a
@@ -158,29 +160,29 @@ unspecified, Mason will not use <A HREF="Admin.html#object_files">object files</
 <A HREF="Request.html#item_cache">data cache class</a> will be
 <code>MemoryCache</code> instead of <code>FileCache</code>.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_dynamic_comp_root">dynamic_comp_root</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_dynamic_comp_root">dynamic_comp_root</a></strong>
+
 <dd>
-True or false, defaults to false. Indicates whether the <A HREF="Params.html#comp_root">comp_root</a>
+<p>True or false, defaults to false. Indicates whether the <A HREF="Params.html#comp_root">comp_root</a>
 can be modified on this interpreter between requests. Mason can
 perform a few optimizations with a fixed component root, so you
-should only set this to true if you actually need it.
+should only set this to true if you actually need it.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_escape_flags">escape_flags</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_escape_flags">escape_flags</a></strong>
+
 <dd>
-A hash reference of escape flags to set for this object.  See the
-section on the <A HREF="Interp.html#item_set_escape">set_escape method</a> for more details.
+<p>A hash reference of escape flags to set for this object.  See the
+section on the <A HREF="Interp.html#item_set_escape">set_escape method</a> for more details.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_ignore_warnings_expr">ignore_warnings_expr</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_ignore_warnings_expr">ignore_warnings_expr</a></strong>
+
 <dd>
-Regular expression indicating which warnings to ignore when loading
+<p>Regular expression indicating which warnings to ignore when loading
 components. Any warning that is not ignored will prevent the
-component from being loaded and executed. For example:
+component from being loaded and executed. For example:</p>
 </dd>
 <dd>
 <pre>
@@ -196,18 +198,18 @@ are turned off completely as a specially optimized case.</p>
 to declare global subroutines inside &lt;%once&gt; sections and not receive
 an error when the component is reloaded.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_object_file_extension">object_file_extension</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_object_file_extension">object_file_extension</a></strong>
+
 <dd>
-Extension to add to the end of object files. Default is ``.obj''.
+<p>Extension to add to the end of object files. Default is ``.obj''.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_preloads">preloads</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_preloads">preloads</a></strong>
+
 <dd>
-A list of component paths, optionally with glob wildcards, to load
-when the interpreter initializes. e.g.
+<p>A list of component paths, optionally with glob wildcards, to load
+when the interpreter initializes. e.g.</p>
 </dd>
 <dd>
 <pre>
@@ -225,36 +227,36 @@ means that this section will be executed before a Mason or Apache
 request exist, so preloading a component that uses <code>$m</code> or <code>$r</code> in a
 <code>&lt;%once&gt;</code> section will fail.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_request_class">request_class</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_request_class">request_class</a></strong>
+
 <dd>
-The class to use when creating requests. Defaults to
-<a HREF="Request.html">HTML::Mason::Request</a>.
+<p>The class to use when creating requests. Defaults to
+<a HREF="Request.html">HTML::Mason::Request</a>.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_resolver">resolver</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_resolver">resolver</a></strong>
+
 <dd>
-The Resolver object to associate with this Compiler. By default a new
-object of class <A HREF="Params.html#resolver_class">resolver_class</a> will be created.
+<p>The Resolver object to associate with this Compiler. By default a new
+object of class <A HREF="Params.html#resolver_class">resolver_class</a> will be created.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_resolver_class">resolver_class</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_resolver_class">resolver_class</a></strong>
+
 <dd>
-The class to use when creating a resolver. Defaults to
-<a HREF="Resolver/File.html">HTML::Mason::Resolver::File</a>.
+<p>The class to use when creating a resolver. Defaults to
+<a HREF="Resolver/File.html">HTML::Mason::Resolver::File</a>.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_static_source">static_source</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_static_source">static_source</a></strong>
+
 <dd>
-True or false, default is false. When false, Mason checks the
+<p>True or false, default is false. When false, Mason checks the
 timestamp of the component source file each time the component is used
 to see if it has changed. This provides the instant feedback for
 source changes that is expected for development.  However it does
-entail a file stat for each component executed.
+entail a file stat for each component executed.</p>
 </dd>
 <dd>
 <p>When true, Mason assumes that the component source tree is unchanging:
@@ -268,14 +270,14 @@ See <A HREF="Params.html#static_source_touch_file">static_source_touch_file</a> 
 <p>We recommend turning this mode on in your production sites if
 possible, if performance is of any concern.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_static_source_touch_file">static_source_touch_file</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_static_source_touch_file">static_source_touch_file</a></strong>
+
 <dd>
-Specifies a filename that Mason will check once at the beginning of
+<p>Specifies a filename that Mason will check once at the beginning of
 of every request. When the file timestamp changes, Mason will (1) clear
 its in-memory component cache, and (2) remove object files if
-they have not already been deleted by another process.
+they have not already been deleted by another process.</p>
 </dd>
 <dd>
 <p>This provides a convenient way to implement <A HREF="Params.html#static_source">static_source</a> mode.
@@ -284,16 +286,17 @@ whenever components change. For Mason's part, checking a single
 file at the beginning of a request is much cheaper than checking
 every component file when static_source=0.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_use_object_files">use_object_files</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_use_object_files">use_object_files</a></strong>
+
 <dd>
-True or false, default is true.  Specifies whether Mason creates
+<p>True or false, default is true.  Specifies whether Mason creates
 object files to save the results of component parsing. You may want to
 turn off object files for disk space reasons, but otherwise this
-should be left alone.
+should be left alone.</p>
 </dd>
-<p></p></dl>
+</li>
+</dl>
 <p>
 </p>
 <hr />
@@ -306,17 +309,17 @@ existing interpreter; the rest are read-only.</p>
 <hr />
 <h1><A NAME="escape_flag_methods">ESCAPE FLAG METHODS</a></h1>
 <dl>
-<dt><strong><A NAME="item_apply_escapes">apply_escapes ($text, $flags, [more flags...])</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_apply_escapes">apply_escapes ($text, $flags, [more flags...])</a></strong>
+
 <A NAME="item_apply_escapes"></a><p>This method applies a one or more escapes to a piece of text.  The
 escapes are specified by giving their flag.  Each escape is applied to
 the text in turn, after which the now-modified text is returned.</p>
-<dt><strong><A NAME="item_remove_escape">remove_escape ($name)</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_remove_escape">remove_escape ($name)</a></strong>
+
 <A NAME="item_remove_escape"></a><p>Given an escape name, this removes that escape from the interpreter's
 known escapes.  If the name is not recognized, it is simply ignored.</p>
-<dt><strong><A NAME="item_set_escape">set_escape ($name =&gt; see below])</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_set_escape">set_escape ($name =&gt; see below])</a></strong>
+
 <A NAME="item_set_escape"></a><p>This method is called to add an escape flag to the list of known
 escapes for the interpreter.  The flag may only consist of the
 characters matching <code>\w</code> and the dash (-).  It must start with an
@@ -340,12 +343,12 @@ configuration file, you can set them like this:</p>
 <hr />
 <h1><A NAME="other_methods">OTHER METHODS</a></h1>
 <dl>
-<dt><strong><A NAME="item_comp_exists">comp_exists (path)</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_comp_exists">comp_exists (path)</a></strong>
+
 <A NAME="item_comp_exists"></a><p>Given an <em>absolute</em> component path, this method returns a boolean
 value indicating whether or not a component exists for that path.</p>
-<dt><strong><A NAME="item_exec">exec (comp, args...)</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_exec">exec (comp, args...)</a></strong>
+
 <A NAME="item_exec"></a><p>Creates a new HTML::Mason::Request object for the given <em>comp</em> and
 <em>args</em>, and executes it. The return value is the return value of
 <em>comp</em>, if any.</p>
@@ -354,21 +357,21 @@ See <A HREF="Admin.html#using_mason_from_a_standalone_sc">using Mason from a sta
 for examples.</p>
 <p>This method isn't generally useful in a mod_perl environment; see
 <A HREF="Devel.html#subrequests">subrequests</a> instead.</p>
-<dt><strong><A NAME="item_flush_code_cache">flush_code_cache</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_flush_code_cache">flush_code_cache</a></strong>
+
 <A NAME="flush_code_cache"></a><p>Empties the component cache. When using Perl 5.00503 or earlier, you
 should call this when finished with an interpreter, in order to remove
 circular references that would prevent the interpreter from being
 destroyed.</p>
-<dt><strong><A NAME="item_load">load (path)</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_load">load (path)</a></strong>
+
 <A NAME="item_load"></a><p>Returns the component object corresponding to an absolute component
 <code>path</code>, or undef if none exists. Dies with an error if the component
 fails to load because of a syntax error.</p>
-<dt><strong><A NAME="item_make_component">make_component (comp_source =&gt; ... )</a></strong><br />
-</dt>
-<dt><strong>make_component (comp_file =&gt; ... )</strong><br />
-</dt>
+<dt><strong><A NAME="item_make_component">make_component (comp_source =&gt; ... )</a></strong>
+
+<dt><strong>make_component (comp_file =&gt; ... )</strong>
+
 <A NAME="item_make_component"></a><p>This method compiles Mason component source code and returns a
 Component object.  The source may be passed in as a string in <code>comp_source</code>,
 or as a filename in <code>comp_file</code>.  When using <code>comp_file</code>, the
@@ -385,21 +388,21 @@ relative to Mason's component root (see
     die $@ if $@;</pre>
 <pre>
     $m-&gt;comp($anon_comp);</pre>
-<dt><strong><A NAME="item_make_request">make_request (@request_params)</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_make_request">make_request (@request_params)</a></strong>
+
 <A NAME="item_make_request"></a><p>This method creates a Mason request object. The arguments to be passed
 are the same as those for the <code>HTML::Mason::Request-&gt;new</code>
 constructor or its relevant subclass. This method will likely only be
 of interest to those attempting to write new handlers or to subclass
 <code>HTML::Mason::Interp</code>.  If you want to create a <em>subrequest</em>, see
 <A HREF="Devel.html#subrequests">subrequests</a> instead.</p>
-<dt><strong><A NAME="item_purge_code_cache">purge_code_cache ()</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_purge_code_cache">purge_code_cache ()</a></strong>
+
 <A NAME="purge_code_cache"></a><p>Called during request execution in order to clear out the code
 cache. Mainly useful to subclasses that may want to take some custom
 action upon clearing the cache.</p>
-<dt><strong><A NAME="item_set_global">set_global ($varname, [values...])</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_set_global">set_global ($varname, [values...])</a></strong>
+
 <A NAME="item_set_global"></a><p>This method sets a global to be used in components. <code>varname</code> is a
 variable name, optionally preceded with a prefix (<code>$</code>, <code>@</code>, or
 <code>%</code>); if the prefix is omitted then <code>$</code> is assumed. <code>varname</code> is

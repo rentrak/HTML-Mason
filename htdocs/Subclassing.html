@@ -1,7 +1,9 @@
+<?xml version="1.0" ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <title>HTML::Mason::Subclassing - Documentation on Subclassing Internal Mason classes</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rev="made" href="mailto:root@localhost" />
 </head>
 
@@ -72,50 +74,51 @@ within Mason itself.</p>
 <h1><A NAME="subclassable_classes">SUBCLASSABLE CLASSES</a></h1>
 <p>The following classes have been designed with subclassing in mind:</p>
 <ul>
-<li><strong><A NAME="item_html_3a_3amason_3a_3areques">HTML::Mason::Request</a></strong><br />
-</li>
-This object is your old friend <code>$m</code>.  The request contains
+<li><strong><A NAME="item_html_3a_3amason_3a_3areques">HTML::Mason::Request</a></strong>
+
+<p>This object is your old friend <code>$m</code>.  The request contains
 information about the current request context, and provides methods
-for calling other components.
-<p></p>
-<li><strong><A NAME="item_html_3a_3amason_3a_3aresolv">HTML::Mason::Resolver</a></strong><br />
+for calling other components.</p>
 </li>
-The resolver's job is to translate a component paths into an actual
+<li><strong><A NAME="item_html_3a_3amason_3a_3aresolv">HTML::Mason::Resolver</a></strong>
+
+<p>The resolver's job is to translate a component paths into an actual
 component.  Mason comes with a single Resolver subclass,
 <code>HTML::Mason::Resolver::File</code>, which is used to translate component
-paths into filesystem paths.
-<p></p>
-<li><strong><A NAME="item_html_3a_3amason_3a_3acompon">HTML::Mason::ComponentSource</a></strong><br />
+paths into filesystem paths.</p>
 </li>
-An object of this class represents a component's source.  These
+<li><strong><A NAME="item_html_3a_3amason_3a_3acompon">HTML::Mason::ComponentSource</a></strong>
+
+<p>An object of this class represents a component's source.  These
 objects are instantiated by the resolver when it finds a component
-matching a given path.
-<p></p>
-<li><strong><A NAME="item_html_3a_3amason_3a_3alexer">HTML::Mason::Lexer</a></strong><br />
+matching a given path.</p>
 </li>
-The lexer is responsible for parsing a component.  Creating a new
-lexer would allow you to change Mason's component syntax.
-<p></p>
-<li><strong><A NAME="item_html_3a_3amason_3a_3acompil">HTML::Mason::Compiler</a></strong><br />
+<li><strong><A NAME="item_html_3a_3amason_3a_3alexer">HTML::Mason::Lexer</a></strong>
+
+<p>The lexer is responsible for parsing a component.  Creating a new
+lexer would allow you to change Mason's component syntax.</p>
 </li>
-The compiler takes the parsed chunks from the lexer and gives them
+<li><strong><A NAME="item_html_3a_3amason_3a_3acompil">HTML::Mason::Compiler</a></strong>
+
+<p>The compiler takes the parsed chunks from the lexer and gives them
 meaning.  The default compiler, <code>HTML::Mason::Compiler::ToObject</code>,
 turns a Mason component into a Mason ``object file'', which contains
-actual Perl code.
-<p></p>
-<li><strong><A NAME="item_html_3a_3amason_3a_3aapache">HTML::Mason::ApacheHandler</a></strong><br />
+actual Perl code.</p>
 </li>
-The ApacheHandler class is the bridge between the mod_perl world and
-Mason, primarily Mason's Interp class.
+<li><strong><A NAME="item_html_3a_3amason_3a_3aapache">HTML::Mason::ApacheHandler</a></strong>
+
+<p>The ApacheHandler class is the bridge between the mod_perl world and
+Mason, primarily Mason's Interp class.</p>
 <p>It also provides its own <A HREF="#item_html_3a_3amason_3a_3areques"><code>HTML::Mason::Request</code></a> and
 <code>HTML::Resolver::File</code> subclasses which implement some mod_perl
 specific behaviors and features.</p>
-<p></p>
-<li><strong><A NAME="item_html_3a_3amason_3a_3ainterp">HTML::Mason::Interp</a></strong><br />
 </li>
-The Interp is the core of Mason, and is primarily responsible for
-making all the other objects do their jobs.
-<p></p></ul>
+<li><strong><A NAME="item_html_3a_3amason_3a_3ainterp">HTML::Mason::Interp</a></strong>
+
+<p>The Interp is the core of Mason, and is primarily responsible for
+making all the other objects do their jobs.</p>
+</li>
+</ul>
 <p>
 </p>
 <hr />

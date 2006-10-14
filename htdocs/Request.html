@@ -1,7 +1,9 @@
+<?xml version="1.0" ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <title>HTML::Mason::Request - Mason Request Class</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rev="made" href="mailto:root@localhost" />
 </head>
 
@@ -60,30 +62,31 @@ component path argument.  Component paths are like URL paths, and
 always use a forward slash (/) as the separator, regardless of what
 your operating system uses.</p>
 <ul>
-<li></li>
-If the path is absolute (starting with a '/'), then the component is
-found relative to the component root.
-<p></p>
-<li></li>
-If the path is relative (no leading '/'), then the component is found
-relative to the current component directory.
-<p></p>
-<li></li>
-If the path matches both a subcomponent and file-based component, the
-subcomponent takes precedence.
-<p></p></ul>
+<li>
+<p>If the path is absolute (starting with a '/'), then the component is
+found relative to the component root.</p>
+</li>
+<li>
+<p>If the path is relative (no leading '/'), then the component is found
+relative to the current component directory.</p>
+</li>
+<li>
+<p>If the path matches both a subcomponent and file-based component, the
+subcomponent takes precedence.</p>
+</li>
+</ul>
 <p>
 </p>
 <hr />
 <h1><A NAME="parameters_to_the_new___construc">PARAMETERS TO THE <code>new()</code> CONSTRUCTOR</a></h1>
 <dl>
-<dt><strong><A NAME="item_autoflush">autoflush</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_autoflush">autoflush</a></strong>
+
 <dd>
-True or false, default is false. Indicates whether to flush the output
+<p>True or false, default is false. Indicates whether to flush the output
 buffer (<A HREF="#item_flush_buffer"><code>$m-&gt;flush_buffer</code></a>) after every string is output. Turn on
 autoflush if you need to send partial output to the client, for
-example in a progress meter.
+example in a progress meter.</p>
 </dd>
 <dd>
 <p>As of Mason 1.3, autoflush will only work if <A HREF="Params.html#enable_autoflush">enable_autoflush</a> has
@@ -92,23 +95,23 @@ have to check for autoflush. Before using autoflush you might consider
 whether a few manual <A HREF="#item_flush_buffer"><code>$m-&gt;flush_buffer</code></a> calls would work nearly
 as well.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_data_cache_api">data_cache_api</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_data_cache_api">data_cache_api</a></strong>
+
 <dd>
-The <A HREF="#item_cache"><code>$m-&gt;cache</code></a> API to use. '1.1', the default, indicates the newer
+<p>The <A HREF="#item_cache"><code>$m-&gt;cache</code></a> API to use. '1.1', the default, indicates the newer
 API <A HREF="Request.html#item_cache">documented in this manual</a>.
 '1.0' indicates the old API documented in 1.0x and earlier. This
 compatibility layer is provided as a convenience for users upgrading
-from older versions of Mason, but will not be supported indefinitely.
+from older versions of Mason, but will not be supported indefinitely.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_data_cache_defaults">data_cache_defaults</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_data_cache_defaults">data_cache_defaults</a></strong>
+
 <dd>
-A hash reference of default options to use for the <A HREF="#item_cache"><code>$m-&gt;cache</code></a>
+<p>A hash reference of default options to use for the <A HREF="#item_cache"><code>$m-&gt;cache</code></a>
 command. For example, to use the <code>MemoryCache</code> implementation
-by default,
+by default,</p>
 </dd>
 <dd>
 <pre>
@@ -118,33 +121,34 @@ by default,
 <p>These settings are overriden by options given to particular
 <A HREF="#item_cache"><code>$m-&gt;cache</code></a> calls.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_dhandler_name">dhandler_name</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_dhandler_name">dhandler_name</a></strong>
+
 <dd>
-File name used for <A HREF="Devel.html#dhandlers">dhandlers</a>. Default
+<p>File name used for <A HREF="Devel.html#dhandlers">dhandlers</a>. Default
 is ``dhandler''.  If this is set to an empty string (``'') then dhandlers
-are turned off entirely.
+are turned off entirely.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_error_format">error_format</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_error_format">error_format</a></strong>
+
 <dd>
-Indicates how errors are formatted. The built-in choices are
+<p>Indicates how errors are formatted. The built-in choices are</p>
 </dd>
 <ul>
-<li></li>
-<em>brief</em> - just the error message with no trace information
-<p></p>
-<li></li>
-<em>text</em> - a multi-line text format
-<p></p>
-<li></li>
-<em>line</em> - a single-line text format, with different pieces of information separated by tabs (useful for log files)
-<p></p>
-<li></li>
-<em>html</em> - a fancy html format
-<p></p></ul>
+<li>
+<p><em>brief</em> - just the error message with no trace information</p>
+</li>
+<li>
+<p><em>text</em> - a multi-line text format</p>
+</li>
+<li>
+<p><em>line</em> - a single-line text format, with different pieces of information separated by tabs (useful for log files)</p>
+</li>
+<li>
+<p><em>html</em> - a fancy html format</p>
+</li>
+</ul>
 <p>The default format under <a HREF="ApacheHandler.html">Apache</a> and
 <a HREF="CGIHandler.html">CGI</a> is either <em>line</em> or <em>html</em> depending
 on whether the error mode is <em>fatal</em> or <em>output</em>, respectively. The
@@ -154,12 +158,12 @@ as_<em>format</em>. You can define your own format by creating an
 appropriately named method; for example, to define an ``xml'' format,
 create a method <code>HTML::Mason::Exception::as_xml</code> patterned after one of
 the built-in methods.</p>
-<dt><strong><A NAME="item_error_mode">error_mode</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_error_mode">error_mode</a></strong>
+
 <dd>
-Indicates how errors are returned to the caller.  The choices are
+<p>Indicates how errors are returned to the caller.  The choices are
 <em>fatal</em>, meaning die with the error, and <em>output</em>, meaning output
-the error just like regular output.
+the error just like regular output.</p>
 </dd>
 <dd>
 <p>The default under <a HREF="ApacheHandler.html">Apache</a> and
@@ -167,22 +171,22 @@ the error just like regular output.
 displayed in the browser.  The default for standalone mode is
 <em>fatal</em>.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_max_recurse">max_recurse</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_max_recurse">max_recurse</a></strong>
+
 <dd>
-The maximum recursion depth for the component stack, for the request
+<p>The maximum recursion depth for the component stack, for the request
 stack, and for the inheritance stack. An error is signalled if the
-maximum is exceeded.  Default is 32.
+maximum is exceeded.  Default is 32.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_out_method">out_method</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_out_method">out_method</a></strong>
+
 <dd>
-Indicates where to send output. If out_method is a reference to a
+<p>Indicates where to send output. If out_method is a reference to a
 scalar, output is appended to the scalar.  If out_method is a
 reference to a subroutine, the subroutine is called with each output
-string. For example, to send output to a file called ``mason.out'':
+string. For example, to send output to a file called ``mason.out'':</p>
 </dd>
 <dd>
 <pre>
@@ -195,15 +199,16 @@ string. For example, to send output to a file called ``mason.out'':
 <a HREF="ApacheHandler.html">Apache</a>, standard output is
 redirected to <A HREF="#item_print"><code>$r-&gt;print</code></a>.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_plugins">plugins</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_plugins">plugins</a></strong>
+
 <dd>
-An array of plugins that will be called at various stages of request
+<p>An array of plugins that will be called at various stages of request
 processing.  Please see <a HREF="Plugin.html">HTML::Mason::Plugin</a> for
-details.
+details.</p>
 </dd>
-<p></p></dl>
+</li>
+</dl>
 <p>
 </p>
 <hr />
@@ -219,8 +224,8 @@ sets and returns the value.  For example:</p>
 <hr />
 <h1><A NAME="other_methods">OTHER METHODS</a></h1>
 <dl>
-<dt><strong><A NAME="item_abort">abort ([return value])</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_abort">abort ([return value])</a></strong>
+
 <A NAME="item_abort"></a><p>Ends the current request, finishing the page without returning
 through components. The optional argument specifies the return
 value from <code>Interp::exec</code>; in a web environment, this ultimately
@@ -232,14 +237,14 @@ shortcut for determining whether a caught error was generated by
 <p>If <A HREF="#item_abort"><code>abort</code></a> is called from a component that has a <code>&lt;%filter&gt;</code>,
 than any output generated up to that point is filtered, <em>unless</em>
 <A HREF="#item_abort"><code>abort</code></a> is called from a <code>&lt;%shared&gt;</code> block.</p>
-<dt><strong><A NAME="item_clear_and_abort">clear_and_abort ([return value])</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_clear_and_abort">clear_and_abort ([return value])</a></strong>
+
 <A NAME="item_clear_and_abort"></a><p>This method is syntactic sugar for calling <A HREF="#item_clear_buffer"><code>clear_buffer()</code></a> and then
 <A HREF="#item_abort"><code>abort()</code></a>.  If you are aborting the request because of an error, you
 will often want to clear the buffer first so that any output generated
 up to that point is not sent to the client.</p>
-<dt><strong><A NAME="item_aborted">aborted ([$err])</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_aborted">aborted ([$err])</a></strong>
+
 <A NAME="item_aborted"></a><p>Returns true or undef indicating whether the specified <code>$err</code>
 was generated by <A HREF="#item_abort"><code>abort</code></a>. If no <code>$err</code> was passed, uses <code>$@</code>.</p>
 <p>In this code, we catch and process fatal errors while letting <A HREF="#item_abort"><code>abort</code></a>
@@ -253,38 +258,38 @@ exceptions pass through:</p>
 <p><code>$@</code> can lose its value quickly, so if you are planning to call
 $m-&gt;aborted more than a few lines after the eval, you should save $@
 to a temporary variable.</p>
-<dt><strong><A NAME="item_base_comp">base_comp</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_base_comp">base_comp</a></strong>
+
 <A NAME="item_base_comp"></a><p>Returns the current base component.</p>
 <p>Here are the rules that determine base_comp as you move from
 component to component.</p>
 <ul>
 <li><strong><A NAME="item_component">At the beginning of a request, the base component is
-initialized to the requested component (<A HREF="#item_request_comp"><code>$m-&gt;request_comp()</code></a>).</a></strong><br />
-</li>
+initialized to the requested component (<A HREF="#item_request_comp"><code>$m-&gt;request_comp()</code></a>).</a></strong>
+
 <li><strong><A NAME="item_when_you_call_a_regular_com">When you call a regular component via a path, the base
-component changes to the called component.</a></strong><br />
-</li>
+component changes to the called component.</a></strong>
+
 <li><strong><A NAME="item_path">When you call a component method via a path (/foo/bar:baz),
-the base component changes to the method's owner.</a></strong><br />
-</li>
-<li><strong><A NAME="item_the_base_component_does_not">The base component does not change when:</a></strong><br />
-</li>
+the base component changes to the method's owner.</a></strong>
+
+<li><strong><A NAME="item_the_base_component_does_not">The base component does not change when:</a></strong>
+
 <ul>
-<li><strong><A NAME="item_a_component_call_is_made_to">a component call is made to a component object</a></strong><br />
-</li>
-<li><strong><A NAME="item_a_component_call_is_made_to">a component call is made to SELF:x or PARENT:x or REQUEST:x</a></strong><br />
-</li>
-<li><strong><A NAME="item_subcomponent">a component call is made to a subcomponent (&lt;%def&gt;)</a></strong><br />
-</li>
+<li><strong><A NAME="item_a_component_call_is_made_to">a component call is made to a component object</a></strong>
+
+<li><strong><A NAME="item_a_component_call_is_made_to">a component call is made to SELF:x or PARENT:x or REQUEST:x</a></strong>
+
+<li><strong><A NAME="item_subcomponent">a component call is made to a subcomponent (&lt;%def&gt;)</a></strong>
+
 </ul>
 </ul>
 <p>This may return nothing if the base component is not yet known, for
 example inside a plugin's <code>start_request_hook()</code> method, where we
 have created a request but it does not yet know anything about the
 component being called.</p>
-<dt><strong><A NAME="item_cache">cache (cache_class=&gt;'...', [cache_options])</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_cache">cache (cache_class=&gt;'...', [cache_options])</a></strong>
+
 <A NAME="item_cache"></a><p><A HREF="#item_cache"><code>$m-&gt;cache</code></a> returns a new <a HREF="Cache/BaseCache.html">cache object</a> with a namespace specific to
 this component.</p>
 <p><em>cache_class</em> specifies the class of cache object to create. It
@@ -304,8 +309,8 @@ documentation for a method reference.</p>
 <p>Note: users upgrading from 1.0x and earlier can continue to use the
 old <A HREF="#item_cache"><code>$m-&gt;cache</code></a> API by setting <A HREF="Params.html#data_cache_api">data_cache_api</a> to '1.0'.  This
 support will be removed at a later date.</p>
-<dt><strong><A NAME="item_cache_self">cache_self ([expires_in =&gt; '...'], [key =&gt; '...'], [get_options], [cache_options])</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_cache_self">cache_self ([expires_in =&gt; '...'], [key =&gt; '...'], [get_options], [cache_options])</a></strong>
+
 <A NAME="item_cache_self"></a><p><A HREF="#item_cache_self"><code>$m-&gt;cache_self</code></a> caches the entire output and return result of a
 component.</p>
 <p><A HREF="#item_cache_self"><code>cache_self</code></a> either returns undef, or a list containing the
@@ -317,16 +322,17 @@ that you are inside the second invocation of the component.</p>
 <code>$cache-&gt;get</code> (<em>expire_if</em>, <em>busy_lock</em>), and two additional
 options:</p>
 <ul>
-<li></li>
-<em>expire_in</em> or <em>expires_in</em>: Indicates when the cache expires - it
+<li>
+<p><em>expire_in</em> or <em>expires_in</em>: Indicates when the cache expires - it
 is passed as the third argument to <code>$cache-&gt;set</code>. e.g. '10 sec',
-'5 min', '2 hours'.
-<p></p>
-<li></li>
-<em>key</em>: An identifier used to uniquely identify the cache results - it
+'5 min', '2 hours'.</p>
+</li>
+<li>
+<p><em>key</em>: An identifier used to uniquely identify the cache results - it
 is passed as the first argument to <code>$cache-&gt;get</code> and
-<code>$cache-&gt;set</code>.  The default key is '__mason_cache_self__'.
-<p></p></ul>
+<code>$cache-&gt;set</code>.  The default key is '__mason_cache_self__'.</p>
+</li>
+</ul>
 <p>To cache the component's output:</p>
 <pre>
     &lt;%init&gt;
@@ -358,8 +364,8 @@ old <A HREF="#item_cache_self"><code>$m-&gt;cache_self</code></a> API by setting
 This support will be removed at a later date.</p>
 <p>See the the <A HREF="Devel.html#data_caching">DATA CACHING</a> section of the developer's manual section for more details on how to
 exercise finer control over caching.</p>
-<dt><strong><A NAME="item_caller_args">caller_args</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_caller_args">caller_args</a></strong>
+
 <A NAME="item_caller_args"></a><p>Returns the arguments passed by the component at the specified stack
 level. Use a positive argument to count from the current component and
 a negative argument to count from the component at the bottom of the
@@ -372,8 +378,8 @@ stack. e.g.</p>
 called in list context, a list of arguments (which may be assigned to
 a hash) is returned.  Returns undef or an empty list, depending on
 context, if the specified stack level does not exist.</p>
-<dt><strong><A NAME="item_callers">callers</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_callers">callers</a></strong>
+
 <A NAME="item_callers"></a><p>With no arguments, returns the current component stack as a list of
 component objects, starting with the current component and ending with
 the top-level component. With one numeric argument, returns the
@@ -387,41 +393,41 @@ the component at the bottom of the stack. e.g.</p>
     $m-&gt;callers(-1)           # first component executed</pre>
 <p>Returns undef or an empty list, depending on context, if the specified
 stack level does not exist.</p>
-<dt><strong><A NAME="item_caller">caller</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_caller">caller</a></strong>
+
 <A NAME="item_caller"></a><p>A synonym for <A HREF="#item_callers"><code>$m-&gt;callers(1)</code></a>, i.e. the component that called the
 currently executing component.</p>
-<dt><strong><A NAME="item_call_next">call_next ([args...])</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_call_next">call_next ([args...])</a></strong>
+
 <A NAME="item_call_next"></a><p>Calls the next component in the content wrapping chain; usually called
 from an autohandler. With no arguments, the original arguments are
 passed to the component.  Any arguments specified here serve to
 augment and override (in case of conflict) the original
 arguments. Works like <A HREF="#item_comp"><code>$m-&gt;comp</code></a> in terms of return value and
 scalar/list context.  See the <A HREF="Devel.html#autohandlers">autohandlers</a> section of the developer's manual for examples.</p>
-<dt><strong><A NAME="item_call_self">call_self (output, return, error, tag)</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_call_self">call_self (output, return, error, tag)</a></strong>
+
 <dd>
-This method allows a component to call itself so that it can filter
+<p>This method allows a component to call itself so that it can filter
 both its output and return values.  It is fairly advanced; for most
-purposes the <code>&lt;%filter&gt;</code> tag will be sufficient and simpler.
+purposes the <code>&lt;%filter&gt;</code> tag will be sufficient and simpler.</p>
 </dd>
 <dd>
 <p><A HREF="#item_call_self"><code>$m-&gt;call_self</code></a> takes four arguments, all of them optional.</p>
 </dd>
 <dl>
 <dt><strong><A NAME="item_output__2d_scalar_reference">output - scalar reference that will be populated with the
-component output.</a></strong><br />
-</dt>
+component output.</a></strong>
+
 <dt><strong><A NAME="item_return__2d_scalar_reference">return - scalar reference that will be populated with the
-component return value.</a></strong><br />
-</dt>
+component return value.</a></strong>
+
 <dt><strong><A NAME="item_error__2d_scalar_reference_">error - scalar reference that will be populated with the error
 thrown by the component, if any. If this parameter is not defined,
-then call_self will not catch errors.</a></strong><br />
-</dt>
-<dt><strong><A NAME="item_tag__2d_a_name_for_this_cal">tag - a name for this call_self invocation; can almost always be omitted.</a></strong><br />
-</dt>
+then call_self will not catch errors.</a></strong>
+
+<dt><strong><A NAME="item_tag__2d_a_name_for_this_cal">tag - a name for this call_self invocation; can almost always be omitted.</a></strong>
+
 </dl>
 <p><A HREF="#item_call_self"><code>$m-&gt;call_self</code></a> acts like a <code>fork()</code> in the sense that it will
 return twice with different values.  When it returns 0, you allow
@@ -466,14 +472,14 @@ main component body.</p>
         return;
     }
     ...</pre>
-<dt><strong><A NAME="item_clear_buffer">clear_buffer</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_clear_buffer">clear_buffer</a></strong>
+
 <A NAME="item_clear_buffer"></a><p>Clears the Mason output buffer. Any output sent before this line is
 discarded. Useful for handling error conditions that can only be
 detected in the middle of a request.</p>
 <p>clear_buffer is, of course, thwarted by <A HREF="#item_flush_buffer"><code>flush_buffer</code></a>.</p>
-<dt><strong><A NAME="item_comp">comp (comp, args...)</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_comp">comp (comp, args...)</a></strong>
+
 <A NAME="item_comp"></a><p>Calls the component designated by <em>comp</em> with the specified
 option/value pairs. <em>comp</em> may be a component path or a component
 object.</p>
@@ -493,8 +499,8 @@ return value.</p>
 <p>This modifier can be used with the &lt;&amp; &amp;&gt; tag as well, for example:</p>
 <pre>
   &lt;&amp; { store =&gt; \$buf }, '/some/comp', size =&gt; 'medium' &amp;&gt;</pre>
-<dt><strong><A NAME="item_comp_exists">comp_exists (comp_path)</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_comp_exists">comp_exists (comp_path)</a></strong>
+
 <A NAME="item_comp_exists"></a><p>Returns 1 if <em>comp_path</em> is the path of an existing component, 0
 otherwise.  <em>comp_path</em> may be any path accepted by
 <A HREF="Request.html#item_comp">comp</a> or
@@ -503,74 +509,74 @@ subcomponent paths.</p>
 <p>Depending on implementation, &lt;comp_exists&gt; may try to load the
 component referred to by the path, and may throw an error if the
 component contains a syntax error.</p>
-<dt><strong><A NAME="item_content">content</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_content">content</a></strong>
+
 <A NAME="content"></a><p>Evaluates the content (passed between &lt;&amp;| comp &amp;&gt; and &lt;/&amp;&gt; tags) of the 
 current component, and returns the resulting text.</p>
 <p>Returns undef if there is no content.</p>
-<dt><strong><A NAME="item_has_content">has_content</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_has_content">has_content</a></strong>
+
 <A NAME="has_content"></a><p>Returns true if the component was called with content (i.e. with &lt;&amp;|
 comp &amp;&gt; and &lt;/&amp;&gt; tags instead of a single &lt;&amp; comp &amp;&gt; tag). This is
 generally better than checking the defined'ness of <A HREF="#item_content"><code>$m-&gt;content</code></a>
 because it will not try to evaluate the content.</p>
-<dt><strong><A NAME="item_count">count</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_count">count</a></strong>
+
 <A NAME="item_count"></a><p>Returns the number of this request, which is unique for a given
 request and interpreter.</p>
-<dt><strong><A NAME="item_current_comp">current_comp</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_current_comp">current_comp</a></strong>
+
 <A NAME="item_current_comp"></a><p>Returns the current component object.</p>
-<dt><strong><A NAME="item_decline">decline</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_decline">decline</a></strong>
+
 <A NAME="item_decline"></a><p>Used from a top-level component or dhandler, this method clears the
 output buffer, aborts the current request and restarts with the next
 applicable dhandler up the tree. If no dhandler is available, a
 not-found error occurs.</p>
 <p>This method bears no relation to the Apache DECLINED status except in
 name.</p>
-<dt><strong><A NAME="item_declined">declined ([$err])</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_declined">declined ([$err])</a></strong>
+
 <A NAME="item_declined"></a><p>Returns true or undef indicating whether the specified <code>$err</code> was
 generated by <A HREF="#item_decline"><code>decline</code></a>. If no <code>$err</code> was passed, uses <code>$@</code>.</p>
-<dt><strong><A NAME="item_depth">depth</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_depth">depth</a></strong>
+
 <A NAME="item_depth"></a><p>Returns the current size of the component stack.  The lowest possible
 value is 1, which indicates we are in the top-level component.</p>
-<dt><strong><A NAME="item_dhandler_arg">dhandler_arg</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_dhandler_arg">dhandler_arg</a></strong>
+
 <A NAME="item_dhandler_arg"></a><p>If the request has been handled by a dhandler, this method returns the
 remainder of the URI or <code>Interp::exec</code> path when the dhandler directory is
 removed. Otherwise returns undef.</p>
 <p><A HREF="#item_dhandler_arg"><code>dhandler_arg</code></a> may be called from any component in the request, not just
 the dhandler.</p>
-<dt><strong><A NAME="item_exec">exec (comp, args...)</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_exec">exec (comp, args...)</a></strong>
+
 <A NAME="item_exec"></a><p>Starts the request by executing the top-level component and
 arguments. This is normally called for you on the main request, but
 you can use it to execute subrequests.</p>
 <p>A request can only be executed once; e.g. it is an error to call this
 recursively on the same request.</p>
-<dt><strong><A NAME="item_fetch_comp">fetch_comp (comp_path)</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_fetch_comp">fetch_comp (comp_path)</a></strong>
+
 <A NAME="item_fetch_comp"></a><p>Given a <em>comp_path</em>, returns the corresponding component object or
 undef if no such component exists.</p>
-<dt><strong><A NAME="item_fetch_next">fetch_next</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_fetch_next">fetch_next</a></strong>
+
 <A NAME="item_fetch_next"></a><p>Returns the next component in the content wrapping chain, or undef if
 there is no next component. Usually called from an autohandler.  See
 the <A HREF="Devel.html#autohandlers">autohandlers</a> section of the developer's manual for usage and examples.</p>
-<dt><strong><A NAME="item_fetch_next_all">fetch_next_all</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_fetch_next_all">fetch_next_all</a></strong>
+
 <A NAME="item_fetch_next_all"></a><p>Returns a list of the remaining components in the content wrapping
 chain. Usually called from an autohandler.  See the <A HREF="Devel.html#autohandlers">autohandlers</a> section of the developer's manual
 for usage and examples.</p>
-<dt><strong><A NAME="item_file">file (filename)</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_file">file (filename)</a></strong>
+
 <A NAME="item_file"></a><p>Returns the contents of <em>filename</em> as a string. If <em>filename</em> is a
 relative path, Mason prepends the current component directory.</p>
-<dt><strong><A NAME="item_flush_buffer">flush_buffer</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_flush_buffer">flush_buffer</a></strong>
+
 <A NAME="item_flush_buffer"></a><p>Flushes the Mason output buffer. Under mod_perl, also sends HTTP
 headers if they haven't been sent and calls <code>$r-&gt;rflush</code> to flush
 the Apache buffer. Flushing the initial bytes of output can make your
@@ -582,17 +588,17 @@ modifier.</p>
 <p><code>&lt;%filter&gt;</code> blocks will process the output whenever the buffers
 are flushed.  If <A HREF="#item_autoflush"><code>autoflush</code></a> is on, your data may be filtered in 
 small pieces.</p>
-<dt><strong><A NAME="item_instance">instance</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_instance">instance</a></strong>
+
 <A NAME="item_instance"></a><p>This class method returns the <code>HTML::Mason::Request</code> currently in
 use.  If called when no Mason request is active it will return
 <code>undef</code>.</p>
 <p>If called inside a subrequest, it returns the subrequest object.</p>
-<dt><strong><A NAME="item_interp">interp</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_interp">interp</a></strong>
+
 <A NAME="item_interp"></a><p>Returns the Interp object associated with this request.</p>
-<dt><strong><A NAME="item_make_subrequest">make_subrequest (comp =&gt; path, args =&gt; arrayref, other parameters)</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_make_subrequest">make_subrequest (comp =&gt; path, args =&gt; arrayref, other parameters)</a></strong>
+
 <A NAME="item_make_subrequest"></a><p>This method creates a new Request object which inherits its parent's
 settable properties, such as <A HREF="Params.html#autoflush">autoflush</a> and <A HREF="Params.html#out_method">out_method</a>.  These
 values may be overridden by passing parameters to this method.</p>
@@ -600,8 +606,8 @@ values may be overridden by passing parameters to this method.</p>
 optional.  It may be specified as an absolute path or as a path
 relative to the current component.</p>
 <p>See the <A HREF="Devel.html#subrequests">subrequests</a> section of the developer's manual for more information about subrequests.</p>
-<dt><strong><A NAME="item_notes">notes (key, value)</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_notes">notes (key, value)</a></strong>
+
 <A NAME="notes"></a><p>The <A HREF="#item_notes"><code>notes()</code></a> method provides a place to store application data,
 giving developers a way to share data among multiple components.  Any
 data stored here persists for the duration of the request, i.e. the
@@ -617,49 +623,49 @@ non-mod_perl environment, and that its lifetime is tied to the
 <em>Mason</em> request object, not the <em>Apache</em> request object.  In
 particular, a Mason subrequest has its own <A HREF="#item_notes"><code>notes()</code></a> structure, but
 would access the same <code>$r-&gt;pnotes()</code> structure.</p>
-<dt><strong><A NAME="item_out">out (string)</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_out">out (string)</a></strong>
+
 <A NAME="item_out"></a><p>A synonym for <A HREF="#item_print"><code>$m-&gt;print</code></a>.</p>
-<dt><strong><A NAME="item_print">print (string)</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_print">print (string)</a></strong>
+
 <A NAME="item_print"></a><p>Print the given <em>string</em>. Rarely needed, since normally all text is just
 placed in the component body and output implicitly. <A HREF="#item_print"><code>$m-&gt;print</code></a> is useful
 if you need to output something in the middle of a Perl block.</p>
 <p>In 1.1 and on, <A HREF="#item_print"><code>print</code></a> and <A HREF="#item_print"><code>$r-&gt;print</code></a> are remapped to <A HREF="#item_print"><code>$m-&gt;print</code></a>,
 so they may be used interchangeably. Before 1.1, one should only use
 <A HREF="#item_print"><code>$m-&gt;print</code></a>.</p>
-<dt><strong><A NAME="item_request_args">request_args</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_request_args">request_args</a></strong>
+
 <A NAME="item_request_args"></a><p>Returns the arguments originally passed to the top level component
 (see <A HREF="Request.html#item_request_comp">request_comp</a> for
 definition).  When called in scalar context, a hash reference is
 returned. When called in list context, a list of arguments (which may
 be assigned to a hash) is returned.</p>
-<dt><strong><A NAME="item_request_comp">request_comp</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_request_comp">request_comp</a></strong>
+
 <A NAME="item_request_comp"></a><p>Returns the component originally called in the request. Without
 autohandlers, this is the same as the first component executed.  With
 autohandlers, this is the component at the end of the
 <A HREF="#item_call_next"><code>$m-&gt;call_next</code></a> chain.</p>
-<dt><strong><A NAME="item_request_depth">request_depth</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_request_depth">request_depth</a></strong>
+
 <A NAME="request_depth"></a><p>Returns the current size of the request/subrequest stack.  The lowest
 possible value is 1, which indicates we are in the top-level request.
 A value of 2 indicates we are inside a subrequest of the top-level request,
 and so on.</p>
-<dt><strong><A NAME="item_scomp">scomp (comp, args...)</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_scomp">scomp (comp, args...)</a></strong>
+
 <A NAME="item_scomp"></a><p>Like <A HREF="Request.html#item_comp">comp</a>, but returns the component output as a string
 instead of printing it. (Think sprintf versus printf.) The
 component's return value is discarded.</p>
-<dt><strong><A NAME="item_subexec">subexec (comp, args...)</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_subexec">subexec (comp, args...)</a></strong>
+
 <A NAME="item_subexec"></a><p>This method creates a new subrequest with the specified top-level
 component and arguments, and executes it. This is most often used
 to perform an ``internal redirect'' to a new component such that
 autohandlers and dhandlers take effect.</p>
-<dt><strong><A NAME="item_time">time</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_time">time</a></strong>
+
 <A NAME="item_time"></a><p>Returns the interpreter's notion of the current time (deprecated).</p>
 </dl>
 <p>
@@ -669,15 +675,15 @@ autohandlers and dhandlers take effect.</p>
 <p>These additional methods are available when running Mason with mod_perl
 and the ApacheHandler.</p>
 <dl>
-<dt><strong><A NAME="item_ah">ah</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_ah">ah</a></strong>
+
 <A NAME="item_ah"></a><p>Returns the ApacheHandler object associated with this request.</p>
-<dt><strong><A NAME="item_apache_req">apache_req</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_apache_req">apache_req</a></strong>
+
 <A NAME="item_apache_req"></a><p>Returns the Apache request object.  This is also available in the
 global <code>$r</code>.</p>
-<dt><strong><A NAME="item_auto_send_headers">auto_send_headers</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_auto_send_headers">auto_send_headers</a></strong>
+
 <A NAME="item_auto_send_headers"></a><p>True or false, default is true.  Indicates whether Mason should
 automatically send HTTP headers before sending content back to the
 client. If you set to false, you should call <code>$r-&gt;send_http_header</code>
@@ -694,8 +700,8 @@ header feature.</p>
 <p>This additional method is available when running Mason with the
 CGIHandler module.</p>
 <dl>
-<dt><strong><A NAME="item_cgi_request">cgi_request</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_cgi_request">cgi_request</a></strong>
+
 <A NAME="item_cgi_request"></a><p>Returns the Apache request emulation object, which is available as
 <code>$r</code> inside components.</p>
 <p>See the <A HREF="CGIHandler.html#_r_methods">CGIHandler docs</a> for
@@ -708,16 +714,16 @@ more details.</p>
 <p>This method is available when Mason is running under either the
 ApacheHandler or CGIHandler modules.</p>
 <dl>
-<dt><strong><A NAME="item_cgi_object">cgi_object</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_cgi_object">cgi_object</a></strong>
+
 <A NAME="item_cgi_object"></a><p>Returns the CGI object used to parse any CGI parameters submitted to
 the component, assuming that you have not changed the default value of
 the ApacheHandler <A HREF="Params.html#args_method">args_method</a> parameter.  If you are using the
 'mod_perl' args method, then calling this method is a fatal error.
 See the <a HREF="ApacheHandler.html">ApacheHandler</a> and
 <a HREF="CGIHandler.html">CGIHandler</a> documentation for more details.</p>
-<dt><strong><A NAME="item_redirect">redirect ($url, [$status])</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_redirect">redirect ($url, [$status])</a></strong>
+
 <A NAME="item_redirect_url_status_"></a><p>Given a url, this generates a proper HTTP redirect for that URL. It
 uses <A HREF="#item_clear_and_abort"><code>$m-&gt;clear_and_abort</code></a> to clear out any previous output, and
 abort the request.  By default, the status code used is 302, but this

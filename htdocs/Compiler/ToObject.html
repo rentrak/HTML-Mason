@@ -1,7 +1,9 @@
+<?xml version="1.0" ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <title>HTML::Mason::Compiler::ToObject - A Compiler subclass that generates Mason object code</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rev="made" href="mailto:root@localhost" />
 </head>
 
@@ -46,57 +48,57 @@ the default Compiler class used by Mason.</p>
 <h1><A NAME="parameters_to_the_new___construc">PARAMETERS TO THE <code>new()</code> CONSTRUCTOR</a></h1>
 <p>All of these parameters are optional.</p>
 <dl>
-<dt><strong><A NAME="item_comp_class">comp_class</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_comp_class">comp_class</a></strong>
+
 <dd>
-The class into which component objects are blessed.  This defaults to
-<a HREF="../Component.html">HTML::Mason::Component</a>.
+<p>The class into which component objects are blessed.  This defaults to
+<a HREF="../Component.html">HTML::Mason::Component</a>.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_subcomp_class">subcomp_class</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_subcomp_class">subcomp_class</a></strong>
+
 <dd>
-The class into which subcomponent objects are blessed.  This defaults
-to <a HREF="../Component/Subcomponent.html">HTML::Mason::Component::Subcomponent</a>.
+<p>The class into which subcomponent objects are blessed.  This defaults
+to <a HREF="../Component/Subcomponent.html">HTML::Mason::Component::Subcomponent</a>.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_in_package">in_package</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_in_package">in_package</a></strong>
+
 <dd>
-This is the package in which a component's code is executed.  For
-historical reasons, this defaults to <code>HTML::Mason::Commands</code>.
+<p>This is the package in which a component's code is executed.  For
+historical reasons, this defaults to <code>HTML::Mason::Commands</code>.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_preamble">preamble</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_preamble">preamble</a></strong>
+
 <dd>
-Text given for this parameter is placed at the beginning of each
+<p>Text given for this parameter is placed at the beginning of each
 component, but after the execution of any <code>&lt;%once&gt;</code> block. See
 also <A HREF="../Params.html#postamble">postamble</a>. The request will be available as <code>$m</code> in preamble
-code.
+code.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_postamble">postamble</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_postamble">postamble</a></strong>
+
 <dd>
-Text given for this parameter is placed at the end of each
+<p>Text given for this parameter is placed at the end of each
 component. See also <A HREF="../Params.html#preamble">preamble</a>.  The request will be available as
-<code>$m</code> in postamble code.
+<code>$m</code> in postamble code.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_use_strict">use_strict</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_use_strict">use_strict</a></strong>
+
 <dd>
-True or false, default is true. Indicates whether or not a given
-component should <A HREF="#item_use_strict"><code>use strict</code></a>.
+<p>True or false, default is true. Indicates whether or not a given
+component should <A HREF="#item_use_strict"><code>use strict</code></a>.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_define_args_hash">define_args_hash</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_define_args_hash">define_args_hash</a></strong>
+
 <dd>
-One of ``always'', ``auto'', or ``never''.  This determines whether or not
+<p>One of ``always'', ``auto'', or ``never''.  This determines whether or not
 an <code>%ARGS</code> hash is created in components.  If it is set to ``always'',
-one is always defined.  If set to ``never'', it is never defined.
+one is always defined.  If set to ``never'', it is never defined.</p>
 </dd>
 <dd>
 <p>The default, ``auto'', will cause the hash to be defined only if some
@@ -108,7 +110,8 @@ to false negatives.</p>
 <p>Not defining the args hash means that we can avoid copying component
 arguments, which can save memory and slightly improve execution speed.</p>
 </dd>
-<p></p></dl>
+</li>
+</dl>
 <p>
 </p>
 <hr />
@@ -124,15 +127,16 @@ properties).</p>
 <p>This class is primarily meant to be used by the Interpreter object,
 and as such has a very limited public API.</p>
 <dl>
-<dt><strong><A NAME="item_compile">compile (comp_source =&gt; $source, name =&gt; $name, comp_class = $comp_class)</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_compile">compile (comp_source =&gt; $source, name =&gt; $name, comp_class = $comp_class)</a></strong>
+
 <dd>
-This method will take component source and return the compiled object
+<p>This method will take component source and return the compiled object
 code for that source.  The <code>comp_source</code> and <code>name</code> parameters are
 optional.  The <A HREF="#item_comp_class"><code>comp_class</code></a> can be used to change the component class
-for this one comonent.
+for this one comonent.</p>
 </dd>
-<p></p></dl>
+</li>
+</dl>
 
 </body>
 

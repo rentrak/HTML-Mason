@@ -1,7 +1,9 @@
+<?xml version="1.0" ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <title>HTML::Mason::Escapes - Functions to escape text for Mason</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rev="made" href="mailto:root@localhost" />
 </head>
 
@@ -29,31 +31,31 @@
 <p>This module contains functions for implementing Mason's <A HREF="Devel.html#escaping_expressions">substitution escaping</a> feature.  These
 functions may also be called directly.</p>
 <dl>
-<dt><strong><A NAME="item_html_entities_escape">html_entities_escape</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_html_entities_escape">html_entities_escape</a></strong>
+
 <dd>
-This function takes a scalar reference and HTML-escapes it using the
+<p>This function takes a scalar reference and HTML-escapes it using the
 <code>HTML::Entities</code> module.  By default, this module assumes that the
 string it is escaping is in ISO-8859-1 (pre Perl 5.8.0) or UTF-8 (Perl
 5.8.0 onwards).  If this is not the case for your data, you will want
 to override this escape to do the right thing for your encoding.  See
 the section on <A HREF="Devel.html#userdefined_escapes">User-defined Escapes in the Developer's Manual</a> for more details on
-how to do this.
+how to do this.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_url_escape">url_escape</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_url_escape">url_escape</a></strong>
+
 <dd>
-This takes a scalar reference and replaces any text it contains
+<p>This takes a scalar reference and replaces any text it contains
 matching <code>[^a-zA-Z0-9_.-]</code> with the URL-escaped equivalent, a percent
-sign (%) followed by the hexadecimal number of that character.
+sign (%) followed by the hexadecimal number of that character.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_basic_html_escape">basic_html_escape</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_basic_html_escape">basic_html_escape</a></strong>
+
 <dd>
-This function takes a scalar reference and HTML-escapes it, escaping
-the following characters: '&amp;', '&gt;', '&lt;', and '``'.
+<p>This function takes a scalar reference and HTML-escapes it, escaping
+the following characters: '&amp;', '&gt;', '&lt;', and '``'.</p>
 </dd>
 <dd>
 <p>It is provided for those who wish to use it to replace (or supplement)
@@ -72,7 +74,8 @@ scripting attacks.  See
 <a href="http://www.megasecurity.org/Info/cross-site_scripting.txt">http://www.megasecurity.org/Info/cross-site_scripting.txt</a> for more
 details.</p>
 </dd>
-<p></p></dl>
+</li>
+</dl>
 
 </body>
 

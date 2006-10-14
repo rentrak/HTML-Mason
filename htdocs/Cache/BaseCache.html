@@ -1,7 +1,9 @@
+<?xml version="1.0" ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <title>HTML::Mason::Cache::BaseCache - Base cache object</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rev="made" href="mailto:root@localhost" />
 </head>
 
@@ -36,52 +38,53 @@ Dewitt Clinton's <code>Cache::Cache</code> package.</p>
 <hr />
 <h1><A NAME="methods">METHODS</a></h1>
 <dl>
-<dt><strong><A NAME="item_clear">clear ()</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_clear">clear ()</a></strong>
+
 <A NAME="item_clear"></a><p>Remove all values in the cache.</p>
-<dt><strong><A NAME="item_get">get (key, [%params])</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_get">get (key, [%params])</a></strong>
+
 <A NAME="item_get"></a><p>Returns the value associated with <em>key</em> or undef if it is
 non-existent or expired. This is extended with the following optional
 name/value parameters:</p>
 <dl>
-<dt><strong><A NAME="item_busy_lock__3d_3e_duration">busy_lock =&gt; duration</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_busy_lock__3d_3e_duration">busy_lock =&gt; duration</a></strong>
+
 <dd>
-If the value has expired, set its expiration time to the current time plus
+<p>If the value has expired, set its expiration time to the current time plus
 <em>duration</em> (instead of removing it from the cache) before returning undef.
 This is used to prevent multiple processes from recomputing the same
 expensive value simultaneously. The <em>duration</em> may be of any form acceptable
-to <A HREF="../Cache/BaseCache.html#item_set">set</a>.
+to <A HREF="../Cache/BaseCache.html#item_set">set</a>.</p>
 </dd>
-<p></p>
-<dt><strong><A NAME="item_expire_if__3d_3e_sub">expire_if =&gt; sub</a></strong><br />
-</dt>
+</li>
+<dt><strong><A NAME="item_expire_if__3d_3e_sub">expire_if =&gt; sub</a></strong>
+
 <dd>
-If the value exists and has not expired, call <em>sub</em> with the cache
+<p>If the value exists and has not expired, call <em>sub</em> with the cache
 object as a single parameter. If <em>sub</em> returns a true value, expire
-the value.
+the value.</p>
 </dd>
-<p></p></dl>
-<dt><strong><A NAME="item_get_object">get_object (key)</a></strong><br />
-</dt>
+</li>
+</dl>
+<dt><strong><A NAME="item_get_object">get_object (key)</a></strong>
+
 <A NAME="item_get_object"></a><p>Returns the underlying <code>Cache::Object</code> object associated with <em>key</em>.
 The most useful methods on this object are</p>
 <pre>
     $co-&gt;get_created_at();    # when was object stored in cache
     $co-&gt;get_accessed_at();   # when was object last accessed
     $co-&gt;get_expires_at();    # when does object expire</pre>
-<dt><strong><A NAME="item_expire">expire (key)</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_expire">expire (key)</a></strong>
+
 <A NAME="item_expire"></a><p>Expires the value associated with <em>key</em>, if it exists. Differs from
 <A HREF="../Cache/BaseCache.html#item_remove">remove</a> only in that
 the cache object is left around, e.g. for retrieval by
 <A HREF="../Cache/BaseCache.html#item_get_object">get_object</a>.</p>
-<dt><strong><A NAME="item_remove">remove (key)</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_remove">remove (key)</a></strong>
+
 <A NAME="item_remove"></a><p>Removes the cache object associated with <em>key</em>, if it exists.</p>
-<dt><strong><A NAME="item_set">set (key, data, [duration])</a></strong><br />
-</dt>
+<dt><strong><A NAME="item_set">set (key, data, [duration])</a></strong>
+
 <A NAME="item_set"></a><p>Associates <em>data</em> with <em>key</em> in the cache. <em>duration</em>
 indicates the time until the value should be erased.  If
 <em>duration</em> is unspecified, the value will never expire
