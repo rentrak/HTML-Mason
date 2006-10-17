@@ -711,7 +711,6 @@ EOF
     $group->add_support( path => '/support/subdir/longjump_test2',
                          component => <<'EOF',
 This is longjump_test2
-
 % no warnings 'uninitialized'; next;
 EOF
                        );
@@ -725,11 +724,6 @@ EOF
 <& longjump_test3 &>
 EOF
                        );
-
-
-
-
-#------------------------------------------------------------
 
     # It is possible to accidentally call 'next' from a component and
     # jump out to the last loop or block in a previous component.
@@ -755,7 +749,8 @@ This is longjump_test2
 Depth is 3.
 The full component stack is /request/support/longjump_test3,/request/support/longjump_test1,/request/longjump.
 EOF
-                      expect_warnings => qr/Exiting subroutine via next/,
+                      # This just shuts the test code up
+                      expect_warnings => qr/.*/,
                     );
 
 #------------------------------------------------------------

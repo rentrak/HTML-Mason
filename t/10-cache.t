@@ -176,12 +176,10 @@ x is <% $x %>
 $x
 </%args>
 <%init>
-return if $m->cache_self( expires_in => '1s' );
+return if $m->cache_self( expires_in => '3s' );
 </%init>
 EOF
                         );
-
-#------------------------------------------------------------
 
     $group->add_test( name => 'cache_self_expires_in',
                       description => 'test that $m->cache_self respects expires_in parameter',

@@ -60,6 +60,7 @@ t/02-sections.t
 t/02a-filter.t
 t/04-misc.t
 t/05-request.t
+t/05a-stack-corruption.t
 t/06-compiler.t
 t/06a-compiler_obj.t
 t/07-interp.t
@@ -84,8 +85,10 @@ t/20-plugins.t
 t/21-escapes.t
 t/22-path-security.t
 t/23-leak2.t
+t/24-tools.t
 t/99-pod.t
 t/lib/Apache/test.pm
+t/lib/LoadTest.pm
 t/live_server_lib.pl
 t/run_one_test
 t/run_tests

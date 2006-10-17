@@ -1,6 +1,6 @@
 ---
 name: HTML-Mason
-version: 1.34
+version: 1.35
 author:
   - 'Jonathan Swartz <swartz@pobox.com>, Dave Rolsky <autarch@urth.org>, Ken Williams <ken@mathforum.org>, John Williams <williams@tni.com>'
 abstract: 'High-performance, dynamic web site authoring system'
@@ -28,7 +28,7 @@ provides:
     version: 0.09
   HTML::Mason:
     file: lib/HTML/Mason.pm
-    version: 1.34
+    version: 1.35
   HTML::Mason::ApacheHandler:
     file: lib/HTML/Mason/ApacheHandler.pm
     version: 1.69
