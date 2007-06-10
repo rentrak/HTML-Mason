@@ -444,6 +444,37 @@ The class to use when creating a compiler. Defaults to
 L<HTML::Mason::Compiler|HTML::Mason::Compiler>.
 
 
+=head2 component_error_handler
+
+=over 4
+
+=item * Perl name:           component_error_handler
+
+=item * Apache name:         MasonComponentErrorHandler
+
+=item * Type in httpd.conf:  code
+
+=item * Default:             sub { package HTML::Mason::Exceptions; use warnings; use strict 'refs'; my($err) = @_; return unless $err; if (UNIVERSAL::can($err, 'rethrow')) { $err->rethrow; } elsif (ref $err) { die $err; } 'HTML::Mason::Exception'->throw('error', $err); }
+
+=item * Belongs to:          C<HTML::Mason::Request>
+
+
+
+
+=back
+
+A code reference used to handle errors thrown during component
+compilation or runtime. By default, this is a subroutine that turns
+non-exception object errors in components into exceptions. If this
+parameter is set to a false value, these errors are simply rethrown
+as-is.
+
+Turning exceptions into objects can be expensive, since this will
+cause the generation of a stack trace for each error. If you are using
+strings or unblessed references as exceptions in your code, you may
+want to turn this off as a performance boost.
+
+
 =head2 data_cache_api
 
 =over 4
@@ -927,6 +958,31 @@ The class to use when creating a lexer. Defaults to L<HTML::Mason::Lexer|HTML::M
 The maximum recursion depth for the component stack, for the request
 stack, and for the inheritance stack. An error is signalled if the
 maximum is exceeded.  Default is 32.
+
+
+=head2 named_component_subs
+
+=over 4
+
+=item * Perl name:           named_component_subs
+
+=item * Apache name:         MasonNamedComponentSubs
+
+=item * Type in httpd.conf:  boolean
+
+=item * Default:             0
+
+=item * Belongs to:          C<HTML::Mason::Compiler::ToObject>
+
+
+
+
+=back
+
+When compiling a component, use uniquely named subroutines for the a
+component's body, subcomponents, and methods. Doing this allows you to
+effectively profile Mason components. Without this, all components
+simply show up as __ANON__ or something similar in the profiler.
 
 
 =head2 object_file_extension

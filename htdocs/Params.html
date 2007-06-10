@@ -37,6 +37,7 @@
 		<li><A HREF="#comp_class">comp_class</a></li>
 		<li><A HREF="#comp_root">comp_root</a></li>
 		<li><A HREF="#compiler_class">compiler_class</a></li>
+		<li><A HREF="#component_error_handler">component_error_handler</a></li>
 		<li><A HREF="#data_cache_api">data_cache_api</a></li>
 		<li><A HREF="#data_cache_defaults">data_cache_defaults</a></li>
 		<li><A HREF="#data_dir">data_dir</a></li>
@@ -54,6 +55,7 @@
 		<li><A HREF="#interp_class">interp_class</a></li>
 		<li><A HREF="#lexer_class">lexer_class</a></li>
 		<li><A HREF="#max_recurse">max_recurse</a></li>
+		<li><A HREF="#named_component_subs">named_component_subs</a></li>
 		<li><A HREF="#object_file_extension">object_file_extension</a></li>
 		<li><A HREF="#out_method">out_method</a></li>
 		<li><A HREF="#plugins">plugins</a></li>
@@ -413,6 +415,30 @@ invalid if the associated paths were to change.</p>
 </ul>
 <p>The class to use when creating a compiler. Defaults to
 <a HREF="Compiler.html">HTML::Mason::Compiler</a>.</p>
+<p>
+</p>
+<h2><A NAME="component_error_handler">component_error_handler</a></h2>
+<ul>
+<li><strong><A NAME="item_perl_name_3a_component_erro">Perl name:           component_error_handler</a></strong>
+
+<li><strong><A NAME="item_apache_name_3a_masoncompone">Apache name:         MasonComponentErrorHandler</a></strong>
+
+<li><strong><A NAME="item_type_in_httpd_2econf_3a_cod">Type in httpd.conf:  code</a></strong>
+
+<li><strong><A NAME="item_my">Default:             sub { package HTML::Mason::Exceptions; use warnings; use strict 'refs'; <code>my($err)</code> = @_; return unless $err; if (UNIVERSAL::can($err, 'rethrow')) { $err-&gt;rethrow; } elsif (ref $err) { die $err; } 'HTML::Mason::Exception'-&gt;throw('error', $err); }</a></strong>
+
+<li><strong>Belongs to:          <code>HTML::Mason::Request</code></strong>
+
+</ul>
+<p>A code reference used to handle errors thrown during component
+compilation or runtime. By default, this is a subroutine that turns
+non-exception object errors in components into exceptions. If this
+parameter is set to a false value, these errors are simply rethrown
+as-is.</p>
+<p>Turning exceptions into objects can be expensive, since this will
+cause the generation of a stack trace for each error. If you are using
+strings or unblessed references as exceptions in your code, you may
+want to turn this off as a performance boost.</p>
 <p>
 </p>
 <h2><A NAME="data_cache_api">data_cache_api</a></h2>
@@ -779,6 +805,25 @@ stack, and for the inheritance stack. An error is signalled if the
 maximum is exceeded.  Default is 32.</p>
 <p>
 </p>
+<h2><A NAME="named_component_subs">named_component_subs</a></h2>
+<ul>
+<li><strong><A NAME="item_perl_name_3a_named_componen">Perl name:           named_component_subs</a></strong>
+
+<li><strong><A NAME="item_apache_name_3a_masonnamedco">Apache name:         MasonNamedComponentSubs</a></strong>
+
+<li><strong>Type in httpd.conf:  boolean</strong>
+
+<li><strong>Default:             0</strong>
+
+<li><strong>Belongs to:          <code>HTML::Mason::Compiler::ToObject</code></strong>
+
+</ul>
+<p>When compiling a component, use uniquely named subroutines for the a
+component's body, subcomponents, and methods. Doing this allows you to
+effectively profile Mason components. Without this, all components
+simply show up as __ANON__ or something similar in the profiler.</p>
+<p>
+</p>
 <h2><A NAME="object_file_extension">object_file_extension</a></h2>
 <ul>
 <li><strong><A NAME="item_perl_name_3a_object_file_ex">Perl name:           object_file_extension</a></strong>
@@ -801,7 +846,7 @@ maximum is exceeded.  Default is 32.</p>
 
 <li><strong><A NAME="item_apache_name_3a_masonoutmeth">Apache name:         MasonOutMethod</a></strong>
 
-<li><strong><A NAME="item_type_in_httpd_2econf_3a_cod">Type in httpd.conf:  code</a></strong>
+<li><strong>Type in httpd.conf:  code</strong>
 
 <li><strong><A NAME="item_default_3a_print_to_stdout">Default:             Print to STDOUT</a></strong>
 

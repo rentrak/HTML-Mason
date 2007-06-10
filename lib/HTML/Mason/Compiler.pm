@@ -190,6 +190,7 @@ sub compile
     my $self = shift;
     my %p = validate( @_, { comp_source => { type => SCALAR|SCALARREF },
                             name => { type => SCALAR },
+                            comp_path => { type => SCALAR },
                             fh => { type => HANDLE, optional => 1 },
                           } );
     my $src = ref($p{comp_source}) ? $p{comp_source} : \$p{comp_source};
@@ -202,6 +203,8 @@ sub compile
 
     # So we're re-entrant in subcomps
     local $self->{paused_compiles} = [];
+
+    local $self->{comp_path} = $p{comp_path};
 
     # Preprocess the source.  The preprocessor routine is handed a
     # reference to the entire source.
@@ -222,7 +225,6 @@ sub start_component
     my $c = $self->{current_compile};
 
     $c->{in_main} = 1;
-    $c->{comp_with_content_stack} = [];
 
     $c->{in_block} = undef;
 
@@ -246,6 +248,8 @@ sub _init_comp_data
     $data->{flags} = {};
     $data->{attr} = {};
 
+    $data->{comp_with_content_stack} = [];
+
     foreach ( qw( cleanup filter init once shared ) )
     {
         $data->{blocks}{$_} = [];
@@ -258,7 +262,7 @@ sub end_component
     my $c = $self->{current_compile};
 
     $self->lexer->throw_syntax_error("Not enough component-with-content ending tags found")
-        if $c->{comp_with_content_stack} && @{ $c->{comp_with_content_stack} };
+        if @{ $c->{comp_with_content_stack} };
 }
 
 sub start_block

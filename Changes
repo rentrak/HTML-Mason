@@ -5,6 +5,39 @@ available at http://www.masonhq.com/code/history.html.
 
 ** denotes an incompatible change
 
+1.36  Jun 10, 2007
+
+    [ BUG FIXES ]
+
+    - If a component with content call ending tag appeared inside a
+  subcomp or method without an opening tag, then the compiler dies
+  with a Perl error, rather than reporting the error
+  usefully. Reported by Rich Williams.
+
+    - Under mod_perl 2, if decline_dirs was false and a directory was
+  requested, you got a "Use of uninitialized value" warning from
+  ApacheHandler in your logs. Reported by Ogden Nefix.
+
+    - HTML::Entities is now a prereq. Not requiring it made for various
+  weird gyrations in the tests that didn't seem to work all the time,
+  causing various failures. Fixes RT #24827.
+
+    - Request::CGIHandler->exec() now returns the return value from
+  executing the component, just like a normal Request. Reported by
+  Adrian Irving-Beer.
+
+    [ ENHANCEMENTS ]
+
+    - Added a new Compiler::ToObject parameter,
+  named_component_subs. Turning this on makes it possible to profile
+  components.
+
+    - Added a new Request parameter, component_error_handler. This can be
+  set to change how component compilation and runtime errors are
+  handled. It can also be set to false to just let errors go
+  unhandled, which could speed up apps that throw a lot of non-object
+  exceptions.
+
 1.35  Oct 17, 2006
 
     [ BUG FIXES ]

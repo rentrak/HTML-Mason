@@ -63,6 +63,7 @@ t/05-request.t
 t/05a-stack-corruption.t
 t/06-compiler.t
 t/06a-compiler_obj.t
+t/06b-compiler-named-subs.t
 t/07-interp.t
 t/07a-interp-mcr.t
 t/07b-interp-static-source.t

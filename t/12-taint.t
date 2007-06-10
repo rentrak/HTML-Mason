@@ -57,10 +57,16 @@ if ($alarm_works)
     my $alarm;
     $SIG{ALRM} = sub { $alarm = 1; die "alarm"; };
 
-    my $comp = read_file( File::Spec->catfile( File::Spec->curdir, 't', 'taint.comp' ) );
+    my $source = read_file( File::Spec->catfile( File::Spec->curdir, 't', 'taint.comp' ) );
+    my $comp;
     eval { alarm 5;
            local $^W;
-           $comp = $compiler->compile( comp_source => $comp, name => 't/taint.comp' );
+           $comp =
+               $compiler->compile
+                   ( comp_source => $source,
+                     name => 't/taint.comp',
+                     comp_path => '/taint.comp',
+                   );
        };
 
     my $error = ( $alarm ? "entered endless while loop" :
@@ -85,6 +91,7 @@ $data_dir = File::Spec->catdir( getcwd(), 'mason_tests', 'data' );
 # This source is tainted, as is anything with return val from getcwd()
 my $comp2 = HTML::Mason::ComponentSource->new
     ( friendly_name => 't/taint.comp',
+      comp_path => '/t/taint.comp',
       source_callback => sub {
           read_file( File::Spec->catfile( File::Spec->curdir, 't', 'taint.comp' ) );
       },
@@ -97,7 +104,7 @@ eval { $interp->compiler->compile_to_file
            ( file => File::Spec->catfile( $data_dir, 'taint_write_test' ),
              source => $comp2,
            ); };
-ok $@, '', "Unable to write a tainted object to disk";
+ok $@, '', "Can write a tainted object to disk";
 
 
 my $cwd = getcwd(); # tainted

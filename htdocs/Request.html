@@ -172,6 +172,22 @@ displayed in the browser.  The default for standalone mode is
 <em>fatal</em>.</p>
 </dd>
 </li>
+<dt><strong><A NAME="item_component_error_handler">component_error_handler</a></strong>
+
+<dd>
+<p>A code reference used to handle errors thrown during component
+compilation or runtime. By default, this is a subroutine that turns
+non-exception object errors in components into exceptions. If this
+parameter is set to a false value, these errors are simply rethrown
+as-is.</p>
+</dd>
+<dd>
+<p>Turning exceptions into objects can be expensive, since this will
+cause the generation of a stack trace for each error. If you are using
+strings or unblessed references as exceptions in your code, you may
+want to turn this off as a performance boost.</p>
+</dd>
+</li>
 <dt><strong><A NAME="item_max_recurse">max_recurse</a></strong>
 
 <dd>

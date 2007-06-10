@@ -175,19 +175,16 @@ EOF
 
 #------------------------------------------------------------
 
-    if ( load_pkg('HTML::Entities') )
-    {
-        $group->add_test( name => 'check_error_format',
-                          description => 'Make sure setting error_format => "html" works',
-                          interp_params => { error_format => 'html',
-                                             error_mode => 'output',
-                                           },
-                          component => <<'EOF',
+    $group->add_test( name => 'check_error_format',
+                      description => 'Make sure setting error_format => "html" works',
+                      interp_params => { error_format => 'html',
+                                         error_mode => 'output',
+                                       },
+                      component => <<'EOF',
 % die("Horrible death");
 EOF
-                          expect => qr{^\s+<html>.*Horrible death}is,
-                        );
-    }
+                      expect => qr{^\s+<html>.*Horrible death}is,
+                    );
 
 #------------------------------------------------------------
 
@@ -197,7 +194,7 @@ EOF
 % $m->subexec("/does/not/exist");
 EOF
                       expect_error => qr{could not find component for initial path}is,
-                      );
+                    );
 
 #------------------------------------------------------------
 
@@ -348,6 +345,55 @@ EOF
                         # exactly one occurance of "Stack:"
                         # (Mason should stop after the first error)
                       expect => qr/Error during compilation((?!Stack:).)*Stack:((?!Stack:).)*$/s,
+                    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'component_error_handler_false',
+                      description => 'Test error-handling with component_error_handler set to false',
+                      interp_params => { component_error_handler => 0 },
+                      component => <<'EOF',
+% die 'a string error';
+EOF
+                      expect_error => qr/a string error/,
+                    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'component_error_Handler_no_upgrade',
+                      description => 'Test that errors do not become object with component_error_handler set to false',
+                      interp_params => { component_error_handler => 0 },
+                      component => <<'EOF',
+% eval { die 'a string error' };
+exception: <% ref $@ ? ref $@ : 'not a ref' %>
+EOF
+                      expect => <<'EOF',
+exception: not a ref
+EOF
+                    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'component_error_handler_false_fatal_mode',
+                      description => 'Test error-handling with component_error_handler set to false and error_mode set to fatal',
+                      interp_params => { component_error_handler => 0,
+                                         error_mode => 'fatal',
+                                       },
+                      component => <<'EOF',
+% die 'a string error';
+EOF
+                      expect_error => qr/a string error/,
+                    );
+
+#------------------------------------------------------------
+
+    $group->add_test( name => 'component_error_handler_uc_message',
+                      description => 'Test error-handling with component_error_handler set to a subroutine that upper-cases all text',
+                      interp_params => { component_error_handler => sub { die map { uc } @_ } },
+                      component => <<'EOF',
+% die 'a string error';
+EOF
+                      expect_error => qr/A STRING ERROR/,
                     );
 
 #------------------------------------------------------------

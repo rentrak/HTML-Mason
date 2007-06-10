@@ -2,9 +2,12 @@
 
 use strict;
 
-use Test::More tests => 3;
+use Test::More;
 
 use HTML::Mason::Escapes;
+
+plan tests => 3;
+
 
 my $html = qq|<>"& \x{2202}|;
 HTML::Mason::Escapes::basic_html_escape( \$html );
