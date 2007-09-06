@@ -2,7 +2,10 @@
 
 use strict;
 
+use File::Spec;
+use HTML::Mason::Tests;
 use Module::Build;
+use Test::More;
 
 my $test_data = eval { Module::Build->current->notes('test_data') };
 
@@ -18,23 +21,23 @@ my $apreq_module = $mpver && $mpver >= 2 ? 'Apache2::Request' : 'Apache::Request
 
 unless ( $test_data
          && $test_data->{is_maintainer}
+         && exists $test_data->{apache_dir}
          && $test_data->{apache_dir}
-         && $mpver )
+         && -d $test_data->{apache_dir} )
 {
-    print "1..0\n";
-    exit;
+    plan skip_all =>
+        '$test_data->{is_maintainer} is not true or '
+        . '$test_data->{apache_dir} is not a directory';
 }
-
-use File::Spec;
-use HTML::Mason::Tests;
-use Test::More;
 
 use lib 'lib', File::Spec->catdir('t', 'lib');
 
 require File::Spec->catfile( 't', 'live_server_lib.pl' );
 
 use Apache::test qw(skip_test have_httpd have_module);
-skip_test unless have_httpd;
+
+plan skip_all => 'have_httpd evaluates false.'
+    unless have_httpd();
 
 local $| = 1;
 
@@ -48,12 +51,15 @@ my $tests = 23; # multi conf & taint tests
 $tests += 70 if my $have_libapreq = have_module($apreq_module);
 $tests += 46 if my $have_cgi      = have_module('CGI');
 $tests += 18 if my $have_tmp      = (-d '/tmp' and -w '/tmp');
+$tests += 4; # set content type tests
 $tests++ if $have_cgi;
 
-# XXX - this never works because Apache::Filter cannot load outside of
-# mod_perl
-my $have_filter = eval { require Apache::Filter };
-$tests++ if $have_filter && $Apache::Filter::VERSION >= 1.021 && $mpver < 1.99;
+# Apache::Filter test - we cannot load Apache::Filter outside of
+# mod_perl, so we'll just assume maintainers have it installed.
+my $have_filter;
+$have_filter = 1 if $test_data->{is_maintainer} && $mpver < 1.99;
+
+$tests++ if $have_filter;
 
 plan( tests => $tests);
 
@@ -75,6 +81,9 @@ if ($have_libapreq) {        # 69 tests
         cleanup_data_dir();
         filter_tests();      # 1 test
     }
+
+    cleanup_data_dir();
+    set_content_type_tests();  # 4 tests
 }
 
 if ($have_tmp) {
@@ -211,6 +220,11 @@ EOF
     write_comp( 'with_dhandler/dhandler', <<'EOF',
 % $r->content_type('text/html');
 with a dhandler
+EOF
+              );
+
+    write_comp( 'with_dhandler_no_ct/dhandler', <<'EOF',
+with a dhandler, no content type
 EOF
               );
 
@@ -421,6 +435,7 @@ EOF
     if ($with_handler)
     {
         $response = Apache::test->fetch('/ah=4/comps/apache_request');
+
         $actual = filter_response($response, $with_handler);
         $success = HTML::Mason::Tests->tests_class->check_output( actual => $actual,
                                                                   expect => <<'EOF',
@@ -956,6 +971,30 @@ Status code: 0
 EOF
                                                   );
     ok($success);
+
+    kill_httpd(1);
+}
+
+sub set_content_type_tests
+{
+    start_httpd('set_content_type');
+
+    my $response = Apache::test->fetch('/comps/basic');
+
+    is( $response->headers->header('Content-Type'),
+        'text/html; charset=i-made-this-up',
+        'Content type set by handler is preserved by Mason' );
+
+    unlike( $response->content, qr/Content-Type:/i,
+            'response body does not contain a content-type header' );
+
+    $response = Apache::test->fetch('/comps/with_dhandler_no_ct/');
+    is( $response->headers->header('Content-Type'),
+        'text/html; charset=i-made-this-up',
+        'Content type set by handler is preserved by Mason with directory request' );
+
+    unlike( $response->content, qr/Content-Type:/i,
+            'response body does not contain a content-type header with directory request' );
 
     kill_httpd(1);
 }
