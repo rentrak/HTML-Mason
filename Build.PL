@@ -41,7 +41,7 @@ unless ($is_dist)
     if ($has_only_mp2)
     {
         $prereq{CGI} = 3.08;
-        $prereq{mod_perl} = 1.999022;
+        $prereq{mod_perl2} = 1.999022;
     }
 }
 
@@ -56,6 +56,7 @@ my $build = Mason::Build->new
     license     => 'perl',
     create_makefile_pl => 'passthrough',
     is_dist     => $is_dist,
+    recursive_test_files => 1,
   );
 
 $build->create_build_script;

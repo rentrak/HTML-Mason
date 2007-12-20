@@ -16,6 +16,7 @@ lib/Apache/Mason.pm
 lib/Bundle/HTML/Mason.pm
 lib/HTML/Mason.pm
 lib/HTML/Mason/Admin.pod
+lib/HTML/Mason/Apache/Request.pm
 lib/HTML/Mason/ApacheHandler.pm
 lib/HTML/Mason/Cache/BaseCache.pm
 lib/HTML/Mason/CGIHandler.pm
@@ -67,7 +68,6 @@ t/06b-compiler-named-subs.t
 t/07-interp.t
 t/07a-interp-mcr.t
 t/07b-interp-static-source.t
-t/08-ah.t
 t/09-component.t
 t/09a-comp_content.t
 t/10-cache.t
@@ -78,7 +78,6 @@ t/13-errors.t
 t/14-cgi.t
 t/14a-fake_apache.t
 t/15-subclass.t
-t/16-live_cgi.t
 t/17-print.t
 t/18-leak.t
 t/19-subrequest.t
@@ -90,7 +89,18 @@ t/24-tools.t
 t/99-pod.t
 t/lib/Apache/test.pm
 t/lib/LoadTest.pm
-t/live_server_lib.pl
+t/lib/Mason/ApacheTest.pm
+t/live/apache-filter.t
+t/live/cgi-no-handler.t
+t/live/cgi-with-handler.t
+t/live/CGIHandler.t
+t/live/libapreq-no-handler.t
+t/live/libapreq-with-handler.t
+t/live/multi-conf.t
+t/live/no-config.t
+t/live/set-content-type.t
+t/live/single-level-server-root.t
+t/live/taint.t
 t/run_one_test
 t/run_tests
 t/single_test.pl

@@ -570,6 +570,9 @@ sub _write_CGIHandler
     print F <<"EOF";
 $Config{startperl}
 
+use strict;
+use warnings;
+
 $libs
 
 use HTML::Mason::CGIHandler;
@@ -1310,11 +1313,6 @@ sub ACTION_test
     my $self = shift;
 
     my $conf = $self->notes('apache_test_conf');
-
-    $self->notes( test_data => { apache_dir => $conf->{apache_dir},
-                                 port       => $conf->{port},
-                                 is_maintainer => $self->_is_maintainer,
-                               } );
 
     $self->SUPER::ACTION_test;
 }

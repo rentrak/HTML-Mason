@@ -179,7 +179,6 @@ sub exec
          and ( !$retval or $retval eq HTTP_OK ) ) {
 
         $r->send_http_header();
-        $r->notes( 'mason-sent-headers' => 1 );
     }
 
     # mod_perl 1 treats HTTP_OK and OK the same, but mod_perl-2 does not.
@@ -202,7 +201,6 @@ sub _handle_error
 
             unless (APACHE2) {
                 $self->apache_req->send_http_header;
-                $self->apache_req->notes( 'mason-sent-headers' => 1 );
             }
         }
         $self->SUPER::_handle_error($err);
@@ -253,6 +251,8 @@ BEGIN {
             require APR::Table;
         } else {
             require Apache;
+            require Apache::Request;
+            require HTML::Mason::Apache::Request;
             Apache->import();
         }
     }
@@ -340,10 +340,9 @@ sub _startup
             }
             die $@ if $@;
         }
-        elsif ($args_method eq 'mod_perl')
+        elsif ( $args_method eq 'mod_perl' && APACHE2 )
         {
-            my $apreq_module = APACHE2 ? 'Apache2::Request' : 'Apache::Request';
-            eval "require $apreq_module" unless defined $apreq_module->VERSION;
+            eval "require Apache2::Request" unless defined Apache2::Request->VERSION;
         }
     }
 }
@@ -888,7 +887,6 @@ sub prepare_request
             unless (APACHE2) {
                 unless ($r->notes('mason-sent-headers')) {
                     $r->send_http_header();
-                    $r->notes( 'mason-sent-headers' => 1 );
                 }
             }
         }
@@ -908,6 +906,10 @@ sub _apache_request_object
 {
     my $self = shift;
 
+    # We need to be careful to never assign a new apache (subclass)
+    # object to $r or we will leak memory, at least with mp1.
+    my $new_r = APACHE2 ? $_[0] : HTML::Mason::Apache::Request->new( $_[0] );
+
     my $r_sub;
     if ( lc $_[0]->dir_config('Filter') eq 'on' )
     {
@@ -921,19 +923,15 @@ sub _apache_request_object
         $r_sub = $no_filter;
     }
 
-    my $apreq_instance = APACHE2
-                ? sub { Apache2::Request->new( $_[0] ) }
-                : sub { Apache::Request->instance( $_[0] ) };
+    my $apreq_instance =
+          APACHE2
+        ? sub { Apache2::Request->new( $_[0] ) }
+        : sub { $_[0] };
 
-    # This gets the proper request object all in one fell swoop.  We
-    # don't want to copy it because if we do something like assign an
-    # Apache::Request object to a variable currently containing a
-    # plain Apache object, we leak memory.  This means we'd have to
-    # use multiple variables to avoid this, which is annoying.
     return
         $r_sub->( $self->args_method eq 'mod_perl' ?
-                  &$apreq_instance( $_[0] ) :
-                  $_[0]
+                  $apreq_instance->( $new_r ) :
+                  $new_r
                 );
 }
 
@@ -1033,7 +1031,6 @@ sub _set_mason_req_out_method
             if (!$sent_headers and HTML::Mason::Request->instance->auto_send_headers) {
                 unless ($r->notes('mason-sent-headers')) {
                     $r->send_http_header();
-                    $r->notes( 'mason-sent-headers' => 1 );
                 }
                 $sent_headers = 1;
             }
