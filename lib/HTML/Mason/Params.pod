@@ -494,11 +494,26 @@ want to turn this off as a performance boost.
 
 =back
 
-The C<$m-E<gt>cache> API to use. '1.1', the default, indicates the newer
-API L<documented in this manual|HTML::Mason::Request/item_cache>.
-'1.0' indicates the old API documented in 1.0x and earlier. This
-compatibility layer is provided as a convenience for users upgrading
-from older versions of Mason, but will not be supported indefinitely.
+The C<$m-E<gt>cache> API to use:
+
+=over
+
+=item *
+
+'1.1', the default, indicates a C<Cache::Cache> based API.
+
+=item *
+
+'chi' indicates a C<CHI> based API.
+
+=item *
+
+'1.0' indicates the custom cache API used in Mason 1.0x and
+earlier. This compatibility layer is provided as a convenience for
+users upgrading from older versions of Mason, but will not be
+supported indefinitely.
+
+=back
 
 
 =head2 data_cache_defaults
@@ -521,10 +536,15 @@ from older versions of Mason, but will not be supported indefinitely.
 =back
 
 A hash reference of default options to use for the C<$m-E<gt>cache>
-command. For example, to use the C<MemoryCache> implementation
-by default,
+command.  For example, to use Cache::Cache's C<MemoryCache>
+implementation by default:
 
     data_cache_defaults => {cache_class => 'MemoryCache'}
+
+To use the CHI C<FastMmap> driver by default:
+
+    data_cache_api      => 'CHI',
+    data_cache_defaults => {driver => 'FastMmap'},
 
 These settings are overriden by options given to particular
 C<$m-E<gt>cache> calls.
@@ -761,7 +781,8 @@ I<text> - a multi-line text format
 
 =item *
 
-I<line> - a single-line text format, with different pieces of information separated by tabs (useful for log files)
+I<line> - a single-line text format, with different pieces of
+information separated by tabs (useful for log files)
 
 =item *
 

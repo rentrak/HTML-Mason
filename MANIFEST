@@ -72,6 +72,7 @@ t/09-component.t
 t/09a-comp_content.t
 t/10-cache.t
 t/10a-cache-1.0x.t
+t/10b-cache-chi.t
 t/11-inherit.t
 t/12-taint.t
 t/13-errors.t

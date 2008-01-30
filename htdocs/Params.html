@@ -454,11 +454,21 @@ want to turn this off as a performance boost.</p>
 <li><strong>Belongs to:          <code>HTML::Mason::Request</code></strong>
 
 </ul>
-<p>The <code>$m-&gt;cache</code> API to use. '1.1', the default, indicates the newer
-API <A HREF="Request.html#item_cache">documented in this manual</a>.
-'1.0' indicates the old API documented in 1.0x and earlier. This
-compatibility layer is provided as a convenience for users upgrading
-from older versions of Mason, but will not be supported indefinitely.</p>
+<p>The <code>$m-&gt;cache</code> API to use:</p>
+<ul>
+<li>
+<p>'1.1', the default, indicates a <code>Cache::Cache</code> based API.</p>
+</li>
+<li>
+<p>'chi' indicates a <code>CHI</code> based API.</p>
+</li>
+<li>
+<p>'1.0' indicates the custom cache API used in Mason 1.0x and
+earlier. This compatibility layer is provided as a convenience for
+users upgrading from older versions of Mason, but will not be
+supported indefinitely.</p>
+</li>
+</ul>
 <p>
 </p>
 <h2><A NAME="data_cache_defaults">data_cache_defaults</a></h2>
@@ -475,10 +485,14 @@ from older versions of Mason, but will not be supported indefinitely.</p>
 
 </ul>
 <p>A hash reference of default options to use for the <code>$m-&gt;cache</code>
-command. For example, to use the <code>MemoryCache</code> implementation
-by default,</p>
+command.  For example, to use Cache::Cache's <code>MemoryCache</code>
+implementation by default:</p>
 <pre>
     data_cache_defaults =&gt; {cache_class =&gt; 'MemoryCache'}</pre>
+<p>To use the CHI <code>FastMmap</code> driver by default:</p>
+<pre>
+    data_cache_api      =&gt; 'CHI',
+    data_cache_defaults =&gt; {driver =&gt; 'FastMmap'},</pre>
 <p>These settings are overriden by options given to particular
 <code>$m-&gt;cache</code> calls.</p>
 <p>
@@ -655,7 +669,8 @@ mode, so you should set this to 0 if you can.</p>
 <p><em>text</em> - a multi-line text format</p>
 </li>
 <li>
-<p><em>line</em> - a single-line text format, with different pieces of information separated by tabs (useful for log files)</p>
+<p><em>line</em> - a single-line text format, with different pieces of
+information separated by tabs (useful for log files)</p>
 </li>
 <li>
 <p><em>html</em> - a fancy html format</p>

@@ -99,23 +99,40 @@ as well.</p>
 <dt><strong><A NAME="item_data_cache_api">data_cache_api</a></strong>
 
 <dd>
-<p>The <A HREF="#item_cache"><code>$m-&gt;cache</code></a> API to use. '1.1', the default, indicates the newer
-API <A HREF="Request.html#item_cache">documented in this manual</a>.
-'1.0' indicates the old API documented in 1.0x and earlier. This
-compatibility layer is provided as a convenience for users upgrading
-from older versions of Mason, but will not be supported indefinitely.</p>
+<p>The <A HREF="#item_cache"><code>$m-&gt;cache</code></a> API to use:</p>
 </dd>
+<ul>
+<li>
+<p>'1.1', the default, indicates a <code>Cache::Cache</code> based API.</p>
 </li>
+<li>
+<p>'chi' indicates a <code>CHI</code> based API.</p>
+</li>
+<li>
+<p>'1.0' indicates the custom cache API used in Mason 1.0x and
+earlier. This compatibility layer is provided as a convenience for
+users upgrading from older versions of Mason, but will not be
+supported indefinitely.</p>
+</li>
+</ul>
 <dt><strong><A NAME="item_data_cache_defaults">data_cache_defaults</a></strong>
 
 <dd>
 <p>A hash reference of default options to use for the <A HREF="#item_cache"><code>$m-&gt;cache</code></a>
-command. For example, to use the <code>MemoryCache</code> implementation
-by default,</p>
+command.  For example, to use Cache::Cache's <code>MemoryCache</code>
+implementation by default:</p>
 </dd>
 <dd>
 <pre>
     data_cache_defaults =&gt; {cache_class =&gt; 'MemoryCache'}</pre>
+</dd>
+<dd>
+<p>To use the CHI <code>FastMmap</code> driver by default:</p>
+</dd>
+<dd>
+<pre>
+    data_cache_api      =&gt; 'CHI',
+    data_cache_defaults =&gt; {driver =&gt; 'FastMmap'},</pre>
 </dd>
 <dd>
 <p>These settings are overriden by options given to particular
@@ -143,7 +160,8 @@ are turned off entirely.</p>
 <p><em>text</em> - a multi-line text format</p>
 </li>
 <li>
-<p><em>line</em> - a single-line text format, with different pieces of information separated by tabs (useful for log files)</p>
+<p><em>line</em> - a single-line text format, with different pieces of
+information separated by tabs (useful for log files)</p>
 </li>
 <li>
 <p><em>html</em> - a fancy html format</p>
@@ -304,27 +322,52 @@ the base component changes to the method's owner.</a></strong>
 example inside a plugin's <code>start_request_hook()</code> method, where we
 have created a request but it does not yet know anything about the
 component being called.</p>
-<dt><strong><A NAME="item_cache">cache (cache_class=&gt;'...', [cache_options])</a></strong>
+<dt><strong><A NAME="item_cache">cache</a></strong>
 
-<A NAME="item_cache"></a><p><A HREF="#item_cache"><code>$m-&gt;cache</code></a> returns a new <a HREF="Cache/BaseCache.html">cache object</a> with a namespace specific to
-this component.</p>
+<A NAME="item_cache"></a><p><A HREF="#item_cache"><code>$m-&gt;cache</code></a> returns a new <a HREF="Cache/BaseCache.html">cache object</a> with a
+namespace specific to this component. The parameters to and return value from
+<A HREF="#item_cache"><code>$m-&gt;cache</code></a> differ depending on which <A HREF="#item_data_cache_api">data_cache_api</a> you are using.</p>
+<dl>
+<dt><strong><A NAME="item_1">If data_cache_api = 1.1 (default)</a></strong>
+
+<dd>
 <p><em>cache_class</em> specifies the class of cache object to create. It
 defaults to <code>FileCache</code> in most cases, or <code>MemoryCache</code> if the
 interpreter has no data directory, and must be a backend subclass of
 <code>Cache::Cache</code>. The prefix ``Cache::'' need not be included.  See the
 <code>Cache::Cache</code> package for a full list of backend subclasses.
 </p>
+</dd>
+<dd>
 <pre>
 
-I&lt;cache_options&gt; may include any valid options to the new() method of
-the cache class. e.g. for C&lt;FileCache&gt;, valid options include
-default_expires_in and cache_depth.</pre>
-<p>See the <A HREF="Devel.html#data_caching">data caching</a> section of the developer's manual for a caching tutorial and examples. See the
-<a HREF="Cache/BaseCache.html">HTML::Mason::Cache::BaseCache</a>
-documentation for a method reference.</p>
-<p>Note: users upgrading from 1.0x and earlier can continue to use the
-old <A HREF="#item_cache"><code>$m-&gt;cache</code></a> API by setting <A HREF="Params.html#data_cache_api">data_cache_api</a> to '1.0'.  This
-support will be removed at a later date.</p>
+Beyond that, I&lt;cache_options&gt; may include any valid options to the new() method of the
+cache class. e.g. for C&lt;FileCache&gt;, valid options include C&lt;default_expires_in&gt; and
+C&lt;cache_depth&gt;.</pre>
+</dd>
+<dd>
+<p>See <a HREF="Cache/BaseCache.html">HTML::Mason::Cache::BaseCache</a> for
+information about the object returend from <A HREF="#item_cache"><code>$m-&gt;cache</code></a>.</p>
+</dd>
+</li>
+<dt><strong><A NAME="item_if_data_cache_api__3d_chi">If data_cache_api = CHI</a></strong>
+
+<dd>
+<p><em>chi_root_class</em> specifies the factory class that will be called to
+create cache objects. The default is 'CHI'.</p>
+</dd>
+<dd>
+<p><em>driver</em> specifies the driver to use, for example <code>Memory</code> or
+<code>FastMmap</code>.  The default is <code>File</code> in most cases, or <code>Memory</code> if
+the interpreter has no data directory.</p>
+</dd>
+<dd>
+<p>Beyond that, <em>cache_options</em> may include any valid options to the
+<code>new()</code> method of the driver. e.g. for the <code>File</code> driver, valid options
+include <code>expires_in</code> and <A HREF="#item_depth"><code>depth</code></a>.</p>
+</dd>
+</li>
+</dl>
 <dt><strong><A NAME="item_cache_self">cache_self ([expires_in =&gt; '...'], [key =&gt; '...'], [get_options], [cache_options])</a></strong>
 
 <A NAME="item_cache_self"></a><p><A HREF="#item_cache_self"><code>$m-&gt;cache_self</code></a> caches the entire output and return result of a
@@ -540,6 +583,12 @@ because it will not try to evaluate the content.</p>
 
 <A NAME="item_count"></a><p>Returns the number of this request, which is unique for a given
 request and interpreter.</p>
+<dt><strong><A NAME="item_current_args">current_args</a></strong>
+
+<A NAME="item_current_args"></a><p>Returns the arguments passed to the current component. When called in
+scalar context, a hash reference is returned.  When called in list
+context, a list of arguments (which may be assigned to a hash) is
+returned.</p>
 <dt><strong><A NAME="item_current_comp">current_comp</a></strong>
 
 <A NAME="item_current_comp"></a><p>Returns the current component object.</p>

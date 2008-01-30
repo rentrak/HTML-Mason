@@ -119,10 +119,11 @@
 		<li><A HREF="#basic_usage">Basic Usage</a></li>
 		<li><A HREF="#multiple_keys_values">Multiple Keys/Values</a></li>
 		<li><A HREF="#expiration">Expiration</a></li>
-		<li><A HREF="#avoiding_concurrent_recomputatio">Avoiding Concurrent Recomputation with Busy Locks</a></li>
+		<li><A HREF="#avoiding_concurrent_recomputatio">Avoiding Concurrent Recomputation</a></li>
 		<li><A HREF="#caching_all_output">Caching All Output</a></li>
 		<li><A HREF="#cache_object">Cache Object</a></li>
-		<li><A HREF="#choosing_a_cache_subclass">Choosing a Cache Subclass</a></li>
+		<li><A HREF="#choosing_a_cache_subclass__with_">Choosing a Cache Subclass - with Cache::Cache</a></li>
+		<li><A HREF="#choosing_a_cache_subclass__with_">Choosing a Cache Subclass - with CHI</a></li>
 		<li><A HREF="#accessing_a_cache_externally">Accessing a Cache Externally</a></li>
 		<li><A HREF="#mason_1_0x_cache_api">Mason 1.0x Cache API</a></li>
 	</ul>
@@ -314,7 +315,7 @@ readability, always put a space after the '%'. Examples:</p>
 <pre>
     &lt;ul&gt;
     % foreach $item (@list) {
-    &lt;li&gt;&lt;% $item %&gt;
+    &lt;li&gt;&lt;% $item %&gt;&lt;/li&gt;
     % }
     &lt;/ul&gt;</pre>
 <p>o HTML list formed from hash</p>
@@ -323,6 +324,7 @@ readability, always put a space after the '%'. Examples:</p>
     % while (my ($key,$value) = each(%ENV)) {
     &lt;li&gt;
     &lt;b&gt;&lt;% $key %&gt;&lt;/b&gt;: &lt;% $value %&gt;
+    &lt;/li&gt;
     % }
     &lt;/ul&gt;</pre>
 <p>o HTML table formed from list of hashes</p>
@@ -557,7 +559,7 @@ a lexical variable to the filter component.</p>
     % my $var;
     &lt;ol&gt;
     &lt;&amp;| list_items , list =&gt; \@items, var =&gt; \$var &amp;&gt;
-    &lt;li&gt; &lt;% $var %&gt;
+    &lt;li&gt; &lt;% $var %&gt;&lt;/li&gt;
     &lt;/&amp;&gt;
     &lt;/ol&gt;</pre>
 <p>list_items component:</p>
@@ -578,7 +580,7 @@ component will allow the list_items component to be nested.</p>
 <pre>
     &lt;ol&gt;
     &lt;&amp;| list_items, list =&gt; \@items &amp;&gt;
-    &lt;li&gt; &lt;% $var %&gt;
+    &lt;li&gt; &lt;% $var %&gt;&lt;/li&gt;
     &lt;/&amp;&gt;
     &lt;/ol&gt;</pre>
 <p>list_items component:</p>
@@ -600,7 +602,7 @@ global, and is automatically local-ized by the foreach statement:</p>
 <pre>
     &lt;ol&gt;
     &lt;&amp;| list_items, list =&gt; \@items &amp;&gt;
-    &lt;li&gt; &lt;% $_ %&gt;
+    &lt;li&gt; &lt;% $_ %&gt; &lt;/li&gt;
     &lt;/&amp;&gt;
     &lt;/ol&gt;</pre>
 <p>list_items component:</p>
@@ -1505,16 +1507,17 @@ a block of HTML to a complex data structure.</p>
 under special circumstances, one component does not access another
 component's cache. Each cached value may be set to expire at a certain
 time.</p>
-<p>Data caching is implemented on top of DeWitt Clinton's <code>Cache::Cache</code>
-package. Mason implements its own extended subclass of Dewitt's module
-called <a HREF="Cache/BaseCache.html">HTML::Mason::Cache::BaseCache</a>.
-See that module's documentation for a companion API reference to this
-section.</p>
+<p>Data caching is implemented on top of one of two external caching
+APIs: <code>Cache::Cache</code> or its newer sibling <code>CHI</code>. You control which
+one Mason uses with the <A HREF="Params.html#data_cache_api">data_cache_api</a> parameter. Currently
+<code>Cache::Cache</code> is the default, but we will switch to <code>CHI</code> once it
+is more mature.  The APIs are very similar for Mason users, so that
+most of the information below applies to both; any differences are
+noted.</p>
 <p>
 </p>
 <h2><A NAME="basic_usage">Basic Usage</a></h2>
-<p>The <code>$m-&gt;cache</code> method returns an
-<a HREF="Cache/BaseCache.html">object</a> representing the cache for
+<p>The <code>$m-&gt;cache</code> method returns a cache object representing the cache for
 this component. Here's the typical usage of <code>$m-&gt;cache</code>:</p>
 <pre>
     my $result = $m-&gt;cache-&gt;get('key');
@@ -1565,7 +1568,7 @@ above, we expire the item whenever a certain file changes.</p>
 <A HREF="#accessing_a_cache_externally">Accessing a Cache Externally</a> below.</p>
 <p>
 </p>
-<h2><A NAME="avoiding_concurrent_recomputatio">Avoiding Concurrent Recomputation with Busy Locks</a></h2>
+<h2><A NAME="avoiding_concurrent_recomputatio">Avoiding Concurrent Recomputation</a></h2>
 <p>The code shown in ``Basic Usage'' above,</p>
 <pre>
    my $result = $m-&gt;cache-&gt;get('key');
@@ -1582,7 +1585,7 @@ recompute the value.  The second process comes in and does the same thing.
 This sequence continues until the first process finishes and stores
 the new value.  On average, the value will be recomputed and written
 to the cache 15 times!</p>
-<p>Mason offers a solution with the <em>busy_lock</em> flag:</p>
+<p>One solution is the <em>busy_lock</em> flag:</p>
 <pre>
    my $result = $m-&gt;cache-&gt;get('key', busy_lock=&gt;'30 sec');</pre>
 <p>In this case, when the value cannot be retrieved, <code>get()</code> sets
@@ -1593,6 +1596,11 @@ seconds.</p>
 <p>Should the 30 seconds expire before the first process is done, a second
 process will start computing the new value while setting the expiration
 time yet another 30 seconds in the future, and so on.</p>
+<p>The disadvantage of this solution is that multiple writes to the cache
+will be performed for each <code>set()</code>.</p>
+<p>Another solution, available only if you are using <code>CHI</code>, is
+<code>expires_variance</code> which will create a variable time window during
+which expiration may occur. See the <code>CHI</code> documentation for details.</p>
 <p>
 </p>
 <h2><A NAME="caching_all_output">Caching All Output</a></h2>
@@ -1615,23 +1623,21 @@ manual.</p>
 <p>
 </p>
 <h2><A NAME="cache_object">Cache Object</a></h2>
-<p><code>$m-&gt;cache-&gt;get_object</code> returns the <code>Cache::Object</code> associated
-with a particular key. You can use this to retrieve useful
-meta-data:</p>
+<p><code>$m-&gt;cache-&gt;get_object</code> returns a <code>Cache::Object</code> or
+<code>CHI::CacheObject</code> associated with a particular key. You can use this
+to retrieve useful meta-data:</p>
 <pre>
     my $co = $m-&gt;cache-&gt;get_object('name1');
     $co-&gt;get_created_at();    # when was object stored in cache
-    $co-&gt;get_accessed_at();   # when was object last accessed
     $co-&gt;get_expires_at();    # when does object expire</pre>
 <p>
 </p>
-<h2><A NAME="choosing_a_cache_subclass">Choosing a Cache Subclass</a></h2>
-<p>The cache API is implemented by a variety of backend subclasses. For
+<h2><A NAME="choosing_a_cache_subclass__with_">Choosing a Cache Subclass - with Cache::Cache</a></h2>
+<p>The <code>Cache::Cache</code> API is implemented by a variety of backend subclasses. For
 example, <code>FileCache</code> implements the interface with a set of
 directories and files, <code>MemoryCache</code> implements the interface in
 process memory, and <code>SharedMemoryCache</code> implements the interface in
-shared memory. See the <code>Cache::Cache</code> package for a full list of
-backend subclasses.</p>
+shared memory.</p>
 <p>By default <code>$m-&gt;cache</code> uses <code>FileCache</code>, but you can override
 this with the <em>cache_class</em> keyword. The value must be the name of a
 <code>Cache::Cache</code> subclass; the prefix ``Cache::'' need not be included.
@@ -1647,15 +1653,35 @@ have used for a given component or key.</p>
 components with the <A HREF="Params.html#data_cache_defaults">data_cache_defaults</a> parameter.</p>
 <p>
 </p>
+<h2><A NAME="choosing_a_cache_subclass__with_">Choosing a Cache Subclass - with CHI</a></h2>
+<p>The <code>CHI</code> API is implemented by a variety of drivers, for example
+<code>CHI::Driver::File</code>, <code>CHI::Driver::FastMmap</code>, and
+<code>CHI::Driver::Memcached</code>.</p>
+<p><code>CHI::Driver::File</code> is the default, but you can override this with
+the <em>driver</em> keyword. The value must be the name of a <code>CHI::Driver</code>
+subclass; the prefix ``CHI::Driver::'' need not be included.  For
+example:</p>
+<pre>
+    my $cache = $m-&gt;cache(driver =&gt; 'Memcached', servers =&gt; [ ... ]);
+    my $result = $cache-&gt;get('key');
+    $cache-&gt;set(key =&gt; $result);</pre>
+<p>You can even specify different subclasses for different keys in the
+same component. Just make sure the correct value is passed to all
+calls to <code>$m-&gt;cache</code>; Mason does not remember which subclass you
+have used for a given component or key.</p>
+<p>The administrator can set the default cache subclass used by all
+components with the <A HREF="Params.html#data_cache_defaults">data_cache_defaults</a> parameter.</p>
+<p>
+</p>
 <h2><A NAME="accessing_a_cache_externally">Accessing a Cache Externally</a></h2>
 <p>To access a component's cache from outside the component (e.g. in an
 external Perl script), you'll need have the following information:</p>
 <ul>
 <li>
-<p>the namespace associated with the component. The function
+<p>the namespace associated with the component. For <code>Cache::Cache</code>, the function
 <code>HTML::Mason::Utils::data_cache_namespace</code>,
 given a component id (usually just the component path), returns the
-namespace.</p>
+namespace. For <code>CHI</code>, the component id/path itself is the namespace.</p>
 </li>
 <li>
 <p>the cache_root, for file-based caches only. Defaults to the
@@ -1665,13 +1691,20 @@ namespace.</p>
 <p>Given this information you can get a handle on the component's cache.
 For example, the following code removes a cache item for component
 <em>/foo/bar</em>, assuming the data directory is <em>/usr/local/www/mason</em>
-and the cache subclass is <code>FileCache</code>:</p>
+and you are using the default file backend:</p>
 <pre>
     use HTML::Mason::Utils qw(data_cache_namespace);</pre>
 <pre>
+    # With Cache::Cache
     my $cache = new Cache::FileCache
         ( { namespace =&gt; data_cache_namespace(&quot;/foo/bar&quot;),
             cache_root =&gt; &quot;/usr/local/www/mason/cache&quot; } );</pre>
+<pre>
+    # With CHI
+    my $cache = CHI-&gt;new
+        ( driver =&gt; 'File',
+          namespace =&gt; &quot;/foo/bar&quot;,
+          cache_root =&gt; &quot;/usr/local/www/mason/cache&quot; );</pre>
 <pre>
     # Remove one key
     $cache-&gt;remove('key1');</pre>
