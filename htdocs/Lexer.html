@@ -54,14 +54,13 @@ it scans the source.</p>
 <h1><A NAME="methods">METHODS</a></h1>
 <p>The lexer has very few public methods.</p>
 <dl>
-<dt><strong><A NAME="item_new">new</a></strong>
+<dt><strong><A NAME="item_new">new</a></strong></dt>
 
 <dd>
 <p>This method creates a new Lexer object.  This methods takes no
 parameters.</p>
 </dd>
-</li>
-<dt><strong><A NAME="item_lex">lex ( comp_source =&gt; ..., name =&gt; ..., compiler =&gt; ... )</a></strong>
+<dt><strong><A NAME="item_lex">lex ( comp_source =&gt; ..., name =&gt; ..., compiler =&gt; ... )</a></strong></dt>
 
 <dd>
 <p>This method tells the lexer to start scanning the given component
@@ -70,30 +69,24 @@ will be used in any error messages generated during lexing.  The
 <code>compiler</code> object must be an object that implements the Mason
 Component API.</p>
 </dd>
-</li>
-<dt><strong><A NAME="item_line_number">line_number</a></strong>
+<dt><strong><A NAME="item_line_number">line_number</a></strong></dt>
 
 <dd>
 <p>The current line number that the lexer has reached.</p>
 </dd>
-</li>
-<dt><strong><A NAME="item_name">name</a></strong>
+<dt><strong><A NAME="item_name">name</a></strong></dt>
 
 <dd>
 <p>The name of the component currently being lexed.</p>
 </dd>
-</li>
-<dt><strong><A NAME="item_throw_syntax_error">throw_syntax_error ($error)</a></strong>
+<dt><strong><A NAME="item_throw_syntax_error">throw_syntax_error ($error)</a></strong></dt>
 
 <dd>
 <p>This throws an <code>HTML::Mason::Exception::Syntax</code> error with the given
 error message as well as additional information about the component
 source.</p>
-</dd>
-<dd>
 <p>This method is used by both the Lexer and the Compiler.</p>
 </dd>
-</li>
 </dl>
 <p>
 </p>

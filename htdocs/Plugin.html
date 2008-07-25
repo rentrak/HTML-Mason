@@ -76,30 +76,22 @@ and <em>end_component_hook</em>.</p>
 <p>Every hook receives two arguments: the plugin object itself,
 and a context object with various methods.</p>
 <dl>
-<dt><strong><A NAME="item_start_request_hook">start_request_hook</a></strong>
+<dt><strong><A NAME="item_start_request_hook">start_request_hook</a></strong></dt>
 
 <dd>
 <p><A HREF="#item_start_request_hook"><code>start_request_hook</code></a> is called before the Mason request begins
 execution.  Its context has the following read-only methods:</p>
-</dd>
-<dd>
 <pre>
     request # the current request ($m)
     args    # arguments the request was called with</pre>
-</dd>
-<dd>
 <p>When called in scalar context, <em>args</em> returns a list reference which
 may be modified to change or add to the arguments passed to the first
 component. When called in list context, <em>args</em> returns a list (which
 may be assigned to a hash).</p>
-</dd>
-<dd>
 <p>Note that subrequests (see
 <a HREF="Request.html">HTML::Mason::Request</a> will create a new plugin
 object and execute this code again; you can skip your code for
 subrequests by checking <code>is_subrequest</code> on <em>request</em>. e.g.</p>
-</dd>
-<dd>
 <pre>
    sub start_request_hook {
        my ($self, $context) = @_;
@@ -107,20 +99,15 @@ subrequests by checking <code>is_subrequest</code> on <em>request</em>. e.g.</p>
            # perform hook action
        }
    }</pre>
-</dd>
-<dd>
 <p>Currently, this hook is called before any information about the
 requested component is available, so you cannot call methods like
 <code>base_comp()</code> or <code>request_args()</code> on the Request object.</p>
 </dd>
-</li>
-<dt><strong><A NAME="item_end_request_hook">end_request_hook</a></strong>
+<dt><strong><A NAME="item_end_request_hook">end_request_hook</a></strong></dt>
 
 <dd>
 <p><A HREF="#item_end_request_hook"><code>end_request_hook</code></a> is called before the Mason request
 exits. Its context has the following read-only methods:</p>
-</dd>
-<dd>
 <pre>
     request     # the current request ($m)
     args        # arguments the request was called with
@@ -128,42 +115,30 @@ exits. Its context has the following read-only methods:</p>
     wantarray   # value of wantarray the request was called with
     result      # arrayref of value(s) that the request is about to return
     error       # reference to error, if any, that the request is about to throw</pre>
-</dd>
-<dd>
 <p>When called in scalar context, <em>args</em> returns a list reference; when
 called in list context, it returns a list (which may be assigned to a
 hash).</p>
-</dd>
-<dd>
 <p><em>result</em> always contains an array ref; if <em>wantarray</em> is 0, the
 return value is the the first element of that array. The plugin may
 modify <em>output</em> to affect what the request outputs, and 
 <em>result</em> and <em>error</em> to affect what the request returns.</p>
 </dd>
-</li>
-<dt><strong><A NAME="item_start_component_hook">start_component_hook</a></strong>
+<dt><strong><A NAME="item_start_component_hook">start_component_hook</a></strong></dt>
 
 <dd>
 <p><A HREF="#item_start_component_hook"><code>start_component_hook</code></a> is called before a component begins
 executing. Its context has the following read-only methods:</p>
-</dd>
-<dd>
 <pre>
     request     # the current request ($m)
     comp        # the component object
     args        # arrayref of arguments the component was called with</pre>
-</dd>
-<dd>
 <p>The plugin may NOT modify <em>args</em> currently.</p>
 </dd>
-</li>
-<dt><strong><A NAME="item_end_component_hook">end_component_hook</a></strong>
+<dt><strong><A NAME="item_end_component_hook">end_component_hook</a></strong></dt>
 
 <dd>
 <p><A HREF="#item_end_component_hook"><code>end_component_hook()</code></a> is called after a component has
 completed. Its context has the following read-only methods:</p>
-</dd>
-<dd>
 <pre>
     request     # the current request ($m)
     comp        # the component object
@@ -171,19 +146,14 @@ completed. Its context has the following read-only methods:</p>
     wantarray   # value of wantarray the component was called with
     result      # arrayref of value(s) that the component is about to return
     error       # reference to error, if any, that the component is about to throw</pre>
-</dd>
-<dd>
 <p><em>result</em> always contains an array ref; if <em>wantarray</em>
 is 0, the return value is the first element of that array.  The plugin
 may modify both <em>result</em> and <em>error</em> to affect how the request
 returns.</p>
-</dd>
-<dd>
 <p>It would be desirable for this hook to have access to the component's
 output as well as its return value, but this is currently impossible
 because output from multiple components combine into a single buffer.</p>
 </dd>
-</li>
 </dl>
 <p>
 </p>

@@ -764,7 +764,7 @@ module.  For full understanding of this section you should read the
 documentation for <code>Cache::Cache</code> as well as for relevant subclasses
 (e.g. <code>Cache::FileCache</code>).</p>
 <dl>
-<dt><strong><A NAME="item_cache_files">Cache files</a></strong>
+<dt><strong><A NAME="item_cache_files">Cache files</a></strong></dt>
 
 <dd>
 <p>By default, <code>Cache::FileCache</code> is the subclass used for data caching,
@@ -775,37 +775,28 @@ each cached item.  The root of the cache tree is
 <A HREF="Params.html#data_dir">data_dir</a>/<code>cache</code>. The name of the cache subdirectory for a component
 is determined by the function <code>HTML::Mason::Utils::data_cache_namespace</code>.</p>
 </dd>
-</li>
-<dt><strong><A NAME="item_default_constructor_options">Default constructor options</a></strong>
+<dt><strong><A NAME="item_default_constructor_options">Default constructor options</a></strong></dt>
 
 <dd>
 <p>Ordinarily, when <code>$m-&gt;cache</code> is called, Mason passes to the cache
 constructor the <code>namespace</code>, and <code>cache_root</code> options, along with
 any other options given in the <code>$m-&gt;cache</code> method.</p>
-</dd>
-<dd>
 <p>You may specify other default constructor options with the
 <A HREF="Params.html#data_cache_defaults">data_cache_defaults</a> parameter. For example,</p>
-</dd>
-<dd>
 <pre>
     PerlSetVar  MasonDataCacheDefaults  &quot;cache_class =&gt; SizeAwareFileCache&quot;
     PerlAddVar  MasonDataCacheDefaults  &quot;cache_depth =&gt; 2&quot;
     PerlAddVar  MasonDataCacheDefaults  &quot;default_expires_in =&gt; 1 hour&quot;</pre>
-</dd>
-<dd>
 <p>Any options passed to individual <code>$m-&gt;cache</code> calls override these
 defaults.</p>
 </dd>
-</li>
-<dt><strong><A NAME="item_disabling_data_caching">Disabling data caching</a></strong>
+<dt><strong><A NAME="item_disabling_data_caching">Disabling data caching</a></strong></dt>
 
 <dd>
 <p>If for some reason you want to disable data caching entirely, set the
 default <code>cache_class</code> to ``NullCache''.  This subclass faithfully
 implements the cache API but never stores data.</p>
 </dd>
-</li>
 </dl>
 <p>
 </p>
@@ -860,10 +851,13 @@ source file changes.</p>
 this prevents different versions of Mason or compilers from using the same
 object file, such as after an upgrade</a></strong>
 
+</li>
 <li><strong><A NAME="item_the_component_path">the component path</a></strong>
 
+</li>
 <li><strong><A NAME="item_object_file_extension_7chtm"><A HREF="Params.html#object_file_extension">object_file_extension</a>, by default ``.obj''</a></strong>
 
+</li>
 </ul>
 <p>Besides improving performance, object files can be useful for
 debugging.  If you feel the need to see what your source has been
@@ -914,21 +908,19 @@ process, rather than loading them on demand, using the <A HREF="Params.html#prel
 parameter.  Each child server will start with those components loaded
 in the memory cache. The trade-offs are:</p>
 <dl>
-<dt><strong><A NAME="item_time">time</a></strong>
+<dt><strong><A NAME="item_time">time</a></strong></dt>
 
 <dd>
 <p>a small one-time startup cost, but children save time by not
 having to load the components</p>
 </dd>
-</li>
-<dt><strong><A NAME="item_memory">memory</a></strong>
+<dt><strong><A NAME="item_memory">memory</a></strong></dt>
 
 <dd>
 <p>a fatter initial server, but the memory for preloaded components are
 shared by all children.  This is similar to the advantage of using
 modules only in the parent process.</p>
 </dd>
-</li>
 </dl>
 <p>Try to preload components that are used frequently and do not change
 often.  (If a preloaded component changes, all the children will have

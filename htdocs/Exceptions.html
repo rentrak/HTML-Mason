@@ -60,122 +60,85 @@ in the exception, only the message.</p>
 <hr />
 <h1><A NAME="exceptions">EXCEPTIONS</a></h1>
 <dl>
-<dt><strong><A NAME="item_html_3a_3amason_3a_3aexcept">HTML::Mason::Exception</a></strong>
+<dt><strong><A NAME="item_html_3a_3amason_3a_3aexcept">HTML::Mason::Exception</a></strong></dt>
 
 <dd>
 <p>This is the parent class for all exceptions thrown by Mason.  Mason
 sometimes throws exceptions in this class when we could not find a
 better category for the message.</p>
-</dd>
-<dd>
 <p>Abbreviated as <code>error</code></p>
 </dd>
-</li>
-<dt><strong><A NAME="item_html_3a_3amason_3a_3aexcept">HTML::Mason::Exception::Abort</a></strong>
+<dt><strong><A NAME="item_html_3a_3amason_3a_3aexcept">HTML::Mason::Exception::Abort</a></strong></dt>
 
 <dd>
 <p>The <code>$m-&gt;abort</code> method was called.</p>
-</dd>
-<dd>
 <p>Exceptions in this class contain the field <code>aborted_value</code>.</p>
 </dd>
-</li>
-<dt><strong><A NAME="item_html_3a_3amason_3a_3aexcept">HTML::Mason::Exception::Decline</a></strong>
+<dt><strong><A NAME="item_html_3a_3amason_3a_3aexcept">HTML::Mason::Exception::Decline</a></strong></dt>
 
 <dd>
 <p>The <code>$m-&gt;decline</code> method was called.</p>
-</dd>
-<dd>
 <p>Exceptions in this class contain the field <code>declined_value</code>.</p>
 </dd>
-</li>
-<dt><strong><A NAME="item_html_3a_3amason_3a_3aexcept">HTML::Mason::Exception::Compilation</a></strong>
+<dt><strong><A NAME="item_html_3a_3amason_3a_3aexcept">HTML::Mason::Exception::Compilation</a></strong></dt>
 
 <dd>
 <p>An exception occurred when attempting to <code>eval</code> an existing object
 file.</p>
-</dd>
-<dd>
 <p>Exceptions in this class have the field <code>filename</code>, which indicates
 what file contained the code that caused the error.</p>
-</dd>
-<dd>
 <p>Abbreviated as <code>compilation_error</code>.</p>
 </dd>
-</li>
-<dt><strong><A NAME="item_html_3a_3amason_3a_3aexcept">HTML::Mason::Exception::Compiler</a></strong>
+<dt><strong><A NAME="item_html_3a_3amason_3a_3aexcept">HTML::Mason::Exception::Compiler</a></strong></dt>
 
 <dd>
 <p>The compiler threw an exception because it received incorrect input.
 For example, this would be thrown if the lexer told the compiler to
 initialize compilation while it was in the middle of compiling another
 component.</p>
-</dd>
-<dd>
 <p>Abbreviated as <code>compiler_error</code>.</p>
 </dd>
-</li>
-<dt><strong><A NAME="item_html_3a_3amason_3a_3aexcept">HTML::Mason::Exception::Compilation::IncompatibleCompiler</a></strong>
+<dt><strong><A NAME="item_html_3a_3amason_3a_3aexcept">HTML::Mason::Exception::Compilation::IncompatibleCompiler</a></strong></dt>
 
 <dd>
 <p>A component was compiled by a compiler or lexer with incompatible
 options.  This is used to tell Mason to recompile a component.</p>
-</dd>
-<dd>
 <p>Abbreviated as <code>wrong_compiler_error</code>.</p>
 </dd>
-</li>
-<dt><strong><A NAME="item_html_3a_3amason_3a_3aexcept">HTML::Mason::Exception::Params</a></strong>
+<dt><strong><A NAME="item_html_3a_3amason_3a_3aexcept">HTML::Mason::Exception::Params</a></strong></dt>
 
 <dd>
 <p>Invalid parameters were passed to a method or function.</p>
-</dd>
-<dd>
 <p>Abbreviated as <code>param_error</code>.</p>
 </dd>
-</li>
-<dt><strong><A NAME="item_html_3a_3amason_3a_3aexcept">HTML::Mason::Exception::Syntax</a></strong>
+<dt><strong><A NAME="item_html_3a_3amason_3a_3aexcept">HTML::Mason::Exception::Syntax</a></strong></dt>
 
 <dd>
 <p>This exception indicates that a component contained invalid syntax.</p>
-</dd>
-<dd>
 <p>Exceptions in this class have the fields <code>source_line</code>, which is the
 actual source where the error was found, <code>comp_name</code>, and
 <code>line_number</code>.</p>
-</dd>
-<dd>
 <p>Abbreviated as <code>syntax_error</code>.</p>
 </dd>
-</li>
-<dt><strong><A NAME="item_html_3a_3amason_3a_3aexcept">HTML::Mason::Exception::System</a></strong>
+<dt><strong><A NAME="item_html_3a_3amason_3a_3aexcept">HTML::Mason::Exception::System</a></strong></dt>
 
 <dd>
 <p>A system call of some sort, such as a file open, failed.</p>
-</dd>
-<dd>
 <p>Abbreviated as <code>system_error</code>.</p>
 </dd>
-</li>
-<dt><strong><A NAME="item_html_3a_3amason_3a_3aexcept">HTML::Mason::Exception::TopLevelNotFound</a></strong>
+<dt><strong><A NAME="item_html_3a_3amason_3a_3aexcept">HTML::Mason::Exception::TopLevelNotFound</a></strong></dt>
 
 <dd>
 <p>The requested top level component could not be found.</p>
-</dd>
-<dd>
 <p>Abbreviated as <code>top_level_not_found_error</code>.</p>
 </dd>
-</li>
-<dt><strong><A NAME="item_html_3a_3amason_3a_3avirtua">HTML::Mason::VirtualMethod</a></strong>
+<dt><strong><A NAME="item_html_3a_3amason_3a_3avirtua">HTML::Mason::VirtualMethod</a></strong></dt>
 
 <dd>
 <p>Some piece of code attempted to call a virtual method which was not
 overridden.</p>
-</dd>
-<dd>
 <p>Abbreviated as <code>virtual_error</code></p>
 </dd>
-</li>
 </dl>
 <p>
 </p>
@@ -191,33 +154,29 @@ an <A HREF="#item_html_3a_3amason_3a_3aexcept"><code>HTML::Mason::Exception::Syn
 <h1><A NAME="exception_methods">EXCEPTION METHODS</a></h1>
 <p>All of the Mason exceptions implement the following methods:</p>
 <dl>
-<dt><strong><A NAME="item_as_brief">as_brief</a></strong>
+<dt><strong><A NAME="item_as_brief">as_brief</a></strong></dt>
 
 <dd>
 <p>This simply returns the exception message, without any trace information.</p>
 </dd>
-</li>
-<dt><strong><A NAME="item_as_line">as_line</a></strong>
+<dt><strong><A NAME="item_as_line">as_line</a></strong></dt>
 
 <dd>
 <p>This returns the exception message and its trace information, all on a
 single line with tabs between the message and each frame of the stack
 trace.</p>
 </dd>
-</li>
-<dt><strong><A NAME="item_as_text">as_text</a></strong>
+<dt><strong><A NAME="item_as_text">as_text</a></strong></dt>
 
 <dd>
 <p>This returns the exception message and stack information, with each
 frame on a separate line.</p>
 </dd>
-</li>
-<dt><strong><A NAME="item_as_html">as_html</a></strong>
+<dt><strong><A NAME="item_as_html">as_html</a></strong></dt>
 
 <dd>
 <p>This returns the exception message and stack as an HTML page.</p>
 </dd>
-</li>
 </dl>
 <p>Each of these methods corresponds to a valid error_format parameter
 for the <a HREF="Request.html">Request object</a> such as <code>text</code> or

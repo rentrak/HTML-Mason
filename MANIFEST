@@ -78,6 +78,7 @@ t/12-taint.t
 t/13-errors.t
 t/14-cgi.t
 t/14a-fake_apache.t
+t/14a-fake_apache.t.rej
 t/15-subclass.t
 t/17-print.t
 t/18-leak.t

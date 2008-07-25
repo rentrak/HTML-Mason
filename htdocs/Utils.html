@@ -36,21 +36,18 @@ code you have written with Mason.</p>
 <hr />
 <h1><A NAME="functions">FUNCTIONS</a></h1>
 <dl>
-<dt><strong><A NAME="item_data_cache_namespace">data_cache_namespace ($comp_id)</a></strong>
+<dt><strong><A NAME="item_data_cache_namespace">data_cache_namespace ($comp_id)</a></strong></dt>
 
 <dd>
 <p>Given a component id, this method returns its default
 <code>Cache::Cache</code> namespace.  This can be useful if you want to access
 the cached data outside of Mason.</p>
-</dd>
-<dd>
 <p>With a single component root, the component id is just the component
 path. With multiple component roots, the component id is
 <code>key</code>/<code>path</code>, where <code>key</code> is the key corresponding to the root that
 the component falls under.</p>
 </dd>
-</li>
-<dt><strong><A NAME="item_cgi_request_args">cgi_request_args ($cgi, $method)</a></strong>
+<dt><strong><A NAME="item_cgi_request_args">cgi_request_args ($cgi, $method)</a></strong></dt>
 
 <dd>
 <p>This function expects to receive a <code>CGI.pm</code> object and the request
@@ -60,7 +57,6 @@ will contain all the arguments passed via the CGI request.  The keys
 will be argument names and the values will be either scalars or array
 references.</p>
 </dd>
-</li>
 </dl>
 
 </body>
