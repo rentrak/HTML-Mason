@@ -1,6 +1,6 @@
 ---
 name: HTML-Mason
-version: 1.40
+version: 1.41
 author:
   - 'Jonathan Swartz <swartz@pobox.com>, Dave Rolsky <autarch@urth.org>, Ken Williams <ken@mathforum.org>, John Williams <williams@tni.com>'
 abstract: 'High-performance, dynamic web site authoring system'
@@ -29,7 +29,7 @@ provides:
     version: 0.09
   HTML::Mason:
     file: lib/HTML/Mason.pm
-    version: 1.40
+    version: 1.41
   HTML::Mason::Apache::Request:
     file: lib/HTML/Mason/Apache/Request.pm
   HTML::Mason::ApacheHandler:
@@ -109,7 +109,7 @@ provides:
     file: lib/HTML/Mason/Utils.pm
   Tie::Handle::Mason:
     file: lib/HTML/Mason/Request.pm
-generated_by: Module::Build version 0.2808
+generated_by: Module::Build version 0.32
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.2.html
   version: 1.2

@@ -9,8 +9,10 @@
 
 <body style="background-color: white">
 
-<p><A NAME="__index__"></a></p>
+
 <!-- INDEX BEGIN -->
+<div name="index">
+<p><A NAME="__index__"></a></p>
 
 <ul>
 
@@ -27,9 +29,11 @@
 
 	<li><A HREF="#see_also">SEE ALSO</a></li>
 </ul>
+
+<hr name="index" />
+</div>
 <!-- INDEX END -->
 
-<hr />
 <p>
 </p>
 <h1><A NAME="name">NAME</a></h1>
@@ -96,23 +100,23 @@ provide direct access to the CGI query, should such access be necessary.</p>
 </p>
 <h2><A NAME="html__mason__cgihandler_methods"><code>HTML::Mason::CGIHandler</code> Methods</a></h2>
 <ul>
-<li><strong><A NAME="item_new"><code>new()</code></a></strong>
+<li><strong><A NAME="new" class="item"><code>new()</code></a></strong>
 
 <p>Creates a new handler.  Accepts any parameter that the Interpreter
 accepts.</p>
-<p>If no <code>comp_root</code> parameter is passed to <A HREF="#item_new"><code>new()</code></a>, the component root
+<p>If no <code>comp_root</code> parameter is passed to <A HREF="#new"><code>new()</code></a>, the component root
 will be <code>$ENV{DOCUMENT_ROOT}</code>.</p>
 </li>
-<li><strong><A NAME="item_handle_request"><code>handle_request()</code></a></strong>
+<li><strong><A NAME="handle_request" class="item"><code>handle_request()</code></a></strong>
 
 <p>Handles the current request, reading input from <code>$ENV{QUERY_STRING}</code>
 or <code>STDIN</code> and sending headers and component output to <code>STDOUT</code>.
 This method doesn't accept any parameters.  The initial component
 will be the one specified in <code>$ENV{PATH_INFO}</code>.</p>
 </li>
-<li><strong><A NAME="item_handle_comp"><code>handle_comp()</code></a></strong>
+<li><strong><A NAME="handle_comp" class="item"><code>handle_comp()</code></a></strong>
 
-<p>Like <A HREF="#item_handle_request"><code>handle_request()</code></a>, but the first (only) parameter is a
+<p>Like <A HREF="#handle_request"><code>handle_request()</code></a>, but the first (only) parameter is a
 component path or component object.  This is useful within a
 traditional CGI environment, in which you're essentially using Mason
 as a templating language but not an application server.</p>
@@ -121,22 +125,22 @@ parameters, and send the HTTP header and component output to STDOUT.
 If you want to handle those parts yourself, see
 the <A HREF="Admin.html#using_mason_from_a_standalone_sc">Using Mason from a standalone script</a> section of the administrator's manual.</p>
 </li>
-<li><strong><A NAME="item_handle_cgi_object"><code>handle_cgi_object()</code></a></strong>
+<li><strong><A NAME="handle_cgi_object" class="item"><code>handle_cgi_object()</code></a></strong>
 
-<p>Also like <A HREF="#item_handle_request"><code>handle_request()</code></a>, but this method takes only a CGI object
+<p>Also like <A HREF="#handle_request"><code>handle_request()</code></a>, but this method takes only a CGI object
 as its parameter.  This can be quite useful if you want to use this
 module with CGI::Fast.</p>
 <p>The component path will be the value of the CGI object's
 <code>path_info()</code> method.</p>
 </li>
-<li><strong><A NAME="item_request_args"><code>request_args()</code></a></strong>
+<li><strong><A NAME="request_args" class="item"><code>request_args()</code></a></strong>
 
 <p>Given an <code>HTML::Mason::FakeApache</code> object, this method is expected to
 return a hash containing the arguments to be passed to the component.
 It is a separate method in order to make it easily overrideable in a
 subclass.</p>
 </li>
-<li><strong><A NAME="item_interp"><code>interp()</code></a></strong>
+<li><strong><A NAME="interp" class="item"><code>interp()</code></a></strong>
 
 <p>Returns the Mason Interpreter associated with this handler.  The
 Interpreter lasts for the entire lifetime of the handler.</p>
@@ -146,7 +150,7 @@ Interpreter lasts for the entire lifetime of the handler.</p>
 </p>
 <h2><A NAME="_r_methods">$r Methods</a></h2>
 <ul>
-<li><strong><A NAME="item_headers_in"><code>headers_in()</code></a></strong>
+<li><strong><A NAME="headers_in" class="item"><code>headers_in()</code></a></strong>
 
 <p>This works much like the <code>Apache</code> method of the same name. In an array
 context, it will return a <code>%hash</code> of response headers. In a scalar context,
@@ -156,16 +160,16 @@ extracted from the CGI environment variables as best as possible. The pattern
 is to merely reverse the conversion from HTTP headers to CGI variables as
 documented here: <A HREF="http://cgi-spec.golux.com/draft-coar-cgi-v11-03-clean.html#6_1">http://cgi-spec.golux.com/draft-coar-cgi-v11-03-clean.html#6.1</a>.</p>
 </li>
-<li><strong><A NAME="item_header_in"><code>header_in()</code></a></strong>
+<li><strong><A NAME="header_in" class="item"><code>header_in()</code></a></strong>
 
 <p>This works much like the <code>Apache</code> method of the same name. When passed the
 name of a header, returns the value of the given incoming header. When passed
 a name and a value, sets the value of the header. Setting the header to
 <code>undef</code> will actually <em>unset</em> the header (instead of setting its value to
 <code>undef</code>), removing it from the table of headers returned from future calls to
-<A HREF="#item_headers_in"><code>headers_in()</code></a> or <A HREF="#item_header_in"><code>header_in()</code></a>.</p>
+<A HREF="#headers_in"><code>headers_in()</code></a> or <A HREF="#header_in"><code>header_in()</code></a>.</p>
 </li>
-<li><strong><A NAME="item_headers_out"><code>headers_out()</code></a></strong>
+<li><strong><A NAME="headers_out" class="item"><code>headers_out()</code></a></strong>
 
 <p>This works much like the <code>Apache</code> method of the same name. In an array
 context, it will return a <code>%hash</code> of response headers. In a scalar context,
@@ -174,7 +178,7 @@ it will return a reference to the case-insensitive hash blessed into the
 headers that will eventually be passed to the <code>CGI</code> module's <code>header()</code>
 method.</p>
 </li>
-<li><strong><A NAME="item_header_out"><code>header_out()</code></a></strong>
+<li><strong><A NAME="header_out" class="item"><code>header_out()</code></a></strong>
 
 <p>This works much like the <code>Apache</code> method of the same name.  When
 passed the name of a header, returns the value of the given outgoing
@@ -185,7 +189,7 @@ of headers that will be sent to the client.</p>
 <p>The headers are eventually passed to the <code>CGI</code> module's <code>header()</code>
 method.</p>
 </li>
-<li><strong><A NAME="item_err_headers_out"><code>err_headers_out()</code></a></strong>
+<li><strong><A NAME="err_headers_out" class="item"><code>err_headers_out()</code></a></strong>
 
 <p>This works much like the <code>Apache</code> method of the same name. In an array
 context, it will return a <code>%hash</code> of error response headers. In a scalar
@@ -194,7 +198,7 @@ the <code>HTML::Mason::FakeTable</code> class. Changes made to this hash will be
 the error headers that will eventually be passed to the <code>CGI</code> module's
 <code>header()</code> method.</p>
 </li>
-<li><strong><A NAME="item_err_header_out"><code>err_header_out()</code></a></strong>
+<li><strong><A NAME="err_header_out" class="item"><code>err_header_out()</code></a></strong>
 
 <p>This works much like the <code>Apache</code> method of the same name. When passed the
 name of a header, returns the value of the given outgoing error header. When
@@ -213,34 +217,34 @@ do a redirect, all you need to do is:</p>
 because it hides most of the complexities of sending headers and
 getting the status code right.</p>
 </li>
-<li><strong><A NAME="item_content_type"><code>content_type()</code></a></strong>
+<li><strong><A NAME="content_type" class="item"><code>content_type()</code></a></strong>
 
 <p>When passed an argument, sets the content type of the current request
 to the value of the argument.  Use this method instead of setting a
-<code>Content-Type</code> header directly with <A HREF="#item_header_out"><code>header_out()</code></a>.  Like
-<A HREF="#item_header_out"><code>header_out()</code></a>, setting the content type to <code>undef</code> will remove any
+<code>Content-Type</code> header directly with <A HREF="#header_out"><code>header_out()</code></a>.  Like
+<A HREF="#header_out"><code>header_out()</code></a>, setting the content type to <code>undef</code> will remove any
 content type set previously.</p>
 <p>When called without arguments, returns the value set by a previous
-call to <A HREF="#item_content_type"><code>content_type()</code></a>.  The behavior when <A HREF="#item_content_type"><code>content_type()</code></a> hasn't
+call to <A HREF="#content_type"><code>content_type()</code></a>.  The behavior when <A HREF="#content_type"><code>content_type()</code></a> hasn't
 already been set is undefined - currently it returns <code>undef</code>.</p>
 <p>If no content type is set during the request, the default MIME type
 <code>text/html</code> will be used.</p>
 </li>
-<li><strong><A NAME="item_method"><code>method()</code></a></strong>
+<li><strong><A NAME="method" class="item"><code>method()</code></a></strong>
 
-<p>Returns the request method used for the current request, e.g., ``GET'', ``POST'',
+<p>Returns the request method used for the current request, e.g., &quot;GET&quot;, &quot;POST&quot;,
 etc.</p>
 </li>
-<li><strong><A NAME="item_http_header"><code>http_header()</code></a></strong>
+<li><strong><A NAME="http_header" class="item"><code>http_header()</code></a></strong>
 
 <p>This method returns the outgoing headers as a string, suitable for
 sending to the client.</p>
 </li>
-<li><strong><A NAME="item_send_http_header"><code>send_http_header()</code></a></strong>
+<li><strong><A NAME="send_http_header" class="item"><code>send_http_header()</code></a></strong>
 
 <p>Sends the outgoing headers to the client.</p>
 </li>
-<li><strong><A NAME="item_notes"><code>notes()</code></a></strong>
+<li><strong><A NAME="notes" class="item"><code>notes()</code></a></strong>
 
 <p>This works much like the <code>Apache</code> method of the same name. When passed
 a <code>$key</code> argument, it returns the value of the note for that key. When
@@ -249,12 +253,12 @@ case-insensitive, and both the key and the value must be strings. When
 called in a scalar context with no <code>$key</code> argument, it returns a hash
 reference blessed into the <code>HTML::Mason::FakeTable</code> class.</p>
 </li>
-<li><strong><A NAME="item_pnotes"><code>pnotes()</code></a></strong>
+<li><strong><A NAME="pnotes" class="item"><code>pnotes()</code></a></strong>
 
-<p>Like <A HREF="#item_notes"><code>notes()</code></a>, but takes any scalar as an value, and stores the
+<p>Like <A HREF="#notes"><code>notes()</code></a>, but takes any scalar as an value, and stores the
 values in a case-sensitive hash.</p>
 </li>
-<li><strong><A NAME="item_subprocess_env"><code>subprocess_env()</code></a></strong>
+<li><strong><A NAME="subprocess_env" class="item"><code>subprocess_env()</code></a></strong>
 
 <p>Works like the <code>Apache</code> method of the same name, but is simply populated with
 the current values of the environment. Still, it's useful, because values can
@@ -262,7 +266,7 @@ be changed and then seen by later components, but the environment itself
 remains unchanged. Like the <code>Apache</code> method, it will reset all of its values
 to the current environment again if it's called without a <code>$key</code> argument.</p>
 </li>
-<li><strong><A NAME="item_params"><code>params()</code></a></strong>
+<li><strong><A NAME="params" class="item"><code>params()</code></a></strong>
 
 <p>This method returns a hash containing the parameters sent by the
 client.  Multiple parameters of the same name are represented by array
@@ -276,7 +280,7 @@ these will be merged together.</p>
 <p>The <code>$m</code> object provided in components has all the functionality of
 the regular <code>HTML::Mason::Request</code> object <code>$m</code>, and the following:</p>
 <ul>
-<li><strong><A NAME="item_cgi_object"><code>cgi_object()</code></a></strong>
+<li><strong><A NAME="cgi_object" class="item"><code>cgi_object()</code></a></strong>
 
 <p>Returns the current <code>CGI</code> request object.  This is handy for
 processing cookies or perhaps even doing HTML generation (but is that
@@ -285,11 +289,11 @@ method, you can set the request object to the argument passed.  Use
 this with care, as it may affect components called after the current
 one (they may check the content length of the request, for example).</p>
 <p>Note that the ApacheHandler class (for using Mason under mod_perl)
-also provides a <A HREF="#item_cgi_object"><code>cgi_object()</code></a> method that does the same thing as
+also provides a <A HREF="#cgi_object"><code>cgi_object()</code></a> method that does the same thing as
 this one.  This makes it easier to write components that function
 equally well under CGIHandler and ApacheHandler.</p>
 </li>
-<li><strong><A NAME="item_cgi_request"><code>cgi_request()</code></a></strong>
+<li><strong><A NAME="cgi_request" class="item"><code>cgi_request()</code></a></strong>
 
 <p>Returns the object that is used to emulate Apache's request object.
 In other words, this is the object that <code>$r</code> is set to when you use
@@ -323,7 +327,7 @@ Perl's <code>each</code> operator:</p>
       push @cookies, $v if lc $k eq 'set-cookie';
   }</pre>
 <p>If anyone knows how Apache::Table does this, let us know! In the meantime, use
-<A HREF="#item_get"><code>get()</code></a> or <A HREF="#item_do"><code>do()</code></a> to get at all of the values for a given key (<A HREF="#item_get"><code>get()</code></a> is
+<A HREF="#get"><code>get()</code></a> or <A HREF="#do"><code>do()</code></a> to get at all of the values for a given key (<A HREF="#get"><code>get()</code></a> is
 much more efficient, anyway).</p>
 <p>Since the methods named for these attributes return an
 <code>HTML::Mason::FakeTable</code> object hash in a scalar reference, it seemed only
@@ -332,19 +336,19 @@ fair to document its interface.</p>
 <li><strong><code>new()</code></strong>
 
 <p>Returns a new <code>HTML::Mason::FakeTable</code> object. Any parameters passed
-to <A HREF="#item_new"><code>new()</code></a> will be added to the table as initial values.</p>
+to <A HREF="#new"><code>new()</code></a> will be added to the table as initial values.</p>
 </li>
-<li><strong><A NAME="item_add"><code>add()</code></a></strong>
+<li><strong><A NAME="add" class="item"><code>add()</code></a></strong>
 
 <p>Adds a new value to the table. If the value did not previously exist under the
 given key, it will be created. Otherwise, it will be added as a new value to
 the key.</p>
 </li>
-<li><strong><A NAME="item_clear"><code>clear()</code></a></strong>
+<li><strong><A NAME="clear" class="item"><code>clear()</code></a></strong>
 
 <p>Clears the table of all values.</p>
 </li>
-<li><strong><A NAME="item_do"><code>do()</code></a></strong>
+<li><strong><A NAME="do" class="item"><code>do()</code></a></strong>
 
 <p>Pass a code reference to this method to have it iterate over all of the
 key/value pairs in the table. Keys will multiple values will trigger the
@@ -353,26 +357,26 @@ reference should expect two arguments: a key and a value. Iteration terminates
 when the code reference returns false, to be sure to have it return a true
 value if you wan it to iterate over every value in the table.</p>
 </li>
-<li><strong><A NAME="item_get"><code>get()</code></a></strong>
+<li><strong><A NAME="get" class="item"><code>get()</code></a></strong>
 
 <p>Gets the value stored for a given key in the table. If a key has multiple
-values, all will be returned when <A HREF="#item_get"><code>get()</code></a> is called in an array context, and
+values, all will be returned when <A HREF="#get"><code>get()</code></a> is called in an array context, and
 only the first value when it is called in a scalar context.</p>
 </li>
-<li><strong><A NAME="item_merge"><code>merge()</code></a></strong>
+<li><strong><A NAME="merge" class="item"><code>merge()</code></a></strong>
 
 <p>Merges a new value with an existing value by concatenating the new value onto
 the existing. The result is a comma-separated list of all of the values merged
 for a given key.</p>
 </li>
-<li><strong><A NAME="item_set"><code>set()</code></a></strong>
+<li><strong><A NAME="set" class="item"><code>set()</code></a></strong>
 
 <p>Takes key and value arguments and sets the value for that key. Previous values
-for that key will be discarded. The value must be a string, or <A HREF="#item_set"><code>set()</code></a> will
+for that key will be discarded. The value must be a string, or <A HREF="#set"><code>set()</code></a> will
 turn it into one. A value of <code>undef</code> will have the same behavior as
-<A HREF="#item_unset"><code>unset()</code></a>.</p>
+<A HREF="#unset"><code>unset()</code></a>.</p>
 </li>
-<li><strong><A NAME="item_unset"><code>unset()</code></a></strong>
+<li><strong><A NAME="unset" class="item"><code>unset()</code></a></strong>
 
 <p>Takes a single key argument and deletes that key from the table, so that none
 of its values will be in the table any longer.</p>

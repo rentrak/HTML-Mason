@@ -9,8 +9,10 @@
 
 <body style="background-color: white">
 
-<p><A NAME="__index__"></a></p>
+
 <!-- INDEX BEGIN -->
+<div name="index">
+<p><A NAME="__index__"></a></p>
 
 <ul>
 
@@ -18,7 +20,7 @@
 	<li><A HREF="#description">DESCRIPTION</a></li>
 	<li><A HREF="#how_to_use_this_manual">HOW TO USE THIS MANUAL</a></li>
 	<li><A HREF="#what_are_components">WHAT ARE COMPONENTS?</a></li>
-	<li><A HREF="#inline_perl_sections">IN-LINE PERL SECTIONS</a></li>
+	<li><A HREF="#in_line_perl_sections">IN-LINE PERL SECTIONS</a></li>
 	<ul>
 
 		<li><A HREF="#examples_and_recommended_usage">Examples and Recommended Usage</a></li>
@@ -42,7 +44,7 @@
 		<li><A HREF="#subrequests">Subrequests</a></li>
 	</ul>
 
-	<li><A HREF="#toplevel_components">TOP-LEVEL COMPONENTS</a></li>
+	<li><A HREF="#top_level_components">TOP-LEVEL COMPONENTS</a></li>
 	<ul>
 
 		<li><A HREF="#dhandlers">dhandlers</a></li>
@@ -106,7 +108,7 @@
 		<li><A HREF="#escaping_expressions">Escaping expressions</a></li>
 		<ul>
 
-			<li><A HREF="#userdefined_escapes">User-defined Escapes</a></li>
+			<li><A HREF="#user_defined_escapes">User-defined Escapes</a></li>
 			<li><A HREF="#manually_applying_escapes">Manually applying escapes</a></li>
 		</ul>
 
@@ -122,20 +124,20 @@
 		<li><A HREF="#avoiding_concurrent_recomputatio">Avoiding Concurrent Recomputation</a></li>
 		<li><A HREF="#caching_all_output">Caching All Output</a></li>
 		<li><A HREF="#cache_object">Cache Object</a></li>
-		<li><A HREF="#choosing_a_cache_subclass__with_">Choosing a Cache Subclass - with Cache::Cache</a></li>
-		<li><A HREF="#choosing_a_cache_subclass__with_">Choosing a Cache Subclass - with CHI</a></li>
+		<li><A HREF="#choosing_a_cache_subclass___with">Choosing a Cache Subclass - with Cache::Cache</a></li>
+		<li><A HREF="#choosing_a_cache_subclass___with">Choosing a Cache Subclass - with CHI</a></li>
 		<li><A HREF="#accessing_a_cache_externally">Accessing a Cache Externally</a></li>
 		<li><A HREF="#mason_1_0x_cache_api">Mason 1.0x Cache API</a></li>
 	</ul>
 
-	<li><A HREF="#webspecific_features">WEB-SPECIFIC FEATURES</a></li>
+	<li><A HREF="#web_specific_features">WEB-SPECIFIC FEATURES</a></li>
 	<ul>
 
 		<li><A HREF="#sending_http_headers">Sending HTTP Headers</a></li>
 		<li><A HREF="#returning_http_status">Returning HTTP Status</a></li>
 		<ul>
 
-			<li><A HREF="#filters_and__m_abort">Filters and $m-&gt;abort</a></li>
+			<li><A HREF="#filters_and__m__abort">Filters and $m-&gt;abort</a></li>
 		</ul>
 
 		<li><A HREF="#external_redirects">External Redirects</a></li>
@@ -143,7 +145,7 @@
 	</ul>
 
 	<li><A HREF="#using_the_perl_debugger">USING THE PERL DEBUGGER</a></li>
-	<li><A HREF="#objectoriented_techniques">OBJECT-ORIENTED TECHNIQUES</a></li>
+	<li><A HREF="#object_oriented_techniques">OBJECT-ORIENTED TECHNIQUES</a></li>
 	<ul>
 
 		<li><A HREF="#determining_inheritance">Determining inheritance</a></li>
@@ -158,9 +160,11 @@
 	<li><A HREF="#authors">AUTHORS</a></li>
 	<li><A HREF="#see_also">SEE ALSO</a></li>
 </ul>
+
+<hr name="index" />
+</div>
 <!-- INDEX END -->
 
-<hr />
 <p>
 </p>
 <h1><A NAME="name">NAME</a></h1>
@@ -192,12 +196,12 @@ still be useful, of course.  Also make sure to read the <A HREF="Admin.html#runn
 <p>If you are just learning Mason and want to get started quickly, we
 recommend the following sections:</p>
 <p>o <A HREF="#what_are_components">What Are Components?</a></p>
-<p>o <A HREF="#inline_perl_sections">In-Line Perl Sections</a></p>
+<p>o <A HREF="#in_line_perl_sections">In-Line Perl Sections</a></p>
 <p>o <A HREF="#calling_components">Calling Components</a></p>
-<p>o <A HREF="#toplevel_components">Top-Level Components</a></p>
+<p>o <A HREF="#top_level_components">Top-Level Components</a></p>
 <p>o <A HREF="#passing_parameters">Passing Parameters</a></p>
 <p>o <A HREF="#initialization_and_cleanup">Initialization and Cleanup</a> (mainly <code>&lt;%init&gt;</code>)</p>
-<p>o <A HREF="#webspecific_features">Web-Specific Features</a></p>
+<p>o <A HREF="#web_specific_features">Web-Specific Features</a></p>
 <p>o <A HREF="#common_traps">Common Traps</a></p>
 <p>
 </p>
@@ -237,7 +241,7 @@ can edit the masthead while another edits the table of contents.  A
 last benefit is <em>reuseability</em>: a component produced for one site
 might be useful on another. You can develop a library of generally
 useful components to employ on your sites and to share with others.</p>
-<p>Most components emit chunks of HTML. ``Top level'' components, invoked
+<p>Most components emit chunks of HTML. &quot;Top level&quot; components, invoked
 from a URL, represent an entire web page. Other, subordinate
 components emit smaller bits of HTML destined for inclusion in top
 level components.</p>
@@ -254,7 +258,7 @@ profile their performance.</p>
 <p>
 </p>
 <hr />
-<h1><A NAME="inline_perl_sections">IN-LINE PERL SECTIONS</a></h1>
+<h1><A NAME="in_line_perl_sections">IN-LINE PERL SECTIONS</a></h1>
 <p>Here is a simple component example:</p>
 <pre>
     &lt;%perl&gt;
@@ -270,7 +274,7 @@ profile their performance.</p>
 <p>After 12 pm, the output of this component is:</p>
 <pre>
     Hello World, good afternoon.</pre>
-<p>This short example demonstrates the three primary ``in-line'' Perl
+<p>This short example demonstrates the three primary &quot;in-line&quot; Perl
 sections. In-line sections are generally embedded within HTML and
 execute in the order they appear. Other sections (<code>&lt;%init&gt;</code>,
 <code>&lt;%args&gt;</code>, etc.) are tied to component events like initialization,
@@ -419,14 +423,14 @@ multiple components that call each other in a hierarchical fashion.</p>
 <pre>
     &lt;&amp; comp_path, [name=&gt;value, ...] &amp;&gt;</pre>
 <dl>
-<dt><strong><A NAME="item_comp_path_3a">comp_path:</a></strong></dt>
+<dt><strong><A NAME="comp_path" class="item">comp_path:</a></strong></dt>
 
 <dd>
 <p>The component path. With a leading '/', the path is relative to the
 component root (<A HREF="Params.html#comp_root">comp_root</a>). Otherwise, it is relative to the
 location of the calling component.</p>
 </dd>
-<dt><strong><A NAME="item_name__3d_3e_value_pairs_3a">name =&gt; value pairs:</a></strong></dt>
+<dt><strong><A NAME="name_value_pairs" class="item">name =&gt; value pairs:</a></strong></dt>
 
 <dd>
 <p>Parameters are passed as one or more <code>name =&gt; value</code> pairs,
@@ -513,7 +517,7 @@ in a site-level autohandler.</p>
       &lt;pig&gt;ellohay &lt;% substr($name,2).substr($name,1,1).'ay' %&gt;,
       isthay isay igpay atinlay&lt;/pig&gt;
    &lt;/&amp;&gt;</pre>
-<p>Here is the <em>/i18n/itext</em> component:</p>
+<p>Here is the <em class="file">/i18n/itext</em> component:</p>
 <pre>
    &lt;% $text %&gt;</pre>
 <pre>
@@ -528,7 +532,7 @@ a component that will do different things depending on whether it was
 passed content. However, before overloading a component in this way,
 consider whether splitting the behavior into two distinct components
 would work as well.</p>
-<p>If a normal component which does not call <A HREF="#item_content"><code>$m-&gt;content</code></a> is called
+<p>If a normal component which does not call <A HREF="#content"><code>$m-&gt;content</code></a> is called
 with content, the content will not be output.</p>
 <p>If you wrap a filtering component call around the entire component,
 the result will be functionally similar to a <code>&lt;%filter&gt;</code> section.
@@ -536,12 +540,12 @@ See also <A HREF="#filtering">Filtering</a>.</p>
 <p>
 </p>
 <h2><A NAME="advanced_components_calls_with_c">Advanced Components Calls with Content</a></h2>
-<p>Internally <A HREF="#item_content"><code>$m-&gt;content</code></a> is implemented with a closure containing
+<p>Internally <A HREF="#content"><code>$m-&gt;content</code></a> is implemented with a closure containing
 the part of the component which is the content.  In English, that
 means that any mason tags and perl code in the content are evaluated
-when <A HREF="#item_content"><code>$m-&gt;content</code></a> is called, and <A HREF="#item_content"><code>$m-&gt;content</code></a> returns the
+when <A HREF="#content"><code>$m-&gt;content</code></a> is called, and <A HREF="#content"><code>$m-&gt;content</code></a> returns the
 text which would have been output by mason.  Because the contents are
-evaluated at the time that <A HREF="#item_content"><code>$m-&gt;content</code></a> is called, one can write
+evaluated at the time that <A HREF="#content"><code>$m-&gt;content</code></a> is called, one can write
 components which act as control structures or which output their
 contents multiple times with different values for the variables (can
 you say taglibs?).</p>
@@ -658,11 +662,11 @@ component, use the <code>$m-&gt;comp</code> command:</p>
 <p>Mason adds a <code>return undef</code> to the bottom of each component to
 provide an empty default return value. To return your own value from a
 component, you <em>must</em> use an explicit <code>return</code> statement. You cannot
-rely on the usual Perl trick of letting return values ``fall through''.</p>
+rely on the usual Perl trick of letting return values &quot;fall through&quot;.</p>
 <p>While it is possible for a component to generate output <strong>and</strong> return
 values, there is very little reason for a component to do both. For
 example, it would not be very friendly for <code>is_netscape</code> to output
-``hi Mom'' while it was computing its value, thereby surprising the
+&quot;hi Mom&quot; while it was computing its value, thereby surprising the
 <code>if</code> statement! Conversely, any value returned by an output
 generating component would typically be discarded by the &lt;&amp; &amp;&gt; tag
 that invoked it.</p>
@@ -701,7 +705,7 @@ simply pass an <A HREF="Params.html#out_method">out_method</a> parameter to <cod
            ( comp =&gt; '/some/comp', args =&gt; [ id =&gt; 172 ], out_method =&gt; \$buffer );
    $req-&gt;exec;
   &lt;/%perl&gt;</pre>
-<p>Now <code>$buffer</code> contains all the output from that call to <em>/some/comp</em>.</p>
+<p>Now <code>$buffer</code> contains all the output from that call to <em class="file">/some/comp</em>.</p>
 <p>For convenience, Mason also provides an <code>$m-&gt;subexec</code> method.
 This method takes the same arguments as <code>$m-&gt;comp</code> and internally
 calls <code>$m-&gt;make_subrequest</code> and then <code>exec</code> on the created
@@ -718,14 +722,14 @@ a new subrequest object for each one.</p>
 <p>
 </p>
 <hr />
-<h1><A NAME="toplevel_components">TOP-LEVEL COMPONENTS</a></h1>
-<p>The first component invoked for a page (the ``top-level component'')
+<h1><A NAME="top_level_components">TOP-LEVEL COMPONENTS</a></h1>
+<p>The first component invoked for a page (the &quot;top-level component&quot;)
 resides within the DocumentRoot and is chosen based on the URL. For
 example:</p>
 <pre>
     <a href="http://www.foo.com/mktg/prods.html?id=372">http://www.foo.com/mktg/prods.html?id=372</a></pre>
 <p>Mason converts this URL to a filename,
-e.g. <em>/usr/local/www/htdocs/mktg/prods.html</em>.  Mason loads and
+e.g. <em class="file">/usr/local/www/htdocs/mktg/prods.html</em>.  Mason loads and
 executes that file as a component. In effect, Mason calls</p>
 <pre>
     $m-&gt;comp('/mktg/prods.html', id=&gt;372)</pre>
@@ -736,15 +740,15 @@ code, or it might contain nothing more than static HTML.</p>
 <h2><A NAME="dhandlers">dhandlers</a></h2>
 <p>What happens when a user requests a component that doesn't exist? In
 this case Mason scans backward through the URI, checking each
-directory for a component named <em>dhandler</em> (``default handler'').  If
+directory for a component named <em>dhandler</em> (&quot;default handler&quot;).  If
 found, the dhandler is invoked and is expected to use
 <code>$m-&gt;dhandler_arg</code> as the parameter to some
 access function, perhaps a database lookup or location in another
 filesystem. In a sense, dhandlers are similar in spirit to Perl's
-AUTOLOAD feature; they are the ``component of last resort'' when a URL
+AUTOLOAD feature; they are the &quot;component of last resort&quot; when a URL
 points to a non-existent component.</p>
-<p>Consider the following URL, in which <em>newsfeeds/</em> exists but not the
-subdirectory <em>LocalNews</em> nor the component <em>Story1</em>:</p>
+<p>Consider the following URL, in which <em class="file">newsfeeds/</em> exists but not the
+subdirectory <em class="file">LocalNews</em> nor the component <em class="file">Story1</em>:</p>
 <pre>
     <a href="http://myserver/newsfeeds/LocalNews/Story1">http://myserver/newsfeeds/LocalNews/Story1</a></pre>
 <p>In this case Mason constructs the following search path:</p>
@@ -753,7 +757,7 @@ subdirectory <em>LocalNews</em> nor the component <em>Story1</em>:</p>
     /newsfeeds/LocalNews/dhandler       =&gt; no such thing
     /newsfeeds/dhandler                 =&gt; found! (search ends)
     /dhandler</pre>
-<p>The found dhandler would read ``LocalNews/Story1'' from
+<p>The found dhandler would read &quot;LocalNews/Story1&quot; from
 <code>$m-&gt;dhandler_arg</code> and use it as a retrieval key into a
 database of stories.</p>
 <p>Here's how a simple /newsfeeds/dhandler might look:</p>
@@ -774,7 +778,7 @@ database of stories.</p>
     return 404 if !$headline;                  # return &quot;not found&quot; if no such story
     &lt;/%init&gt;</pre>
 <p>By default dhandlers do not get a chance to handle requests to a
-directory itself (e.g. <em>/newsfeeds</em>). These are automatically
+directory itself (e.g. <em class="file">/newsfeeds</em>). These are automatically
 deferred to Apache, which generates an index page or a FORBIDDEN
 error.  Often this is desirable, but if necessary the administrator
 can let in directory requests as well; see the <A HREF="Admin.html#allowing_directory_requests">allowing directory requests</a> section of the administrator's manual.</p>
@@ -797,7 +801,7 @@ standard header and footer, applying an output filter, or setting up
 global variables.</p>
 <p>Autohandlers are directory based.  When Mason determines the top-level
 component, it checks that directory and all parent directories for a
-component called <em>autohandler</em>. If found, the autohandler is called
+component called <em class="file">autohandler</em>. If found, the autohandler is called
 first.  After performing its actions, the autohandler typically calls
 <code>$m-&gt;call_next</code> to transfer control to the original intended
 component.</p>
@@ -845,7 +849,7 @@ example, to combine general site-wide templates and more specific section-based 
 <p>Autohandlers can be made even more powerful in conjunction with
 Mason's object-oriented style features: methods, attributes, and
 inheritance.  In the interest of space these are discussed in a
-separate section, <A HREF="#objectoriented_techniques">Object-Oriented Techniques</a>.</p>
+separate section, <A HREF="#object_oriented_techniques">Object-Oriented Techniques</a>.</p>
 <p>The administrator can customize the file name used for autohandlers
 with the <A HREF="Params.html#autohandler_name">autohandler_name</a> parameter.</p>
 <p>
@@ -859,7 +863,7 @@ only in conjunction with a matching component.</p>
 <p>As a rule of thumb: use an autohandler when you have a set of
 components to handle your pages and you want to augment them
 with a template/filter. Use a dhandler when you want to create a set
-of ``virtual URLs'' that don't correspond to any actual components,
+of &quot;virtual URLs&quot; that don't correspond to any actual components,
 or to provide default behavior for a directory.</p>
 <p>dhandlers and autohandlers can even be used in the same directory. For
 example, you might have a mix of real URLs and virtual URLs to which
@@ -912,7 +916,7 @@ default values. For example:</p>
 <p>Here, <em>$a</em>, <em>@b</em>, and <em>%c</em> are required arguments; the component generates
 an error if the caller leaves them unspecified. <em>$d</em>, <em>$e</em>, <em>@f</em> and <em>%g</em> are
 optional arguments; they are assigned the specified default values if
-unspecified.  All the arguments are available as lexically scoped (``my'')
+unspecified.  All the arguments are available as lexically scoped (&quot;my&quot;)
 variables in the rest of the component.</p>
 <p>Arguments are separated by one or more newlines. Comments may be used at
 the end of a line or on their own line.</p>
@@ -922,7 +926,7 @@ expression may reference an earlier one (as $e references $d above).</p>
 sections.  Parameters with non-valid variable names cannot be
 pre-declared and must be fetched manually out of the %ARGS hash (see
 below).  One common example of undeclarable parameters are the
-``button.x/button.y'' parameters sent for a form submit.</p>
+&quot;button.x/button.y&quot; parameters sent for a form submit.</p>
 <p>2. %ARGS hash: This variable, always available, contains all of the
 parameters passed to the component (whether or not they were
 declared).  It is especially handy for dealing with large numbers of
@@ -1075,7 +1079,7 @@ compiler cannot properly handle it.</p>
 that uses the component. However, if the component is preloaded, this
 code will only execute once in the parent.  Unless you have total control
 over what components will be preloaded, it is safest to avoid
-initializing variables that can't survive a fork(), e.g. DBI handles.
+initializing variables that can't survive a <code>fork()</code>, e.g. DBI handles.
 Use code like this to initialize such variables in the <code>&lt;%init&gt;</code>
 section:</p>
 <pre>
@@ -1100,7 +1104,7 @@ body, subcomponents, and methods.  However, unlike <code>&lt;%once&gt;</code>, t
 code runs once per request (whenever the component is used) and its
 variables last only until the end of the request.</p>
 <p>A <code>&lt;%shared&gt;</code> section is useful for initializing variables needed in, say, the
-main body and one more subcomponents or methods. See <A HREF="#objectoriented_techniques">Object-Oriented Techniques</a> for an example of usage.</p>
+main body and one more subcomponents or methods. See <A HREF="#object_oriented_techniques">Object-Oriented Techniques</a> for an example of usage.</p>
 <p>It's important to realize that you do not have access to the <code>%ARGS</code>
 hash or variables created via an <code>&lt;%args&gt;</code> block inside a shared
 section.  However, you can access arguments via
@@ -1149,15 +1153,15 @@ file-based component. To avoid this situation and for general clarity,
 we recommend that you pick a unique way to name all of your
 subcomponents that is unlikely to interfere with file-based
 components. A commonly accepted practice is to start subcomponent
-names with ``.''.</p>
+names with &quot;.&quot;.</p>
 <p>While inside a subcomponent, you may use absolute or relative paths to
-call file-based components and also call any of your ``sibling''
+call file-based components and also call any of your &quot;sibling&quot;
 subcomponents.</p>
 <p>The lexical scope of a subcomponent is separate from the main
 component.  However a subcomponent can declare its own <code>&lt;%args&gt;</code> section
 and have relevant values passed in.  You can also use a <code>&lt;%shared&gt;</code>
 section to declare variables visible from both scopes.</p>
-<p>In the following example, we create a ``.link'' subcomponent to produce a
+<p>In the following example, we create a &quot;.link&quot; subcomponent to produce a
 standardized hyperlink:</p>
 <pre>
     &lt;%def .link&gt;
@@ -1184,7 +1188,7 @@ naming, contents, and scope. However, while subcomponents can only be
 seen from the parent component, methods are meant to be called from
 other components.</p>
 <p>There are two ways to call a method. First, via a path of the form
-``comp:method'':</p>
+&quot;comp:method&quot;:</p>
 <pre>
     &lt;&amp; /foo/bar:method1 &amp;&gt;</pre>
 <pre>
@@ -1195,7 +1199,7 @@ other components.</p>
     ...
     $comp-&gt;call_method('method1');</pre>
 <p>Methods are commonly used in conjunction with autohandlers to make
-templates more flexible. See <A HREF="#objectoriented_techniques">Object-Oriented Techniques</a> for more information.</p>
+templates more flexible. See <A HREF="#object_oriented_techniques">Object-Oriented Techniques</a> for more information.</p>
 <p>You cannot create a subcomponent and method with the same name. 
 This is mostly to prevent obfuscation and accidental errors.</p>
 <p>
@@ -1204,7 +1208,7 @@ This is mostly to prevent obfuscation and accidental errors.</p>
 <h1><A NAME="flags_and_attributes">FLAGS AND ATTRIBUTES</a></h1>
 <p>The <code>&lt;%flags&gt;</code> and <code>&lt;%attr&gt;</code> sections consist of key/value
 pairs, one per line, joined by '=&gt;'.  In each pair, the key must be
-any valid Perl ``bareword identifier'' (made of letters, numbers, and
+any valid Perl &quot;bareword identifier&quot; (made of letters, numbers, and
 the underscore character), and the value may be any scalar value,
 including references.  An optional comment may follow each line.</p>
 <p>
@@ -1215,7 +1219,7 @@ component's behavior.</p>
 <p>Currently there is only one flag, <code>inherit</code>, which specifies the
 component's <em>parent</em> in the form of a relative or absolute component
 path. A component inherits methods and attributes from its parent; see
-<A HREF="#objectoriented_techniques">Object-Oriented Techniques</a> for
+<A HREF="#object_oriented_techniques">Object-Oriented Techniques</a> for
 examples.</p>
 <pre>
     &lt;%flags&gt;
@@ -1258,7 +1262,7 @@ other components, etc.</p>
     &lt;%filter&gt;
     tr/a-z/A-Z/
     &lt;/%filter&gt;</pre>
-<p>The following navigation bar uses a filter to ``unlink'' and highlight
+<p>The following navigation bar uses a filter to &quot;unlink&quot; and highlight
 the item corresponding to the current page:</p>
 <pre>
     &lt;a href=&quot;/&quot;&gt;Home&lt;/a&gt; | &lt;a href=&quot;/products/&quot;&gt;Products&lt;/a&gt; |
@@ -1330,7 +1334,7 @@ whitespace.</p>
    % }</pre>
 <p>will be skipped by Mason, including component calls.  While we don't
 recomend this for comments per se, it is a useful notation for
-``commenting out'' code that you don't want to run.</p>
+&quot;commenting out&quot; code that you don't want to run.</p>
 <p>
 </p>
 <h2><A NAME="html_xml_____comments">HTML/XML/... comments</a></h2>
@@ -1380,19 +1384,19 @@ escape flags (plus arbitrary whitespace), separated by commas:</p>
     &lt;% $file_data |h %&gt;</pre>
 <p>The current valid flags are:</p>
 <ul>
-<li><strong><A NAME="item_h">h</a></strong>
+<li><strong><A NAME="h" class="item">h</a></strong>
 
 <p>Escape HTML ('&lt;' =&gt; '&amp;lt;', etc.) using <code>HTML::Entities::encode()</code>.
 Before Perl 5.8.0 this module assumes that text is in the ISO-8859-1
-character set; see <A HREF="Devel.html#userdefined_escapes">the next section</a> for how to override this escaping. After 5.8.0, the encoding
+character set; see <A HREF="Devel.html#user_defined_escapes">the next section</a> for how to override this escaping. After 5.8.0, the encoding
 assumes that text is in Unicode.</p>
 </li>
-<li><strong><A NAME="item_u">u</a></strong>
+<li><strong><A NAME="u" class="item">u</a></strong>
 
 <p>Escape a URL query string (':' =&gt; '%3A', etc.) - all but
 [a-zA-Z0-9_.-]</p>
 </li>
-<li><strong><A NAME="item_n">n</a></strong>
+<li><strong><A NAME="n" class="item">n</a></strong>
 
 <p>This is a special flag indicating that the default escape flags should
 <em>not</em> be used for this substitution.</p>
@@ -1400,9 +1404,9 @@ assumes that text is in Unicode.</p>
 </ul>
 <p>The administrator may specify a set of default escape flags via the
 <A HREF="Params.html#default_escape_flags">default_escape_flags</a> parameter. For example, if the administrator
-sets <A HREF="Params.html#default_escape_flags">default_escape_flags</a> to <code>['h']</code>, then all &lt;% %&gt; expressions
+sets <A HREF="Params.html#default_escape_flags">default_escape_flags</a> to <A HREF="#h"><code>['h']</code></a>, then all &lt;% %&gt; expressions
 will automatically be HTML-escaped.  In this case you would use the
-<A HREF="#item_n"><code>n</code></a> flag to turn off HTML-escaping for a specific expression:</p>
+<A HREF="#n"><code>n</code></a> flag to turn off HTML-escaping for a specific expression:</p>
 <pre>
     &lt;% $html_block |n %&gt;</pre>
 <p>Multiple escapes can be specified as a comma-separated list:</p>
@@ -1418,7 +1422,7 @@ you are using user-defined escapes as well, you <em>must</em> use a comma:</p>
     &lt;% $uri | u, add_session %&gt;</pre>
 <p>
 </p>
-<h3><A NAME="userdefined_escapes">User-defined Escapes</a></h3>
+<h3><A NAME="user_defined_escapes">User-defined Escapes</a></h3>
 <p>Besides the default escapes mentioned above, it is possible for the
 user to define their own escapes or to override the built-in 'h' and
 'u' escapes.</p>
@@ -1562,7 +1566,7 @@ above, we expire the item whenever a certain file changes.</p>
 <p>
 </p>
 <h2><A NAME="avoiding_concurrent_recomputatio">Avoiding Concurrent Recomputation</a></h2>
-<p>The code shown in ``Basic Usage'' above,</p>
+<p>The code shown in &quot;Basic Usage&quot; above,</p>
 <pre>
    my $result = $m-&gt;cache-&gt;get('key');
    if (!defined($result)) {
@@ -1625,7 +1629,7 @@ to retrieve useful meta-data:</p>
     $co-&gt;get_expires_at();    # when does object expire</pre>
 <p>
 </p>
-<h2><A NAME="choosing_a_cache_subclass__with_">Choosing a Cache Subclass - with Cache::Cache</a></h2>
+<h2><A NAME="choosing_a_cache_subclass___with">Choosing a Cache Subclass - with Cache::Cache</a></h2>
 <p>The <code>Cache::Cache</code> API is implemented by a variety of backend subclasses. For
 example, <code>FileCache</code> implements the interface with a set of
 directories and files, <code>MemoryCache</code> implements the interface in
@@ -1633,7 +1637,7 @@ process memory, and <code>SharedMemoryCache</code> implements the interface in
 shared memory.</p>
 <p>By default <code>$m-&gt;cache</code> uses <code>FileCache</code>, but you can override
 this with the <em>cache_class</em> keyword. The value must be the name of a
-<code>Cache::Cache</code> subclass; the prefix ``Cache::'' need not be included.
+<code>Cache::Cache</code> subclass; the prefix &quot;Cache::&quot; need not be included.
 For example:</p>
 <pre>
     my $result = $m-&gt;cache(cache_class =&gt; 'MemoryCache')-&gt;get('key');
@@ -1646,13 +1650,13 @@ have used for a given component or key.</p>
 components with the <A HREF="Params.html#data_cache_defaults">data_cache_defaults</a> parameter.</p>
 <p>
 </p>
-<h2><A NAME="choosing_a_cache_subclass__with_">Choosing a Cache Subclass - with CHI</a></h2>
+<h2><A NAME="choosing_a_cache_subclass___with">Choosing a Cache Subclass - with CHI</a></h2>
 <p>The <code>CHI</code> API is implemented by a variety of drivers, for example
 <code>CHI::Driver::File</code>, <code>CHI::Driver::FastMmap</code>, and
 <code>CHI::Driver::Memcached</code>.</p>
 <p><code>CHI::Driver::File</code> is the default, but you can override this with
 the <em>driver</em> keyword. The value must be the name of a <code>CHI::Driver</code>
-subclass; the prefix ``CHI::Driver::'' need not be included.  For
+subclass; the prefix &quot;CHI::Driver::&quot; need not be included.  For
 example:</p>
 <pre>
     my $cache = $m-&gt;cache(driver =&gt; 'Memcached', servers =&gt; [ ... ]);
@@ -1678,12 +1682,12 @@ namespace. For <code>CHI</code>, the component id/path itself is the namespace.<
 </li>
 <li>
 <p>the cache_root, for file-based caches only. Defaults to the
-``cache'' subdirectory under the Mason data directory.</p>
+&quot;cache&quot; subdirectory under the Mason data directory.</p>
 </li>
 </ul>
 <p>Given this information you can get a handle on the component's cache.
 For example, the following code removes a cache item for component
-<em>/foo/bar</em>, assuming the data directory is <em>/usr/local/www/mason</em>
+<em class="file">/foo/bar</em>, assuming the data directory is <em class="file">/usr/local/www/mason</em>
 and you are using the default file backend:</p>
 <pre>
     use HTML::Mason::Utils qw(data_cache_namespace);</pre>
@@ -1719,7 +1723,7 @@ the <A HREF="Devel.html#accessing_a_cache_externally">previous section</a>.</p>
 <p>
 </p>
 <hr />
-<h1><A NAME="webspecific_features">WEB-SPECIFIC FEATURES</a></h1>
+<h1><A NAME="web_specific_features">WEB-SPECIFIC FEATURES</a></h1>
 <p>
 </p>
 <h2><A NAME="sending_http_headers">Sending HTTP Headers</a></h2>
@@ -1750,7 +1754,7 @@ into the header.</p>
     ...
     &lt;/%init&gt;</pre>
 <p>With autoflush off this code will always work.  Turn autoflush on and
-this code will only work as long as <em>/shared/get_user_cookie</em> doesn't
+this code will only work as long as <em class="file">/shared/get_user_cookie</em> doesn't
 output anything (given its functional nature, it shouldn't).</p>
 <p>The administrator can turn off automatic header sending via the
 <A HREF="Params.html#auto_send_headers">auto_send_headers</a> parameter. You can also turn it off on
@@ -1789,7 +1793,7 @@ or the status will not make it out:</p>
    }</pre>
 <p>
 </p>
-<h3><A NAME="filters_and__m_abort">Filters and $m-&gt;abort</a></h3>
+<h3><A NAME="filters_and__m__abort">Filters and $m-&gt;abort</a></h3>
 <p>A filter section will still be called after a component aborts with
 <code>$m-&gt;abort</code>.  You can always check <code>$m-&gt;aborted</code> in your
 <code>&lt;%filter&gt;</code> block if you don't want to run the filter after an abort.</p>
@@ -1870,7 +1874,7 @@ the <A HREF="Params.html#use_source_line_numbers">use_source_line_numbers</a> pa
 <p>
 </p>
 <hr />
-<h1><A NAME="objectoriented_techniques">OBJECT-ORIENTED TECHNIQUES</a></h1>
+<h1><A NAME="object_oriented_techniques">OBJECT-ORIENTED TECHNIQUES</a></h1>
 <p>Earlier you learned how to assign a common template to an entire
 hierarchy of pages using <em>autohandlers</em>. The basic template looks like:</p>
 <pre>
@@ -1914,7 +1918,7 @@ or to specify multiple parents.</p>
 called component, its parent, its parent's parent, and so
 on. Execution begins with the top-most component; calling
 <code>$m-&gt;call_next</code> passes control to the next component in the chain.  This
-is the familiar autohandler ``wrapping'' behavior, generalized for any
+is the familiar autohandler &quot;wrapping&quot; behavior, generalized for any
 number of arbitrarily named templates.</p>
 <p>
 </p>
@@ -1931,7 +1935,7 @@ appropriate component:</p>
     $self-&gt;call_method('header');</pre>
 <p>This looks for a method named 'header' in the page component.  If no
 such method exists, the chain of parents is searched upwards, until
-ultimately a ``method not found'' error occurs. Use 'method_exists' to
+ultimately a &quot;method not found&quot; error occurs. Use 'method_exists' to
 avoid this error for questionable method calls:</p>
 <pre>
     if ($self-&gt;method_exists('header')) { ...</pre>
@@ -1984,7 +1988,7 @@ page, use <code>attr</code>:</p>
     my $color = $self-&gt;attr('color')</pre>
 <p>This looks for an attribute named 'color' in the $self component. If
 no such attribute exists, the chain of parents is searched upwards,
-until ultimately an ``attribute not found'' error occurs. Use
+until ultimately an &quot;attribute not found&quot; error occurs. Use
 <code>attr_exists</code> or <code>attr_if_exist</code> to avoid this error for
 questionable attributes:</p>
 <pre>
@@ -2039,7 +2043,7 @@ for its slightly greater speed and predictable execution model.</p>
     /products/autohandler
     /products/index.html</pre>
 <p>and that a request comes in for /products/index.html.</p>
-<p><em>/autohandler</em> contains a general template for the site, referring to a
+<p><em class="file">/autohandler</em> contains a general template for the site, referring to a
 number of standard methods and attributes for each page:</p>
 <pre>
     &lt;head&gt;
@@ -2075,8 +2079,8 @@ number of standard methods and attributes for each page:</p>
     &lt;%method footer&gt;
     &lt;/%method&gt;</pre>
 <p>Notice how we provide defaults for each method and attribute, even if blank.</p>
-<p><em>/products/autohandler</em> overrides some attributes and methods for the
-<em>/products</em> section of the site.</p>
+<p><em class="file">/products/autohandler</em> overrides some attributes and methods for the
+<em class="file">/products</em> section of the site.</p>
 <pre>
     &lt;%attr&gt;
     body_style =&gt; 'plain'
@@ -2089,19 +2093,19 @@ number of standard methods and attributes for each page:</p>
 <p>Note that this component, though it only defines attributes and
 methods, must call <code>$m-&gt;call_next</code> if it wants the rest of the
 chain to run.</p>
-<p><em>/products/index.html</em> might override a few attributes, but mainly provides
+<p><em class="file">/products/index.html</em> might override a few attributes, but mainly provides
 a primary section for the body.</p>
 <p>
 </p>
 <hr />
 <h1><A NAME="common_traps">COMMON TRAPS</a></h1>
 <dl>
-<dt><strong><A NAME="item_content">Do not call $r-&gt;content or ``new CGI''</a></strong></dt>
+<dt><strong><A NAME="content" class="item">Do not call $r-&gt;content or &quot;new CGI&quot;</a></strong></dt>
 
 <dd>
-<p>Mason calls <A HREF="#item_content"><code>$r-&gt;content</code></a> itself to read request input, emptying
+<p>Mason calls <A HREF="#content"><code>$r-&gt;content</code></a> itself to read request input, emptying
 the input buffer and leaving a trap for the unwary: subsequent calls
-to <A HREF="#item_content"><code>$r-&gt;content</code></a> hang the server. This is a mod_perl ``feature'' that
+to <A HREF="#content"><code>$r-&gt;content</code></a> hang the server. This is a mod_perl &quot;feature&quot; that
 may be fixed in an upcoming release.</p>
 <p>For the same reason you should not create a CGI object like</p>
 <pre>

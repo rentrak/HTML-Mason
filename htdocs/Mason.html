@@ -9,8 +9,10 @@
 
 <body style="background-color: white">
 
-<p><A NAME="__index__"></a></p>
+
 <!-- INDEX BEGIN -->
+<div name="index">
+<p><A NAME="__index__"></a></p>
 
 <ul>
 
@@ -24,9 +26,11 @@
 	<li><A HREF="#copyright">COPYRIGHT</a></li>
 	<li><A HREF="#see_also">SEE ALSO</a></li>
 </ul>
+
+<hr name="index" />
+</div>
 <!-- INDEX END -->
 
-<hr />
 <p>
 </p>
 <h1><A NAME="name">NAME</a></h1>
@@ -54,9 +58,9 @@ e-commerce sites.</p>
 a web site or not.  But it was originally built for web sites and
 since that's why most people are interested in it, that is the focus
 of this documentation.</p>
-<p>Mason's various pieces revolve around the notion of ``components''. A
+<p>Mason's various pieces revolve around the notion of &quot;components''. A
 component is a mix of HTML, Perl, and special Mason commands, one
-component per file. So-called ''top-level`` components represent entire
+component per file. So-called &quot;top-level&quot; components represent entire
 web-pages, while smaller components typically return HTML snippets for
 embedding in top-level components. This object-like architecture
 greatly simplifies site maintenance: change a shared component, and
@@ -130,13 +134,13 @@ server. First, go to a standard URL on your site to make sure you
 haven't broken anything. If all goes well you should see the same page
 as before. If not, recheck your Apache config files and also tail your
 server's error log.</p>
-<p>If you are getting ``404 Not Found'' errors even when the files clearly
+<p>If you are getting &quot;404 Not Found&quot; errors even when the files clearly
 exist, Mason may be having trouble with your document root. One
 situation that will unfortunately confuse Mason is if your document
 root goes through a symbolic link. Try expressing your document root
 in terms of the true filesystem path.</p>
 <p>Next, try adding the tag &lt;% 2+2 %&gt; at the top of some HTML file. If you
-reload this page and see a ``4'', Mason is working!</p>
+reload this page and see a &quot;4&quot;, Mason is working!</p>
 <p>
 </p>
 <hr />

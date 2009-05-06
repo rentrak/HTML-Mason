@@ -9,8 +9,10 @@
 
 <body style="background-color: white">
 
-<p><A NAME="__index__"></a></p>
+
 <!-- INDEX BEGIN -->
+<div name="index">
+<p><A NAME="__index__"></a></p>
 
 <ul>
 
@@ -23,12 +25,14 @@
 	</ul>
 
 	<li><A HREF="#methods">METHODS</a></li>
-	<li><A HREF="#filebased_methods">FILE-BASED METHODS</a></li>
+	<li><A HREF="#file_based_methods">FILE-BASED METHODS</a></li>
 	<li><A HREF="#see_also">SEE ALSO</a></li>
 </ul>
+
+<hr name="index" />
+</div>
 <!-- INDEX END -->
 
-<hr />
 <p>
 </p>
 <h1><A NAME="name">NAME</a></h1>
@@ -65,9 +69,9 @@ or <code>&lt;%method&gt;</code> tags.</p>
 </ol>
 <p>Some of the methods below return different values (or nothing at all)
 depending on the component type.</p>
-<p>The component API is primarily useful for introspection, e.g. ``what
-component called me'' or ``does the next component take a certain
-argument''.  You can build complex Mason sites without ever dealing
+<p>The component API is primarily useful for introspection, e.g. &quot;what
+component called me&quot; or &quot;does the next component take a certain
+argument&quot;.  You can build complex Mason sites without ever dealing
 directly with a component object.</p>
 <p>
 </p>
@@ -90,45 +94,45 @@ object.</p>
 <hr />
 <h1><A NAME="methods">METHODS</a></h1>
 <dl>
-<dt><strong><A NAME="item_attr">attr (name)</a></strong></dt>
+<dt><strong><A NAME="attr" class="item">attr (name)</a></strong></dt>
 
 <dd>
 <p>Looks for the specified attribute in this component and its parents,
 returning the first value found. Dies with an error if not
-found. Attributes are declared in the <code>&lt;%attr&gt;</code> section.</p>
+found. Attributes are declared in the <A HREF="#attr"><code>&lt;%attr&gt;</code></a> section.</p>
 </dd>
-<dt><strong><A NAME="item_attr_if_exists">attr_if_exists (name)</a></strong></dt>
+<dt><strong><A NAME="attr_if_exists" class="item">attr_if_exists (name)</a></strong></dt>
 
 <dd>
 <p>This method works exactly like the one above but returns undef if the
 attribute does not exist.</p>
 </dd>
-<dt><strong><A NAME="item_attr_exists">attr_exists (name)</a></strong></dt>
+<dt><strong><A NAME="attr_exists" class="item">attr_exists (name)</a></strong></dt>
 
 <dd>
 <p>Returns true if the specified attribute exists in this component or
 one of its parents, undef otherwise.</p>
 </dd>
-<dt><strong><A NAME="item_attributes">attributes</a></strong></dt>
+<dt><strong><A NAME="attributes" class="item">attributes</a></strong></dt>
 
 <dd>
 <p>Returns a hashref containing the attributes defined in this component,
 with the attribute names as keys.  This does not return attributes
 inherited from parent components.</p>
 </dd>
-<dt><strong><A NAME="item_call_method">call_method (name, args...)</a></strong></dt>
+<dt><strong><A NAME="call_method" class="item">call_method (name, args...)</a></strong></dt>
 
 <dd>
 <p>Looks for the specified user-defined method in this component and its
 parents, calling the first one found. Dies with an error if not found.
 Methods are declared in the <code>&lt;%method&gt;</code> section.</p>
 </dd>
-<dt><strong><A NAME="item_create_time">create_time</a></strong></dt>
+<dt><strong><A NAME="create_time" class="item">create_time</a></strong></dt>
 
 <dd>
 <p>A synonym for <A HREF="Component.html#item_load_time">load_time</a> (deprecated).</p>
 </dd>
-<dt><strong><A NAME="item_declared_args">declared_args</a></strong></dt>
+<dt><strong><A NAME="declared_args" class="item">declared_args</a></strong></dt>
 
 <dd>
 <p>Returns a reference to a hash of hashes representing the arguments
@@ -151,7 +155,7 @@ component runs.</p>
   # does $fido have a default value?
   if (defined($comp-&gt;declared_args-&gt;{'$fido'}-&gt;{default})) { ... }</pre>
 </dd>
-<dt><strong><A NAME="item_dir_path">dir_path</a></strong></dt>
+<dt><strong><A NAME="dir_path" class="item">dir_path</a></strong></dt>
 
 <dd>
 <p>Returns the component's notion of a current directory, relative to the
@@ -160,44 +164,44 @@ file-based components this is the full component path minus the filename.
 For subcomponents this is the same as the component that defines it.
 Undefined for anonymous components.</p>
 </dd>
-<dt><strong><A NAME="item_flag">flag (name)</a></strong></dt>
+<dt><strong><A NAME="flag" class="item">flag (name)</a></strong></dt>
 
 <dd>
 <p>Returns the value for the specified system flag.  Flags are declared
 in the <code>&lt;%flags&gt;</code> section and affect the behavior of the component.
 Unlike attributes, flags values do not get inherited from parent components.</p>
 </dd>
-<dt><strong><A NAME="item_is_subcomp">is_subcomp</a></strong></dt>
+<dt><strong><A NAME="is_subcomp" class="item">is_subcomp</a></strong></dt>
 
 <dd>
 <p>Returns true if this is a subcomponent of another component.  For
 historical reasons, this returns true for both methods and
 subcomponents.</p>
 </dd>
-<dt><strong><A NAME="item_is_method">is_method</a></strong></dt>
+<dt><strong><A NAME="is_method" class="item">is_method</a></strong></dt>
 
 <dd>
 <p>Returns true if this is a method.</p>
 </dd>
-<dt><strong><A NAME="item_is_file_based">is_file_based</a></strong></dt>
+<dt><strong><A NAME="is_file_based" class="item">is_file_based</a></strong></dt>
 
 <dd>
 <p>Returns true if this component was loaded from a source or object
 file.</p>
 <A NAME="item_load_time"></a></dd>
-<dt><strong><A NAME="item_load_time">load_time</a></strong></dt>
+<dt><strong><A NAME="load_time" class="item">load_time</a></strong></dt>
 
 <dd>
 <p>Returns the time (in Perl <code>time()</code> format) when this component object
 was created.</p>
 </dd>
-<dt><strong><A NAME="item_method_exists">method_exists (name)</a></strong></dt>
+<dt><strong><A NAME="method_exists" class="item">method_exists (name)</a></strong></dt>
 
 <dd>
 <p>Returns true if the specified user-defined method exists in this
 component or one of its parents, undef otherwise.</p>
 </dd>
-<dt><strong><A NAME="item_methods">methods</a></strong></dt>
+<dt><strong><A NAME="methods" class="item">methods</a></strong></dt>
 
 <dd>
 <p>This method works exactly like the
@@ -206,38 +210,38 @@ returns methods, not subcomponents.  This does not return methods
 inherited from parent components.</p>
 <p>Methods are declared in <code>&lt;%method&gt;</code> sections.</p>
 </dd>
-<dt><strong><A NAME="item_name">name</a></strong></dt>
+<dt><strong><A NAME="name" class="item">name</a></strong></dt>
 
 <dd>
 <p>Returns a short name of the component.  For file-based components this
 is the filename without the path. For subcomponents this is the name
 specified in <code>&lt;%def&gt;</code>. Undefined for anonymous components.</p>
 </dd>
-<dt><strong><A NAME="item_object_file">object_file</a></strong></dt>
+<dt><strong><A NAME="object_file" class="item">object_file</a></strong></dt>
 
 <dd>
 <p>Returns the object filename for this component.</p>
 </dd>
-<dt><strong><A NAME="item_parent">parent</a></strong></dt>
+<dt><strong><A NAME="parent" class="item">parent</a></strong></dt>
 
 <dd>
 <p>Returns the parent of this component for inheritance purposes, by
 default the nearest <code>autohandler</code> in or above the component's directory.
 Can be changed via the <code>inherit</code> flag.</p>
 </dd>
-<dt><strong><A NAME="item_path">path</a></strong></dt>
+<dt><strong><A NAME="path" class="item">path</a></strong></dt>
 
 <dd>
 <p>Returns the entire path of this component, relative to the component root.</p>
 </dd>
-<dt><strong><A NAME="item_scall_method">scall_method (name, args...)</a></strong></dt>
+<dt><strong><A NAME="scall_method" class="item">scall_method (name, args...)</a></strong></dt>
 
 <dd>
-<p>Like <A HREF="#item_call_method">item_call_method</a>, but returns the method output as
+<p>Like <A HREF="#call_method">item_call_method</a>, but returns the method output as
 a string instead of printing it. (Think sprintf versus printf.) The
 method's return value, if any, is discarded.</p>
 <A NAME="item_subcomps"></a></dd>
-<dt><strong><A NAME="item_subcomps">subcomps</a></strong></dt>
+<dt><strong><A NAME="subcomps" class="item">subcomps</a></strong></dt>
 
 <dd>
 <p>With no arguments, returns a hashref containing the subcomponents defined
@@ -250,7 +254,7 @@ or undef if no such subcomponent exists. e.g.</p>
     }</pre>
 <p>Subcomponents are declared in <code>&lt;%def&gt;</code> sections.</p>
 </dd>
-<dt><strong><A NAME="item_title">title</a></strong></dt>
+<dt><strong><A NAME="title" class="item">title</a></strong></dt>
 
 <dd>
 <p>Returns a printable string denoting this component.  It is intended to
@@ -258,24 +262,24 @@ uniquely identify a component within a given interpreter although this
 is not 100% guaranteed. Mason uses this string in error messages,
 among other places.</p>
 <p>For file-based components this is the component path.  For
-subcomponents this is ``parent_component_path:subcomponent_name''. For
-anonymous components this is a unique label like ``[anon 17]''.</p>
+subcomponents this is &quot;parent_component_path:subcomponent_name&quot;. For
+anonymous components this is a unique label like &quot;[anon 17]&quot;.</p>
 </dd>
 </dl>
 <p>
 </p>
 <hr />
-<h1><A NAME="filebased_methods">FILE-BASED METHODS</a></h1>
+<h1><A NAME="file_based_methods">FILE-BASED METHODS</a></h1>
 <p>The following methods apply only to file-based components (those
 loaded from source or object files). They return undef for other
 component types.</p>
 <dl>
-<dt><strong><A NAME="item_source_file">source_file</a></strong></dt>
+<dt><strong><A NAME="source_file" class="item">source_file</a></strong></dt>
 
 <dd>
 <p>Returns the source filename for this component.</p>
 </dd>
-<dt><strong><A NAME="item_source_dir">source_dir</a></strong></dt>
+<dt><strong><A NAME="source_dir" class="item">source_dir</a></strong></dt>
 
 <dd>
 <p>Returns the directory of the source filename for this component.</p>

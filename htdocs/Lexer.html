@@ -9,8 +9,10 @@
 
 <body style="background-color: white">
 
-<p><A NAME="__index__"></a></p>
+
 <!-- INDEX BEGIN -->
+<div name="index">
+<p><A NAME="__index__"></a></p>
 
 <ul>
 
@@ -20,9 +22,11 @@
 	<li><A HREF="#methods">METHODS</a></li>
 	<li><A HREF="#subclassing">SUBCLASSING</a></li>
 </ul>
+
+<hr name="index" />
+</div>
 <!-- INDEX END -->
 
-<hr />
 <p>
 </p>
 <h1><A NAME="name">NAME</a></h1>
@@ -54,32 +58,32 @@ it scans the source.</p>
 <h1><A NAME="methods">METHODS</a></h1>
 <p>The lexer has very few public methods.</p>
 <dl>
-<dt><strong><A NAME="item_new">new</a></strong></dt>
+<dt><strong><A NAME="new" class="item">new</a></strong></dt>
 
 <dd>
 <p>This method creates a new Lexer object.  This methods takes no
 parameters.</p>
 </dd>
-<dt><strong><A NAME="item_lex">lex ( comp_source =&gt; ..., name =&gt; ..., compiler =&gt; ... )</a></strong></dt>
+<dt><strong><A NAME="lex" class="item">lex ( comp_source =&gt; ..., name =&gt; ..., compiler =&gt; ... )</a></strong></dt>
 
 <dd>
 <p>This method tells the lexer to start scanning the given component
-source.  All of these parameters are required.  The <A HREF="#item_name"><code>name</code></a> parameter
+source.  All of these parameters are required.  The <A HREF="#name"><code>name</code></a> parameter
 will be used in any error messages generated during lexing.  The
 <code>compiler</code> object must be an object that implements the Mason
 Component API.</p>
 </dd>
-<dt><strong><A NAME="item_line_number">line_number</a></strong></dt>
+<dt><strong><A NAME="line_number" class="item">line_number</a></strong></dt>
 
 <dd>
 <p>The current line number that the lexer has reached.</p>
 </dd>
-<dt><strong><A NAME="item_name">name</a></strong></dt>
+<dt><strong><A NAME="name" class="item">name</a></strong></dt>
 
 <dd>
 <p>The name of the component currently being lexed.</p>
 </dd>
-<dt><strong><A NAME="item_throw_syntax_error">throw_syntax_error ($error)</a></strong></dt>
+<dt><strong><A NAME="throw_syntax_error" class="item">throw_syntax_error ($error)</a></strong></dt>
 
 <dd>
 <p>This throws an <code>HTML::Mason::Exception::Syntax</code> error with the given

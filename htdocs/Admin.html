@@ -9,8 +9,10 @@
 
 <body style="background-color: white">
 
-<p><A NAME="__index__"></a></p>
+
 <!-- INDEX BEGIN -->
+<div name="index">
+<p><A NAME="__index__"></a></p>
 
 <ul>
 
@@ -46,7 +48,7 @@
 		<li><A HREF="#writing_a_wrapper">Writing a Wrapper</a></li>
 		<ul>
 
-			<li><A HREF="#wrappers_and_perlsetvarstyle_con">Wrappers and PerlSetVar-style configuration</a></li>
+			<li><A HREF="#wrappers_and_perlsetvar_style_co">Wrappers and PerlSetVar-style configuration</a></li>
 		</ul>
 
 		<li><A HREF="#wrapping_with_a__perl__block">Wrapping with a &lt;Perl&gt; block</a></li>
@@ -108,9 +110,11 @@
 	<li><A HREF="#authors">AUTHORS</a></li>
 	<li><A HREF="#see_also">SEE ALSO</a></li>
 </ul>
+
+<hr name="index" />
+</div>
 <!-- INDEX END -->
 
-<hr />
 <p>
 </p>
 <h1><A NAME="name">NAME</a></h1>
@@ -134,21 +138,21 @@ mod_perl to hand content requests to this module, you can use Mason to
 generate web pages.  There are two ways to configure Mason under
 mod_perl.</p>
 <ul>
-<li><strong><A NAME="item_basic">Basic</a></strong>
+<li><strong><A NAME="basic" class="item">Basic</a></strong>
 
 <p>Mason provides reasonable default behavior under mod_perl, so using
 Mason can be as simple as adding two directives to your Apache
 configuration file.  Throughout this document, we will assume that
-your Apache configuration file is called <em>httpd.conf</em>.  By adding
+your Apache configuration file is called <em class="file">httpd.conf</em>.  By adding
 more configuration parameters to this file you can implement more
 complex behaviors.</p>
 </li>
-<li><strong><A NAME="item_advanced">Advanced</a></strong>
+<li><strong><A NAME="advanced" class="item">Advanced</a></strong>
 
 <p>If the basic method does not provide enough flexibility for you, you
 can wrap Mason in a custom mod_perl handler.  The wrapper code you
 write can create its own Mason objects, or it can take advantage of
-<em>httpd.conf</em> configuration parameters and let Mason create the
+<em class="file">httpd.conf</em> configuration parameters and let Mason create the
 objects it needs by itself.</p>
 </li>
 </ul>
@@ -191,7 +195,7 @@ reasons:</p>
 <li>
 <p>Mason should be prevented from handling images, tarballs, and other
 binary files. Not only will performance suffer, but binary files may
-inadvertently contain a Mason character sequence such as ``&lt;%''. These
+inadvertently contain a Mason character sequence such as &quot;&lt;%&quot;. These
 files should be instead served by Apache's default content handler.</p>
 </li>
 <li>
@@ -204,8 +208,8 @@ simply result in a 404 NOT_FOUND.</p>
 </ol>
 <p>The easiest way to distinguish between different types of files is
 with filename extensions. While many naming schemes are possible, we
-suggest using ``normal'' extensions for top-level components and
-adding an ``m'' prefix for private components. For example,</p>
+suggest using &quot;normal&quot; extensions for top-level components and
+adding an &quot;m&quot; prefix for private components. For example,</p>
 <pre>
                              Top-level       Private</pre>
 <pre>
@@ -240,27 +244,27 @@ that <code>LocationMatch</code> will work best in conjunction with Mason's
 <p>
 </p>
 <h2><A NAME="configuration_parameters">Configuration Parameters</a></h2>
-<p>Mason allows you to flexibly configure its behavior via <em>httpd.conf</em>
+<p>Mason allows you to flexibly configure its behavior via <em class="file">httpd.conf</em>
 configuration parameters.</p>
 <p>These configuration parameters are set via mod_perl's <code>PerlSetVar</code>
 and <code>PerlAddVar</code> directives.  Though these parameters are all strings
-in your <em>httpd.conf</em> file, Mason treats different directives as
+in your <em class="file">httpd.conf</em> file, Mason treats different directives as
 containing different types of values:</p>
 <ul>
-<li><strong><A NAME="item_string">string</a></strong>
+<li><strong><A NAME="string" class="item">string</a></strong>
 
 <p>The variable's value is simply taken literally and used.  The string
 should be surrounded by quotes if the it contains whitespace.  The
 quotes will be automatically removed by Apache before Mason sees the
 variable.</p>
 </li>
-<li><strong><A NAME="item_boolean">boolean</a></strong>
+<li><strong><A NAME="boolean" class="item">boolean</a></strong>
 
 <p>The variable's value is used as a boolean, and is subject to Perl's
 rules on truth/falseness.  It is recommended that you use 0 (false) or
 1 (true) for these arguments.</p>
 </li>
-<li><strong><A NAME="item_code">code</a></strong>
+<li><strong><A NAME="code" class="item">code</a></strong>
 
 <p>The string is treated as a piece of code and <code>eval</code>'ed.  This is used
 for parameters that expect subroutine references.  For example, an
@@ -271,18 +275,18 @@ anonymous subroutine might look like:</p>
 <pre>
  PerlSetVar  MasonOutMode  &quot;\&amp;Some::Module::handle_output&quot;</pre>
 </li>
-<li><strong><A NAME="item_list">list</a></strong>
+<li><strong><A NAME="list" class="item">list</a></strong>
 
 <p>To set a list parameter, use <code>PerlAddVar</code> for the values, like this:</p>
 <pre>
  PerlAddVar  MasonPreloads  /foo/bar/baz.comp
  PerlAddVar  MasonPreloads  /foo/bar/quux.comp</pre>
 </li>
-<li><strong><A NAME="item_hash_list">hash_list</a></strong>
+<li><strong><A NAME="hash_list" class="item">hash_list</a></strong>
 
 <p>Just like a list parameter, use <code>PerlAddVar</code> for the values.
 However, in the case of a hash_list, each element should be a
-key/value pair separated by ``=&gt;'':</p>
+key/value pair separated by &quot;=&gt;&quot;:</p>
 <pre>
  PerlAddVar  MasonDataCacheDefaults  &quot;cache_class =&gt; MemoryCache&quot;
  PerlAddVar  MasonDataCacheDefaults  &quot;namespace =&gt; foo&quot;</pre>
@@ -303,16 +307,16 @@ of parameters, and their associated types.</p>
 hierarchy.  When running Mason with the ApacheHandler or CGIHandler
 modules, this defaults to your document root.</p>
 <p>The component root defines how component paths are translated into
-real file paths. If your component root is <em>/usr/local/httpd/docs</em>, a
-component path of <em>/products/index.html</em> translates to the file
-<em>/usr/local/httpd/docs/products/index.html</em>.</p>
+real file paths. If your component root is <em class="file">/usr/local/httpd/docs</em>, a
+component path of <em class="file">/products/index.html</em> translates to the file
+<em class="file">/usr/local/httpd/docs/products/index.html</em>.</p>
 <p>One cannot call a component outside the component root. If Apache
 passes a file through Mason that is outside the component root (say,
 as the result of an Alias) you will get a 404 and a warning in the
 logs.</p>
 <p>You may also specify multiple component roots in the spirit of Perl's
 <code>@INC</code>. Each root is assigned a key that identifies the root
-mnemonically. For example, in <em>httpd.conf</em>:</p>
+mnemonically. For example, in <em class="file">httpd.conf</em>:</p>
 <pre>
     PerlAddVar  MasonCompRoot  &quot;private =&gt; /usr/home/joe/comps&quot;
     PerlAddVar  MasonCompRoot  &quot;main =&gt; /usr/local/www/htdocs&quot;</pre>
@@ -329,10 +333,10 @@ component roots, and they appear in the <code>title()</code> of a component.</p>
 <h2><A NAME="data_directory">Data Directory</a></h2>
 <p>The data directory (<A HREF="Params.html#data_dir">data_dir</a>) is a writable directory that Mason
 uses for various features and optimizations. By default, it is a
-directory called ``mason'' under your Apache server root.  Because Mason
+directory called &quot;mason&quot; under your Apache server root.  Because Mason
 will not use a <em>default</em> data directory under a top-level directory,
 you will need to change this on certain systems that assign a
-high-level server root such as <em>/usr</em> or <em>/etc</em>.</p>
+high-level server root such as <em class="file">/usr</em> or <em class="file">/etc</em>.</p>
 <p>Mason will create the directory on startup, if necessary, and set its
 permissions according to the web server User/Group.</p>
 <p>
@@ -348,7 +352,7 @@ several ways to load them.</p>
     PerlModule LWP</pre>
 </li>
 <li>
-<p>In the <code>&lt;%once&gt;</code> section of the <code>component(s)</code> that use the module.</p>
+<p>In the <code>&lt;%once&gt;</code> section of the component(s) that use the module.</p>
 <pre>
     &lt;%once&gt;
     use CGI ':standard';
@@ -370,7 +374,7 @@ names and other symbols will be usable from components.  The first
 method, in contrast, will import symbols into the <code>main</code> package. The
 significance of this depends on whether the modules export symbols and
 whether you want to use them from components.</p>
-<p>If you want to preload the modules in your <em>httpd.conf</em> file, and
+<p>If you want to preload the modules in your <em class="file">httpd.conf</em> file, and
 still have them export symbols into the <code>HTML::Mason::Commands</code>
 namespace, you can do this:</p>
 <pre>
@@ -391,8 +395,8 @@ namespace, you can do this:</p>
 <p>By default Mason will decline requests for directories, leaving Apache
 to serve up a directory index or a FORBIDDEN as appropriate.
 Unfortunately this rule applies even if there is a dhandler in the
-directory: <em>/foo/bar/dhandler</em> does not get a chance to
-handle a request for <em>/foo/bar/</em>.</p>
+directory: <em class="file">/foo/bar/dhandler</em> does not get a chance to
+handle a request for <em class="file">/foo/bar/</em>.</p>
 <p>If you would like Mason to handle directory requests, set
 <A HREF="Params.html#decline_dirs">decline_dirs</a> to 0.  The dhandler that catches a directory request
 is responsible for setting a reasonable content type via
@@ -405,7 +409,7 @@ is responsible for setting a reasonable content type via
 </p>
 <h3><A NAME="multiple_sites__one_component_ro">Multiple sites, one component root</a></h3>
 <p>If you want to share some components between your sites, arrange your
-<em>httpd.conf</em> so that all DocumentRoots live under a single component
+<em class="file">httpd.conf</em> so that all DocumentRoots live under a single component
 space:</p>
 <pre>
     # Web site #1
@@ -438,7 +442,7 @@ space:</p>
         +- site2/           # DocumentRoot for second site</pre>
 <p>Incoming URLs for each site can only request components in their
 respective DocumentRoots, while components internally can call other
-components anywhere in the component space. The <em>shared/</em> directory
+components anywhere in the component space. The <em class="file">shared/</em> directory
 is a private directory for use by components, inaccessible from the
 Web.</p>
 <p>
@@ -499,15 +503,15 @@ as a content handler.  The file that defines the <code>handler()</code>
 subroutine can be a module, or you can simply load a simple file that
 contains this subroutine definition.  The latter solution was, for a
 long time, the <em>only</em> way to configure Mason, and the file used was
-traditionally called <em>handler.pl</em>.</p>
+traditionally called <em class="file">handler.pl</em>.</p>
 <p>Nowadays, we recommend that you create a custom module in the
 appropriate namespace and define your <code>handler()</code> subroutine there.
 The advantage to this approach is that it uses well-known techniques
 for creating and installing modules, but it does require a bit more
 work than simply dropping a script file into the Apache configuration
-directory.  But because the process is better defined, it may ``feel''
+directory.  But because the process is better defined, it may &quot;feel&quot;
 more solid to some folks than the script approach.</p>
-<p>The <em>eg/</em> directory of the Mason distribution contains a couple
+<p>The <em class="file">eg/</em> directory of the Mason distribution contains a couple
 sample modules that define <code>handler()</code> subroutines.  Let's assume
 that your module, like the example, defines a <code>handler()</code> in the
 package <code>MyApp::Mason</code>.  In this case, your Apache configuration
@@ -519,12 +523,12 @@ would look like this:</p>
     SetHandler   perl-script
     PerlHandler  MyApp::Mason
   &lt;/LocationMatch&gt;</pre>
-<p>You may still see references to a <em>handler.pl</em> file in the Mason
+<p>You may still see references to a <em class="file">handler.pl</em> file in the Mason
 users list archives, as well as the FAQ.  These references will
 generally be applicable to any custom code wrapping Mason.</p>
 <p>
 </p>
-<h3><A NAME="wrappers_and_perlsetvarstyle_con">Wrappers and PerlSetVar-style configuration</a></h3>
+<h3><A NAME="wrappers_and_perlsetvar_style_co">Wrappers and PerlSetVar-style configuration</a></h3>
 <p>Sometimes people attempt to write a wrapper <em>and</em> configure Mason
 with <code>PerlSetVar</code> directives in their Apache configuration file.
 <strong>This does not work</strong>.  When you give mod_perl this configuration:</p>
@@ -538,7 +542,7 @@ See <A HREF="#mixing_httpd_conf_configuration_">Mixing httpd.conf Configuration 
 </p>
 <h2><A NAME="wrapping_with_a__perl__block">Wrapping with a &lt;Perl&gt; block</a></h2>
 <p>You can also put your wrapper code in a <code>&lt;Perl&gt;</code> block as part of
-your <em>httpd.conf</em> file.  The result is no different than loading a
+your <em class="file">httpd.conf</em> file.  The result is no different than loading a
 file via the <code>PerlRequire</code> directive.</p>
 <p>
 </p>
@@ -566,7 +570,7 @@ is being called.</p>
       return $ah-&gt;handle_request($r);
   }</pre>
 <p>This wrapper is fully functional, but it doesn't actually do anything
-you couldn't do more easily by configuring Mason via the <em>httpd.conf</em>
+you couldn't do more easily by configuring Mason via the <em class="file">httpd.conf</em>
 file.  However, it does serve as a good skeleton to which additional
 functionality can easily be added.</p>
 <p>
@@ -600,7 +604,7 @@ called <code>MyApp::MasonInit</code>:</p>
   }</pre>
 <pre>
   1;</pre>
-<p>This can be loaded via a <code>PerlModule</code> directive in the <em>httpd.conf</em>
+<p>This can be loaded via a <code>PerlModule</code> directive in the <em class="file">httpd.conf</em>
 file, or in the wrapper code itself via <code>use</code>.</p>
 <p>
 </p>
@@ -697,7 +701,7 @@ however you like.</p>
 <p>
 </p>
 <h2><A NAME="mixing_httpd_conf_configuration_">Mixing httpd.conf Configuration with a Wrapper</a></h2>
-<p>You can take advantage of Mason's <em>httpd.conf</em> configuration system
+<p>You can take advantage of Mason's <em class="file">httpd.conf</em> configuration system
 while at the same time providing your own wrapper code.  The key to
 doing this is <em>not</em> creating your own ApacheHandler object.  Instead,
 you call the <code>HTML::Mason::ApacheHandler-&gt;handler()</code> class method
@@ -716,7 +720,7 @@ does this:</p>
   }</pre>
 <p>The <code>HTML::Mason::ApacheHandler-&gt;handler</code> method will create an
 ApacheHandler object based on the configuration directives it finds in
-your <em>httpd.conf</em> file.  Obviously, this wrapper is again a skeleton,
+your <em class="file">httpd.conf</em> file.  Obviously, this wrapper is again a skeleton,
 but you could mix and match this wrapper code with any of the code
 shown above.</p>
 <p>Alternately you could subclass the <code>HTML::Mason::ApacheHandler</code>
@@ -764,7 +768,7 @@ module.  For full understanding of this section you should read the
 documentation for <code>Cache::Cache</code> as well as for relevant subclasses
 (e.g. <code>Cache::FileCache</code>).</p>
 <dl>
-<dt><strong><A NAME="item_cache_files">Cache files</a></strong></dt>
+<dt><strong><A NAME="cache_files" class="item">Cache files</a></strong></dt>
 
 <dd>
 <p>By default, <code>Cache::FileCache</code> is the subclass used for data caching,
@@ -775,7 +779,7 @@ each cached item.  The root of the cache tree is
 <A HREF="Params.html#data_dir">data_dir</a>/<code>cache</code>. The name of the cache subdirectory for a component
 is determined by the function <code>HTML::Mason::Utils::data_cache_namespace</code>.</p>
 </dd>
-<dt><strong><A NAME="item_default_constructor_options">Default constructor options</a></strong></dt>
+<dt><strong><A NAME="default_constructor_options" class="item">Default constructor options</a></strong></dt>
 
 <dd>
 <p>Ordinarily, when <code>$m-&gt;cache</code> is called, Mason passes to the cache
@@ -790,11 +794,11 @@ any other options given in the <code>$m-&gt;cache</code> method.</p>
 <p>Any options passed to individual <code>$m-&gt;cache</code> calls override these
 defaults.</p>
 </dd>
-<dt><strong><A NAME="item_disabling_data_caching">Disabling data caching</a></strong></dt>
+<dt><strong><A NAME="disabling_data_caching" class="item">Disabling data caching</a></strong></dt>
 
 <dd>
 <p>If for some reason you want to disable data caching entirely, set the
-default <code>cache_class</code> to ``NullCache''.  This subclass faithfully
+default <code>cache_class</code> to &quot;NullCache&quot;.  This subclass faithfully
 implements the cache API but never stores data.</p>
 </dd>
 </dl>
@@ -847,15 +851,15 @@ component source file.  The object file is recreated whenever the
 source file changes.</p>
 <p>The object file pathname is formed from three parts:</p>
 <ul>
-<li><strong><A NAME="item_the_compiler_object_id_7cht">the compiler <A HREF="Compiler.html#item_object_id">object_id</a> -
+<li><strong><A NAME="the_compiler_object_id_html_maso" class="item">the compiler <A HREF="Compiler.html#object_id">object_id</a> -
 this prevents different versions of Mason or compilers from using the same
 object file, such as after an upgrade</a></strong>
 
 </li>
-<li><strong><A NAME="item_the_component_path">the component path</a></strong>
+<li><strong><A NAME="the_component_path" class="item">the component path</a></strong>
 
 </li>
-<li><strong><A NAME="item_object_file_extension_7chtm"><A HREF="Params.html#object_file_extension">object_file_extension</a>, by default ``.obj''</a></strong>
+<li><strong><A NAME="object_file_extension_html_mason" class="item"><A HREF="Params.html#object_file_extension">object_file_extension</a>, by default &quot;.obj&quot;</a></strong>
 
 </li>
 </ul>
@@ -898,7 +902,7 @@ well-placed <code>$m-&gt;flush_buffer</code> calls would be just as good as
 <h2><A NAME="write_a_handler_subroutine">Write a handler subroutine</a></h2>
 <p>Writing your own <code>handler()</code> subroutine which uses an ApacheHandler
 object (or objects) created during server startup is slightly faster
-(around 5% or so) than configuring mason via your <em>httpd.conf</em> file
+(around 5% or so) than configuring mason via your <em class="file">httpd.conf</em> file
 and letting Mason create its own ApacheHandler objects internally.</p>
 <p>
 </p>
@@ -908,13 +912,13 @@ process, rather than loading them on demand, using the <A HREF="Params.html#prel
 parameter.  Each child server will start with those components loaded
 in the memory cache. The trade-offs are:</p>
 <dl>
-<dt><strong><A NAME="item_time">time</a></strong></dt>
+<dt><strong><A NAME="time" class="item">time</a></strong></dt>
 
 <dd>
 <p>a small one-time startup cost, but children save time by not
 having to load the components</p>
 </dd>
-<dt><strong><A NAME="item_memory">memory</a></strong></dt>
+<dt><strong><A NAME="memory" class="item">memory</a></strong></dt>
 
 <dd>
 <p>a fatter initial server, but the memory for preloaded components are
@@ -948,18 +952,18 @@ message go to the error logs.</p>
 <p>The first behavior is ideal for development, where you want immediate
 feedback on the error.  The second behavior is usually desired for
 production so that users are not exposed to messy error messages.  You
-choose the behavior by setting <A HREF="Params.html#error_mode">error_mode</a> to ``output'' or ``fatal''
+choose the behavior by setting <A HREF="Params.html#error_mode">error_mode</a> to &quot;output&quot; or &quot;fatal&quot;
 respectively.</p>
 <p>Error formatting is controlled by the <A HREF="Params.html#error_format">error_format</a> parameter.  When
-showing errors in the browser, Mason defaults to the ``html'' format.
-When the <A HREF="Params.html#error_mode">error_mode</a> is set to ``fatal'', the default format is
-``line'', which puts the entire error message on one line in a format
+showing errors in the browser, Mason defaults to the &quot;html&quot; format.
+When the <A HREF="Params.html#error_mode">error_mode</a> is set to &quot;fatal&quot;, the default format is
+&quot;line&quot;, which puts the entire error message on one line in a format
 suitable for web server error logs.  Mason also offers other formats,
 which are covered in the <a HREF="Request.html">Request class</a>
 documentation.</p>
 <p>Finally, you can use Apache's <code>ErrorDocument</code> directive to specify a
 custom error handler for 500 errors.  In this case, you'd set the
-<A HREF="Params.html#error_mode">error_mode</a> to ``fatal''.  The URL specified by the <code>ErrorDocument</code>
+<A HREF="Params.html#error_mode">error_mode</a> to &quot;fatal&quot;.  The URL specified by the <code>ErrorDocument</code>
 directive could point to a Mason component.</p>
 <p>
 </p>
@@ -1062,7 +1066,7 @@ module has been loaded.</p>
 to an RT installation, so that the error is logged in a bug tracking
 system.  Finally, it displays a less technical error message to the
 user.</p>
-<p>For this to work properly, you must set <A HREF="Params.html#error_mode">error_mode</a> to ``fatal'', so
+<p>For this to work properly, you must set <A HREF="Params.html#error_mode">error_mode</a> to &quot;fatal&quot;, so
 that Mason doesn't just display its own HTML error page.</p>
 <p>
 </p>
@@ -1088,7 +1092,7 @@ output to the browser.</p>
      );</pre>
 <pre>
     $h-&gt;handle_request;</pre>
-<p>The relevant portions of the <em>httpd.conf</em> file look like:</p>
+<p>The relevant portions of the <em class="file">httpd.conf</em> file look like:</p>
 <pre>
     DocumentRoot /path/to/comp/root
     ScriptAlias /cgi-bin/ /path/to/cgi-bin/</pre>
@@ -1105,7 +1109,7 @@ output to the browser.</p>
         Deny from all
     &lt;/FilesMatch&gt;</pre>
 <p>This simply causes Apache to call the mason_handler.cgi script every
-time a URL ending in ``.html'' under the component root is requested.</p>
+time a URL ending in &quot;.html&quot; under the component root is requested.</p>
 <p>To exclude certian directories from being under Mason control, you can
 use something like the following:</p>
 <pre>

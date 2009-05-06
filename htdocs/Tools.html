@@ -9,8 +9,10 @@
 
 <body style="background-color: white">
 
-<p><A NAME="__index__"></a></p>
+
 <!-- INDEX BEGIN -->
+<div name="index">
+<p><A NAME="__index__"></a></p>
 
 <ul>
 
@@ -18,9 +20,11 @@
 	<li><A HREF="#description">DESCRIPTION</a></li>
 	<li><A HREF="#functions">FUNCTIONS</a></li>
 </ul>
+
+<hr name="index" />
+</div>
 <!-- INDEX END -->
 
-<hr />
 <p>
 </p>
 <h1><A NAME="name">NAME</a></h1>
@@ -40,51 +44,51 @@ they may change from release to release.  You have been warned.</p>
 <hr />
 <h1><A NAME="functions">FUNCTIONS</a></h1>
 <dl>
-<dt><strong><A NAME="item_read_file">read_file</a></strong></dt>
+<dt><strong><A NAME="read_file" class="item">read_file</a></strong></dt>
 
 <dd>
 <p>This function takes a file name and an optional argument indicating
 whether or not to open the final in binary mode.  It will return the
 entire contents of the file as a scalar.</p>
 </dd>
-<dt><strong><A NAME="item_paths_eq">paths_eq</a></strong></dt>
+<dt><strong><A NAME="paths_eq" class="item">paths_eq</a></strong></dt>
 
 <dd>
 <p>Given to paths, this function indicates whether they represent the
 same location on the filesystem.  It does not account for symlinks.</p>
 </dd>
-<dt><strong><A NAME="item_compress_path">compress_path</a></strong></dt>
+<dt><strong><A NAME="compress_path" class="item">compress_path</a></strong></dt>
 
 <dd>
 <p>This turns a component path into a filesystem-friendly path by
 escaping potentially meaningful characters.</p>
 </dd>
-<dt><strong><A NAME="item_absolute_comp_path">absolute_comp_path</a></strong></dt>
+<dt><strong><A NAME="absolute_comp_path" class="item">absolute_comp_path</a></strong></dt>
 
 <dd>
 <p>Given a component path and a directory path, this function returns the
 absolute component path, prepending the directory path if needed.</p>
 </dd>
-<dt><strong><A NAME="item_mason_canonpath">mason_canonpath</a></strong></dt>
+<dt><strong><A NAME="mason_canonpath" class="item">mason_canonpath</a></strong></dt>
 
 <dd>
 <p>This function cleans up a component path and returns its canonical
 version.  It is largely the same as File::Spec::Unix::canonpath, with
 a few additional cleanups.</p>
 </dd>
-<dt><strong><A NAME="item_pkg_installed">pkg_installed</a></strong></dt>
+<dt><strong><A NAME="pkg_installed" class="item">pkg_installed</a></strong></dt>
 
 <dd>
 <p>Given a module name, this function returns true or false to indicate
-whether or not a corresponding <em>.pm</em> file exists.</p>
+whether or not a corresponding <em class="file">.pm</em> file exists.</p>
 </dd>
-<dt><strong><A NAME="item_pkg_loaded">pkg_loaded</a></strong></dt>
+<dt><strong><A NAME="pkg_loaded" class="item">pkg_loaded</a></strong></dt>
 
 <dd>
 <p>Given a module name, this function returns true or false to indicate
 whether or not the module has been loaded into memory.</p>
 </dd>
-<dt><strong><A NAME="item_load_pkg">load_pkg</a></strong></dt>
+<dt><strong><A NAME="load_pkg" class="item">load_pkg</a></strong></dt>
 
 <dd>
 <p>Given a module name, this function attempts to load it.  It takes an
@@ -94,12 +98,12 @@ cannot be found, this function simply returns false.</p>
 <p>All errors generate exceptions no matter what.</p>
 <p>If the module is loaded successfully, this function returns true.</p>
 </dd>
-<dt><strong><A NAME="item_taint_is_on">taint_is_on</a></strong></dt>
+<dt><strong><A NAME="taint_is_on" class="item">taint_is_on</a></strong></dt>
 
 <dd>
 <p>Returns a boolean value indicating whether taint mode is on or not.</p>
 </dd>
-<dt><strong><A NAME="item_coerce_to_array">coerce_to_array</a></strong></dt>
+<dt><strong><A NAME="coerce_to_array" class="item">coerce_to_array</a></strong></dt>
 
 <dd>
 <p>Given a scalar, which may be a reference, this function attempts to
@@ -108,7 +112,7 @@ exception if this can't be done.</p>
 <p>This function is called from the generated component code as part of a
 component's argument handling.</p>
 </dd>
-<dt><strong><A NAME="item_coerce_to_hash">coerce_to_hash</a></strong></dt>
+<dt><strong><A NAME="coerce_to_hash" class="item">coerce_to_hash</a></strong></dt>
 
 <dd>
 <p>Given a scalar, which may be a reference, this function attempts to
@@ -117,7 +121,7 @@ if this can't be done.</p>
 <p>This function is called from the generated component code as part of a
 component's argument handling.</p>
 </dd>
-<dt><strong><A NAME="item_checksum">checksum</a></strong></dt>
+<dt><strong><A NAME="checksum" class="item">checksum</a></strong></dt>
 
 <dd>
 <p>Computes a simple checksum of a string. Used for Compiler::object_id.</p>

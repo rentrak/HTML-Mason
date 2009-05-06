@@ -9,8 +9,10 @@
 
 <body style="background-color: white">
 
-<p><A NAME="__index__"></a></p>
+
 <!-- INDEX BEGIN -->
+<div name="index">
+<p><A NAME="__index__"></a></p>
 
 <ul>
 
@@ -18,9 +20,11 @@
 	<li><A HREF="#description">DESCRIPTION</a></li>
 	<li><A HREF="#functions">FUNCTIONS</a></li>
 </ul>
+
+<hr name="index" />
+</div>
 <!-- INDEX END -->
 
-<hr />
 <p>
 </p>
 <h1><A NAME="name">NAME</a></h1>
@@ -36,7 +40,7 @@ code you have written with Mason.</p>
 <hr />
 <h1><A NAME="functions">FUNCTIONS</a></h1>
 <dl>
-<dt><strong><A NAME="item_data_cache_namespace">data_cache_namespace ($comp_id)</a></strong></dt>
+<dt><strong><A NAME="data_cache_namespace" class="item">data_cache_namespace ($comp_id)</a></strong></dt>
 
 <dd>
 <p>Given a component id, this method returns its default
@@ -47,12 +51,12 @@ path. With multiple component roots, the component id is
 <code>key</code>/<code>path</code>, where <code>key</code> is the key corresponding to the root that
 the component falls under.</p>
 </dd>
-<dt><strong><A NAME="item_cgi_request_args">cgi_request_args ($cgi, $method)</a></strong></dt>
+<dt><strong><A NAME="cgi_request_args" class="item">cgi_request_args ($cgi, $method)</a></strong></dt>
 
 <dd>
 <p>This function expects to receive a <code>CGI.pm</code> object and the request
 method (GET, POST, etc).  Given these two things, it will return a
-hash in list context or a hashref in scalar context.  The <code>hash(ref)</code>
+hash in list context or a hashref in scalar context.  The hash(ref)
 will contain all the arguments passed via the CGI request.  The keys
 will be argument names and the values will be either scalars or array
 references.</p>

@@ -9,8 +9,10 @@
 
 <body style="background-color: white">
 
-<p><A NAME="__index__"></a></p>
+
 <!-- INDEX BEGIN -->
+<div name="index">
+<p><A NAME="__index__"></a></p>
 
 <ul>
 
@@ -22,9 +24,11 @@
 	<li><A HREF="#authors">AUTHORS</a></li>
 	<li><A HREF="#see_also">SEE ALSO</a></li>
 </ul>
+
+<hr name="index" />
+</div>
 <!-- INDEX END -->
 
-<hr />
 <p>
 </p>
 <h1><A NAME="name">NAME</a></h1>
@@ -76,10 +80,10 @@ and <em>end_component_hook</em>.</p>
 <p>Every hook receives two arguments: the plugin object itself,
 and a context object with various methods.</p>
 <dl>
-<dt><strong><A NAME="item_start_request_hook">start_request_hook</a></strong></dt>
+<dt><strong><A NAME="start_request_hook" class="item">start_request_hook</a></strong></dt>
 
 <dd>
-<p><A HREF="#item_start_request_hook"><code>start_request_hook</code></a> is called before the Mason request begins
+<p><A HREF="#start_request_hook"><code>start_request_hook</code></a> is called before the Mason request begins
 execution.  Its context has the following read-only methods:</p>
 <pre>
     request # the current request ($m)
@@ -103,10 +107,10 @@ subrequests by checking <code>is_subrequest</code> on <em>request</em>. e.g.</p>
 requested component is available, so you cannot call methods like
 <code>base_comp()</code> or <code>request_args()</code> on the Request object.</p>
 </dd>
-<dt><strong><A NAME="item_end_request_hook">end_request_hook</a></strong></dt>
+<dt><strong><A NAME="end_request_hook" class="item">end_request_hook</a></strong></dt>
 
 <dd>
-<p><A HREF="#item_end_request_hook"><code>end_request_hook</code></a> is called before the Mason request
+<p><A HREF="#end_request_hook"><code>end_request_hook</code></a> is called before the Mason request
 exits. Its context has the following read-only methods:</p>
 <pre>
     request     # the current request ($m)
@@ -123,10 +127,10 @@ return value is the the first element of that array. The plugin may
 modify <em>output</em> to affect what the request outputs, and 
 <em>result</em> and <em>error</em> to affect what the request returns.</p>
 </dd>
-<dt><strong><A NAME="item_start_component_hook">start_component_hook</a></strong></dt>
+<dt><strong><A NAME="start_component_hook" class="item">start_component_hook</a></strong></dt>
 
 <dd>
-<p><A HREF="#item_start_component_hook"><code>start_component_hook</code></a> is called before a component begins
+<p><A HREF="#start_component_hook"><code>start_component_hook</code></a> is called before a component begins
 executing. Its context has the following read-only methods:</p>
 <pre>
     request     # the current request ($m)
@@ -134,10 +138,10 @@ executing. Its context has the following read-only methods:</p>
     args        # arrayref of arguments the component was called with</pre>
 <p>The plugin may NOT modify <em>args</em> currently.</p>
 </dd>
-<dt><strong><A NAME="item_end_component_hook">end_component_hook</a></strong></dt>
+<dt><strong><A NAME="end_component_hook" class="item">end_component_hook</a></strong></dt>
 
 <dd>
-<p><A HREF="#item_end_component_hook"><code>end_component_hook()</code></a> is called after a component has
+<p><A HREF="#end_component_hook"><code>end_component_hook()</code></a> is called after a component has
 completed. Its context has the following read-only methods:</p>
 <pre>
     request     # the current request ($m)

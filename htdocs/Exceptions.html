@@ -9,8 +9,10 @@
 
 <body style="background-color: white">
 
-<p><A NAME="__index__"></a></p>
+
 <!-- INDEX BEGIN -->
+<div name="index">
+<p><A NAME="__index__"></a></p>
 
 <ul>
 
@@ -23,9 +25,11 @@
 	<li><A HREF="#exception_methods">EXCEPTION METHODS</a></li>
 	<li><A HREF="#exception_class_checking">EXCEPTION CLASS CHECKING</a></li>
 </ul>
+
+<hr name="index" />
+</div>
 <!-- INDEX END -->
 
-<hr />
 <p>
 </p>
 <h1><A NAME="name">NAME</a></h1>
@@ -52,7 +56,7 @@ and provides some extra methods for them beyond those provided by
 <p>When this module is imported, it is possible to specify a list of
 abbreviated function names that you want to use to throw exceptions.
 In the <A HREF="#synopsis">SYNOPSIS</a> example, we use the <code>system_error</code>
-function to throw a <A HREF="#item_html_3a_3amason_3a_3aexcept"><code>HTML::Mason::Exception::System</code></a> exception.</p>
+function to throw a <A HREF="#html_mason_exception_system"><code>HTML::Mason::Exception::System</code></a> exception.</p>
 <p>These abbreviated functions do not allow you to set additional fields
 in the exception, only the message.</p>
 <p>
@@ -60,7 +64,7 @@ in the exception, only the message.</p>
 <hr />
 <h1><A NAME="exceptions">EXCEPTIONS</a></h1>
 <dl>
-<dt><strong><A NAME="item_html_3a_3amason_3a_3aexcept">HTML::Mason::Exception</a></strong></dt>
+<dt><strong><A NAME="html_mason_exception" class="item">HTML::Mason::Exception</a></strong></dt>
 
 <dd>
 <p>This is the parent class for all exceptions thrown by Mason.  Mason
@@ -68,19 +72,19 @@ sometimes throws exceptions in this class when we could not find a
 better category for the message.</p>
 <p>Abbreviated as <code>error</code></p>
 </dd>
-<dt><strong><A NAME="item_html_3a_3amason_3a_3aexcept">HTML::Mason::Exception::Abort</a></strong></dt>
+<dt><strong><A NAME="html_mason_exception_abort" class="item">HTML::Mason::Exception::Abort</a></strong></dt>
 
 <dd>
 <p>The <code>$m-&gt;abort</code> method was called.</p>
 <p>Exceptions in this class contain the field <code>aborted_value</code>.</p>
 </dd>
-<dt><strong><A NAME="item_html_3a_3amason_3a_3aexcept">HTML::Mason::Exception::Decline</a></strong></dt>
+<dt><strong><A NAME="html_mason_exception_decline" class="item">HTML::Mason::Exception::Decline</a></strong></dt>
 
 <dd>
 <p>The <code>$m-&gt;decline</code> method was called.</p>
 <p>Exceptions in this class contain the field <code>declined_value</code>.</p>
 </dd>
-<dt><strong><A NAME="item_html_3a_3amason_3a_3aexcept">HTML::Mason::Exception::Compilation</a></strong></dt>
+<dt><strong><A NAME="html_mason_exception_compilation" class="item">HTML::Mason::Exception::Compilation</a></strong></dt>
 
 <dd>
 <p>An exception occurred when attempting to <code>eval</code> an existing object
@@ -89,7 +93,7 @@ file.</p>
 what file contained the code that caused the error.</p>
 <p>Abbreviated as <code>compilation_error</code>.</p>
 </dd>
-<dt><strong><A NAME="item_html_3a_3amason_3a_3aexcept">HTML::Mason::Exception::Compiler</a></strong></dt>
+<dt><strong><A NAME="html_mason_exception_compiler" class="item">HTML::Mason::Exception::Compiler</a></strong></dt>
 
 <dd>
 <p>The compiler threw an exception because it received incorrect input.
@@ -98,20 +102,20 @@ initialize compilation while it was in the middle of compiling another
 component.</p>
 <p>Abbreviated as <code>compiler_error</code>.</p>
 </dd>
-<dt><strong><A NAME="item_html_3a_3amason_3a_3aexcept">HTML::Mason::Exception::Compilation::IncompatibleCompiler</a></strong></dt>
+<dt><strong><A NAME="html_mason_exception_compilation" class="item">HTML::Mason::Exception::Compilation::IncompatibleCompiler</a></strong></dt>
 
 <dd>
 <p>A component was compiled by a compiler or lexer with incompatible
 options.  This is used to tell Mason to recompile a component.</p>
 <p>Abbreviated as <code>wrong_compiler_error</code>.</p>
 </dd>
-<dt><strong><A NAME="item_html_3a_3amason_3a_3aexcept">HTML::Mason::Exception::Params</a></strong></dt>
+<dt><strong><A NAME="html_mason_exception_params" class="item">HTML::Mason::Exception::Params</a></strong></dt>
 
 <dd>
 <p>Invalid parameters were passed to a method or function.</p>
 <p>Abbreviated as <code>param_error</code>.</p>
 </dd>
-<dt><strong><A NAME="item_html_3a_3amason_3a_3aexcept">HTML::Mason::Exception::Syntax</a></strong></dt>
+<dt><strong><A NAME="html_mason_exception_syntax" class="item">HTML::Mason::Exception::Syntax</a></strong></dt>
 
 <dd>
 <p>This exception indicates that a component contained invalid syntax.</p>
@@ -120,19 +124,19 @@ actual source where the error was found, <code>comp_name</code>, and
 <code>line_number</code>.</p>
 <p>Abbreviated as <code>syntax_error</code>.</p>
 </dd>
-<dt><strong><A NAME="item_html_3a_3amason_3a_3aexcept">HTML::Mason::Exception::System</a></strong></dt>
+<dt><strong><A NAME="html_mason_exception_system" class="item">HTML::Mason::Exception::System</a></strong></dt>
 
 <dd>
 <p>A system call of some sort, such as a file open, failed.</p>
 <p>Abbreviated as <code>system_error</code>.</p>
 </dd>
-<dt><strong><A NAME="item_html_3a_3amason_3a_3aexcept">HTML::Mason::Exception::TopLevelNotFound</a></strong></dt>
+<dt><strong><A NAME="html_mason_exception_toplevelnot" class="item">HTML::Mason::Exception::TopLevelNotFound</a></strong></dt>
 
 <dd>
 <p>The requested top level component could not be found.</p>
 <p>Abbreviated as <code>top_level_not_found_error</code>.</p>
 </dd>
-<dt><strong><A NAME="item_html_3a_3amason_3a_3avirtua">HTML::Mason::VirtualMethod</a></strong></dt>
+<dt><strong><A NAME="html_mason_virtualmethod" class="item">HTML::Mason::VirtualMethod</a></strong></dt>
 
 <dd>
 <p>Some piece of code attempted to call a virtual method which was not
@@ -146,7 +150,7 @@ overridden.</p>
 <h1><A NAME="fields">FIELDS</a></h1>
 <p>Some of the exceptions mentioned above have additional fields, which
 are available via accessors.  For example, to get the line number of
-an <A HREF="#item_html_3a_3amason_3a_3aexcept"><code>HTML::Mason::Exception::Syntax</code></a> exception, you call the
+an <A HREF="#html_mason_exception_syntax"><code>HTML::Mason::Exception::Syntax</code></a> exception, you call the
 <code>line_number</code> method on the exception object.</p>
 <p>
 </p>
@@ -154,25 +158,25 @@ an <A HREF="#item_html_3a_3amason_3a_3aexcept"><code>HTML::Mason::Exception::Syn
 <h1><A NAME="exception_methods">EXCEPTION METHODS</a></h1>
 <p>All of the Mason exceptions implement the following methods:</p>
 <dl>
-<dt><strong><A NAME="item_as_brief">as_brief</a></strong></dt>
+<dt><strong><A NAME="as_brief" class="item">as_brief</a></strong></dt>
 
 <dd>
 <p>This simply returns the exception message, without any trace information.</p>
 </dd>
-<dt><strong><A NAME="item_as_line">as_line</a></strong></dt>
+<dt><strong><A NAME="as_line" class="item">as_line</a></strong></dt>
 
 <dd>
 <p>This returns the exception message and its trace information, all on a
 single line with tabs between the message and each frame of the stack
 trace.</p>
 </dd>
-<dt><strong><A NAME="item_as_text">as_text</a></strong></dt>
+<dt><strong><A NAME="as_text" class="item">as_text</a></strong></dt>
 
 <dd>
 <p>This returns the exception message and stack information, with each
 frame on a separate line.</p>
 </dd>
-<dt><strong><A NAME="item_as_html">as_html</a></strong></dt>
+<dt><strong><A NAME="as_html" class="item">as_html</a></strong></dt>
 
 <dd>
 <p>This returns the exception message and stack as an HTML page.</p>
@@ -181,9 +185,9 @@ frame on a separate line.</p>
 <p>Each of these methods corresponds to a valid error_format parameter
 for the <a HREF="Request.html">Request object</a> such as <code>text</code> or
 <code>html</code>.</p>
-<p>You can create your own method in the <A HREF="#item_html_3a_3amason_3a_3aexcept"><code>HTML::Mason::Exception</code></a>
+<p>You can create your own method in the <A HREF="#html_mason_exception"><code>HTML::Mason::Exception</code></a>
 namespace, such as <code>as_you_wish</code>, in which case you could set this
-parameter to ``you_wish''.  This method will receive a single argument,
+parameter to &quot;you_wish&quot;.  This method will receive a single argument,
 the exception object, and is expected to return some sort of string
 containing the formatted error message.</p>
 <p>
@@ -200,7 +204,7 @@ indicating what subclass to check for.</p>
 <pre>
   if ( isa_mason_exception($@, 'Syntax') ) { ... }</pre>
 <p>Note that when specifying a subclass you should not include the
-leading ``HTML::Mason::Exception::'' portion of the class name.</p>
+leading &quot;HTML::Mason::Exception::&quot; portion of the class name.</p>
 
 </body>
 

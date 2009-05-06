@@ -9,8 +9,10 @@
 
 <body style="background-color: white">
 
-<p><A NAME="__index__"></a></p>
+
 <!-- INDEX BEGIN -->
+<div name="index">
+<p><A NAME="__index__"></a></p>
 
 <ul>
 
@@ -21,9 +23,11 @@
 	<li><A HREF="#accessor_methods">ACCESSOR METHODS</a></li>
 	<li><A HREF="#methods">METHODS</a></li>
 </ul>
+
+<hr name="index" />
+</div>
 <!-- INDEX END -->
 
-<hr />
 <p>
 </p>
 <h1><A NAME="name">NAME</a></h1>
@@ -52,25 +56,25 @@ the default Compiler class used by Mason.</p>
 <h1><A NAME="parameters_to_the_new___construc">PARAMETERS TO THE <code>new()</code> CONSTRUCTOR</a></h1>
 <p>All of these parameters are optional.</p>
 <dl>
-<dt><strong><A NAME="item_comp_class">comp_class</a></strong></dt>
+<dt><strong><A NAME="comp_class" class="item">comp_class</a></strong></dt>
 
 <dd>
 <p>The class into which component objects are blessed.  This defaults to
 <a HREF="../Component.html">HTML::Mason::Component</a>.</p>
 </dd>
-<dt><strong><A NAME="item_subcomp_class">subcomp_class</a></strong></dt>
+<dt><strong><A NAME="subcomp_class" class="item">subcomp_class</a></strong></dt>
 
 <dd>
 <p>The class into which subcomponent objects are blessed.  This defaults
 to <a HREF="../Component/Subcomponent.html">HTML::Mason::Component::Subcomponent</a>.</p>
 </dd>
-<dt><strong><A NAME="item_in_package">in_package</a></strong></dt>
+<dt><strong><A NAME="in_package" class="item">in_package</a></strong></dt>
 
 <dd>
 <p>This is the package in which a component's code is executed.  For
 historical reasons, this defaults to <code>HTML::Mason::Commands</code>.</p>
 </dd>
-<dt><strong><A NAME="item_preamble">preamble</a></strong></dt>
+<dt><strong><A NAME="preamble" class="item">preamble</a></strong></dt>
 
 <dd>
 <p>Text given for this parameter is placed at the beginning of each
@@ -78,20 +82,20 @@ component, but after the execution of any <code>&lt;%once&gt;</code> block. See
 also <A HREF="../Params.html#postamble">postamble</a>. The request will be available as <code>$m</code> in preamble
 code.</p>
 </dd>
-<dt><strong><A NAME="item_postamble">postamble</a></strong></dt>
+<dt><strong><A NAME="postamble" class="item">postamble</a></strong></dt>
 
 <dd>
 <p>Text given for this parameter is placed at the end of each
 component. See also <A HREF="../Params.html#preamble">preamble</a>.  The request will be available as
 <code>$m</code> in postamble code.</p>
 </dd>
-<dt><strong><A NAME="item_use_strict">use_strict</a></strong></dt>
+<dt><strong><A NAME="use_strict" class="item">use_strict</a></strong></dt>
 
 <dd>
 <p>True or false, default is true. Indicates whether or not a given
-component should <A HREF="#item_use_strict"><code>use strict</code></a>.</p>
+component should <A HREF="#use_strict"><code>use strict</code></a>.</p>
 </dd>
-<dt><strong><A NAME="item_named_component_subs">named_component_subs</a></strong></dt>
+<dt><strong><A NAME="named_component_subs" class="item">named_component_subs</a></strong></dt>
 
 <dd>
 <p>When compiling a component, use uniquely named subroutines for the a
@@ -99,14 +103,14 @@ component's body, subcomponents, and methods. Doing this allows you to
 effectively profile Mason components. Without this, all components
 simply show up as __ANON__ or something similar in the profiler.</p>
 </dd>
-<dt><strong><A NAME="item_define_args_hash">define_args_hash</a></strong></dt>
+<dt><strong><A NAME="define_args_hash" class="item">define_args_hash</a></strong></dt>
 
 <dd>
-<p>One of ``always'', ``auto'', or ``never''.  This determines whether or not
-an <code>%ARGS</code> hash is created in components.  If it is set to ``always'',
-one is always defined.  If set to ``never'', it is never defined.</p>
-<p>The default, ``auto'', will cause the hash to be defined only if some
-part of the component contains the string ``ARGS''.  This is somewhat
+<p>One of &quot;always&quot;, &quot;auto&quot;, or &quot;never&quot;.  This determines whether or not
+an <code>%ARGS</code> hash is created in components.  If it is set to &quot;always&quot;,
+one is always defined.  If set to &quot;never&quot;, it is never defined.</p>
+<p>The default, &quot;auto&quot;, will cause the hash to be defined only if some
+part of the component contains the string &quot;ARGS&quot;.  This is somewhat
 crude, and may result in some false positives, but this is preferable
 to false negatives.</p>
 <p>Not defining the args hash means that we can avoid copying component
@@ -128,13 +132,13 @@ properties).</p>
 <p>This class is primarily meant to be used by the Interpreter object,
 and as such has a very limited public API.</p>
 <dl>
-<dt><strong><A NAME="item_compile"><code>compile(...)</code></a></strong></dt>
+<dt><strong><A NAME="compile" class="item">compile(...)</a></strong></dt>
 
 <dd>
 <p>This method will take component source and return the compiled object
 code for that source. See <A HREF="../Compiler.html#compile_____">compile(...) in the HTML::Mason::Compiler manpage</a> for
 details on this method.</p>
-<p>This subclass also accepts a <A HREF="#item_comp_class"><code>comp_class</code></a> parameter, allowing you to
+<p>This subclass also accepts a <A HREF="#comp_class"><code>comp_class</code></a> parameter, allowing you to
 override the class into which the component is compiled.</p>
 </dd>
 </dl>

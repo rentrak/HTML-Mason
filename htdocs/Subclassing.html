@@ -9,8 +9,10 @@
 
 <body style="background-color: white">
 
-<p><A NAME="__index__"></a></p>
+
 <!-- INDEX BEGIN -->
+<div name="index">
+<p><A NAME="__index__"></a></p>
 
 <ul>
 
@@ -35,9 +37,11 @@
 	<li><A HREF="#cgihandler">CGIHandler</a></li>
 	<li><A HREF="#using_subclasses">USING SUBCLASSES</a></li>
 </ul>
+
+<hr name="index" />
+</div>
 <!-- INDEX END -->
 
-<hr />
 <p>
 </p>
 <hr />
@@ -58,7 +62,7 @@ objects.</p>
 This module was originally part of the Mason core as
 <code>HTML::Mason::Container</code>, but Ken Williams decided to release it separately on CPAN.</p>
 <p>It was created to encapsulate some common behaviors for Mason objects
-such as parameter validation and the creation of ``contained'' objects.</p>
+such as parameter validation and the creation of &quot;contained&quot; objects.</p>
 <p>Basically, any Mason object which takes parameters to its constructor
 <strong>must</strong> inherit from this module.  Of course, since all of the classes
 that you might consider subclassing already inherit from
@@ -74,46 +78,46 @@ within Mason itself.</p>
 <h1><A NAME="subclassable_classes">SUBCLASSABLE CLASSES</a></h1>
 <p>The following classes have been designed with subclassing in mind:</p>
 <ul>
-<li><strong><A NAME="item_html_3a_3amason_3a_3areques">HTML::Mason::Request</a></strong>
+<li><strong><A NAME="html_mason_request" class="item">HTML::Mason::Request</a></strong>
 
 <p>This object is your old friend <code>$m</code>.  The request contains
 information about the current request context, and provides methods
 for calling other components.</p>
 </li>
-<li><strong><A NAME="item_html_3a_3amason_3a_3aresolv">HTML::Mason::Resolver</a></strong>
+<li><strong><A NAME="html_mason_resolver" class="item">HTML::Mason::Resolver</a></strong>
 
 <p>The resolver's job is to translate a component paths into an actual
 component.  Mason comes with a single Resolver subclass,
 <code>HTML::Mason::Resolver::File</code>, which is used to translate component
 paths into filesystem paths.</p>
 </li>
-<li><strong><A NAME="item_html_3a_3amason_3a_3acompon">HTML::Mason::ComponentSource</a></strong>
+<li><strong><A NAME="html_mason_componentsource" class="item">HTML::Mason::ComponentSource</a></strong>
 
 <p>An object of this class represents a component's source.  These
 objects are instantiated by the resolver when it finds a component
 matching a given path.</p>
 </li>
-<li><strong><A NAME="item_html_3a_3amason_3a_3alexer">HTML::Mason::Lexer</a></strong>
+<li><strong><A NAME="html_mason_lexer" class="item">HTML::Mason::Lexer</a></strong>
 
 <p>The lexer is responsible for parsing a component.  Creating a new
 lexer would allow you to change Mason's component syntax.</p>
 </li>
-<li><strong><A NAME="item_html_3a_3amason_3a_3acompil">HTML::Mason::Compiler</a></strong>
+<li><strong><A NAME="html_mason_compiler" class="item">HTML::Mason::Compiler</a></strong>
 
 <p>The compiler takes the parsed chunks from the lexer and gives them
 meaning.  The default compiler, <code>HTML::Mason::Compiler::ToObject</code>,
-turns a Mason component into a Mason ``object file'', which contains
+turns a Mason component into a Mason &quot;object file&quot;, which contains
 actual Perl code.</p>
 </li>
-<li><strong><A NAME="item_html_3a_3amason_3a_3aapache">HTML::Mason::ApacheHandler</a></strong>
+<li><strong><A NAME="html_mason_apachehandler" class="item">HTML::Mason::ApacheHandler</a></strong>
 
 <p>The ApacheHandler class is the bridge between the mod_perl world and
 Mason, primarily Mason's Interp class.</p>
-<p>It also provides its own <A HREF="#item_html_3a_3amason_3a_3areques"><code>HTML::Mason::Request</code></a> and
+<p>It also provides its own <A HREF="#html_mason_request"><code>HTML::Mason::Request</code></a> and
 <code>HTML::Resolver::File</code> subclasses which implement some mod_perl
 specific behaviors and features.</p>
 </li>
-<li><strong><A NAME="item_html_3a_3amason_3a_3ainterp">HTML::Mason::Interp</a></strong>
+<li><strong><A NAME="html_mason_interp" class="item">HTML::Mason::Interp</a></strong>
 
 <p>The Interp is the core of Mason, and is primarily responsible for
 making all the other objects do their jobs.</p>
@@ -146,7 +150,7 @@ overridden constructor looks something like this:</p>
 </p>
 <h2><A NAME="what_to_subclass">What to Subclass?</a></h2>
 <p>One important thing to know about this class is that it is actually
-several classes.  The first, <A HREF="#item_html_3a_3amason_3a_3areques"><code>HTML::Mason::Request</code></a>, is used when
+several classes.  The first, <A HREF="#html_mason_request"><code>HTML::Mason::Request</code></a>, is used when
 ApacheHandler is not loaded.  The other,
 <code>HTML::Mason::Request::ApacheHandler</code>, is loaded by ApacheHandler and
 used to provide some mod_perl specific features.  Similar, the
@@ -177,7 +181,7 @@ constructor, like this:</p>
 <p>It is quite important that you do this as these handler-specific
 subclasses provide important functionality.  The <code>alter_superclass()</code>
 method is implemented in the
-<a HREF="Request.html"><A HREF="#item_html_3a_3amason_3a_3areques"><code>HTML::Mason::Request</code></a></a> base class, and will
+<a HREF="Request.html"><A HREF="#html_mason_request"><code>HTML::Mason::Request</code></a></a> base class, and will
 do the right thing even in cases of multiple inheritance.  It also
 cooperates with <code>Class::Container</code> to make sure that it sees changes
 to the inheritance hierarchy.</p>
@@ -231,15 +235,15 @@ request, you can simply check the value of <code>$self-&gt;is_subrequest</code>.
 that path corresponds to.</p>
 <p>All resolver classes must implement two methods, <code>get_info</code> and
 <code>glob_path</code>.  The first takes a component path and returns a new
-<A HREF="#item_html_3a_3amason_3a_3acompon"><code>HTML::Mason::ComponentSource</code></a> object.  This object contains
+<A HREF="#html_mason_componentsource"><code>HTML::Mason::ComponentSource</code></a> object.  This object contains
 information about the component, such as its last modified time and
 its source.  See the
-<a HREF="ComponentSource.html"><A HREF="#item_html_3a_3amason_3a_3acompon"><code>HTML::Mason::ComponentSource</code></a></a>
+<a HREF="ComponentSource.html"><A HREF="#html_mason_componentsource"><code>HTML::Mason::ComponentSource</code></a></a>
 documentation for more details.</p>
 <p>You may choose to provide your own ComponentSource subclass as well,
 if your resolver implementation can take advantage of it.</p>
 <p>The <code>glob_path</code> method is responsible for translating a component
-path like <em>/foo/*/bar</em> into a list of component paths that match that
+path like <em class="file">/foo/*/bar</em> into a list of component paths that match that
 glob pattern.</p>
 <p>
 </p>
@@ -263,7 +267,7 @@ the default Compiler class.  For example, if you wanted to do
 something like make attributes dynamic, you could override the
 <code>_flags_or_attr()</code> method in ToObject.</p>
 <p>If you want to drastically change the behavior, you can subclass
-<A HREF="#item_html_3a_3amason_3a_3acompil"><code>HTML::Mason::Compiler</code></a> instead.  An example of this would be
+<A HREF="#html_mason_compiler"><code>HTML::Mason::Compiler</code></a> instead.  An example of this would be
 creating a compiler that generates <code>EmbPerl</code> or <code>Apache::ASP</code> as
 output.</p>
 <p>

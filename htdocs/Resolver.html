@@ -9,8 +9,10 @@
 
 <body style="background-color: white">
 
-<p><A NAME="__index__"></a></p>
+
 <!-- INDEX BEGIN -->
+<div name="index">
+<p><A NAME="__index__"></a></p>
 
 <ul>
 
@@ -26,9 +28,11 @@
 
 	<li><A HREF="#see_also">SEE ALSO</a></li>
 </ul>
+
+<hr name="index" />
+</div>
 <!-- INDEX END -->
 
-<hr />
 <p>
 </p>
 <h1><A NAME="name">NAME</a></h1>
@@ -67,7 +71,7 @@ do not need to subclass it yourself.</p>
 <p>If you are interested in creating a resolver subclass, you must
 implement the following methods.</p>
 <dl>
-<dt><strong><A NAME="item_new">new</a></strong></dt>
+<dt><strong><A NAME="new" class="item">new</a></strong></dt>
 
 <dd>
 <p>This method is optional.  The new method included in this class is
@@ -75,18 +79,18 @@ simply inherited from <code>Class::Container</code>.
 If you need something more complicated done in your new method you
 will need to override it in your subclass.</p>
 </dd>
-<dt><strong><A NAME="item_get_info">get_info</a></strong></dt>
+<dt><strong><A NAME="get_info" class="item">get_info</a></strong></dt>
 
 <dd>
 <p>Takes three arguments: an absolute component path, a component root key,
 and a component root path. Returns a new
 <a HREF="ComponentSource.html">HTML::Mason::ComponentSource</a> object.</p>
 </dd>
-<dt><strong><A NAME="item_glob_path">glob_path</a></strong></dt>
+<dt><strong><A NAME="glob_path" class="item">glob_path</a></strong></dt>
 
 <dd>
 <p>Takes two arguments: a path glob pattern, something
-like ``/foo/*'' or ``/foo/*/bar'', and a component root path. Returns
+like &quot;/foo/*&quot; or &quot;/foo/*/bar&quot;, and a component root path. Returns
 a list of component paths for components which match this glob pattern.</p>
 <p>For example, the filesystem resolver simply appends this pattern to
 the component root path and calls the Perl <code>glob()</code> function to
@@ -100,7 +104,7 @@ find matching files on the filesystem.</p>
 <a HREF="ApacheHandler.html">HTML::Mason::ApacheHandler</a> module, then
 you must implement the following method as well.</p>
 <dl>
-<dt><strong><A NAME="item_apache_request_to_comp_path">apache_request_to_comp_path ($r, @comp_root_array)</a></strong></dt>
+<dt><strong><A NAME="apache_request_to_comp_path" class="item">apache_request_to_comp_path ($r, @comp_root_array)</a></strong></dt>
 
 <dd>
 <p>This method, given an Apache object and a list of component root pairs,

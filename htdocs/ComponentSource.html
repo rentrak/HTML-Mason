@@ -9,8 +9,10 @@
 
 <body style="background-color: white">
 
-<p><A NAME="__index__"></a></p>
+
 <!-- INDEX BEGIN -->
+<div name="index">
+<p><A NAME="__index__"></a></p>
 
 <ul>
 
@@ -19,9 +21,11 @@
 	<li><A HREF="#description">DESCRIPTION</a></li>
 	<li><A HREF="#methods">METHODS</a></li>
 </ul>
+
+<hr name="index" />
+</div>
 <!-- INDEX END -->
 
-<hr />
 <p>
 </p>
 <h1><A NAME="name">NAME</a></h1>
@@ -43,26 +47,26 @@ source component, one that has yet to be compiled.</p>
 <hr />
 <h1><A NAME="methods">METHODS</a></h1>
 <dl>
-<dt><strong><A NAME="item_new">new</a></strong></dt>
+<dt><strong><A NAME="new" class="item">new</a></strong></dt>
 
 <dd>
 <p>This method takes the following arguments:</p>
 <ul>
-<li><strong><A NAME="item_comp_path">comp_path</a></strong>
+<li><strong><A NAME="comp_path" class="item">comp_path</a></strong>
 
 <p>The component's component path.</p>
 </li>
-<li><strong><A NAME="item_last_modified">last_modified</a></strong>
+<li><strong><A NAME="last_modified" class="item">last_modified</a></strong>
 
 <p>This is the last modificatoin time for the component, in Unix time
 (seconds since the epoch).</p>
 </li>
-<li><strong><A NAME="item_comp_id">comp_id</a></strong>
+<li><strong><A NAME="comp_id" class="item">comp_id</a></strong>
 
 <p>This is a unique id for the component used to distinguish two
 components with the same name in different component roots.</p>
 <p>If your resolver does not support multiple component roots, this can
-simply be the same as the ``comp_path'' key or it can be any other id
+simply be the same as the &quot;comp_path&quot; key or it can be any other id
 you wish.</p>
 <p>This value will be used when constructing filesystem paths so it needs
 to be something that works on different filesystems.  If it contains
@@ -73,13 +77,13 @@ some forward slashes in them or also <strong>all</strong> of your generated obje
 files will end up in a single directory, which could affect
 performance.</p>
 </li>
-<li><strong><A NAME="item_comp_class">comp_class</a></strong>
+<li><strong><A NAME="comp_class" class="item">comp_class</a></strong>
 
 <p>The component class into which this particular component should be
 blessed when it is created.  This must be a subclass of
 <code>HTML::Mason::Component</code>, which is the default.</p>
 </li>
-<li><strong><A NAME="item_friendly_name">friendly_name</a></strong>
+<li><strong><A NAME="friendly_name" class="item">friendly_name</a></strong>
 
 <p>This is used when displaying error messages related to the component,
 like parsing errors.  This should be something that will help whoever
@@ -87,7 +91,7 @@ sees the message identify the component.  For example, for component
 stored on the filesystem, this should be the absolute path to the
 component.</p>
 </li>
-<li><strong><A NAME="item_source_callback">source_callback</a></strong>
+<li><strong><A NAME="source_callback" class="item">source_callback</a></strong>
 
 <p>This is a subroutine reference which, when called, returns the
 component source.</p>
@@ -95,7 +99,7 @@ component source.</p>
 profusion of tiny little <code>HTML::Mason::ComponentSource</code> subclasses that
 don't do very much.</p>
 </li>
-<li><strong><A NAME="item_extra">extra</a></strong>
+<li><strong><A NAME="extra" class="item">extra</a></strong>
 
 <p>This optional parameter should be a hash reference.  It is used to
 pass information from the resolver to the component class.</p>
@@ -123,12 +127,12 @@ the interpreter (this may change in the future).</p>
 <p>These are all simple accessors that return the value given to the
 constructor.</p>
 </dd>
-<dt><strong><A NAME="item_comp_source">comp_source</a></strong></dt>
+<dt><strong><A NAME="comp_source" class="item">comp_source</a></strong></dt>
 
 <dd>
 <p>Returns the source of the component.</p>
 </dd>
-<dt><strong><A NAME="item_object_code">object_code ( compiler =&gt; $compiler )</a></strong></dt>
+<dt><strong><A NAME="object_code" class="item">object_code ( compiler =&gt; $compiler )</a></strong></dt>
 
 <dd>
 <p>Given a compiler, this method returns the object code for the

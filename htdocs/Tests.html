@@ -9,8 +9,10 @@
 
 <body style="background-color: white">
 
-<p><A NAME="__index__"></a></p>
+
 <!-- INDEX BEGIN -->
+<div name="index">
+<p><A NAME="__index__"></a></p>
 
 <ul>
 
@@ -44,9 +46,11 @@
 
 	<li><A HREF="#see_also">SEE ALSO</a></li>
 </ul>
+
+<hr name="index" />
+</div>
 <!-- INDEX END -->
 
-<hr />
 <p>
 </p>
 <h1><A NAME="name">NAME</a></h1>
@@ -97,15 +101,15 @@ me!).</p>
 <h2><A NAME="new">new</a></h2>
 <p>Takes the following parameters:</p>
 <ul>
-<li><strong><A NAME="item_name">name (required)</a></strong>
+<li><strong><A NAME="name" class="item">name (required)</a></strong>
 
 <p>The name of the entire group of tests.</p>
 </li>
-<li><strong><A NAME="item_description">description (required)</a></strong>
+<li><strong><A NAME="description" class="item">description (required)</a></strong>
 
 <p>What this group tests.</p>
 </li>
-<li><strong><A NAME="item_pre_test_cleanup">pre_test_cleanup (optional, default=1)</a></strong>
+<li><strong><A NAME="pre_test_cleanup" class="item">pre_test_cleanup (optional, default=1)</a></strong>
 
 <p>If this is true (the default), the component root and data directory
 will be deleted both before and after running tests.</p>
@@ -116,19 +120,19 @@ will be deleted both before and after running tests.</p>
 <h2><A NAME="add_support">add_support</a></h2>
 <p>Takes the following parameters:</p>
 <ul>
-<li><strong><A NAME="item_path">path (required)</a></strong>
+<li><strong><A NAME="path" class="item">path (required)</a></strong>
 
 <p>The path that other components will expect this component to be
 reachable at.  All paths are prepended with the group name.  So '/bar'
 as a support component in the 'foo' group's ultimate path would be
 '/foo/bar'.</p>
 </li>
-<li><strong><A NAME="item_component">component</a></strong>
+<li><strong><A NAME="component" class="item">component</a></strong>
 
 <p>Text of the support component.  This parameter must have a value
 unless the skip_component parameter is true.</p>
 </li>
-<li><strong><A NAME="item_skip_component">skip_component</a></strong>
+<li><strong><A NAME="skip_component" class="item">skip_component</a></strong>
 
 <p>If true, then the test harness will not write a component to disk for
 this test.</p>
@@ -158,32 +162,32 @@ components, this path is prepended with the group's name.  If no path
 is given, it uses call_path, if given, otherwise it uses the name
 parameter.</p>
 </li>
-<li><strong><A NAME="item_call_path">call_path (optional)</a></strong>
+<li><strong><A NAME="call_path" class="item">call_path (optional)</a></strong>
 
 <p>The path that should be used to call the component.  If none is given,
 it will be /&lt;group name&gt;/&lt;test name&gt;.  If a value is given, it is
 still prepended by /&lt;group name&gt;/.</p>
 </li>
-<li><strong><A NAME="item_call_args">call_args (optional)</a></strong>
+<li><strong><A NAME="call_args" class="item">call_args (optional)</a></strong>
 
 <p>The arguments that should be passed to the component, in list or hash
 reference form. If none is given, no arguments are passed.</p>
 </li>
-<li><strong><A NAME="item_compiler_params">compiler_params</a></strong>
+<li><strong><A NAME="compiler_params" class="item">compiler_params</a></strong>
 
 <p>This is a hash reference of parameters to be passed to the Compiler-&gt;new
 method.</p>
 </li>
-<li><strong><A NAME="item_interp_params">interp_params</a></strong>
+<li><strong><A NAME="interp_params" class="item">interp_params</a></strong>
 
 <p>This is a hash reference of parameters to be passed to the Interp-&gt;new
 method.</p>
 </li>
-<li><strong><A NAME="item_interp">interp</a></strong>
+<li><strong><A NAME="interp" class="item">interp</a></strong>
 
 <p>Provide an HTML::Mason::Interp object to be used for the test.</p>
 </li>
-<li><strong><A NAME="item_todo">todo</a></strong>
+<li><strong><A NAME="todo" class="item">todo</a></strong>
 
 <p>If this is given, the test will be treated as a todo test, so it will
 be expected to fail.  This should be a string.</p>
@@ -191,27 +195,27 @@ be expected to fail.  This should be a string.</p>
 </ul>
 <p>One of the following three options is required:</p>
 <ul>
-<li><strong><A NAME="item_expect">expect</a></strong>
+<li><strong><A NAME="expect" class="item">expect</a></strong>
 
 <p>The text expected as a result of calling the component.  This
 parameter is _not_ required when running in <A HREF="#additional_run_modes">Create mode</a>.</p>
 </li>
-<li><strong><A NAME="item_expect_error">expect_error</a></strong>
+<li><strong><A NAME="expect_error" class="item">expect_error</a></strong>
 
 <p>A regex that will be matched against the error returned from the
 component execution.</p>
 </li>
-<li><strong><A NAME="item_no_warnings">no_warnings</a></strong>
+<li><strong><A NAME="no_warnings" class="item">no_warnings</a></strong>
 
 <p>If true, this means that the test expects to run without generating
 any warnings.  If warnings are generated, the test fails.</p>
 </li>
-<li><strong><A NAME="item_expect_warnings">expect_warnings</a></strong>
+<li><strong><A NAME="expect_warnings" class="item">expect_warnings</a></strong>
 
 <p>A regex that will be matched against any warnings output when running
 the component.</p>
 </li>
-<li><strong><A NAME="item_skip_expect">skip_expect</a></strong>
+<li><strong><A NAME="skip_expect" class="item">skip_expect</a></strong>
 
 <p>This causes the component to be run but its output is ignored.
 However, if the component execution causes an error this will cause
