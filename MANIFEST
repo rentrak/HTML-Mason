@@ -78,7 +78,6 @@ t/12-taint.t
 t/13-errors.t
 t/14-cgi.t
 t/14a-fake_apache.t
-t/14a-fake_apache.t.rej
 t/15-subclass.t
 t/17-print.t
 t/18-leak.t
@@ -90,6 +89,7 @@ t/23-leak2.t
 t/24-tools.t
 t/99-pod.t
 t/lib/Apache/test.pm
+t/lib/BadModule.pm
 t/lib/LoadTest.pm
 t/lib/Mason/ApacheTest.pm
 t/live/apache-filter.t
