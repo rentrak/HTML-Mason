@@ -65,6 +65,7 @@ t/05a-stack-corruption.t
 t/06-compiler.t
 t/06a-compiler_obj.t
 t/06b-compiler-named-subs.t
+t/06c-compiler-spaces-path.t
 t/07-interp.t
 t/07a-interp-mcr.t
 t/07b-interp-static-source.t
@@ -87,6 +88,7 @@ t/21-escapes.t
 t/22-path-security.t
 t/23-leak2.t
 t/24-tools.t
+t/25-flush-in-content.t
 t/99-pod.t
 t/lib/Apache/test.pm
 t/lib/BadModule.pm

@@ -1,25 +1,20 @@
 ---
-name: HTML-Mason
-version: 1.42
+abstract: 'High-performance, dynamic web site authoring system'
 author:
   - 'Jonathan Swartz <swartz@pobox.com>, Dave Rolsky <autarch@urth.org>, Ken Williams <ken@mathforum.org>, John Williams <williams@tni.com>'
-abstract: 'High-performance, dynamic web site authoring system'
-license: perl
-resources:
-  license: http://dev.perl.org/licenses/
-requires:
-  CGI: 2.46
-  Cache::Cache: 1
-  Class::Container: 0.07
-  Exception::Class: 1.15
-  File::Spec: 0.8
-  Params::Validate: 0.7
-  Scalar::Util: 1.01
 build_requires:
-  HTML::Entities: 0
   Module::Build: 0.26
   Test: 0
   Test::Builder: 0
+configure_requires:
+  Module::Build: 0.36
+dynamic_config: 1
+generated_by: 'Module::Build version 0.36'
+license: perl
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: HTML-Mason
 provides:
   Apache::Mason:
     file: lib/Apache/Mason.pm
@@ -29,7 +24,7 @@ provides:
     version: 0.09
   HTML::Mason:
     file: lib/HTML/Mason.pm
-    version: 1.42
+    version: 1.43
   HTML::Mason::Apache::Request:
     file: lib/HTML/Mason/Apache/Request.pm
   HTML::Mason::ApacheHandler:
@@ -109,7 +104,15 @@ provides:
     file: lib/HTML/Mason/Utils.pm
   Tie::Handle::Mason:
     file: lib/HTML/Mason/Request.pm
-generated_by: Module::Build version 0.32
-meta-spec:
-  url: http://module-build.sourceforge.net/META-spec-v1.2.html
-  version: 1.2
+requires:
+  CGI: 2.46
+  Cache::Cache: 1
+  Class::Container: 0.07
+  Exception::Class: 1.15
+  File::Spec: 0.8
+  HTML::Entities: 0
+  Params::Validate: 0.7
+  Scalar::Util: 1.01
+resources:
+  license: http://dev.perl.org/licenses/
+version: 1.43
