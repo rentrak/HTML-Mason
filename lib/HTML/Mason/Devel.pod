@@ -1513,13 +1513,14 @@ under special circumstances, one component does not access another
 component's cache. Each cached value may be set to expire at a certain
 time.
 
-Data caching is implemented on top of one of two external caching
-APIs: C<Cache::Cache> or its newer sibling C<CHI>. You control which
-one Mason uses with the L<data_cache_api|HTML::Mason::Params/data_cache_api> parameter. Currently
-C<Cache::Cache> is the default, but we will switch to C<CHI> once it
-is more mature.  The APIs are very similar for Mason users, so that
-most of the information below applies to both; any differences are
-noted.
+Data caching is implemented on top of one of two external caching APIs:
+C<Cache::Cache>, which is stable but has not changed in years, or C<CHI>,
+which has picked up where C<Cache::Cache> has left off and is actively
+maintained. You control which one Mason uses with the L<data_cache_api|HTML::Mason::Params/data_cache_api>
+parameter.  C<Cache::Cache> is the default for backward compatibility
+reasons, but we recommend C<CHI> for anyone doing serious caching.  The APIs
+are very similar for Mason users, so that most of the information below
+applies to both; any differences are noted.
 
 =head2 Basic Usage
 
@@ -1926,6 +1927,20 @@ that line numbers are reported relative to the source file. Depending
 on your task, this can be a help or a hindrance when using the
 debugger.  The administrator can turn off '#line' directives with
 the L<use_source_line_numbers|HTML::Mason::Params/use_source_line_numbers> parameter.
+
+=head1 LOGGING
+
+Mason uses C<Log::Any> to log various events, such as the start and
+end of each request and each component call. You can also log to
+C<Log::Any> from a component with the
+C<$m-E<gt>log> method. e.g.
+
+    $m->log->error("Something bad happened!");
+    $m->log->debugf("Arguments for '%s' were '%s'", $func, \%args)
+        if $m->log->is_debug;
+
+See C<Log::Any::Adapter> for how to direct these logs to
+an output of your choice.
 
 =head1 OBJECT-ORIENTED TECHNIQUES
 

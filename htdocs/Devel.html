@@ -145,6 +145,7 @@
 	</ul>
 
 	<li><A HREF="#using_the_perl_debugger">USING THE PERL DEBUGGER</a></li>
+	<li><A HREF="#logging">LOGGING</a></li>
 	<li><A HREF="#object_oriented_techniques">OBJECT-ORIENTED TECHNIQUES</a></li>
 	<ul>
 
@@ -1504,13 +1505,14 @@ a block of HTML to a complex data structure.</p>
 under special circumstances, one component does not access another
 component's cache. Each cached value may be set to expire at a certain
 time.</p>
-<p>Data caching is implemented on top of one of two external caching
-APIs: <code>Cache::Cache</code> or its newer sibling <code>CHI</code>. You control which
-one Mason uses with the <A HREF="Params.html#data_cache_api">data_cache_api</a> parameter. Currently
-<code>Cache::Cache</code> is the default, but we will switch to <code>CHI</code> once it
-is more mature.  The APIs are very similar for Mason users, so that
-most of the information below applies to both; any differences are
-noted.</p>
+<p>Data caching is implemented on top of one of two external caching APIs:
+<code>Cache::Cache</code>, which is stable but has not changed in years, or <code>CHI</code>,
+which has picked up where <code>Cache::Cache</code> has left off and is actively
+maintained. You control which one Mason uses with the <A HREF="Params.html#data_cache_api">data_cache_api</a>
+parameter.  <code>Cache::Cache</code> is the default for backward compatibility
+reasons, but we recommend <code>CHI</code> for anyone doing serious caching.  The APIs
+are very similar for Mason users, so that most of the information below
+applies to both; any differences are noted.</p>
 <p>
 </p>
 <h2><A NAME="basic_usage">Basic Usage</a></h2>
@@ -1871,6 +1873,20 @@ that line numbers are reported relative to the source file. Depending
 on your task, this can be a help or a hindrance when using the
 debugger.  The administrator can turn off '#line' directives with
 the <A HREF="Params.html#use_source_line_numbers">use_source_line_numbers</a> parameter.</p>
+<p>
+</p>
+<hr />
+<h1><A NAME="logging">LOGGING</a></h1>
+<p>Mason uses <code>Log::Any</code> to log various events, such as the start and
+end of each request and each component call. You can also log to
+<code>Log::Any</code> from a component with the
+<code>$m-&gt;log</code> method. e.g.</p>
+<pre>
+    $m-&gt;log-&gt;error(&quot;Something bad happened!&quot;);
+    $m-&gt;log-&gt;debugf(&quot;Arguments for '%s' were '%s'&quot;, $func, \%args)
+        if $m-&gt;log-&gt;is_debug;</pre>
+<p>See <code>Log::Any::Adapter</code> for how to direct these logs to
+an output of your choice.</p>
 <p>
 </p>
 <hr />

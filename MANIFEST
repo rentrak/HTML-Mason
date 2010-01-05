@@ -89,6 +89,7 @@ t/22-path-security.t
 t/23-leak2.t
 t/24-tools.t
 t/25-flush-in-content.t
+t/25-log.t
 t/99-pod.t
 t/lib/Apache/test.pm
 t/lib/BadModule.pm

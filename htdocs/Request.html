@@ -705,6 +705,13 @@ optional.  It may be specified as an absolute path or as a path
 relative to the current component.</p>
 <p>See the <A HREF="Devel.html#subrequests">subrequests</a> section of the developer's manual for more information about subrequests.</p>
 </dd>
+<dt><strong><A NAME="log" class="item">log</a></strong></dt>
+
+<A NAME="item_log"></a><dd>
+<p>Returns a <code>Log::Any</code> logger with a log category specific to the
+current component.  The category for a component &quot;/foo/bar&quot; would be
+&quot;HTML::Mason::Component::foo::bar&quot;.</p>
+</dd>
 <dt><strong><A NAME="notes" class="item">notes (key, value)</a></strong></dt>
 
 <A NAME="notes"></a><dd>

@@ -24,7 +24,7 @@ provides:
     version: 0.09
   HTML::Mason:
     file: lib/HTML/Mason.pm
-    version: 1.43
+    version: 1.44
   HTML::Mason::Apache::Request:
     file: lib/HTML/Mason/Apache/Request.pm
   HTML::Mason::ApacheHandler:
@@ -105,14 +105,18 @@ provides:
   Tie::Handle::Mason:
     file: lib/HTML/Mason/Request.pm
 requires:
+  Apache::Request: 1.05
   CGI: 2.46
   Cache::Cache: 1
   Class::Container: 0.07
   Exception::Class: 1.15
   File::Spec: 0.8
   HTML::Entities: 0
+  Log::Any: 0.08
   Params::Validate: 0.7
   Scalar::Util: 1.01
+  Test::Deep: 0
+  mod_perl: 1.24
 resources:
   license: http://dev.perl.org/licenses/
-version: 1.43
+version: 1.44
