@@ -113,8 +113,10 @@ sub compile_to_file
 
     ($file) = $file =~ /^(.*)/s if taint_is_on;  # Untaint blindly
 
-    open my $fh, "> $file"
-        or system_error "Couldn't create object file $file: $!";
+    my $temp_file = $file . '.' . $$ . '.' . time();
+
+    open my $fh, "> $temp_file"
+        or system_error "Couldn't create temp object file $file: $!";
 
     $self->compile( comp_source => $source->comp_source_ref,
                     name => $source->friendly_name,
@@ -122,9 +124,12 @@ sub compile_to_file
                     comp_path => $source->comp_path,
                     fh => $fh );
 
-    close $fh 
-        or system_error "Couldn't close object file $file: $!";
-    
+    close $fh
+        or system_error "Couldn't close temp object file $temp_file: $!";
+
+    rename($temp_file, $file)
+        or system_error "Couldn't rename $temp_file to object file $file: $!";
+
     return \@newfiles;
 }
 
